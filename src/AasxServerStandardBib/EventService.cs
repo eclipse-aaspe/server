@@ -34,7 +34,6 @@ using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 
 public class EventService : IEventService
 {
-
     public EventService(MqttClientService mqttClientService)
     {
         _mqttClientService = mqttClientService;
@@ -49,7 +48,7 @@ public class EventService : IEventService
 
     private readonly MqttClientService _mqttClientService;
 
-    public async void PublishMqttMessage(EventDto eventData)
+    public async void PublishMqttMessage(EventDto eventData, string clientId)
     {
         if (!_enableMqtt)
         {
@@ -111,9 +110,8 @@ public class EventService : IEventService
                 source = "https://pathAddedLater",
                 subject = new
                 {
-                   id = eventPayloadEntry.submodelId,
-                   //ToDo: Find correct parameter
-                   //semanticId = eventPayloadEntry
+                    id = eventPayloadEntry.submodelId,
+                    //semanticId = eventPayloadEntry.semanticId
                 },
                 id = $"later-{Guid.NewGuid()}",
                 time = DateTime.UtcNow.ToString("o"),
@@ -127,14 +125,11 @@ public class EventService : IEventService
         if (payloadList.Count > 0)
         {
             var jsonArray = JsonSerializer.Serialize(payloadList);
-            Console.WriteLine(jsonArray);
+            //Console.WriteLine(jsonArray);
 
-            var clientId = eventData.UserName.Value + eventData.PassWord.Value;
-
-            await _mqttClientService.PublishAsync(clientId, "/noauth/submodels", jsonArray);
-            await _mqttClientService.PublishAsync(clientId, "/fx/all/submodels", jsonArray);
-            await _mqttClientService.PublishAsync(clientId, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
-
+            var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/noauth/submodels", jsonArray);
+            //await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/all/submodels", jsonArray);
+            //await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
         }
     }
 
@@ -237,6 +232,10 @@ public class EventService : IEventService
                 }
                 e.submodelId = submodelId;
                 e.idShortPath = idShortPath + sme.IdShort;
+
+                //ToDo: Find correct Semantic Id
+                //e.semanticId = sme.SemanticId.GetAsIdentifier();
+
                 entries.Add(e);
                 count++;
             }
@@ -1416,6 +1415,10 @@ public class EventService : IEventService
                     if (p != null)
                         eventDto.ConditionSME = p;
                     break;
+                case "messagebroker":
+                    if (p != null)
+                        eventDto.MessageBroker = p;
+                    break;
             }
         }
         /*
@@ -1597,4 +1600,3 @@ public class EventService : IEventService
         return eventDto;
     }
 }
-

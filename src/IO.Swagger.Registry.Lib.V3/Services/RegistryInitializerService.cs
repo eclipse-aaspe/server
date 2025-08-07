@@ -51,9 +51,10 @@ public class RegistryInitializerService : IRegistryInitializerService
     private static List<string?> federatedElemensSemanticId = [];
     private static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = [];
 
-    public RegistryInitializerService(IAasDescriptorWritingService aasDescriptorWritingService)
+    public RegistryInitializerService(IAasDescriptorWritingService aasDescriptorWritingService, AasxTaskService aasxTaskService)
     {
         _aasDescriptorWritingService = aasDescriptorWritingService;
+        _aasxTaskService = aasxTaskService;
     }
 
     public List<string> GetRegistryList() => getRegistry;
@@ -64,6 +65,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
     public static X509Certificate2? Certificate;
     private readonly IAasDescriptorWritingService _aasDescriptorWritingService;
+    private readonly AasxTaskService _aasxTaskService;
 
     public async Task InitRegistry(List<AasxCredentialsEntry> cList, DateTime timestamp, bool initAgain = false)
     {
@@ -271,7 +273,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                         // basyx with Submodel Registry: read submodel descriptors
                         string? requestPath = $"{submodelRegistryUrl}/submodel-descriptors";
 
-                        if (AasxCredentials.get(cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
+                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
                         {
                             requestPath = replace;
                         }
@@ -280,7 +282,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                         if (!requestPath.Contains("localhost"))
                         {
-                            handler.Proxy = AasxTask.proxy;
+                            handler.Proxy = _aasxTaskService.proxy;
                         }
 
                         var client = new HttpClient(handler);
@@ -342,7 +344,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                         string  urlEdcWrapper;
                         string  replace;
 
-                        if (AasxCredentials.get(cs.credentials, requestPath, out var queryPara, out userPW, out urlEdcWrapper, out replace) && !string.IsNullOrEmpty(replace))
+                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPath, out var queryPara, out userPW, out urlEdcWrapper, out replace) && !string.IsNullOrEmpty(replace))
                         {
                             requestPath = replace;
                         }
@@ -351,9 +353,9 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                         if (!requestPath.Contains("localhost"))
                         {
-                            if (AasxTask.proxy != null)
+                            if (_aasxTaskService.proxy != null)
                             {
-                                handler.Proxy = AasxTask.proxy;
+                                handler.Proxy = _aasxTaskService.proxy;
                             }
                             else
                             {
@@ -497,7 +499,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                                         requestPath = endpoint;
                                         client.DefaultRequestHeaders.Clear();
-                                        if (requestPath != null && AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                        if (requestPath != null && AasxCredentials.get(_aasxTaskService , cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                         {
                                             if (replace != "")
                                             {
@@ -882,9 +884,9 @@ public class RegistryInitializerService : IRegistryInitializerService
 
             if (!requestPath.Contains("localhost"))
             {
-                if (AasxTask.proxy != null)
+                if (_aasxTaskService.proxy != null)
                 {
-                    handler.Proxy = AasxTask.proxy;
+                    handler.Proxy = _aasxTaskService.proxy;
                 }
                 else
                 {

@@ -987,7 +987,8 @@ namespace AasxServer
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
             */
 
-            AasxTask.taskInit(serviceProvider.GetService<IEventService>());
+            var aasxTaskService = serviceProvider.GetService<AasxTaskService>();
+            aasxTaskService.TaskInit();
 
             // RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);

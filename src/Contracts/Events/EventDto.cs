@@ -57,7 +57,10 @@ public class EventDto
     public AasCore.Aas3_0.Property LastUpdate = null;
     public SubmodelElementCollection Diff = null;
 
+    // MQTT:// without TLS and MQTTS:// with TLS, then URL:PORT
+    public AasCore.Aas3_0.Property MessageBroker = null;
+
     //public string SubmodelId { get; set; }
-    //public string IdShortPath { get; set; } 
+    //public string IdShortPath { get; set; }
 }
 

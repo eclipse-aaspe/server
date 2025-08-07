@@ -1938,9 +1938,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         securityCondition = null;
 
 
-        if (ignoreNullConfig && securityConfig == null)
+        if (securityConfig == null)
         {
-            return true;
+            return ignoreNullConfig;
         }
 
 

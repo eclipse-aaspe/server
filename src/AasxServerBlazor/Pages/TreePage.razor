@@ -2,6 +2,7 @@
 @inject AASService SubmodelService
 @inject ISecurityService SecService
 @inject IDbRequestHandlerService DbReqService
+@inject AasxTaskService AasxTaskService
 @using Contracts
 @using MW.Blazor
 @using AasCore.Aas3_0
@@ -274,7 +275,7 @@
 						else
 						{
 							// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-							AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
+							AasxTaskService.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
 						}
 					}
                     }
@@ -360,7 +361,7 @@
 							else
 							{
 								// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-								AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
+								AasxTaskService.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
 							}
 							Program.signalNewData(0);
 						}

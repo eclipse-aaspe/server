@@ -11,43 +11,33 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using AasxServerDB;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.Json.Nodes;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using AasxRestServerLibrary;
-using AdminShellNS;
-using Extensions;
-using IdentityModel;
-using IdentityModel.Client;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
-using System.Linq;
-
 namespace AasxServer
 {
-    using System.IO.Packaging;
-    using System.Runtime.CompilerServices;
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using AasxServerDB;
+    using System.IdentityModel.Tokens.Jwt;
+    using System.IO;
+    using System.Net;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Security.Claims;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text.Json.Nodes;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using AdminShellNS;
+    using Extensions;
+    using IdentityModel;
+    using IdentityModel.Client;
+    using Microsoft.IdentityModel.Tokens;
+    using System.Security.Cryptography;
+    using System.Linq;
     using System.Text.Json;
-    using System.Xml.Linq;
-    using AasxServerStandardBib.Interfaces;
     using Contracts;
     using Contracts.Events;
-    using Newtonsoft.Json;
-    // using Opc.Ua;
-    // using Org.BouncyCastle.Asn1.Ocsp;
-    using ScottPlot.Drawing.Colormaps;
 
     public class AasxTask
     {
@@ -59,16 +49,61 @@ namespace AasxServer
         public DateTime nextExecution = new DateTime();
         public int envIndex = -1;
 
-        public static List<AasxTask> taskList = null;
+        //MQTT
+        public string submodelId = "";
+        public string idShortPath = "";
+    }
 
-        public static WebProxy proxy = null;
+    public class CfpNode
+    {
+        public int envIndex = -1;
+        public string asset = null;
+        public AssetAdministrationShell aas = null;
+        public Property cradleToGateModule = null;
+        public Property productionModule = null;
+        public Property distributionModule = null;
+        public Property cradleToGateCombination = null;
+        public Property productionCombination = null;
+        public Property distributionCombination = null;
+        public Property weightModule = null;
+        public Property weightCombination = null;
+        public AasCore.Aas3_0.File manufacturerLogo = null;
+        public AasCore.Aas3_0.File productImage = null;
+        public string productDesignation = "";
+        public List<string> bom = new List<string>();
+        public DateTime bomTimestamp = new DateTime();
+        public List<CfpNode> children = new List<CfpNode>();
+        public int iChild = 0;
+    }
 
-        public static IEventService _eventService;
 
-        public static void taskInit(IEventService eventService)
+    public class AasxTaskService
+    {
+        public AasxTaskService(IEventService eventService)
         {
             _eventService = eventService;
+        }
 
+        public List<AasxTask> taskList = new List<AasxTask>();
+        public IEventService _eventService = null;
+        public WebProxy proxy = null;
+
+        //CFP
+        public CfpNode root = null;
+        public string asbuilt_total = null;
+        public Property pCO2eqTotal = null;
+        public bool cfpValid = false;
+        public DateTime lastCreateTimestamp = new DateTime();
+        public bool credentialsChanged = false;
+        public string hashBOM = "";
+        public long logCount = 0;
+        public long logCountModulo = 30;
+        public bool once = false;
+        bool firstCycle = true;
+
+
+        public void TaskInit()
+        {
             string proxyFile = "proxy.txt";
             if (System.IO.File.Exists(proxyFile))
             {
@@ -124,7 +159,6 @@ namespace AasxServer
             }
 
             DateTime timeStamp = DateTime.UtcNow;
-            taskList = new List<AasxTask>();
 
             int aascount = AasxServer.Program.env.Length;
 
@@ -151,9 +185,40 @@ namespace AasxServer
                                     if (sme is SubmodelElementCollection smec)
                                     {
                                         var nextTask = new AasxTask();
-                                        AasxTask.taskList.Add(nextTask);
+                                        taskList.Add(nextTask);
                                         nextTask.def = smec;
                                         nextTask.envIndex = i;
+                                        nextTask.submodelId = sm.Id;
+
+                                        var idShortPath = sme.IdShort;
+                                        var parent = sme.Parent as IReferable;
+                                        while (parent != null && parent is not Submodel)
+                                        {
+                                            if (parent is ISubmodelElementList parentList)
+                                            {
+                                                //Considering child elements of SML can have null idShorts
+                                                if (idShortPath == null || idShortPath.Equals(sme.IdShort))
+                                                {
+                                                    var index = parentList.Value?.IndexOf(sme);
+                                                    idShortPath = $"[{index}]";
+                                                }
+
+                                                idShortPath = parentList.IdShort + idShortPath;
+                                            }
+                                            else if (parent.Parent is ISubmodelElementList prevParentList)
+                                            {
+                                                var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                                                idShortPath = $"[{index}].{idShortPath}";
+                                            }
+                                            else
+                                            {
+                                                idShortPath = $"{parent.IdShort}.{idShortPath}";
+                                            }
+
+                                            parent = (IReferable)parent.Parent;
+                                        }
+
+                                        nextTask.idShortPath = idShortPath;
 
                                         int countSmec = 0;
                                         if (smec.Value != null)
@@ -198,8 +263,9 @@ namespace AasxServer
                                             }
                                         }
 
+                                        //submodel id und idShortPath
                                         if (nextTask.taskType?.Value.ToLower() == "init")
-                                            runOperations(nextTask.def, nextTask.envIndex, timeStamp);
+                                            runOperations(nextTask.def, nextTask.envIndex, nextTask.submodelId, nextTask.idShortPath, timeStamp);
                                     }
                                 }
                             }
@@ -212,8 +278,8 @@ namespace AasxServer
             // MICHA
             tasksThread.Start();
         }
-        static bool firstCycle = true;
-        static void runOperations(SubmodelElementCollection smec, int envIndex, DateTime timeStamp)
+
+        void runOperations(SubmodelElementCollection smec, int envIndex, string submodelId, string idShortPath, DateTime timeStamp)
         {
             int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
@@ -227,19 +293,19 @@ namespace AasxServer
                     {
                         //ToDo: Only at server start in future
 
-                        operation_get_put_events(op, envIndex, timeStamp, "get");
+                        operation_get_put_events(op, envIndex, timeStamp, submodelId, idShortPath, "get");
                     }
                     if (idShort.StartsWith("putevents"))
                     {
                         //ToDo: Only at server start in future
 
-                        operation_get_put_events(op, envIndex, timeStamp, "put");
+                        operation_get_put_events(op, envIndex, timeStamp, submodelId, idShortPath, "put");
                     }
                     if (idShort.StartsWith("eventelement"))
                     {
                         //ToDo: Only at server start in future
 
-                        operation_get_put_events(op, envIndex, timeStamp, "");
+                        operation_get_put_events(op, envIndex, timeStamp, submodelId, idShortPath, "");
                     }
                     switch (idShort)
                     {
@@ -276,7 +342,7 @@ namespace AasxServer
             firstCycle = false;
         }
 
-        static void operation_authenticate(Operation op, int envIndex, DateTime timeStamp)
+        void operation_authenticate(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
 
@@ -402,7 +468,7 @@ namespace AasxServer
                                 accessToken.Value = "";
                             }
 
-                            if (createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                            if (CreateAccessToken(envIndex, authServerEndPoint, authServerCertificate,
                                                   clientCertificate, clientCertificatePassWord,
                                                   accessToken, clientToken))
                                 accessToken.SetTimeStamp(timeStamp);
@@ -413,7 +479,7 @@ namespace AasxServer
             }
         }
 
-        static bool createAccessToken(int envIndex, Property authServerEndPoint, AasCore.Aas3_0.File authServerCertificate,
+        bool CreateAccessToken(int envIndex, Property authServerEndPoint, AasCore.Aas3_0.File authServerCertificate,
                                       AasCore.Aas3_0.File clientCertificate, Property clientCertificatePassWord,
                                       Property accessToken, Property clientToken,
                                       string policy = "", string policyRequestedResource = "")
@@ -660,7 +726,7 @@ namespace AasxServer
             return false;
         }
 
-        static void operation_get_put(Operation op, int envIndex, DateTime timeStamp)
+        void operation_get_put(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
             // inputVariable sourceEndPoint: property
@@ -988,7 +1054,7 @@ namespace AasxServer
                         {
                             accessToken.Value = "";
 
-                            if (!createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                            if (!CreateAccessToken(envIndex, authServerEndPoint, authServerCertificate,
                                                    clientCertificate, clientCertificatePassWord,
                                                    accessToken, clientToken,
                                                    "", ""))
@@ -1045,7 +1111,7 @@ namespace AasxServer
                             || (clientToken != null && clientToken.Value == ""))
                         {
                             clientToken.Value = "";
-                            if (!createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                            if (!CreateAccessToken(envIndex, authServerEndPoint, authServerCertificate,
                                                    clientCertificate, clientCertificatePassWord,
                                                    accessToken, clientToken,
                                                    policy, policyRequestedResource))
@@ -1541,8 +1607,8 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
-        static bool debug = false;
-        static void operation_get_put_events(Operation op, int envIndex, DateTime timeStamp, string getPut)
+        bool debug = false;
+        void operation_get_put_events(Operation op, int envIndex, DateTime timeStamp, string submodelId, string idShortPath, string getPut)
         {
             if (debug)
             {
@@ -1572,7 +1638,7 @@ namespace AasxServer
                                 eventData.AccessToken.Value = "";
                             }
 
-                            if (createAccessToken(envIndex, eventData.AuthServerEndPoint, eventData.AuthServerCertificate,
+                            if (CreateAccessToken(envIndex, eventData.AuthServerEndPoint, eventData.AuthServerCertificate,
                                                   eventData.ClientCertificate, eventData.ClientCertificatePassWord,
                                                   eventData.AccessToken, eventData.ClientToken))
                                 eventData.AccessToken.SetTimeStamp(timeStamp);
@@ -1586,12 +1652,13 @@ namespace AasxServer
 
             if (eventData.Direction != null && eventData.Mode != null)
             {
+                var clientId = submodelId + idShortPath;
+
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
-                    _eventService.PublishMqttMessage(eventData);
+                    _eventService.PublishMqttMessage(eventData, clientId);
                     return;
                 }
-
 
                 if (eventData.Direction.Value == "OUT" && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
                 {
@@ -2211,42 +2278,13 @@ namespace AasxServer
             Program.signalNewData(1);
         }
 
-        public class cfpNode
-        {
-            public int envIndex = -1;
-            public string asset = null;
-            public AssetAdministrationShell aas = null;
-            public Property cradleToGateModule = null;
-            public Property productionModule = null;
-            public Property distributionModule = null;
-            public Property cradleToGateCombination = null;
-            public Property productionCombination = null;
-            public Property distributionCombination = null;
-            public Property weightModule = null;
-            public Property weightCombination = null;
-            public AasCore.Aas3_0.File manufacturerLogo = null;
-            public AasCore.Aas3_0.File productImage = null;
-            public string productDesignation = "";
-            public List<string> bom = new List<string>();
-            public DateTime bomTimestamp = new DateTime();
-            public List<cfpNode> children = new List<cfpNode>();
-            public int iChild = 0;
-        }
-
-        public static cfpNode root = null;
-        public static string asbuilt_total = null;
-        public static Property pCO2eqTotal = null;
-        public static bool cfpValid = false;
-        public static DateTime lastCreateTimestamp = new DateTime();
-        public static bool credentialsChanged = false;
-
-        public static void resetTimeStamp()
+        public void resetTimeStamp()
         {
             lastCreateTimestamp = new DateTime();
             credentialsChanged = true;
         }
 
-        static string cleanupIdShort(String text)
+        string cleanupIdShort(String text)
         {
             if (text.Contains(" - EXTERNAL"))
                 text = text.Replace(" - EXTERNAL", "");
@@ -2257,11 +2295,7 @@ namespace AasxServer
             return text;
         }
 
-        public static string hashBOM = "";
-        public static long logCount = 0;
-        public static long logCountModulo = 30;
-
-        public static bool createCfpTree(int envIndex, DateTime timeStamp)
+        public bool createCfpTree(int envIndex, DateTime timeStamp)
         {
             bool changed = false;
             string digest = "";
@@ -2309,7 +2343,7 @@ namespace AasxServer
                                         string userPW = "";
                                         string urlEdcWrapper = "";
                                         string replace = "";
-                                        if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                        if (AasxCredentials.get(this, cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                         {
                                             if (replace != "")
                                                 requestPath = replace;
@@ -2323,8 +2357,8 @@ namespace AasxServer
 
                                         if (!requestPath.Contains("localhost"))
                                         {
-                                            if (AasxServer.AasxTask.proxy != null)
-                                                handler.Proxy = AasxServer.AasxTask.proxy;
+                                            if (proxy != null)
+                                                handler.Proxy = proxy;
                                             else
                                                 handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                                         }
@@ -2404,7 +2438,7 @@ namespace AasxServer
                 }
             }
 
-            Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
+            Dictionary<string, CfpNode> assetCfp = new Dictionary<string, CfpNode>();
             // cfpNode root = new cfpNode();
             aascount = AasxServer.Program.env.Length;
             root = null;
@@ -2420,7 +2454,7 @@ namespace AasxServer
 
                     //var assetId = aas.assetRef.Keys[ 0 ].Value;
                     var assetId = aas.AssetInformation.GlobalAssetId;
-                    var cfp = new cfpNode();
+                    var cfp = new CfpNode();
                     cfp.envIndex = i;
                     cfp.aas = aas as AssetAdministrationShell;
                     cfp.asset = assetId;
@@ -2808,7 +2842,7 @@ namespace AasxServer
                 {
                     foreach (var asset in cfp.bom)
                     {
-                        cfpNode child = null;
+                        CfpNode child = null;
                         if (assetCfp.TryGetValue(asset, out child))
                         {
                             cfp.children.Add(child);
@@ -2828,9 +2862,7 @@ namespace AasxServer
             return changed;
         }
 
-        public static bool once = false;
-
-        public static void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
+        public void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
         {
             if (AasxServer.Program.initializingRegistry)
             {
@@ -2844,9 +2876,9 @@ namespace AasxServer
             // Iterate tree and calculate CFP values
             bool changed = createCfpTree(envIndex, timeStamp);
 
-            cfpNode node = root;
-            cfpNode parent = null;
-            List<cfpNode> stack = new List<cfpNode>();
+            CfpNode node = root;
+            CfpNode parent = null;
+            List<CfpNode> stack = new List<CfpNode>();
             int sp = -1;
 
             while (node != null)
@@ -3038,32 +3070,7 @@ namespace AasxServer
         {
             CrudOperator.setTimeStampValue(submodelId, path, timeStamp, value);
         }
-        //public static AdminShellPackageEnv getEnv(string aasID)
-        //{
-        //    if (aasID.IsNullOrEmpty())
-        //    {
-        //        return null;
-        //    }
 
-        //    var envFileName = "";
-        //    return AasxServerDB.Converter.GetPackageEnv(aasID, out envFileName);
-        //}
-        //public static void saveAASXtoTemp(string aasID)
-        //{
-        //    if (aasID.IsNullOrEmpty())
-        //    {
-        //        return;
-        //    }
-
-        //    var env = getEnv(aasID);
-
-        //    if (env == null)
-        //    {
-        //        return;
-        //    }
-
-        //    saveAASXtoTemp([env]);
-        //}
         static void saveAASXtoTemp(AdminShellPackageEnv[] env)
         {
             bool newData = false;
@@ -3124,16 +3131,16 @@ namespace AasxServer
 
         static Thread tasksThread;
 
-        public static void tasksSamplingLoop()
+        public void tasksSamplingLoop()
         {
             while (true)
             {
-                tasksCyclic();
+                TasksCyclic();
                 Thread.Sleep(100);
             }
         }
 
-        public static void tasksCyclic()
+        public void TasksCyclic()
         {
             if (Program.isLoading)
                 return;
@@ -3178,7 +3185,7 @@ namespace AasxServer
 
                     // Program.signalNewData(0);
 
-                    runOperations(t.def, t.envIndex, timeStamp);
+                    runOperations(t.def, t.envIndex, t.submodelId, t.idShortPath, timeStamp);
                     taskRun = true;
                 }
             }

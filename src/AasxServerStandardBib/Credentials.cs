@@ -135,7 +135,7 @@ namespace AasxServer
             cList.Add(c);
         }
 
-        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW,
+        public static bool get(AasxTaskService aasxTaskService, List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW,
             out string urlEdcWrapper, out string replace, bool blazor = false)
         {
             queryPara = "";
@@ -181,7 +181,7 @@ namespace AasxServer
                                 break;
                             case "bearer":
                             case "entraid":
-                                bearerCheckAndInit(cList[i]);
+                                bearerCheckAndInit(cList[i], aasxTaskService);
                                 qp.Add("bearer=" + cList[i].bearer);
                                 result = true;
                                 break;
@@ -227,7 +227,7 @@ namespace AasxServer
             return result;
         }
 
-        public static void bearerCheckAndInit(AasxCredentialsEntry c)
+        public static void bearerCheckAndInit(AasxCredentialsEntry c, AasxTaskService aasxTaskService)
         {
             // check if existing bearer is still valid
             if (c.bearer != string.Empty)
@@ -281,8 +281,8 @@ namespace AasxServer
                     {
                         ServerCertificateCustomValidationCallback = delegate { return true; },
                     };
-                    if (AasxServer.AasxTask.proxy != null)
-                        handler.Proxy = AasxServer.AasxTask.proxy;
+                    if (aasxTaskService.proxy != null)
+                        handler.Proxy = aasxTaskService.proxy;
                     else
                         handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                     var client = new HttpClient(handler);
@@ -435,8 +435,8 @@ namespace AasxServer
                     {
                         ServerCertificateCustomValidationCallback = delegate { return true; },
                     };
-                    if (AasxServer.AasxTask.proxy != null)
-                        handler.Proxy = AasxServer.AasxTask.proxy;
+                    if (aasxTaskService.proxy != null)
+                        handler.Proxy = aasxTaskService.proxy;
                     else
                         handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                     var client = new HttpClient(handler);

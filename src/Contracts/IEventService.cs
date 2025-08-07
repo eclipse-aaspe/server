@@ -23,7 +23,7 @@ using Contracts.Events;
 
 public interface IEventService
 {
-    public void PublishMqttMessage(EventDto eventDto);
+    public void PublishMqttMessage(EventDto eventDto, string clientId);
 
     public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, string changes, int depth, SubmodelElementCollection statusData,
         ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,

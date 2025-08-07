@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AasxServerBlazor.Configuration;
 
+using AasxServer;
 using AasxServerDB;
 using AasxServerStandardBib;
 using Contracts;
@@ -84,6 +85,6 @@ public static class DependencyRegistry
         services.AddTransient<QueryGrammarJSON>();
 
         services.AddSingleton<MqttClientService>();
-        services.AddHostedService<SubmodelPublisherService>();
+        services.AddSingleton<AasxTaskService>();
     }
 }

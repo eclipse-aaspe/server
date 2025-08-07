@@ -4,6 +4,7 @@
 @using Data
 @inject AASService                  SubmodelService
 @inject IRegistryInitializerService AasRegistryService
+@inject AasxTaskService AasxTaskService
 @using AasxServer;
 @using Extensions;
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
@@ -19,24 +20,24 @@
     // AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
     // AasxTask.cfpNode node = AasxTask.root;
     float total = 0.0f;
-    if (!Program.showWeight && AasxTask.root != null && AasxTask.root.cradleToGateCombination != null)
-    {
+	if (!Program.showWeight && AasxTaskService.root != null && AasxTaskService.root.cradleToGateCombination != null)
+	{
         try
         {
-            total = (float) Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
-            total = (float) Math.Round(total, 1);
+			total = (float)Convert.ToDouble(AasxTaskService.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+			total = (float) Math.Round(total, 1);
         }
         catch
         {
         }
     }
 
-    if (Program.showWeight && AasxTask.root != null && AasxTask.root.weightCombination != null)
-    {
+	if (Program.showWeight && AasxTaskService.root != null && AasxTaskService.root.weightCombination != null)
+	{
         try
         {
-            total = (float) Convert.ToDouble(AasxTask.root.weightCombination.Value, CultureInfo.InvariantCulture);
-            total = (float) Math.Round(total, 1);
+			total = (float)Convert.ToDouble(AasxTaskService.root.weightCombination.Value, CultureInfo.InvariantCulture);
+			total = (float) Math.Round(total, 1);
         }
         catch
         {
@@ -44,12 +45,12 @@
     }
 
     float h_total = 0.0f;
-    if (AasxTask.asbuilt_total != null)
-    {
+	if (AasxTaskService.asbuilt_total != null)
+	{
         try
         {
-            h_total = (float) Convert.ToDouble(AasxTask.asbuilt_total, CultureInfo.InvariantCulture);
-            h_total = (float) Math.Round(h_total, 1);
+			h_total = (float)Convert.ToDouble(AasxTaskService.asbuilt_total, CultureInfo.InvariantCulture);
+			h_total = (float) Math.Round(h_total, 1);
         }
         catch
         {
@@ -85,17 +86,17 @@
         </div>
     </div>
     @{
-        nextLevel(AasxTask.root, total, timeStamp);
+		nextLevel(AasxTaskService.root, total, timeStamp);
     }
 </div>
 
 @{
-    void nextLevel(AasxTask.cfpNode nextNode, float total, DateTime timeStamp, bool moduleOnly = false)
-    {
+	void nextLevel(CfpNode nextNode, float total, DateTime timeStamp, bool moduleOnly = false)
+	{
         <div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
 
             @{
-                AasxTask.cfpNode node = nextNode;
+                CfpNode node = nextNode;
                 while (node != null)
                 {
                     if (node.iChild == 0)
@@ -210,7 +211,7 @@
                             string buttonText  = "+";
 
                             <div class="node mb-2 flex flex-row space-x-2">
-                                @if (viewCombination && node != null && node != AasxTask.root)
+                                @if (viewCombination && node != null && node != AasxTaskService.root)
                                 {
                                     if (!closedNode.Contains(node.aas.Id))
                                     {
@@ -365,7 +366,7 @@
                                                     Console.WriteLine("registryURL " + registryURL);
                                                 }
 
-                                                if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                                                if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                 {
                                                     if (replace != "")
                                                         registryURL = replace;
@@ -378,7 +379,7 @@
                                             userPW        = "";
                                             urlEdcWrapper = "";
                                             replace       = "";
-                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                                            if (AasxCredentials.get(AasxTaskService, cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                             {
                                                 if (replace != "")
                                                     link = replace;
@@ -501,7 +502,7 @@
                                                             }
 
                                                             var icon = id;
-                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                                                            if (AasxCredentials.get(AasxTaskService, cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                             {
                                                                 if (replace != "")
                                                                     smlink = replace;
@@ -585,7 +586,7 @@
 @code {
 
 // void toggle(int clickIndex)
-    void toggle(AasxTask.cfpNode n)
+    void toggle(CfpNode n)
     {
         if (closedNode.Contains(n.aas.Id))
         {
@@ -681,7 +682,7 @@
         return endpoint;
     }
 
-    static string getImageLink(List<AasxCredentialsEntry> credentials, File f, int envIndex)
+    string getImageLink(List<AasxCredentialsEntry> credentials, File f, int envIndex)
     {
         if (f == null || envIndex == -1)
             return null;
@@ -723,7 +724,7 @@
                             string userPW        = "";
                             string urlEdcWrapper = "";
                             string replace       = "";
-                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                            if (AasxCredentials.get(AasxTaskService, credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                             {
                                 if (replace != "")
                                     path = replace;
