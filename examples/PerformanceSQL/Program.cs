@@ -42,22 +42,18 @@ class Program
         using var db = new AppDbContext();
         db.Database.EnsureCreated();
 
-        // int SMID = db.SMs.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
-        // int SMEID = db.SMEs.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
-        // int VALUEID = db.Values.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
-
-        int SMID = db.SMs.Any()
-            ? db.SMs.Max(x => x.Id) + 1
-            : 1;
-        int SMEID = db.SMEs.Any()
-            ? db.SMs.Max(x => x.Id) + 1
-            : 1;
-        int VALUEID = db.Values.Any()
-            ? db.SMs.Max(x => x.Id) + 1
-            : 1;
-
         while (true)
         {
+            int SMID = db.SMs.Any()
+                ? db.SMs.Max(x => x.Id) + 1
+                : 1;
+            int SMEID = db.SMEs.Any()
+                ? db.SMEs.Max(x => x.Id) + 1
+                : 1;
+            int VALUEID = db.Values.Any()
+                ? db.Values.Max(x => x.Id) + 1
+                : 1;
+
             Console.WriteLine();
             Console.WriteLine($"SMID {SMID} SMEID {SMEID} VALUEID {VALUEID}");
             Console.WriteLine("0 Stop");
@@ -175,6 +171,7 @@ class Program
                     if (i % 10 == 0)
                     {
                         await db.SaveChangesAsync();
+
                         db.ChangeTracker.Clear();
                         Console.WriteLine($"SMID {SMID} SMEID {SMEID} VALUEID {VALUEID}");
                     }

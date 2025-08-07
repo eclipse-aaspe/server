@@ -87,7 +87,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual async Task<IActionResult> GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
-        [FromQuery] string? includeConceptDescriptions)
+        [FromQuery] string? includeConceptDescriptions, [FromQuery] string? contentType)
         {
             _logger.LogDebug($"Received a request an appropriate serialization");
 
@@ -111,9 +111,15 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);
+            if (!HttpContext.Request.Headers.TryGetValue("Content-Type", out var isContentType))
+            {
+                if (contentType != null)
+                {
+                    isContentType = contentType;
+                }
+            }
 
-            bool createAASXPackage = contentType.Equals("application/asset-administration-shell-package+xml");
+            bool createAASXPackage = isContentType.Equals("application/asset-administration-shell-package+xml");
 
             var result = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeCD, createAASXPackage);
 
@@ -129,7 +135,7 @@ namespace IO.Swagger.Controllers
                 await HttpContext.Response.Body.WriteAsync(fileRequestResult.Content);
                 return new EmptyResult();
             }
-            else if (contentType.Equals("application/json"))
+            else if (isContentType.Equals("application/json"))
             {
                 return new ObjectResult(result.Environment);
             }
