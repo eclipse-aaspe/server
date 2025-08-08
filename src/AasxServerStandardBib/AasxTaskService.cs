@@ -2167,7 +2167,6 @@ namespace AasxServer
                             " ; PUT " + requestPath;
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
-                        eventData.Status.SetTimeStamp(now);
                         // d = eventData.LastUpdate.Value = "reconnect";
                         eventData.LastUpdate.SetTimeStamp(now);
                     }

@@ -83,17 +83,17 @@ public class MqttClientService
         }
     }
 
-    public async Task<bool> PublishAsync(string clientId, string messageBroker, string userName, string password, string topic, string payload)
+    public async Task<MqttClientPublishResult> PublishAsync(string clientId, string messageBroker, string userName, string password, string topic, string payload)
     {
         var mqttClient = _mqttClients.FirstOrDefault(cl => cl.Options.ClientId == clientId);
 
-        if (mqttClient == null || !mqttClient.IsConnected)
+        if (mqttClient == null)
         {
-            if (mqttClient == null)
-            {
-                mqttClient = _factory.CreateMqttClient();
-            }
+            mqttClient = _factory.CreateMqttClient();
+        }
 
+        if (!mqttClient.IsConnected)
+        {
             var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password);
 
             if (result != null && result.ResultCode == MqttClientConnectResultCode.Success)
@@ -113,17 +113,10 @@ public class MqttClientService
             .Build();
 
             var messageResult = await mqttClient.PublishAsync(message);
-
-            if (messageResult != null && messageResult.IsSuccess)
-            {
-                _logger.LogInformation("MQTT message sent.");
-                Console.WriteLine("MQTT message sent.");
-
-                return true;
-            }
+            return messageResult;
         }
 
-        return false;
+        return null;
     }
 }
 

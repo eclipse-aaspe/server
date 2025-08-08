@@ -29,8 +29,6 @@ using System.Text.Json;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 
 public class EventService : IEventService
 {
@@ -44,14 +42,22 @@ public class EventService : IEventService
     public ICollection<EventDto> EventDtos;
 
     public static object EventLock = new object();
-    private bool _enableMqtt;
 
+    private bool _enableMqtt;
     private readonly MqttClientService _mqttClientService;
 
     public async void PublishMqttMessage(EventDto eventData, string clientId)
     {
-        if (!_enableMqtt)
+        if (!_enableMqtt
+            || eventData.MessageBroker == null
+            || eventData.MessageBroker.Value.IsNullOrEmpty()
+            || eventData.PassWord == null
+            || eventData.PassWord.Value == null
+            || eventData.UserName == null
+            || eventData.UserName.Value == null)
         {
+            //ToDo: logging?
+            //ToDo: allow empty username or password?
             return;
         }
 
@@ -127,9 +133,92 @@ public class EventService : IEventService
             var jsonArray = JsonSerializer.Serialize(payloadList);
             //Console.WriteLine(jsonArray);
 
-            var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/noauth/submodels", jsonArray);
-            //await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/all/submodels", jsonArray);
-            //await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
+            try
+            {
+                var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/noauth/submodels", jsonArray);
+                var now = DateTime.UtcNow;
+
+                bool isSucceeded = false;
+
+                if (result != null && result.IsSuccess)
+                {
+                    isSucceeded = true;
+                    Console.WriteLine("MQTT message sent.");
+                }
+
+                if (isSucceeded)
+                {
+                    //ToDo: Handling depending on topic?
+                    await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/all/submodels", jsonArray);
+                    await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
+
+
+                    if (eventData.Transmitted != null)
+                    {
+                        eventData.Transmitted.Value = e.status.transmitted;
+                        eventData.Transmitted.SetTimeStamp(now);
+                    }
+                    var dt = DateTime.Parse(e.status.lastUpdate);
+                    if (eventData.LastUpdate != null)
+                    {
+                        eventData.LastUpdate.Value = e.status.lastUpdate;
+                        eventData.LastUpdate.SetTimeStamp(dt);
+                    }
+                    if (eventData.Status != null)
+                    {
+                        if (eventData.Message != null)
+                        {
+                            //ToDo: Is message really correct? 
+                            eventData.Message.Value = "on";
+                        }
+                        eventData.Status.SetTimeStamp(now);
+                    }
+                    if (eventData.Diff != null && diffEntry.Count > 0)
+                    {
+                        eventData.Diff.Value = new List<ISubmodelElement>();
+                        int i = 0;
+                        foreach (var dif in diffEntry)
+                        {
+                            var p = new Property(DataTypeDefXsd.String);
+                            p.IdShort = "diff" + i;
+                            p.Value = dif;
+                            p.SetTimeStamp(dt);
+                            eventData.Diff.Value.Add(p);
+                            p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
+                            i++;
+                        }
+                        eventData.Diff.SetTimeStamp(dt);
+                    }
+                }
+                else
+                {
+                    var statusCode = "";
+
+                    if (result != null)
+                    {
+                        statusCode = result.ReasonCode.ToString();
+                    }
+
+                    if (eventData.Status != null)
+                    {
+                        eventData.Message.Value = "ERROR: " +
+                            statusCode + " ; " +
+                            " ; PUT " + eventData.MessageBroker.Value;
+                        eventData.Status.SetTimeStamp(now);
+                        eventData.LastUpdate.SetTimeStamp(now);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                eventData.Message.Value = "ERROR: " +
+                    ex.Message +
+                    " ; PUT " + eventData.MessageBroker.Value;
+                var now = DateTime.UtcNow;
+                eventData.Status.SetTimeStamp(now);
+                // d = eventData.LastUpdate.Value = "reconnect";
+                eventData.LastUpdate.SetTimeStamp(now);
+            }
         }
     }
 
