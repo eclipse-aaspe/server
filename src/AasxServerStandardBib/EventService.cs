@@ -122,7 +122,7 @@ public class EventService : IEventService
                 id = $"later-{Guid.NewGuid()}",
                 time = DateTime.UtcNow.ToString("o"),
                 datacontenttype = eventPayloadEntry.payloadType == "sm" ? "application/json+submodel" : "application/json",
-                data = eventPayloadEntry.payload
+                data = eventPayloadEntry.payloadJsonObj
             };
 
             payloadList.Add(payloadObject);
@@ -149,8 +149,8 @@ public class EventService : IEventService
                 if (isSucceeded)
                 {
                     //ToDo: Handling depending on topic?
-                    await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/all/submodels", jsonArray);
-                    await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
+                    //await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/all/submodels", jsonArray);
+                    //await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.UserName.Value, eventData.PassWord.Value, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
 
 
                     if (eventData.Transmitted != null)
@@ -449,6 +449,7 @@ public class EventService : IEventService
                             if (withPayload)
                             {
                                 entry.payload = json;
+                                entry.payloadJsonObj = j;
                             }
                             entry.lastUpdate = e.status.lastUpdate;
                             entry.idShortPath = idShortPath.TrimEnd('.');
@@ -706,6 +707,7 @@ public class EventService : IEventService
                                         {
                                             var json = j.ToJsonString();
                                             entry.payload = json;
+                                            entry.payloadJsonObj = j;
                                         }
                                     }
                                 }
@@ -742,6 +744,7 @@ public class EventService : IEventService
                                 {
                                     var json = j.ToJsonString();
                                     entry.payload = json;
+                                    entry.payloadJsonObj = j;
                                 }
                             }
                         }

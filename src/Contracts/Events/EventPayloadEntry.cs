@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
@@ -24,6 +25,8 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public string lastUpdate { get; set; } // timeStamp for this entry
     public string payloadType { get; set; } // Submodel, SME, AAS
     public string payload { get; set; } // JSON Serialization
+    public JsonObject payloadJsonObj { get; set; } // JSON Serialization
+
     public string submodelId { get; set; } // ID of related Submodel
     public string idShortPath { get; set; } // for SMEs only
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
@@ -41,6 +44,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
         idShortPath = "";
         semanticId = "";
         notDeletedIdShortList = new List<string>();
+        payloadJsonObj = new JsonObject();
     }
 
     public int CompareTo(EventPayloadEntry other)
