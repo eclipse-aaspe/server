@@ -150,6 +150,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
     /// <param name="assetKind">The Asset&#x27;s kind (Instance or Type)</param>
     /// <param name="assetType">The Asset&#x27;s type (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
     /// <response code="200">Requested Asset Administration Shell Descriptors</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="403">Forbidden</response>
@@ -167,7 +168,8 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     public virtual IActionResult GetAllAssetAdministrationShellDescriptors([FromQuery] int? limit,
                                                                            [FromQuery] string? cursor,
                                                                            [FromQuery] string? assetKind,
-                                                                           [FromQuery] string? assetType)
+                                                                           [FromQuery] string? assetType,
+                                                                           [FromQuery] string? assetId)
     {
         // TODO (jtikekar, 2023-09-04): AssetType resembles GlobalAssetId from old Implementation
         var assetList = new List<string?>();
@@ -175,6 +177,12 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
         {
             var decodedAssetType = _decoderService.Decode("assetType", assetType);
             assetList = [decodedAssetType];
+        }
+        // single assetId
+        if (!string.IsNullOrEmpty(assetId))
+        {
+            var decodedAssetId = _decoderService.Decode("assetId", assetId);
+            assetList.Add(decodedAssetId);
         }
 
         List<AssetAdministrationShellDescriptor> aasDescriptors;
