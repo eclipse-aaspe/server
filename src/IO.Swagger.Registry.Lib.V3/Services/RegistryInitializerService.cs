@@ -79,7 +79,7 @@ public class RegistryInitializerService : IRegistryInitializerService
         init = true;
         if (initAgain)
         {
-            aasRegistry      = null;
+            aasRegistry = null;
             submodelRegistry = null;
 
             var i = initiallyEmpty;
@@ -407,10 +407,22 @@ public class RegistryInitializerService : IRegistryInitializerService
                         }
                     }
 
-                    var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
+                    var i = 0;
+                    while (i < Program.env.Length)
+                    {
+                        var env = Program.env[i];
+                        if (env == null)
+                        {
+                            break;
+                        }
+                        i++;
+                    }
+                    initiallyEmpty = i;
+
                     aasDescriptorsForSubmodelView = [];
                     foreach (var greg in getRegistry)
                     {
+                        var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
                         string? json        = null;
                         string? accessToken = null;
                         requestPathGetReg = $"{greg}/shell-descriptors";
@@ -496,7 +508,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                 {
                                                     ad.SubmodelDescriptors.Add(sd);
                                                 }
-                                           }
+                                            }
                                         }
                                     }
                                 }
@@ -516,18 +528,6 @@ public class RegistryInitializerService : IRegistryInitializerService
                         }
                         else
                         {
-                            var i = 0;
-                            while (i < Program.env.Length)
-                            {
-                                var env = Program.env[i];
-                                if (env == null)
-                                {
-                                    break;
-                                }
-                                i++;
-                            }
-
-                            initiallyEmpty = i;
                             foreach (var ad in aasDescriptors)
                             {
                                 if (ad.IdShort != null && (ad.IdShort.Equals("REGISTRY", StringComparison.Ordinal) ||
