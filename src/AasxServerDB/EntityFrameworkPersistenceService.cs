@@ -1493,6 +1493,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var offSm = dbEventRequest.OffsetSm;
         var limSme = dbEventRequest.LimitSme;
         var offSme = dbEventRequest.OffsetSme;
+        var smOnly = dbEventRequest.IsSubmodelsOnly;
 
         var eventPayload = new Contracts.Events.EventPayload();
         List<String> diffEntry = new List<String>();
@@ -1543,13 +1544,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
             eventPayload = _eventService.CollectPayload(securityCondition, changes, depth,
             eventData.StatusData, eventData.DataReference, data, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, wp, limSm, offSm, limSme, offSme);
+            diff, diffEntry, wp, smOnly, limSm, offSm, limSme, offSme);
         }
         else // database
         {
             eventPayload = _eventService.CollectPayload(securityCondition, changes, 0,
             eventData.StatusData, eventData.DataReference, null, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, wp, limSm, limSme, offSm, offSme);
+            diff, diffEntry, wp, smOnly, limSm, limSme, offSm, offSme);
         }
 
         if (diff == "status")

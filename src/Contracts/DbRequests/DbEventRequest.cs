@@ -34,6 +34,8 @@ public class DbEventRequest
     //For Read request
     public bool IsWithPayload { get; set; }
 
+    public bool IsSubmodelsOnly { get; set; }
+
     public int LimitSm { get; set; }
 
     public int LimitSme { get; set; }

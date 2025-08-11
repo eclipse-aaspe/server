@@ -31,7 +31,6 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public string idShortPath { get; set; } // for SMEs only
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
 
-    //ToDo: Find correct Semantic Id
     public string semanticId { get; set; }
 
     public EventPayloadEntry()

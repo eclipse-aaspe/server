@@ -1652,11 +1652,16 @@ namespace AasxServer
 
             if (eventData.Direction != null && eventData.Mode != null)
             {
-                var clientId = submodelId + idShortPath;
+                var mqttClientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
+
+                if (!idShortPath.IsNullOrEmpty())
+                {
+                    mqttClientId += "/submodel-elements/" + idShortPath;
+                }
 
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
-                    _eventService.PublishMqttMessage(eventData, clientId);
+                    _eventService.PublishMqttMessage(eventData, mqttClientId);
                     return;
                 }
 
@@ -1838,9 +1843,13 @@ namespace AasxServer
                 }
                 catch (Exception ex)
                 {
-                    eventData.Message.Value = "ERROR: " +
+                    if (eventData.Message != null
+                        && eventData.Message.Value != null)
+                    {
+                        eventData.Message.Value = "ERROR: " +
                         ex.Message +
                         " ; GET " + requestPath;
+                    }
                     eventData.Status.SetTimeStamp(DateTime.UtcNow);
                     update = 2;
                 }
@@ -2047,8 +2056,28 @@ namespace AasxServer
                 if (d != "reconnect")
                 {
                     List<String> diffEntry = new List<String>();
-                    bool np = false;
-                    np = eventData.NoPayload != null && eventData.NoPayload.Value != null && eventData.NoPayload.Value.ToLower() == "true";
+
+                    bool wp = false;
+
+                    if (eventData.NoPayload != null
+                        && eventData.NoPayload.Value != null)
+                    {
+                        wp = eventData.NoPayload.Value.ToLower() == "false";
+                    }
+                    if (eventData.WithPayload != null
+                        && eventData.WithPayload.Value != null)
+                    {
+                        wp = eventData.WithPayload.Value.ToLower() == "true";
+                    }
+
+                    bool smOnly = false;
+
+                    if (eventData.SubmodelsOnly != null
+                            && eventData.SubmodelsOnly.Value != null)
+                    {
+                        smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
+                    }
+
                     string c = "";
                     if (eventData.Changes != null)
                     {
@@ -2057,7 +2086,7 @@ namespace AasxServer
 
                     var e = _eventService.CollectPayload(null, c, 0, eventData.StatusData,
                         eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
-                        d, diffEntry, !np, 1000, 1000, 0, 0);
+                        d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
                     {
                         Console.WriteLine(diff);

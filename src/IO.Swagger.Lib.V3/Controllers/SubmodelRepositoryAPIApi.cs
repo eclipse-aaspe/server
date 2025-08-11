@@ -106,7 +106,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public async virtual Task<IActionResult> GetEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "")
+        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "", bool? submodelsOnly = false)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -147,6 +147,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             {
                 wp = (bool)withPayload;
             }
+            bool smOnly = false;
+            if (submodelsOnly.HasValue)
+            {
+                smOnly = (bool)submodelsOnly;
+            }
             int limSm = 1000;
             if (limitSm.HasValue && limitSm != null)
             {
@@ -185,6 +190,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 Submodel = submodel,
                 Diff = diff,
                 IsWithPayload = wp,
+                IsSubmodelsOnly = smOnly,
                 LimitSm = limSm,
                 LimitSme = limSme,
                 OffsetSm = offSm,
