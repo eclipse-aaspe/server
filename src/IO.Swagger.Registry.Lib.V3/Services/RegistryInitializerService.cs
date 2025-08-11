@@ -283,15 +283,15 @@ public class RegistryInitializerService : IRegistryInitializerService
                         var error = false;
                         var response = new HttpResponseMessage();
 
-                        if (AasxCredentials.get(cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
+                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
                         {
                             requestPath = replace;
                         }
 
                         var handler = new HttpClientHandler() { ServerCertificateCustomValidationCallback = delegate { return true; } };
-                        if (AasxTask.proxy != null)
+                        if (_aasxTaskService.proxy != null)
                         {
-                            handler.Proxy = AasxTask.proxy;
+                            handler.Proxy = _aasxTaskService.proxy;
                         }
                         else
                         {

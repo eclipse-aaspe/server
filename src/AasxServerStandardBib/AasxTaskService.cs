@@ -101,7 +101,6 @@ namespace AasxServer
         public bool once = false;
         bool firstCycle = true;
 
-
         public void TaskInit()
         {
             string proxyFile = "proxy.txt";
@@ -2330,14 +2329,7 @@ namespace AasxServer
             public int iChild = 0;
         }
 
-        public static cfpNode root = null;
-        public static string asbuilt_total = null;
-        public static Property pCO2eqTotal = null;
-        public static bool cfpValid = false;
-        public static DateTime lastCreateTimestamp = new DateTime();
-        public static bool credentialsChanged = false;
-
-        public static void resetTimeStamp()
+        public void resetTimeStamp()
         {
             lastCreateTimestamp = new DateTime();
             credentialsChanged = true;
@@ -2353,11 +2345,6 @@ namespace AasxServer
                 text = text.Replace(" - COPY", "");
             return text;
         }
-
-        public static string hashBOM = "";
-        public static long logCount = 0;
-        public static long logCountModulo = 30;
-
 
         public bool createCfpTree(int envIndex, DateTime timeStamp)
         {

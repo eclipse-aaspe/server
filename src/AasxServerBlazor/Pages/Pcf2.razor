@@ -383,7 +383,7 @@
                                                         Console.WriteLine("registryURL " + registryURL);
                                                     }
 
-                                                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                                                    if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                     {
                                                         if (replace != "")
                                                             registryURL = replace;
