@@ -47,6 +47,7 @@ public class RegistryInitializerService : IRegistryInitializerService
     private static ISubmodel? submodelRegistry;
     private static int initiallyEmpty;
     private static List<string> getRegistry = [];
+    private static List<string> getRegistryOfRegistry = [];
     private static List<string> postRegistry = [];
     private static List<string?> federatedElemensSemanticId = [];
     private static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = [];
@@ -136,6 +137,7 @@ public class RegistryInitializerService : IRegistryInitializerService
             if (aasRegistry != null)
             {
                 getRegistry.Clear();
+                getRegistryOfRegistry.Clear();
                 if (aasRegistry.SubmodelElements != null)
                 {
                     foreach (var sme in aasRegistry.SubmodelElements)
@@ -166,6 +168,19 @@ public class RegistryInitializerService : IRegistryInitializerService
                                         if (registryURL != "")
                                         {
                                             getRegistry.Add(registryURL);
+                                        }
+                                    }
+                                }
+
+                                if (p.IdShort?.ToLower(CultureInfo.InvariantCulture) == "getregistryofregistry")
+                                {
+                                    if (p.Value != null)
+                                    {
+                                        var registryURL = TranslateURL(p.Value);
+                                        Console.WriteLine("GET from Registry of Registry: " + registryURL);
+                                        if (registryURL != "")
+                                        {
+                                            getRegistryOfRegistry.Add(registryURL);
                                         }
                                     }
                                 }
@@ -259,8 +274,69 @@ public class RegistryInitializerService : IRegistryInitializerService
                     }
                 }
 
+                if (getRegistryOfRegistry.Count != 0)
+                {
+                    var requestPath = "";
+                    foreach (var regOfReg in getRegistryOfRegistry)
+                    {
+                        requestPath = regOfReg;
+                        var error = false;
+                        var response = new HttpResponseMessage();
+
+                        if (AasxCredentials.get(cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
+                        {
+                            requestPath = replace;
+                        }
+
+                        var handler = new HttpClientHandler() { ServerCertificateCustomValidationCallback = delegate { return true; } };
+                        if (AasxTask.proxy != null)
+                        {
+                            handler.Proxy = AasxTask.proxy;
+                        }
+                        else
+                        {
+                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                        }
+
+                        var client = new HttpClient(handler);
+                        client.Timeout = TimeSpan.FromSeconds(10);
+                        try
+                        {
+                            Console.WriteLine($"GET {requestPath}");
+                            var task = Task.Run(async () => { response = await client.GetAsync(requestPath); });
+                            task.Wait();
+                            var json = response.Content.ReadAsStringAsync().Result;
+                            if (!string.IsNullOrEmpty(json))
+                            {
+
+                                var urls = new List<string>();
+                                var jsonArray = JsonNode.Parse(json)?.AsArray();
+
+                                if (jsonArray != null)
+                                {
+                                    foreach (var item in jsonArray)
+                                    {
+                                        var url = item?["url"]?.ToString();
+                                        if (!string.IsNullOrEmpty(url) && !getRegistry.Contains(url))
+                                        {
+                                            getRegistry.Add(url);
+                                        }
+                                    }
+                                }
+                            }
+
+                            error = !response.IsSuccessStatusCode;
+                        }
+                        catch
+                        {
+                            error = true;
+                        }
+                    }
+                }
+
                 if (getRegistry.Count != 0)
                 {
+                    var requestPathGetReg = "";
                     var submodelDescriptors = new List<SubmodelDescriptor>();
                     var submodelRegistryUrl = System.Environment.GetEnvironmentVariable("SUBMODELREGISTRY");
                     if (submodelRegistryUrl != null)
@@ -271,16 +347,16 @@ public class RegistryInitializerService : IRegistryInitializerService
                         submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
 
                         // basyx with Submodel Registry: read submodel descriptors
-                        string? requestPath = $"{submodelRegistryUrl}/submodel-descriptors";
+                        requestPathGetReg = $"{submodelRegistryUrl}/submodel-descriptors";
 
-                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
+                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPathGetReg, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
                         {
-                            requestPath = replace;
+                            requestPathGetReg = replace;
                         }
 
                         var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
-                        if (!requestPath.Contains("localhost"))
+                        if (!requestPathGetReg.Contains("localhost"))
                         {
                             handler.Proxy = _aasxTaskService.proxy;
                         }
@@ -296,8 +372,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                         var response = new HttpResponseMessage();
                         try
                         {
-                            Console.WriteLine($"GET {requestPath}");
-                            var task = Task.Run(async () => { response = await client.GetAsync(requestPath); });
+                            Console.WriteLine($"GET {requestPathGetReg}");
+                            var task = Task.Run(async () => { response = await client.GetAsync(requestPathGetReg); });
                             task.Wait();
                             var json = response.Content.ReadAsStringAsync().Result;
                             if (!string.IsNullOrEmpty(json))
@@ -327,31 +403,31 @@ public class RegistryInitializerService : IRegistryInitializerService
                         if (error)
                         {
                             var r = $"ERROR GET; {response.StatusCode}";
-                            r += $" ; {requestPath}";
+                            r += $" ; {requestPathGetReg}";
                             r += $" ; {response.Content.ReadAsStringAsync().Result}";
                             Console.WriteLine(r);
                         }
                     }
 
+                    var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
+                    aasDescriptorsForSubmodelView = [];
                     foreach (var greg in getRegistry)
                     {
-                        var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
-
                         string? json        = null;
                         string? accessToken = null;
-                        string? requestPath = $"{greg}/shell-descriptors";
-                        string  userPW;
-                        string  urlEdcWrapper;
-                        string  replace;
+                        requestPathGetReg = $"{greg}/shell-descriptors";
+                        var userPW = "";
+                        var urlEdcWrapper = "";
+                        var replace = "";
 
-                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPath, out var queryPara, out userPW, out urlEdcWrapper, out replace) && !string.IsNullOrEmpty(replace))
+                        if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPathGetReg, out var queryPara, out userPW, out urlEdcWrapper, out replace) && !string.IsNullOrEmpty(replace))
                         {
-                            requestPath = replace;
+                            requestPathGetReg = replace;
                         }
 
                         var handler = new HttpClientHandler {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
-                        if (!requestPath.Contains("localhost"))
+                        if (!requestPathGetReg.Contains("localhost"))
                         {
                             if (_aasxTaskService.proxy != null)
                             {
@@ -372,8 +448,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                         var response = new HttpResponseMessage();
                         try
                         {
-                            Console.WriteLine($"GET {requestPath}");
-                            var path = requestPath;
+                            Console.WriteLine($"GET {requestPathGetReg}");
+                            var path = requestPathGetReg;
                             var task = Task.Run(async () => { response = await client.GetAsync(path); });
                             task.Wait();
                             json = response.Content.ReadAsStringAsync().Result;
@@ -396,7 +472,9 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                 }
 
                                                 var ad = DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(jsonNode);
+                                                ad.Extensions = new List<Extension> { new Extension("registry", value: greg) };
                                                 aasDescriptors.Add(ad);
+                                                aasDescriptorsForSubmodelView.Add(ad);
                                                 ad.SubmodelDescriptors ??= [];
 
                                                 if (ad.SubmodelDescriptors.Count != 0)
@@ -404,9 +482,9 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                     continue;
                                                 }
 
-                                                requestPath = ad.Endpoints?[0].ProtocolInformation?.Href;
-                                                Console.WriteLine($"GET {requestPath}");
-                                                var path1 = requestPath;
+                                                requestPathGetReg = ad.Endpoints?[0].ProtocolInformation?.Href;
+                                                Console.WriteLine($"GET {requestPathGetReg}");
+                                                var path1 = requestPathGetReg;
                                                 task = Task.Run(async () => { response = await client.GetAsync(path1); });
                                                 task.Wait();
                                                 json         = response.Content.ReadAsStringAsync().Result;
@@ -420,9 +498,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                 {
                                                     ad.SubmodelDescriptors.Add(sd);
                                                 }
-
-                                                aasDescriptorsForSubmodelView.Add(ad);
-                                            }
+                                           }
                                         }
                                     }
                                 }
@@ -437,7 +513,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                         if (error)
                         {
-                            var r = $"ERROR GET; {response.StatusCode} ; {requestPath} ; {response.Content.ReadAsStringAsync().Result}";
+                            var r = $"ERROR GET; {response.StatusCode} ; {requestPathGetReg} ; {response.Content.ReadAsStringAsync().Result}";
                             Console.WriteLine(r);
                         }
                         else
@@ -465,7 +541,9 @@ public class RegistryInitializerService : IRegistryInitializerService
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
                                 // check, if AAS is existing and must be replaced
-                                var extensions = new List<IExtension> {new Extension("endpoint", value: ad.Endpoints?[0].ProtocolInformation?.Href)};
+                                var extensions = new List<IExtension>();
+                                extensions.Add(new Extension("endpoint", value: ad.Endpoints?[0].ProtocolInformation?.Href));
+                                // extensions.Add(new Extension("registry", value: ad.Extensions?[0].Value));
                                 var aas = new AssetAdministrationShell(ad.Id, new AssetInformation(AssetKind.Instance, ad.GlobalAssetId), extensions,
                                                                        idShort: $"{ad.IdShort} - EXTERNAL");
                                 aas.TimeStamp       = timestamp;
@@ -497,13 +575,13 @@ public class RegistryInitializerService : IRegistryInitializerService
                                             }
                                         }
 
-                                        requestPath = endpoint;
+                                        requestPathGetReg = endpoint;
                                         client.DefaultRequestHeaders.Clear();
-                                        if (requestPath != null && AasxCredentials.get(_aasxTaskService , cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                        if (requestPathGetReg != null && AasxCredentials.get(_aasxTaskService , cList, requestPathGetReg, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                         {
                                             if (replace != "")
                                             {
-                                                requestPath = replace;
+                                                requestPathGetReg = replace;
                                             }
 
                                             if (queryPara != "")
@@ -518,7 +596,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                                             if (urlEdcWrapper != "")
                                             {
-                                                requestPath = urlEdcWrapper;
+                                                requestPathGetReg = urlEdcWrapper;
                                             }
                                         }
 
@@ -536,13 +614,13 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                 // copy specific submodels locally
                                                 try
                                                 {
-                                                    requestPath += queryPara;
+                                                    requestPathGetReg += queryPara;
                                                     // HEAD to get policy for submodel
                                                     if (Program.withPolicy)
                                                     {
                                                         // requestPath += queryPara;
-                                                        Console.WriteLine($"HEAD Submodel {requestPath}");
-                                                        var path = requestPath;
+                                                        Console.WriteLine($"HEAD Submodel {requestPathGetReg}");
+                                                        var path = requestPathGetReg;
                                                         var task = Task.Run(async () =>
                                                                             {
                                                                                 response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, path));
@@ -601,8 +679,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                         }
                                                     }
 
-                                                    Console.WriteLine("GET Submodel " + requestPath);
-                                                    var task1 = Task.Run(async () => { response = await client.GetAsync(requestPath); });
+                                                    Console.WriteLine("GET Submodel " + requestPathGetReg);
+                                                    var task1 = Task.Run(async () => { response = await client.GetAsync(requestPathGetReg); });
                                                     task1.Wait();
                                                     if (response.IsSuccessStatusCode)
                                                     {
@@ -635,7 +713,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                         }
                                                         catch (Exception ex)
                                                         {
-                                                            Console.WriteLine($"ERROR Deserialization {requestPath} {ex.Message}");
+                                                            Console.WriteLine($"ERROR Deserialization {requestPathGetReg} {ex.Message}");
 
                                                             success = false;
                                                         }
@@ -663,9 +741,9 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                         }
                                                     }
 
-                                                    requestPath += queryPara;
-                                                    Console.WriteLine("GET Submodel Core " + requestPath);
-                                                    var path  = requestPath;
+                                                    requestPathGetReg += queryPara;
+                                                    Console.WriteLine("GET Submodel Core " + requestPathGetReg);
+                                                    var path  = requestPathGetReg;
                                                     var task2 = Task.Run(async () => { response = await client.GetAsync(path); });
                                                     task2.Wait();
                                                     if (response.IsSuccessStatusCode)

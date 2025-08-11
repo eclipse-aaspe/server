@@ -181,6 +181,8 @@ class Program
                 }
 
                 await db.SaveChangesAsync();
+
+                db.Database.ExecuteSqlRaw("ANALYZE");
             }
             else if (input == "3")
             {

@@ -352,19 +352,11 @@
                                             // JUIJUI
 
                                             // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                                            var registry = AasRegistryService.GetRegistryList();
-                                            if (registry.Count != 0)
+                                            var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
+                                            if (aasDescriptors != null && aasDescriptors.Count != 0)
                                             {
-                                                string registryURL = registry[ 0 ];
-
-                                                // check for buffered shell descriptors from getregistry() for basyx
-                                                var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
-                                                if (aasDescriptors != null && aasDescriptors.Count != 0)
-                                                {
-                                                    registryURL = NavMan.Uri;
-                                                    registryURL = registryURL.Substring(0, registryURL.Length - "/pcf".Length);
-                                                    Console.WriteLine("registryURL " + registryURL);
-                                                }
+                                                var ad = aasDescriptors.FirstOrDefault(ad => ad.Id == node.aas.Id);
+                                                var registryURL = ad.Extensions[0].Value;
 
                                                 if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                 {
@@ -373,6 +365,32 @@
                                                 }
 
                                                 link += "&registryURL=" + registryURL;
+                                            }
+
+                                            if (false)
+                                            {
+                                                var registry = AasRegistryService.GetRegistryList();
+                                                if (registry.Count != 0)
+                                                {
+                                                    string registryURL = registry[0];
+
+                                                    // check for buffered shell descriptors from getregistry() for basyx
+                                                    aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
+                                                    if (aasDescriptors != null && aasDescriptors.Count != 0)
+                                                    {
+                                                        registryURL = NavMan.Uri;
+                                                        registryURL = registryURL.Substring(0, registryURL.Length - "/pcf".Length);
+                                                        Console.WriteLine("registryURL " + registryURL);
+                                                    }
+
+                                                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                                                    {
+                                                        if (replace != "")
+                                                            registryURL = replace;
+                                                    }
+
+                                                    link += "&registryURL=" + registryURL;
+                                                }
                                             }
 
                                             queryPara     = "";

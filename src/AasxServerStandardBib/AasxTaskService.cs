@@ -2306,7 +2306,38 @@ namespace AasxServer
             Program.signalNewData(1);
         }
 
-        public void resetTimeStamp()
+        public class cfpNode
+        {
+            public int envIndex = -1;
+            public string asset = null;
+            public AssetAdministrationShell aas = null;
+            public string repositoryURL = "";
+            public string registryURL = "";
+            public Property cradleToGateModule = null;
+            public Property productionModule = null;
+            public Property distributionModule = null;
+            public Property cradleToGateCombination = null;
+            public Property productionCombination = null;
+            public Property distributionCombination = null;
+            public Property weightModule = null;
+            public Property weightCombination = null;
+            public AasCore.Aas3_0.File manufacturerLogo = null;
+            public AasCore.Aas3_0.File productImage = null;
+            public string productDesignation = "";
+            public List<string> bom = new List<string>();
+            public DateTime bomTimestamp = new DateTime();
+            public List<cfpNode> children = new List<cfpNode>();
+            public int iChild = 0;
+        }
+
+        public static cfpNode root = null;
+        public static string asbuilt_total = null;
+        public static Property pCO2eqTotal = null;
+        public static bool cfpValid = false;
+        public static DateTime lastCreateTimestamp = new DateTime();
+        public static bool credentialsChanged = false;
+
+        public static void resetTimeStamp()
         {
             lastCreateTimestamp = new DateTime();
             credentialsChanged = true;
@@ -2322,6 +2353,11 @@ namespace AasxServer
                 text = text.Replace(" - COPY", "");
             return text;
         }
+
+        public static string hashBOM = "";
+        public static long logCount = 0;
+        public static long logCountModulo = 30;
+
 
         public bool createCfpTree(int envIndex, DateTime timeStamp)
         {
