@@ -2209,6 +2209,8 @@ namespace AasxServer
             public int envIndex = -1;
             public string asset = null;
             public AssetAdministrationShell aas = null;
+            public string repositoryURL = "";
+            public string registryURL = "";
             public Property cradleToGateModule = null;
             public Property productionModule = null;
             public Property distributionModule = null;
