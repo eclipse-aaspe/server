@@ -137,7 +137,6 @@ public class EventService : IEventService
                 sourceString += "/submodel-elements/" + eventPayloadEntry.idShortPath;
             }
 
-
             var payloadObject = new
             {
                 specversion = "1.0",
@@ -145,13 +144,14 @@ public class EventService : IEventService
                 source = sourceString,
                 subject = new
                 {
-                    id = eventPayloadEntry.submodelId,
-                    semanticId = eventPayloadEntry.semanticId
+                    modelType = eventPayloadEntry.modelType,
+                    semanticId = eventPayloadEntry.semanticId,
+                    submodelId = eventPayloadEntry.submodelId,
+                    idShortPath = eventPayloadEntry.idShortPath
                 },
-                id = $"later-{Guid.NewGuid()}",
+                id = $"{Guid.NewGuid()}",
                 time = DateTime.UtcNow.ToString("o"),
-                //ToDo: Add handling for payload type "sme"
-                datacontenttype = eventPayloadEntry.payloadType == "sm" ? "application/json+submodel" : "application/json",
+                datacontenttype = "application/json",
                 data = eventPayloadEntry.payloadJsonObj
             };
 
@@ -724,6 +724,7 @@ public class EventService : IEventService
                                     var entry = new EventPayloadEntry();
                                     entry.entryType = entryType;
                                     entry.payloadType = "sme";
+                                    entry.modelType = CrudOperator.GetModelType(sme.SMEType);
                                     entry.idShortPath = idShortPath;
                                     entry.submodelId = sm.Identifier;
                                     entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
@@ -769,6 +770,7 @@ public class EventService : IEventService
                         var entry = new EventPayloadEntry();
                         entry.entryType = entryType;
                         entry.payloadType = "sm";
+                        entry.modelType = "submodel";
                         entry.idShortPath = sm.IdShort;
                         entry.submodelId = sm.Identifier;
                         entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);

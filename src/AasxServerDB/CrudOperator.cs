@@ -16,6 +16,7 @@ namespace AasxServerDB
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Dynamic.Core;
+    using System.Runtime.Intrinsics.X86;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
@@ -1483,6 +1484,43 @@ namespace AasxServerDB
                 return dic;
             }
             return new Dictionary<string, string>();
+        }
+
+        public static string? GetModelType(string smeType)
+        {
+            switch (smeType)
+            {
+                case "Rel":
+                    return "RelationshipElement";
+                case "RelA":
+                    return "AnnotatedRelationshipElement";
+                case "Prop":
+                    return "Property";
+                case "MLP":
+                    return "MultiLanguageProperty";
+                case "Range":
+                    return "Range";
+                case "Blob":
+                    return "Blob";
+                case "File":
+                    return "File";
+                case "Ref":
+                    return "ReferenceElement";
+                case "Cap":
+                    return "Capability";
+                case "SML":
+                    return "SubmodelElementList";
+                case "SMC":
+                    return "SubmodelElementCollection";
+                case "Ent":
+                    return "Entity";
+                case "Evt":
+                    return "BasicEventElement";
+                case "Opr":
+                    return "Operation";
+                default:
+                    return null;
+            }
         }
         private static ISubmodelElement? CreateSME(SMESet smeSet, List<SmeMerged> tree = null)
         {
