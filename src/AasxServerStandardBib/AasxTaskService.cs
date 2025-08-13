@@ -2077,6 +2077,15 @@ namespace AasxServer
                         smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
                     }
 
+                    //ToDo: Do we need this for HTTP, also? (like for MQTT)
+                    //bool pbee = false;
+
+                    //if (eventData.PublishBasicEventElement != null
+                    //        && eventData.PublishBasicEventElement.Value != null)
+                    //{
+                    //    pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
+                    //}
+
                     string c = "";
                     if (eventData.Changes != null)
                     {

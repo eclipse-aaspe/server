@@ -24,6 +24,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public string entryType { get; set; } // CREATE, UPDATE, DELETE
     public string lastUpdate { get; set; } // timeStamp for this entry
     public string payloadType { get; set; } // Submodel, SME, AAS
+    //ToDo: Should this be set to "BasicEventElement", if PublishBasicEvemtElement is true?
     public string modelType { get; set; } // Submodel, Property, ..
     public string payload { get; set; } // JSON Serialization
     public JsonObject payloadJsonObj { get; set; } // JSON Serialization

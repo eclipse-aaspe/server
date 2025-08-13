@@ -21,6 +21,8 @@ using AasCore.Aas3_0;
 
 public class EventDto
 {
+    public string? IdShort { get; set; }
+
     public SubmodelElementCollection Authentication = null;
     public AasCore.Aas3_0.Property AuthType = null;
     public AasCore.Aas3_0.Property AuthServerEndPoint = null;
@@ -43,7 +45,9 @@ public class EventDto
     public SubmodelElementCollection StatusData = null;
     public AasCore.Aas3_0.Property NoPayload = null;
     public AasCore.Aas3_0.Property WithPayload = null;
+
     public AasCore.Aas3_0.Property SubmodelsOnly = null;
+    public AasCore.Aas3_0.Property PublishBasicEventElement = null;
 
     // memory || database
     public AasCore.Aas3_0.Property Persistence = null;
@@ -62,8 +66,5 @@ public class EventDto
     // MQTT:// without TLS and MQTTS:// with TLS, then URL:PORT
     public AasCore.Aas3_0.Property MessageBroker = null;
     public AasCore.Aas3_0.Property MessageTopicType = null;
-
-    //public string SubmodelId { get; set; }
-    //public string IdShortPath { get; set; }
 }
 

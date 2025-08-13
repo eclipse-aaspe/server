@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+//ToDo: Move to some kind of communication project
 namespace AasxServerDB;
 
 using Microsoft.Extensions.Logging;

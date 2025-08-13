@@ -112,6 +112,14 @@ public class EventService : IEventService
             smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
         }
 
+        bool pbee = false;
+
+        if (eventData.PublishBasicEventElement != null
+                && eventData.PublishBasicEventElement.Value != null)
+        {
+            pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
+        }
+
         string c = "";
         if (eventData.Changes != null)
         {
@@ -130,12 +138,36 @@ public class EventService : IEventService
 
         foreach (var eventPayloadEntry in e.eventEntries)
         {
-            var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.submodelId);
+            var sourceString = "";
 
-            if(eventPayloadEntry.payloadType == "sme")
+            if (!pbee)
             {
-                sourceString += "/submodel-elements/" + eventPayloadEntry.idShortPath;
+                sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.submodelId);
+
+                if (eventPayloadEntry.payloadType == "sme")
+                {
+                    sourceString += "/submodel-elements/" + eventPayloadEntry.idShortPath;
+                }
             }
+            else
+            {
+                if (eventData.IdShort != null)
+                {
+                    sourceString = $"{clientId}.{eventData.IdShort}";
+                }
+            }
+
+            var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
+
+            if (pbee)
+            {
+                schemaType += "BasicEventElement";
+            }
+            else
+            {
+                schemaType += eventPayloadEntry.modelType;
+            }
+
 
             var payloadObject = new
             {
@@ -146,8 +178,9 @@ public class EventService : IEventService
                 {
                     modelType = eventPayloadEntry.modelType,
                     semanticId = eventPayloadEntry.semanticId,
-                    submodelId = eventPayloadEntry.submodelId,
-                    idShortPath = eventPayloadEntry.idShortPath
+                    id = eventPayloadEntry.submodelId,
+                    idShortPath = eventPayloadEntry.idShortPath,
+                    schema = schemaType
                 },
                 id = $"{Guid.NewGuid()}",
                 time = DateTime.UtcNow.ToString("o"),
@@ -1436,6 +1469,8 @@ public class EventService : IEventService
         AasCore.Aas3_0.Property p = null;
         EventDto eventDto = new EventDto();
 
+        eventDto.IdShort = op.IdShort;
+
         foreach (var input in op.InputVariables)
         {
             smec = null;
@@ -1569,6 +1604,10 @@ public class EventService : IEventService
                 case "submodelsonly":
                     if (p != null)
                         eventDto.SubmodelsOnly = p;
+                    break;
+                case "publishbasiceventelement":
+                    if (p != null)
+                        eventDto.PublishBasicEventElement = p;
                     break;
             }
         }
