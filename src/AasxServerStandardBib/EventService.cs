@@ -250,6 +250,7 @@ public class EventService : IEventService
                         }
                         eventData.Diff.SetTimeStamp(dt);
                     }
+                    Program.signalNewData(2);
                 }
                 else
                 {
