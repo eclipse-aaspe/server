@@ -1982,10 +1982,10 @@ namespace AasxServer
 
                                         EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<EventPayload>(jsonString);
 
-                                        if (eventPayload.statusData != "")
+                                        if (eventPayload.statusData != null)
                                         {
                                             ISubmodelElement receiveSme = null;
-                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData.ToJsonString()));
                                             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
                                             if (receiveSme != null && receiveSme is SubmodelElementCollection smc)

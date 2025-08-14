@@ -153,6 +153,7 @@ public class EventService : IEventService
             {
                 if (eventData.IdShort != null)
                 {
+                    //ToDo: With Events?
                     sourceString = $"{clientId}.{eventData.IdShort}";
                 }
             }
@@ -437,7 +438,7 @@ public class EventService : IEventService
         if (statusData != null && statusData.Value != null)
         {
             var j = Jsonization.Serialize.ToJsonObject(statusData);
-            e.statusData = j.ToJsonString();
+            e.statusData = j;
             /*
             if (depth == 0)
             {
@@ -887,10 +888,10 @@ public class EventService : IEventService
         lastDiffValue = TimeStamp.TimeStamp.DateTimeToString(dt);
 
         ISubmodelElementCollection statusDataCollection = null;
-        if (eventPayload.statusData != "" && statusData != null)
+        if (eventPayload.statusData != null && statusData != null)
         {
             ISubmodelElement receiveSme = null;
-            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData.ToJsonString()));
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
             if (receiveSme is SubmodelElementCollection smc)
