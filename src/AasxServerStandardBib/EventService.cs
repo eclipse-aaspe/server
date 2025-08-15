@@ -86,6 +86,20 @@ public class EventService : IEventService
             else
             {
                 d = eventData.LastUpdate.Value;
+
+                if (eventData.MaxInterval != null
+                    && eventData.MaxInterval.Value != null
+                    && Int32.TryParse(eventData.MaxInterval.Value, out int result))
+                {
+                    var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                        .Add(TimeSpan.FromSeconds(result));
+
+                    var now = DateTime.UtcNow;
+
+                    if (now < nextUpdate) {
+                        return;
+                    }
+                }
             }
         }
 
@@ -284,6 +298,21 @@ public class EventService : IEventService
                 // d = eventData.LastUpdate.Value = "reconnect";
                 eventData.LastUpdate.SetTimeStamp(now);
             }
+        }
+        else if (eventData.MinInterval != null
+                    && eventData.MinInterval.Value != null
+                    && Int32.TryParse(eventData.MinInterval.Value, out int result))
+        {
+            var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                .Add(TimeSpan.FromSeconds(result));
+
+            var now = DateTime.UtcNow;
+
+            if (now > nextUpdate)
+            {
+                //Publish keep alive message
+            }
+
         }
     }
 
@@ -1610,6 +1639,14 @@ public class EventService : IEventService
                 case "publishbasiceventelement":
                     if (p != null)
                         eventDto.PublishBasicEventElement = p;
+                    break;
+                case "mininterval":
+                    if (p != null)
+                        eventDto.MinInterval = p;
+                    break;
+                case "maxinterval":
+                    if (p != null)
+                        eventDto.MaxInterval = p;
                     break;
             }
         }

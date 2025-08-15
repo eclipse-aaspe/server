@@ -56,12 +56,15 @@ public class EventDto
     // "" only conditionSM, * = all SME in SM, else query condition for SME
     public AasCore.Aas3_0.Property ConditionSME = null;
     public AasCore.Aas3_0.ReferenceElement DataReference = null;
+    public AasCore.Aas3_0.Property MinInterval = null;
+    public AasCore.Aas3_0.Property MaxInterval = null;
 
     public SubmodelElementCollection Status = null;
     public AasCore.Aas3_0.Property Message = null;
     public AasCore.Aas3_0.Property Transmitted = null;
     public AasCore.Aas3_0.Property LastUpdate = null;
     public SubmodelElementCollection Diff = null;
+
 
     // MQTT:// without TLS and MQTTS:// with TLS, then URL:PORT
     public AasCore.Aas3_0.Property MessageBroker = null;
