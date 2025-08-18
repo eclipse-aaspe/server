@@ -607,10 +607,6 @@ public class EventService : IEventService
                 if (conditionSM != null && conditionSM.Value != null)
                 {
                     searchSM = conditionSM.Value;
-                    if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
-                    {
-                        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
-                    }
                 }
                 if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
                 {
@@ -626,10 +622,6 @@ public class EventService : IEventService
                 if (conditionSME != null && conditionSME.Value != null)
                 {
                     searchSME = conditionSME.Value;
-                    if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
-                    {
-                        searchSME = $"({securityCondition["sme."]})&&({searchSME})";
-                    }
                 }
                 if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
                 {
