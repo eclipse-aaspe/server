@@ -47,7 +47,7 @@ public class EventService : IEventService
     private bool _enableMqtt;
     private readonly MqttClientService _mqttClientService;
 
-    public async void PublishMqttMessage(EventDto eventData, string clientId)
+    public async void PublishMqttMessage(EventDto eventData, string submodelId, string idShortPath)
     {
         if (!_enableMqtt
             || eventData.MessageBroker == null
@@ -96,7 +96,8 @@ public class EventService : IEventService
 
                     var now = DateTime.UtcNow;
 
-                    if (now < nextUpdate) {
+                    if (now < nextUpdate)
+                    {
                         return;
                     }
                 }
@@ -132,6 +133,7 @@ public class EventService : IEventService
                 && eventData.PublishBasicEventElement.Value != null)
         {
             pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
+            wp = false;
         }
 
         string c = "";
@@ -147,6 +149,14 @@ public class EventService : IEventService
         {
             Console.WriteLine(diff);
         }
+
+        var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
+
+        if (!idShortPath.IsNullOrEmpty())
+        {
+            clientId += $"/submodel-elements/{idShortPath}.{eventData.IdShort}";
+        }
+
 
         var payloadList = new List<object>();
 
@@ -167,8 +177,7 @@ public class EventService : IEventService
             {
                 if (eventData.IdShort != null)
                 {
-                    //ToDo: With Events?
-                    sourceString = $"{clientId}.{eventData.IdShort}";
+                    sourceString = $"{Program.externalBlazor}/submodels/{submodelId}/events/{idShortPath}.{eventData.IdShort}/status";
                 }
             }
 
@@ -191,7 +200,6 @@ public class EventService : IEventService
                 source = sourceString,
                 subject = new
                 {
-                    modelType = eventPayloadEntry.modelType,
                     semanticId = eventPayloadEntry.semanticId,
                     id = eventPayloadEntry.submodelId,
                     idShortPath = eventPayloadEntry.idShortPath,
@@ -200,7 +208,8 @@ public class EventService : IEventService
                 id = $"{Guid.NewGuid()}",
                 time = DateTime.UtcNow.ToString("o"),
                 datacontenttype = "application/json",
-                data = eventPayloadEntry.payloadJsonObj
+                data = eventPayloadEntry.payloadJsonObj,
+                lastUpdate = eventData.LastUpdate,
             };
 
             payloadList.Add(payloadObject);

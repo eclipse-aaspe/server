@@ -1651,16 +1651,9 @@ namespace AasxServer
 
             if (eventData.Direction != null && eventData.Mode != null)
             {
-                var mqttClientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
-
-                if (!idShortPath.IsNullOrEmpty())
-                {
-                    mqttClientId += "/submodel-elements/" + idShortPath;
-                }
-
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
-                    _eventService.PublishMqttMessage(eventData, mqttClientId);
+                    _eventService.PublishMqttMessage(eventData, submodelId, idShortPath);
                     return;
                 }
 
