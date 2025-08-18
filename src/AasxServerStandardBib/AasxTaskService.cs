@@ -38,6 +38,8 @@ namespace AasxServer
     using System.Text.Json;
     using Contracts;
     using Contracts.Events;
+    using MQTTnet;
+    using System.Security.Authentication;
 
     public class AasxTask
     {
@@ -100,6 +102,7 @@ namespace AasxServer
         public long logCountModulo = 30;
         public bool once = false;
         bool firstCycle = true;
+
 
         public void TaskInit()
         {
@@ -273,6 +276,78 @@ namespace AasxServer
                 }
             }
 
+            var factory = new MqttClientFactory();
+
+            var mqttClient = factory.CreateMqttClient();
+            var options = new MqttClientOptionsBuilder()
+                .WithClientId("MQTT-OZ");
+            options.WithCredentials("aorzelski@phoenixcontact.com", "aorzelski@phoenixcontact.com");
+            options.WithTcpServer("mqtt-broker.aas-voyager.com", 8883);
+            options.WithTlsOptions(new MqttClientTlsOptions
+            {
+                UseTls = true,
+                SslProtocol = SslProtocols.Tls12, // oder Tls13, je nach Server
+                AllowUntrustedCertificates = false,
+                IgnoreCertificateChainErrors = false,
+                IgnoreCertificateRevocationErrors = false
+            });
+            var optionsBuilder = options.WithCleanSession().Build();
+            mqttClient.ApplicationMessageReceivedAsync += e =>
+            {
+                var payload = e.ApplicationMessage?.Payload == null
+                    ? null
+                    : Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+                try
+                {
+                    var json = JsonArray.Parse(payload) as JsonArray;
+
+                    foreach (var item in json)
+                    {
+                        var subject = item["subject"];
+                        var idShortPath = subject["idShortPath"];
+
+                        var idShortPathString = idShortPath.ToJsonString();
+
+                        var now = DateTime.UtcNow;
+
+                        if (idShortPathString.ToLower() == "billofmaterial")
+                        {
+                            var nextUpdate = lastCreateTimestamp
+                                    .Add(TimeSpan.FromSeconds(5));
+
+                            if (now < nextUpdate)
+                            {
+                                return Task.CompletedTask;
+                            }
+                            operation_calculate_cfp(now);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                return Task.CompletedTask;
+            };
+            var result = mqttClient.ConnectAsync(optionsBuilder).Result;
+
+            if (result.ResultCode == MqttClientConnectResultCode.Success &&  mqttClient.IsConnected)
+            {
+                string[] subscribeTopics = ["/noauth/#"];
+
+                foreach (var topic in subscribeTopics)
+                {
+                    mqttClient.SubscribeAsync(topic);
+                }
+
+                //mqttClient.DisconnectAsync();
+            }
+            else
+            {
+                Console.WriteLine("Client not connected!");
+            }
+
             tasksThread = new Thread(new ThreadStart(tasksSamplingLoop));
             // MICHA
             tasksThread.Start();
@@ -322,7 +397,7 @@ namespace AasxServer
                             break;
                         case "calculatecfp":
                         case "calculate_cfp":
-                            operation_calculate_cfp(op, envIndex, timeStamp);
+                            operation_calculate_cfp(timeStamp);
                             break;
                         case "timeseriessampling":
                             AasxTimeSeries.TimeSeries.timeSeriesSampling(false);
@@ -2348,7 +2423,7 @@ namespace AasxServer
             return text;
         }
 
-        public bool createCfpTree(int envIndex, DateTime timeStamp)
+        public bool createCfpTree(DateTime timeStamp)
         {
             bool changed = false;
             string digest = "";
@@ -2915,7 +2990,7 @@ namespace AasxServer
             return changed;
         }
 
-        public void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
+        public void operation_calculate_cfp(DateTime timeStamp)
         {
             if (AasxServer.Program.initializingRegistry)
             {
@@ -2927,7 +3002,7 @@ namespace AasxServer
                 return;
 
             // Iterate tree and calculate CFP values
-            bool changed = createCfpTree(envIndex, timeStamp);
+            bool changed = createCfpTree(timeStamp);
 
             CfpNode node = root;
             CfpNode parent = null;
