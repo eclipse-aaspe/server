@@ -58,6 +58,8 @@ class Program
 
             if (!string.IsNullOrEmpty(jwtToken))
             {
+                authType = "jwt";
+
                 Console.WriteLine("Validating jwtToken: " + jwtToken);
                 var handler = new JwtSecurityTokenHandler();
                 var jwtSecurityToken = handler.ReadJwtToken(jwtToken);
@@ -167,20 +169,55 @@ class Program
             Console.WriteLine("User: " + user);
             Console.WriteLine("Domain: " + domain);
 
+            var topic = context.ApplicationMessage?.Topic;
             var payload = context.ApplicationMessage?.Payload == null
             ? null
             : Encoding.UTF8.GetString(context.ApplicationMessage.Payload);
 
             Console.WriteLine("Message received:");
-            Console.WriteLine($"topic: {context.ApplicationMessage?.Topic}");
+            Console.WriteLine($"topic: {topic}");
             Console.WriteLine($"payload: {payload}");
             Console.WriteLine($"QoS: {context.ApplicationMessage?.QualityOfServiceLevel}");
             Console.WriteLine($"Retain: {context.ApplicationMessage?.Retain}");
+
+            if (string.IsNullOrWhiteSpace(topic))
+            {
+                Console.WriteLine("Publish rejected: topic is empty.");
+                context.ProcessPublish = false;
+            }
 
             if (string.IsNullOrWhiteSpace(user))
             {
                 Console.WriteLine("Publish rejected: username is empty.");
                 context.ProcessPublish = false;
+            }
+
+            if (topic != null && !topic.StartsWith("/noauth/") && !topic.StartsWith("/fx/all/"))
+            {
+                if (!topic.StartsWith("/fx/domain/"))
+                {
+                    Console.WriteLine($"Publish rejected: topic {topic} not allowed");
+                    context.ProcessPublish = false;
+                }
+                else if (string.IsNullOrWhiteSpace(domain))
+                {
+                    Console.WriteLine("Publish rejected: no domain defined");
+                    context.ProcessPublish = false;
+                }
+                else if (!topic.EndsWith("/" + domain))
+                {
+                    Console.WriteLine($"Publish rejected: topic must end with /{domain}");
+                    context.ProcessPublish = false;
+                }
+                else
+                {
+                    var split = topic.Split('/');
+                    if (split.Length != 5 || split[3] == "")
+                    {
+                        Console.WriteLine($"Publish rejected: topic be /fx/domain/receiver/{domain}");
+                        context.ProcessPublish = false;
+                    }
+                }
             }
 
             return Task.CompletedTask;
@@ -243,7 +280,8 @@ class Program
 
                 foreach (var allowedTopic in allowedTopics)
                 {
-                    Console.WriteLine($"Subscribed {context.ClientId} to {allowedTopic}");
+                    Console.WriteLine();
+                    Console.WriteLine($"Subscribe {context.ClientId} to {allowedTopic} by {topic}");
                     mqttServer.SubscribeAsync(context.ClientId, new MqttTopicFilterBuilder()
                     .WithTopic(allowedTopic)
                     .WithAtMostOnceQoS()
