@@ -87,9 +87,9 @@ public class EventService : IEventService
             {
                 d = eventData.LastUpdate.Value;
 
-                if (eventData.MaxInterval != null
-                    && eventData.MaxInterval.Value != null
-                    && Int32.TryParse(eventData.MaxInterval.Value, out int result))
+                if (eventData.MinInterval != null
+                    && eventData.MinInterval.Value != null
+                    && Int32.TryParse(eventData.MinInterval.Value, out int result))
                 {
                     var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
                         .Add(TimeSpan.FromSeconds(result));
@@ -142,13 +142,6 @@ public class EventService : IEventService
             c = eventData.Changes.Value;
         }
 
-        var e = CollectPayload(null, c, 0, eventData.StatusData,
-            eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
-            d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
-        foreach (var diff in diffEntry)
-        {
-            Console.WriteLine(diff);
-        }
 
         var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
 
@@ -157,68 +150,121 @@ public class EventService : IEventService
             clientId += $"/submodel-elements/{idShortPath}.{eventData.IdShort}";
         }
 
+        if (pbee)
+        {
+            d = "status";
+        }
+
+        var e = CollectPayload(null, c, 0, eventData.StatusData,
+            eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
+            d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
+
+
+        bool sendStatus = false;
+
+        if (pbee)
+        {
+            if (e.status.lastUpdate != eventData.LastUpdate.Value)
+            {
+                eventData.LastUpdate.Value = e.status.lastUpdate;
+                sendStatus = true;
+            }
+        }
+
+        if (!sendStatus && e.eventEntries.Count == 0)
+        {
+            if (eventData.MaxInterval != null
+                && eventData.MaxInterval.Value != null
+                && Int32.TryParse(eventData.MaxInterval.Value, out int result))
+            {
+                var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                    .Add(TimeSpan.FromSeconds(result));
+
+                var now = DateTime.UtcNow;
+
+                if (now > nextUpdate)
+                {
+                    sendStatus = true;
+                }
+            }
+        }
 
         var payloadList = new List<object>();
 
-        foreach (var eventPayloadEntry in e.eventEntries)
+        if (sendStatus)
         {
             var sourceString = "";
 
-            if (!pbee)
+            if (eventData.IdShort != null)
             {
+                sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+            }
+
+            var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+
+            var payloadObject = new
+            {
+                specversion = "1.0",
+                source = sourceString,
+                subject = new
+                {
+                    semanticId = eventData.SemanticId?.Keys == null ? eventData.SemanticId?.Keys[0].Value : "",
+                    schema = schemaType
+                },
+                id = $"{Guid.NewGuid()}",
+                time = DateTime.UtcNow.ToString("o"),
+                datacontenttype = "application/json",
+                lastUpdate = eventData.LastUpdate.Value,
+            };
+
+            payloadList.Add(payloadObject);
+        }
+        else
+        {
+            foreach (var diff in diffEntry)
+            {
+                Console.WriteLine(diff);
+            }
+
+            foreach (var eventPayloadEntry in e.eventEntries)
+            {
+                var sourceString = "";
+
                 sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.submodelId);
 
                 if (eventPayloadEntry.payloadType == "sme")
                 {
                     sourceString += "/submodel-elements/" + eventPayloadEntry.idShortPath;
                 }
-            }
-            else
-            {
-                if (eventData.IdShort != null)
-                {
-                    sourceString = $"{Program.externalBlazor}/submodels/{submodelId}/events/{idShortPath}.{eventData.IdShort}/status";
-                }
-            }
 
-            var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
-
-            if (pbee)
-            {
-                schemaType += "BasicEventElement";
-            }
-            else
-            {
+                var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
                 schemaType += eventPayloadEntry.modelType;
-            }
 
-
-            var payloadObject = new
-            {
-                specversion = "1.0",
-                type = eventPayloadEntry.entryType,
-                source = sourceString,
-                subject = new
+                var payloadObject = new
                 {
-                    semanticId = eventPayloadEntry.semanticId,
-                    id = eventPayloadEntry.submodelId,
-                    idShortPath = eventPayloadEntry.idShortPath,
-                    schema = schemaType
-                },
-                id = $"{Guid.NewGuid()}",
-                time = DateTime.UtcNow.ToString("o"),
-                datacontenttype = "application/json",
-                data = eventPayloadEntry.payloadJsonObj,
-                lastUpdate = eventData.LastUpdate,
-            };
+                    specversion = "1.0",
+                    type = eventPayloadEntry.entryType,
+                    source = sourceString,
+                    subject = new
+                    {
+                        semanticId = eventPayloadEntry.semanticId,
+                        id = eventPayloadEntry.submodelId,
+                        idShortPath = eventPayloadEntry.idShortPath,
+                        schema = schemaType
+                    },
+                    id = $"{Guid.NewGuid()}",
+                    time = DateTime.UtcNow.ToString("o"),
+                    datacontenttype = "application/json",
+                    data = eventPayloadEntry.payloadJsonObj,
+                };
 
-            payloadList.Add(payloadObject);
+                payloadList.Add(payloadObject);
+            }
         }
 
         if (payloadList.Count > 0)
         {
             var jsonArray = JsonSerializer.Serialize(payloadList);
-            //Console.WriteLine(jsonArray);
 
             try
             {
@@ -290,7 +336,6 @@ public class EventService : IEventService
                             statusCode + " ; " +
                             " ; PUT " + eventData.MessageBroker.Value;
                         eventData.Status.SetTimeStamp(now);
-                        eventData.LastUpdate.SetTimeStamp(now);
                     }
                 }
             }
@@ -305,23 +350,7 @@ public class EventService : IEventService
                 var now = DateTime.UtcNow;
                 eventData.Status.SetTimeStamp(now);
                 // d = eventData.LastUpdate.Value = "reconnect";
-                eventData.LastUpdate.SetTimeStamp(now);
             }
-        }
-        else if (eventData.MinInterval != null
-                    && eventData.MinInterval.Value != null
-                    && Int32.TryParse(eventData.MinInterval.Value, out int result))
-        {
-            var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                .Add(TimeSpan.FromSeconds(result));
-
-            var now = DateTime.UtcNow;
-
-            if (now > nextUpdate)
-            {
-                //Publish keep alive message
-            }
-
         }
     }
 
@@ -1510,6 +1539,7 @@ public class EventService : IEventService
         EventDto eventDto = new EventDto();
 
         eventDto.IdShort = op.IdShort;
+        eventDto.SemanticId = op.SemanticId;
 
         foreach (var input in op.InputVariables)
         {

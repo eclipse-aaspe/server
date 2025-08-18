@@ -22,6 +22,7 @@ using AasCore.Aas3_0;
 public class EventDto
 {
     public string? IdShort { get; set; }
+    public IReference? SemanticId { get; set; }
 
     public SubmodelElementCollection Authentication = null;
     public AasCore.Aas3_0.Property AuthType = null;

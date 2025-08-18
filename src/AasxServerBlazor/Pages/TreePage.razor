@@ -272,7 +272,8 @@
 						{
 							Program.env[SelectedNode.envIndex].setWrite(true);
 						}
-						else
+
+						if (parentSubmodelId != null && idShortPath != null)
 						{
 							// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
 							AasxTaskService.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
