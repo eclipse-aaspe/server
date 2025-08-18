@@ -109,13 +109,18 @@ class Program
 
         if (mqttClient.IsConnected)
         {
-            string[] topics = [ "/noauth/submodels", "/fx/all/submodels", "/fx/domain/phoenixcontact.com/submodels" ];
+            string[] subscribeTopics = ["/noauth/#", "/fx/all/#", "/fx/domain/phoenixcontact.com/#"];
+            // string[] publishTopics = ["/noauth/submodels", "/fx/all/submodels", "/fx/domain/phoenixcontact.com/phoenixcontact.com/submodels"];
+            string[] publishTopics = ["/fx/all/submodels", "/fx/domain/phoenixcontact.com/phoenixcontact.com/submodels"];
             var stringList = new List<string> { "first", "second", "third", $"{DateTime.UtcNow}" };
 
-            foreach (var topic in topics)
+            foreach (var topic in subscribeTopics)
             {
                 await mqttClient.SubscribeAsync(topic);
+            }
 
+            foreach (var topic in publishTopics)
+            {
                 var jsonPayload = JsonSerializer.Serialize(stringList);
 
                 // Nachricht senden
