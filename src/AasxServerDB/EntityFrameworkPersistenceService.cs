@@ -1553,16 +1553,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             diff, diffEntry, wp, smOnly, limSm, limSme, offSm, offSme);
         }
 
-        if (diff == "status")
+        if (eventPayload.eventEntries.Count == 0 && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         {
-            /*
-            if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
-            {
-                eventPayload.status.lastUpdate = eventData.LastUpdate.Value;
-            }
-            */
+            eventPayload.status.lastUpdate = eventData.LastUpdate.Value;
         }
-        else
+        if (diff != "status")
         {
             var timeStamp = DateTime.UtcNow;
             if (eventData.Transmitted != null)

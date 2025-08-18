@@ -878,11 +878,11 @@ public class EventService : IEventService
                 {
                     if (searchSM is "(*)" or "*" or "")
                     {
-                        timeStampMax = db.SMSets.Select(sm => sm.TimeStampTree).Max();
+                        timeStampMax = db.SMSets.Select(sm => sm.TimeStampTree).DefaultIfEmpty().Max();
                     }
                     else
                     {
-                        timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).Max();
+                        timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).DefaultIfEmpty().Max();
                     }
                 }
                 e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
