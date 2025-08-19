@@ -721,7 +721,11 @@ public class EventService : IEventService
 
                 foreach (var sm in smSearchList)
                 {
-                    var entryType = "CREATE";
+                    var entryType = "UPDATE";
+                    if (sm.TimeStampCreate > diffTime1)
+                    {
+                        entryType = "CREATE";
+                    }
 
                     bool completeSM = true;
 
