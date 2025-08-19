@@ -280,7 +280,7 @@ namespace AasxServer
 
             var mqttClient = factory.CreateMqttClient();
             var options = new MqttClientOptionsBuilder()
-                .WithClientId("MQTT-OZ");
+                .WithClientId("MQTT-OZ-PCF");
             options.WithCredentials("aorzelski@phoenixcontact.com", "aorzelski@phoenixcontact.com");
             options.WithTcpServer("mqtt-broker.aas-voyager.com", 8883);
             options.WithTlsOptions(new MqttClientTlsOptions
@@ -2423,11 +2423,6 @@ namespace AasxServer
             return text;
         }
 
-        static bool executeCfp = false;
-        public static void createCfpTreeStatic(DateTime timeStamp)
-        {
-            executeCfp = true;
-        }
         public bool createCfpTree(DateTime timeStamp)
         {
             bool changed = false;
@@ -3321,12 +3316,6 @@ namespace AasxServer
                     runOperations(t.def, t.envIndex, t.submodelId, t.idShortPath, timeStamp);
                     taskRun = true;
                 }
-            }
-
-            if (executeCfp)
-            {
-                executeCfp = false;
-                createCfpTree(timeStamp);
             }
 
             if (taskRun)
