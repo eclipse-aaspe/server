@@ -872,14 +872,25 @@ namespace AasxServerDB
             // new SME with new time can only be at the end
 
             ISubmodelElement? submodelElement = null;
+
             var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-            if (!String.IsNullOrEmpty(aasIdentifier))
+
+            if (!string.IsNullOrEmpty(aasIdentifier))
             {
                 var aasDB = db.AASSets
-                        .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                    .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                if (aasDB.Count != 1)
+                {
+                    return null;
+                }
                 var aasDBId = aasDB[0].Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                if (smRefDBQuery.Count != 1)
+                {
+                    return null;
+                }
             }
+
             var smDB = smDBQuery.FirstOrDefault();
             var visitor = new VisitorAASX(db);
             visitor._smDB = smDB;
@@ -1017,12 +1028,16 @@ namespace AasxServerDB
             {
                 var aasDB = db.AASSets
                     .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
+                if (aasDB.Count != 1)
                 {
                     return;
                 }
                 var aasDBId = aasDB[0].Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                if (smRefDBQuery.Count != 1)
+                {
+                    return;
+                }
             }
 
             if (securityCondition != null)
@@ -1080,12 +1095,16 @@ namespace AasxServerDB
                     {
                         var aasDB = db.AASSets
                             .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                        if (aasDB == null || aasDB.Count != 1)
+                        if (aasDB.Count != 1)
                         {
                             return;
                         }
                         var aasDBId = aasDB[0].Id;
-                        smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                        var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                        if (smRefDBQuery.Count != 1)
+                        {
+                            return;
+                        }
                     }
 
                     if (securityCondition != null)

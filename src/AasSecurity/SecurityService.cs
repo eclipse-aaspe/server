@@ -577,6 +577,13 @@ namespace AasSecurity
                                             user = username;
                                             Console.WriteLine("Received username+password http header = " + user);
                                         }
+                                        else
+                                        {
+                                            if (userName != "" && passWord != "")
+                                            {
+                                                accessRights = $"__{userName}__{passWord}";
+                                            }
+                                        }
                                     }
                                     catch (ArgumentException argumentException)
                                     {
