@@ -18,9 +18,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
+using AdminShellNS;
 
 public class EventDto
 {
+    public AdminShellPackageEnv env = null;
     public string? IdShort { get; set; }
     public IReference? SemanticId { get; set; }
 

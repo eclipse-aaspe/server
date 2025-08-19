@@ -351,6 +351,8 @@ public class EventService : IEventService
                 eventData.Status.SetTimeStamp(now);
                 // d = eventData.LastUpdate.Value = "reconnect";
             }
+
+            eventData.env.setWrite(true);
         }
     }
 
@@ -1534,6 +1536,7 @@ public class EventService : IEventService
         AasCore.Aas3_0.Property p = null;
         EventDto eventDto = new EventDto();
 
+        eventDto.env = env;
         eventDto.IdShort = op.IdShort;
         eventDto.SemanticId = op.SemanticId;
 
