@@ -1092,6 +1092,8 @@ namespace AasxServerDB
 
         public static void DeleteSubmodelElement(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
+            var now = DateTime.UtcNow;
+
             using (var transaction = db.Database.BeginTransaction())
             {
                 try
@@ -1139,8 +1141,16 @@ namespace AasxServerDB
                     var parentId = smeParent[0].Id;
                     var smeFound = smeParent;
 
-                    for (int i = 1; i < idShortPathElements.Length; i++)
+                    for (var i = 1; i < idShortPathElements.Length; i++)
                     {
+                        if (i < idShortPathElements.Length - 1)
+                        {
+                            smeFound[0].TimeStampTree = now;
+                        }
+                        else
+                        {
+                            smeFound[0].TimeStampDelete = now;
+                        }
                         idShort = idShortPathElements[i];
                         //ToDo SubmodelElementList with index (type: int) must be implemented
                         var smeFoundDB = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == parentId && sme.IdShort == idShort);
@@ -1155,12 +1165,11 @@ namespace AasxServerDB
                     var smeFoundTreeIds = CrudOperator.GetTree(db, smDB[0], smeFound)?.Select(s => s.Id);
                     if (smeFoundTreeIds?.Count() > 0)
                     {
-                        var now = DateTime.UtcNow;
-                        if (idShortPathElements.Length > 1)
+                        smDB[0].TimeStampTree = now;
+                        if (idShortPathElements.Length == 1)
                         {
-                            smeParent[0].TimeStampDelete = now;
+                            smDB[0].TimeStampDelete = now;
                         }
-                        smDB[0].TimeStampDelete = now;
                         db.SMESets.Where(sme => smeFoundTreeIds.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
                         db.SaveChanges();
                     }
