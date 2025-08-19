@@ -454,7 +454,7 @@ namespace AasxServerDB
 
         public static void ReplaceAssetInformation(AasContext db, AASSet aasDB, IAssetInformation newAssetInformation)
         {
-            var cuurentDataTime = DateTime.UtcNow;
+            var currentDataTime = DateTime.UtcNow;
 
             aasDB.AssetKind = Serializer.SerializeElement(newAssetInformation.AssetKind);
             aasDB.SpecificAssetIds = Serializer.SerializeList(newAssetInformation.SpecificAssetIds);
@@ -462,8 +462,8 @@ namespace AasxServerDB
             aasDB.AssetType = newAssetInformation.AssetType;
             aasDB.DefaultThumbnailPath = newAssetInformation.DefaultThumbnail?.Path;
             aasDB.DefaultThumbnailContentType = newAssetInformation.DefaultThumbnail?.ContentType;
-            aasDB.TimeStamp = cuurentDataTime;
-            aasDB.TimeStampTree = cuurentDataTime;
+            aasDB.TimeStamp = currentDataTime;
+            aasDB.TimeStampTree = currentDataTime;
 
             db.SaveChanges();
         }
@@ -477,6 +477,10 @@ namespace AasxServerDB
             if (aasDB != null && identifier != null)
             {
                 aasDB.SMRefSets.Add(new SMRefSet { Identifier = identifier });
+                var currentDataTime = DateTime.UtcNow;
+                aasDB.TimeStamp = currentDataTime;
+                aasDB.TimeStampTree = currentDataTime;
+                db.SaveChanges();
             }
 
             // TODO: read reference from DB
@@ -494,6 +498,9 @@ namespace AasxServerDB
                 if (smRefDB != null)
                 {
                     aasDB.SMRefSets.Remove(smRefDB);
+                    var currentDataTime = DateTime.UtcNow;
+                    aasDB.TimeStamp = currentDataTime;
+                    aasDB.TimeStampTree = currentDataTime;
                     db.SaveChanges();
                 }
             }
@@ -1148,12 +1155,18 @@ namespace AasxServerDB
                     var smeFoundTreeIds = CrudOperator.GetTree(db, smDB[0], smeFound)?.Select(s => s.Id);
                     if (smeFoundTreeIds?.Count() > 0)
                     {
+                        var now = DateTime.UtcNow;
+                        if (idShortPathElements.Length > 1)
+                        {
+                            smeParent[0].TimeStampDelete = now;
+                        }
+                        smDB[0].TimeStampDelete = now;
                         db.SMESets.Where(sme => smeFoundTreeIds.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
                         db.SaveChanges();
                     }
                     transaction.Commit();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     transaction.Rollback();
                 }
