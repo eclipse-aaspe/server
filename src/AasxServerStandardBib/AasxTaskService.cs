@@ -311,7 +311,7 @@ namespace AasxServer
 
                         var now = DateTime.UtcNow;
 
-                        if (idShortPathString.ToLower() == "billofmaterial")
+                        if (idShortPathString.ToLower() == "\"billofmaterial\"")
                         {
                             var nextUpdate = lastCreateTimestamp
                                     .Add(TimeSpan.FromSeconds(5));
