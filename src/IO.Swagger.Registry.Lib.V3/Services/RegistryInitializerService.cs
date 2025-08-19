@@ -800,6 +800,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                 }
             }
 
+            AasxTaskService.createCfpTreeStatic(DateTime.UtcNow);
             Program.signalNewData(2);
 
             Program.initializingRegistry = false;

@@ -2423,6 +2423,11 @@ namespace AasxServer
             return text;
         }
 
+        static bool executeCfp = false;
+        public static void createCfpTreeStatic(DateTime timeStamp)
+        {
+            executeCfp = true;
+        }
         public bool createCfpTree(DateTime timeStamp)
         {
             bool changed = false;
@@ -3316,6 +3321,12 @@ namespace AasxServer
                     runOperations(t.def, t.envIndex, t.submodelId, t.idShortPath, timeStamp);
                     taskRun = true;
                 }
+            }
+
+            if (executeCfp)
+            {
+                executeCfp = false;
+                createCfpTree(timeStamp);
             }
 
             if (taskRun)
