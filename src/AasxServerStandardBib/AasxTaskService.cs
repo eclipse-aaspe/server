@@ -307,20 +307,23 @@ namespace AasxServer
                         var subject = item["subject"];
                         var idShortPath = subject["idShortPath"];
 
-                        var idShortPathString = idShortPath.ToJsonString();
-
-                        var now = DateTime.UtcNow;
-
-                        if (idShortPathString.ToLower() == "\"billofmaterial\"")
+                        if (idShortPath != null)
                         {
-                            var nextUpdate = lastCreateTimestamp
-                                    .Add(TimeSpan.FromSeconds(5));
+                            var idShortPathString = idShortPath.ToJsonString();
 
-                            if (now < nextUpdate)
+                            var now = DateTime.UtcNow;
+
+                            if (idShortPathString.ToLower() == "\"billofmaterial\"")
                             {
-                                return Task.CompletedTask;
+                                var nextUpdate = lastCreateTimestamp
+                                        .Add(TimeSpan.FromSeconds(5));
+
+                                if (now < nextUpdate)
+                                {
+                                    return Task.CompletedTask;
+                                }
+                                operation_calculate_cfp(now);
                             }
-                            operation_calculate_cfp(now);
                         }
                     }
                 }
