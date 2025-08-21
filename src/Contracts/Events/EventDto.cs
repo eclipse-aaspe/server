@@ -23,7 +23,12 @@ using AdminShellNS;
 public class EventDto
 {
     public AdminShellPackageEnv env = null;
+
     public string? IdShort { get; set; }
+
+    public string IdShortPath { get; set; }
+    public string SubmodelId { get; set; }
+
     public IReference? SemanticId { get; set; }
 
     public SubmodelElementCollection Authentication = null;
@@ -51,6 +56,8 @@ public class EventDto
 
     public AasCore.Aas3_0.Property SubmodelsOnly = null;
     public AasCore.Aas3_0.Property PublishBasicEventElement = null;
+    public AasCore.Aas3_0.Property Action = null;
+    public AasCore.Aas3_0.Property MessageCondition = null;
 
     // memory || database
     public AasCore.Aas3_0.Property Persistence = null;

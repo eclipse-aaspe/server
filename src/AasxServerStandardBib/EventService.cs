@@ -30,6 +30,8 @@ using Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using AasxServer;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Threading.Tasks;
 
 public class EventService : IEventService
 {
@@ -38,14 +40,172 @@ public class EventService : IEventService
         _mqttClientService = mqttClientService;
         var envValue = Environment.GetEnvironmentVariable("AASX_MQTT");
         _enableMqtt = envValue == "1";
+
+        EventDtos = new List<EventDto>();
     }
 
-    public ICollection<EventDto> EventDtos;
+    public List<EventDto> EventDtos { get; set; }
 
     public static object EventLock = new object();
 
     private bool _enableMqtt;
     private readonly MqttClientService _mqttClientService;
+
+    public event EventHandler? CalculateCfpRequestReceived;
+
+    public EventDto TryAddDto(EventDto eventDto)
+    {
+        var eventDtoIdentfier = $"{eventDto.SubmodelId}.{eventDto.IdShortPath}.{eventDto.IdShort}";
+        var dto = EventDtos.FirstOrDefault(e => $"{e.SubmodelId}.{e.IdShortPath}.{e.IdShort}" == eventDtoIdentfier);
+
+        if (dto == null)
+        {
+            EventDtos.Add(eventDto);
+            return eventDto;
+        }
+        else
+        {
+            return dto;
+        }
+    }
+
+    public async void RegisterMqttMessage(EventDto eventData, string submodelId, string idShortPath)
+    {
+        if (!_enableMqtt
+            || eventData.MessageBroker == null
+            || eventData.MessageBroker.Value.IsNullOrEmpty()
+            || eventData.PassWord == null
+            || eventData.PassWord.Value == null
+            || eventData.UserName == null
+            || eventData.UserName.Value == null)
+        {
+            //ToDo: logging?
+            //ToDo: allow empty username or password?
+            return;
+        }
+
+        var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
+
+        if (!idShortPath.IsNullOrEmpty())
+        {
+            clientId += $"/submodel-elements/{idShortPath}.{eventData.IdShort}";
+        }
+
+        _mqttClientService.MessageReceived += _mqttClientService_MessageReceived;
+ 
+        var result = await _mqttClientService.SubscribeAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
+                                eventData.UserName.Value, eventData.PassWord.Value);
+    }
+
+    private void _mqttClientService_MessageReceived(object? sender, MqttClientServiceMessageReceivedEventArgs e)
+    {
+        var eventDtosWithMessageCondition = EventDtos.Where(ev => ev.MessageCondition != null
+                    && ev.MessageCondition.Value != null);
+
+        foreach (var item in e.Message)
+        {
+            EventDto eventDto = null;
+
+            var source = item["source"];
+
+            if (source != null)
+            {
+                eventDto = eventDtosWithMessageCondition.FirstOrDefault(ev
+                    => ev.MessageCondition.Value == $"(source={source.ToString()})");
+            }
+
+            if (eventDto == null)
+            {
+                var subject = item["subject"];
+
+                if (subject != null)
+                {
+                    var idShortPath = subject["idShortPath"];
+
+                    if (idShortPath != null)
+                    {
+                        eventDto = eventDtosWithMessageCondition.FirstOrDefault(ev
+                            => ev.MessageCondition.Value == $"(idShortPath=subject.{idShortPath.ToString()})");
+                    }
+
+                    if (eventDto != null)
+                    {
+                        var id = subject["id"];
+
+                        if (id != null)
+                        {
+                            eventDto = eventDtosWithMessageCondition.FirstOrDefault(ev
+                                => ev.MessageCondition.Value == $"(id=subject.{id.ToString()})");
+                        }
+                    }
+
+                    //var schemaType = subject["schema"];
+                    //if (schemaType != null
+                    //    && schemaType.ToString().Split("/").Last() != "BasicEventElement")
+                    //{
+
+                    //}
+                }
+            }
+
+            if (eventDto != null)
+            {
+                if (eventDto.Action != null && eventDto.Action.Value != null)
+                {
+                    if (eventDto.Action.Value == "calculatecfp")
+                    {
+                        var nextUpdate = DateTime.UtcNow;
+                        var now = nextUpdate;
+
+                        if (eventDto.LastUpdate != null
+                            && eventDto.LastUpdate.Value != null)
+                        {
+
+                            if (eventDto.MinInterval != null
+                                && eventDto.MinInterval.Value != null)
+                            {
+                                nextUpdate = DateTime.Parse(eventDto.LastUpdate.Value)
+                                    .Add(TimeSpan.FromSeconds(Int32.Parse(eventDto.MinInterval.Value)));
+                            }
+
+                            if (now >= nextUpdate)
+                            {
+                                OnCalculateCfpRequestReceived();
+                                eventDto.LastUpdate.Value = now.ToString();
+                            }
+
+
+                        }
+                        else if (eventDto.Action.Value == "updateDatabase")
+                        {
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected virtual void OnCalculateCfpRequestReceived()
+    {
+        CalculateCfpRequestReceived?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async void CheckMqttMessages(EventDto eventData, string submodelId, string idShortPath)
+    {
+        if (!_enableMqtt
+            || eventData.MessageBroker == null
+            || eventData.MessageBroker.Value.IsNullOrEmpty()
+            || eventData.PassWord == null
+            || eventData.PassWord.Value == null
+            || eventData.UserName == null
+            || eventData.UserName.Value == null)
+        {
+            //ToDo: logging?
+            //ToDo: allow empty username or password?
+            return;
+        }
+    }
 
     public async void PublishMqttMessage(EventDto eventData, string submodelId, string idShortPath)
     {
@@ -228,9 +388,7 @@ public class EventService : IEventService
 
             foreach (var eventPayloadEntry in e.eventEntries)
             {
-                var sourceString = "";
-
-                sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.submodelId);
+                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.submodelId);
 
                 if (eventPayloadEntry.payloadType == "sme")
                 {
@@ -1685,6 +1843,10 @@ public class EventService : IEventService
                 case "maxinterval":
                     if (p != null)
                         eventDto.MaxInterval = p;
+                    break;
+                case "action":
+                    if (p != null)
+                        eventDto.Action = p;
                     break;
             }
         }

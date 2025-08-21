@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using AdminShellNS;
@@ -23,6 +24,13 @@ using Contracts.Events;
 
 public interface IEventService
 {
+    public EventDto TryAddDto(EventDto eventDto);
+
+    public event EventHandler? CalculateCfpRequestReceived;
+
+    public void RegisterMqttMessage(EventDto eventData, string submodelId, string idShortPath);
+    void CheckMqttMessages(EventDto eventData, string submodelId, string idShortPath);
+
     public void PublishMqttMessage(EventDto eventDto, string submodelId, string idShortPath);
 
     public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, string changes, int depth, SubmodelElementCollection statusData,
@@ -35,4 +43,3 @@ public interface IEventService
 
     public EventDto ParseData(Operation op, AdminShellPackageEnv env);
 }
-

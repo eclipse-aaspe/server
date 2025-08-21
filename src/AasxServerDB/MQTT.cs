@@ -19,15 +19,26 @@ using Microsoft.Extensions.Hosting;
 using MQTTnet;
 using System.Security.Authentication;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text;
+
+public class MqttClientServiceMessageReceivedEventArgs
+{
+    public JsonArray Message
+    {
+        get; set;
+    }
+
+    public string ClientId { get; set; }
+}
+
 public class MqttClientService
 {
     private readonly List<IMqttClient> _mqttClients;
     private readonly MqttClientFactory _factory;
     private readonly ILogger<MqttClientService> _logger;
 
-
-    //private MqttClientOptions _options;
-
+    public event EventHandler<MqttClientServiceMessageReceivedEventArgs>? MessageReceived;
 
     public MqttClientService(ILogger<MqttClientService> logger)
     {
@@ -38,7 +49,7 @@ public class MqttClientService
         _mqttClients = new List<IMqttClient>();
     }
 
-    public async Task<MqttClientConnectResult> ConnectAsync(IMqttClient mqttClient, string clientId, string messageBroker, string userName, string password)
+    private async Task<MqttClientConnectResult> ConnectAsync(IMqttClient mqttClient, string clientId, string messageBroker, string userName, string password)
     {
         var messageBrokerData = messageBroker.Split(':');
 
@@ -47,17 +58,16 @@ public class MqttClientService
             return null;
         }
 
-        bool withTLS = messageBrokerData[0].Equals("MQTTS",StringComparison.OrdinalIgnoreCase);
+        bool withTLS = messageBrokerData[0].Equals("MQTTS", StringComparison.OrdinalIgnoreCase);
         var serverHost = messageBrokerData[1].Replace("//", "");
         var serverPort = int.Parse(messageBrokerData[2]);
-
 
         var options = new MqttClientOptionsBuilder()
                             .WithClientId(clientId)
                             .WithTcpServer(serverHost, serverPort)
                             .WithCredentials(userName, password)
                             .WithTlsOptions(new MqttClientTlsOptions
-                            { 
+                            {
                                 UseTls = withTLS,
                                 SslProtocol = SslProtocols.Tls12, // oder Tls13, je nach Server
                                 AllowUntrustedCertificates = false,
@@ -73,7 +83,7 @@ public class MqttClientService
         return result;
     }
 
-    public async Task DisconnectAsync(string clientId)
+    private async Task DisconnectAsync(string clientId)
     {
         var mqttClient = _mqttClients.Where(cl => cl.Options.ClientId == clientId).FirstOrDefault();
 
@@ -82,6 +92,62 @@ public class MqttClientService
             _logger.LogInformation("MQTT disconnected.");
             Console.WriteLine("MQTT disconnected.");
         }
+    }
+    public async Task<MqttClientSubscribeResult> SubscribeAsync(string clientId, string messageBroker, string messageTopic, string userName, string password)
+    {
+        var mqttClient = _mqttClients.FirstOrDefault(cl => cl.Options.ClientId == clientId);
+
+        if (mqttClient == null)
+        {
+            mqttClient = _factory.CreateMqttClient();
+        }
+
+        mqttClient.ApplicationMessageReceivedAsync += e =>
+        {
+            var payload = e.ApplicationMessage?.Payload == null
+                ? null
+                : Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+            try
+            {
+                var json = JsonArray.Parse(payload) as JsonArray;
+
+                if (json != null)
+                {
+                    OnMessageReceived(new MqttClientServiceMessageReceivedEventArgs()
+                    {
+                        ClientId = clientId,
+                        Message = json
+                    });
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return Task.CompletedTask;
+        };
+        if (!mqttClient.IsConnected)
+        {
+            var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password);
+            if (result != null && result.ResultCode == MqttClientConnectResultCode.Success)
+            {
+                _mqttClients.Add(mqttClient);
+            }
+        }
+
+        if (mqttClient != null && mqttClient.IsConnected)
+        {
+            var messageResult = await mqttClient.SubscribeAsync(messageTopic);
+            return messageResult;
+        }
+
+        return null;
+    }
+
+    protected virtual void OnMessageReceived(MqttClientServiceMessageReceivedEventArgs result)
+    {
+        MessageReceived?.Invoke(this, result);
     }
 
     public async Task<MqttClientPublishResult> PublishAsync(string clientId, string messageBroker, string messageTopic, string userName, string password, string payload)
@@ -96,7 +162,6 @@ public class MqttClientService
         if (!mqttClient.IsConnected)
         {
             var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password);
-            
             if (result != null && result.ResultCode == MqttClientConnectResultCode.Success)
             {
                 _mqttClients.Add(mqttClient);
