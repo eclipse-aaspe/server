@@ -208,7 +208,7 @@ public class EventService : IEventService
                 source = sourceString,
                 subject = new
                 {
-                    semanticId = eventData.SemanticId?.Keys == null ? eventData.SemanticId?.Keys[0].Value : "",
+                    semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "",
                     schema = schemaType
                 },
                 id = $"{Guid.NewGuid()}",
