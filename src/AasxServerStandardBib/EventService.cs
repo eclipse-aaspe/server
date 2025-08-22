@@ -249,6 +249,9 @@ public class EventService : IEventService
                         //toDo
                     }
                     eventData.LastUpdate.Value = now.ToString();
+
+                    //toDo: 
+                    eventData.Transmitted.Value = now.ToString();
                 }
             }
             else
@@ -426,22 +429,17 @@ public class EventService : IEventService
 
             var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
 
-            var payloadObject = new
+            var payloadElementObject = new
             {
-                specversion = "1.0",
                 source = sourceString,
                 subject = new
                 {
                     semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "",
                     schema = schemaType
                 },
-                id = $"{Guid.NewGuid()}",
-                time = DateTime.UtcNow.ToString("o"),
-                datacontenttype = "application/json",
-                lastUpdate = eventData.LastUpdate.Value,
             };
 
-            payloadList.Add(payloadObject);
+            payloadList.Add(payloadElementObject);
         }
         else
         {
@@ -462,9 +460,8 @@ public class EventService : IEventService
                 var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
                 schemaType += eventPayloadEntry.modelType;
 
-                var payloadObject = new
+                var payloadElementObject = new
                 {
-                    specversion = "1.0",
                     type = eventPayloadEntry.entryType,
                     source = sourceString,
                     subject = new
@@ -474,24 +471,31 @@ public class EventService : IEventService
                         idShortPath = eventPayloadEntry.idShortPath,
                         schema = schemaType
                     },
-                    id = $"{Guid.NewGuid()}",
-                    time = DateTime.UtcNow.ToString("o"),
-                    datacontenttype = "application/json",
                     data = eventPayloadEntry.payloadJsonObj,
                 };
 
-                payloadList.Add(payloadObject);
+                payloadList.Add(payloadElementObject);
             }
         }
 
         if (payloadList.Count > 0)
         {
-            var jsonArray = JsonSerializer.Serialize(payloadList);
+            var payloadObject = new
+            {
+                specversion = "1.0",
+                id = $"{Guid.NewGuid()}",
+                transmitted = DateTime.UtcNow.ToString("o"),
+                datacontenttype = "application/json",
+                time = eventData.LastUpdate.Value,
+                elements = payloadList
+            };
+
+            var payloadObjString = JsonSerializer.Serialize(payloadObject);
 
             try
             {
                 var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                    eventData.UserName.Value, eventData.PassWord.Value, jsonArray);
+                    eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
 
                 var now = DateTime.UtcNow;
 
