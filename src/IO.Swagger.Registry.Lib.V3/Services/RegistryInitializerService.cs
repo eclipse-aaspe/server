@@ -484,31 +484,38 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                 }
 
                                                 var ad = DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(jsonNode);
-                                                ad.Extensions = new List<Extension> { new Extension("registry", value: greg) };
-                                                aasDescriptors.Add(ad);
-                                                aasDescriptorsForSubmodelView.Add(ad);
-                                                ad.SubmodelDescriptors ??= [];
-
-                                                if (ad.SubmodelDescriptors.Count != 0)
+                                                if (ad.IdShort.ToLower() == "events")
                                                 {
-                                                    continue;
+                                                    // for setting breakpoint
                                                 }
-
-                                                requestPathGetReg = ad.Endpoints?[0].ProtocolInformation?.Href;
-                                                Console.WriteLine($"GET {requestPathGetReg}");
-                                                var path1 = requestPathGetReg;
-                                                task = Task.Run(async () => { response = await client.GetAsync(path1); });
-                                                task.Wait();
-                                                json         = response.Content.ReadAsStringAsync().Result;
-                                                memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                                node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
-                                                var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
-
-                                                var ids = (from s in aas?.Submodels select s.Keys[0].Value).ToList();
-
-                                                foreach (var sd in submodelDescriptors.Where(sd => ids.Contains(sd.Id)))
+                                                else
                                                 {
-                                                    ad.SubmodelDescriptors.Add(sd);
+                                                    ad.Extensions = new List<Extension> { new Extension("registry", value: greg) };
+                                                    aasDescriptors.Add(ad);
+                                                    aasDescriptorsForSubmodelView.Add(ad);
+                                                    ad.SubmodelDescriptors ??= [];
+
+                                                    if (ad.SubmodelDescriptors.Count != 0)
+                                                    {
+                                                        continue;
+                                                    }
+
+                                                    requestPathGetReg = ad.Endpoints?[0].ProtocolInformation?.Href;
+                                                    Console.WriteLine($"GET {requestPathGetReg}");
+                                                    var path1 = requestPathGetReg;
+                                                    task = Task.Run(async () => { response = await client.GetAsync(path1); });
+                                                    task.Wait();
+                                                    json = response.Content.ReadAsStringAsync().Result;
+                                                    memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                    node = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
+                                                    var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
+
+                                                    var ids = (from s in aas?.Submodels select s.Keys[0].Value).ToList();
+
+                                                    foreach (var sd in submodelDescriptors.Where(sd => ids.Contains(sd.Id)))
+                                                    {
+                                                        ad.SubmodelDescriptors.Add(sd);
+                                                    }
                                                 }
                                             }
                                         }

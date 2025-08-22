@@ -73,11 +73,11 @@ public class EventService : IEventService
     {
         if (!_enableMqtt
             || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty()
-            || eventData.PassWord == null
-            || eventData.PassWord.Value == null
-            || eventData.UserName == null
-            || eventData.UserName.Value == null)
+            || eventData.MessageBroker.Value.IsNullOrEmpty())
+        //|| eventData.PassWord == null
+        //|| eventData.PassWord.Value == null
+        //|| eventData.UserName == null
+        //|| eventData.UserName.Value == null)
         {
             //ToDo: logging?
             //ToDo: allow empty username or password?
@@ -110,8 +110,9 @@ public class EventService : IEventService
 
             if (source != null)
             {
+                var search = $"(source == \"{source.ToString()}\")";
                 eventDto = eventDtosWithMessageCondition.FirstOrDefault(ev
-                    => ev.MessageCondition.Value == $"(source={source.ToString()})");
+                    => ev.MessageCondition.Value == search);
             }
 
             if (eventDto == null)
@@ -125,17 +126,17 @@ public class EventService : IEventService
                     if (idShortPath != null)
                     {
                         eventDto = eventDtosWithMessageCondition.FirstOrDefault(ev
-                            => ev.MessageCondition.Value == $"(idShortPath=subject.{idShortPath.ToString()})");
+                            => ev.MessageCondition.Value == $"(subject.idShortPath == \"{idShortPath.ToString()}\")");
                     }
 
-                    if (eventDto != null)
+                    if (eventDto == null)
                     {
                         var id = subject["id"];
 
                         if (id != null)
                         {
                             eventDto = eventDtosWithMessageCondition.FirstOrDefault(ev
-                                => ev.MessageCondition.Value == $"(id=subject.{id.ToString()})");
+                                => ev.MessageCondition.Value == $"(subject.id == \"{id.ToString()}\")");
                         }
                     }
 
@@ -157,24 +158,31 @@ public class EventService : IEventService
                         var nextUpdate = DateTime.UtcNow;
                         var now = nextUpdate;
 
-                        if (eventDto.LastUpdate != null
-                            && eventDto.LastUpdate.Value != null)
+                        if (eventDto.LastUpdate != null)
                         {
+                            var executeAction = false;
 
-                            if (eventDto.MinInterval != null
-                                && eventDto.MinInterval.Value != null)
+                            executeAction = string.IsNullOrEmpty(eventDto.LastUpdate.Value);
+                            if (!executeAction)
                             {
-                                nextUpdate = DateTime.Parse(eventDto.LastUpdate.Value)
-                                    .Add(TimeSpan.FromSeconds(Int32.Parse(eventDto.MinInterval.Value)));
+                                if (eventDto.MinInterval != null
+                                    && eventDto.MinInterval.Value != null)
+                                {
+                                    nextUpdate = DateTime.Parse(eventDto.LastUpdate.Value)
+                                        .Add(TimeSpan.FromSeconds(Int32.Parse(eventDto.MinInterval.Value)));
+                                }
+
+                                if (now >= nextUpdate)
+                                {
+                                    executeAction = true;
+                                }
                             }
 
-                            if (now >= nextUpdate)
+                            if (executeAction)
                             {
                                 OnCalculateCfpRequestReceived();
                                 eventDto.LastUpdate.Value = now.ToString();
                             }
-
-
                         }
                         else if (eventDto.Action.Value == "updateDatabase")
                         {
@@ -1847,6 +1855,10 @@ public class EventService : IEventService
                 case "action":
                     if (p != null)
                         eventDto.Action = p;
+                    break;
+                case "messagecondition":
+                    if (p != null)
+                        eventDto.MessageCondition = p;
                     break;
             }
         }

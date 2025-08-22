@@ -342,7 +342,6 @@ namespace AasxServer
 
                 }
             }
-            firstCycle = false;
         }
 
         void operation_authenticate(Operation op, int envIndex, DateTime timeStamp)
@@ -3270,6 +3269,7 @@ namespace AasxServer
                     taskRun = true;
                 }
             }
+            firstCycle = false;
 
             if (taskRun)
                 System.GC.Collect();

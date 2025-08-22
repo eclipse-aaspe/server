@@ -74,7 +74,8 @@ public class MqttClientService
                                 IgnoreCertificateChainErrors = false,
                                 IgnoreCertificateRevocationErrors = false
                             })
-                            .WithCleanSession()
+                            .WithCleanSession(false)
+                            .WithKeepAlivePeriod(TimeSpan.FromSeconds(60))
                             .Build();
         var result = await mqttClient.ConnectAsync(options);
         _logger.LogInformation("MQTT connected.");
@@ -127,6 +128,14 @@ public class MqttClientService
 
             return Task.CompletedTask;
         };
+
+        mqttClient.DisconnectedAsync += e =>
+        {
+            _logger.LogWarning($"Disconnected: Reason={e.Reason}, Exception={e.Exception?.Message}");
+
+            return Task.CompletedTask;
+        };
+
         if (!mqttClient.IsConnected)
         {
             var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password);
