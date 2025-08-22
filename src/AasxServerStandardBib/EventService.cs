@@ -205,6 +205,52 @@ public class EventService : IEventService
             //ToDo: allow empty username or password?
             return;
         }
+
+        if (eventData.Action != null && eventData.Action.Value != null)
+        {
+            if (eventData.Action.Value == "calculatecfp")
+            {
+                var nextUpdate = DateTime.UtcNow;
+                var now = nextUpdate;
+
+                if (eventData.LastUpdate != null
+                    && eventData.LastUpdate.Value != null)
+                {
+
+                    if (eventData.MinInterval != null
+                        && eventData.MinInterval.Value != null)
+                    {
+                        nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                            .Add(TimeSpan.FromSeconds(Int32.Parse(eventData.MinInterval.Value)));
+                    }
+
+                    if (now >= nextUpdate)
+                    {
+                        OnCalculateCfpRequestReceived();
+                        eventData.LastUpdate.Value = now.ToString();
+                    }
+                    else
+                    {
+                        if (eventData.MaxInterval != null
+                                && eventData.MaxInterval.Value != null
+                                    && Int32.TryParse(eventData.MaxInterval.Value, out int result))
+                        {
+                            var nextMaxActionUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                                .Add(TimeSpan.FromSeconds(result));
+
+                            if (now > nextMaxActionUpdate)
+                            {
+                                //ToDo: Do we need max intervall for MQTT in event elements
+                            }
+                        }
+                    }
+                }
+                else if (eventData.Action.Value == "updateDatabase")
+                {
+
+                }
+            }
+        }
     }
 
     public async void PublishMqttMessage(EventDto eventData, string submodelId, string idShortPath)
