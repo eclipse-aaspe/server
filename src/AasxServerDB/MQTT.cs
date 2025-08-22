@@ -124,6 +124,7 @@ public class MqttClientService
             }
             catch (Exception)
             {
+                return Task.CompletedTask;
             }
 
             return Task.CompletedTask;

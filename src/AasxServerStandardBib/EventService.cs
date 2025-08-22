@@ -214,50 +214,60 @@ public class EventService : IEventService
             return;
         }
 
-        if (eventData.Action != null && eventData.Action.Value != null)
+        if (eventData.LastUpdate != null)
         {
-            if (eventData.Action.Value == "calculatecfp")
+            var nextUpdate = DateTime.UtcNow;
+            var now = nextUpdate;
+            var executeAction = false;
+
+            executeAction = string.IsNullOrEmpty(eventData.LastUpdate.Value);
+            if (!executeAction)
             {
-                var nextUpdate = DateTime.UtcNow;
-                var now = nextUpdate;
-
-                if (eventData.LastUpdate != null
-                    && eventData.LastUpdate.Value != null)
+                if (eventData.MinInterval != null
+                    && eventData.MinInterval.Value != null)
                 {
-
-                    if (eventData.MinInterval != null
-                        && eventData.MinInterval.Value != null)
-                    {
-                        nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                            .Add(TimeSpan.FromSeconds(Int32.Parse(eventData.MinInterval.Value)));
-                    }
-
-                    if (now >= nextUpdate)
-                    {
-                        OnCalculateCfpRequestReceived();
-                        eventData.LastUpdate.Value = now.ToString();
-                    }
-                    else
-                    {
-                        if (eventData.MaxInterval != null
-                                && eventData.MaxInterval.Value != null
-                                    && Int32.TryParse(eventData.MaxInterval.Value, out int result))
-                        {
-                            var nextMaxActionUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                                .Add(TimeSpan.FromSeconds(result));
-
-                            if (now > nextMaxActionUpdate)
-                            {
-                                //ToDo: Do we need max intervall for MQTT in event elements
-                            }
-                        }
-                    }
+                    nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                        .Add(TimeSpan.FromSeconds(Int32.Parse(eventData.MinInterval.Value)));
                 }
-                else if (eventData.Action.Value == "updateDatabase")
-                {
 
+                if (now >= nextUpdate)
+                {
+                    executeAction = true;
                 }
             }
+
+            if (executeAction)
+            {
+                if (eventData.Action != null && eventData.Action.Value != null)
+                {
+                    if (eventData.Action.Value == "calculatecfp")
+                    {
+                        OnCalculateCfpRequestReceived();
+                    }
+                    else if (eventData.Action.Value == "updateDatabase")
+                    {
+                        //toDo
+                    }
+                    eventData.LastUpdate.Value = now.ToString();
+                }
+            }
+            else
+            {
+                //ToDo: Do we need max interval for MQTT in event elements?
+                if (eventData.MaxInterval != null
+                        && eventData.MaxInterval.Value != null
+                            && Int32.TryParse(eventData.MaxInterval.Value, out int result))
+                {
+                    var nextMaxActionUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                        .Add(TimeSpan.FromSeconds(result));
+
+                    if (now > nextMaxActionUpdate)
+                    {
+                        //ToDo: Do we need max interval for MQTT in event elements?
+                    }
+                }
+            }
+
         }
     }
 
