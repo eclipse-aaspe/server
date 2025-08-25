@@ -19,38 +19,40 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
+
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
-    public string entryType { get; set; } // CREATE, UPDATE, DELETE
-    public string lastUpdate { get; set; } // timeStamp for this entry
-    public string payloadType { get; set; } // Submodel, SME, AAS
-    //ToDo: Should this be set to "BasicEventElement", if PublishBasicEvemtElement is true?
-    public string modelType { get; set; } // Submodel, Property, ..
-    public string payload { get; set; } // JSON Serialization
-    public JsonObject payloadJsonObj { get; set; } // JSON Serialization
+    public const string SCHEMA = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
+    public string? idShortPath;
 
-    public string submodelId { get; set; } // ID of related Submodel
-    public string idShortPath { get; set; } // for SMEs only
+    public EventPayloadEntrySubject Subject { get; set; }
+
+
+    public string time { get; set; } //latest timeStamp
+    public string type { get; set; } // CREATE, UPDATE, DELETE
+    //public string source { get; set; } // link to source
+    public string payloadType { get; set; } // Submodel, SME, AAS
+
+    public JsonObject data { get; set; } // JSON Serialization
+
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
 
-    public string semanticId { get; set; }
 
     public EventPayloadEntry()
     {
-        entryType = "";
-        lastUpdate = "";
+        type = "";
+        time = "";
+        //source = "";
         payloadType = "";
-        payload = "";
-        submodelId = "";
-        idShortPath = "";
-        semanticId = "";
+
+        data = new JsonObject();;
+        Subject = new EventPayloadEntrySubject();
         notDeletedIdShortList = new List<string>();
-        payloadJsonObj = new JsonObject();
     }
 
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.submodelId, other.submodelId);
+        var result = string.Compare(this.Subject.id, other.Subject.id);
 
         if (result == 0)
         {
@@ -73,7 +75,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
         if (result == 0)
         {
-            result = string.Compare(this.idShortPath, other.idShortPath);
+            result = string.Compare(this.Subject.idShortPath, other.Subject.idShortPath);
         }
 
         return result;

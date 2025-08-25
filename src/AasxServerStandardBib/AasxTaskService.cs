@@ -2022,7 +2022,7 @@ namespace AasxServer
                                                     }
 
                                                     var dt = eventData.StatusData.TimeStamp;
-                                                    d = eventPayload.status.lastUpdate;
+                                                    d = eventPayload.time;
                                                     if (d == "")
                                                     {
                                                         d = "init";
@@ -2182,13 +2182,13 @@ namespace AasxServer
                                 {
                                     if (eventData.Transmitted != null)
                                     {
-                                        eventData.Transmitted.Value = e.status.transmitted;
+                                        eventData.Transmitted.Value = e.transmitted;
                                         eventData.Transmitted.SetTimeStamp(now);
                                     }
-                                    var dt = DateTime.Parse(e.status.lastUpdate);
+                                    var dt = DateTime.Parse(e.time);
                                     if (eventData.LastUpdate != null)
                                     {
-                                        eventData.LastUpdate.Value = e.status.lastUpdate;
+                                        eventData.LastUpdate.Value = e.time;
                                         eventData.LastUpdate.SetTimeStamp(dt);
                                     }
                                     if (eventData.Status != null)

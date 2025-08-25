@@ -21,15 +21,31 @@ using System.Threading.Tasks;
 
 public class EventPayload
 {
+    //To be deleted, when db request handler is used for events?
     public static object EventLock = new object();
-    public EventStatus status { get; set; }
+
+    private const string SPEC_VERSION = "1.0";
+
+    public string specVersion { get; set; } //current spec version, to be changed in static variable
+    public string time { get; set; } //latest timeStamp for all entries
+    public string transmitted { get; set; } // timestamp of GET or PUT
+
+
+    public int countSM { get; set; }
+    public string cursor { get; set; }
+
     public JsonObject statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
-    public List<EventPayloadEntry> eventEntries { get; set; }
+    public List<EventPayloadEntry> elements { get; set; }
 
     public EventPayload()
     {
-        status = new EventStatus();
+        specVersion = SPEC_VERSION;
+        time = "";
+        transmitted = "";
+
+        countSM = 0;
+
         statusData = new JsonObject();
-        eventEntries = new List<EventPayloadEntry>();
+        elements = new List<EventPayloadEntry>();
     }
 }
