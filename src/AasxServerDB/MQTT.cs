@@ -111,19 +111,21 @@ public class MqttClientService
 
             try
             {
-                var json = JsonArray.Parse(payload) as JsonArray;
+                var json = JsonObject.Parse(payload) as JsonObject;
+                var jsonArray = json["elements"] as JsonArray;
 
                 if (json != null)
                 {
                     OnMessageReceived(new MqttClientServiceMessageReceivedEventArgs()
                     {
                         ClientId = clientId,
-                        Message = json
+                        Message = jsonArray
                     });
                 }
             }
             catch (Exception)
             {
+                return Task.CompletedTask;
             }
 
             return Task.CompletedTask;

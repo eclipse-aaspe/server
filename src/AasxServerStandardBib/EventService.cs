@@ -214,50 +214,63 @@ public class EventService : IEventService
             return;
         }
 
-        if (eventData.Action != null && eventData.Action.Value != null)
+        if (eventData.LastUpdate != null)
         {
-            if (eventData.Action.Value == "calculatecfp")
+            var nextUpdate = DateTime.UtcNow;
+            var now = nextUpdate;
+            var executeAction = false;
+
+            executeAction = string.IsNullOrEmpty(eventData.LastUpdate.Value);
+            if (!executeAction)
             {
-                var nextUpdate = DateTime.UtcNow;
-                var now = nextUpdate;
-
-                if (eventData.LastUpdate != null
-                    && eventData.LastUpdate.Value != null)
+                if (eventData.MinInterval != null
+                    && eventData.MinInterval.Value != null)
                 {
-
-                    if (eventData.MinInterval != null
-                        && eventData.MinInterval.Value != null)
-                    {
-                        nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                            .Add(TimeSpan.FromSeconds(Int32.Parse(eventData.MinInterval.Value)));
-                    }
-
-                    if (now >= nextUpdate)
-                    {
-                        OnCalculateCfpRequestReceived();
-                        eventData.LastUpdate.Value = now.ToString();
-                    }
-                    else
-                    {
-                        if (eventData.MaxInterval != null
-                                && eventData.MaxInterval.Value != null
-                                    && Int32.TryParse(eventData.MaxInterval.Value, out int result))
-                        {
-                            var nextMaxActionUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                                .Add(TimeSpan.FromSeconds(result));
-
-                            if (now > nextMaxActionUpdate)
-                            {
-                                //ToDo: Do we need max intervall for MQTT in event elements
-                            }
-                        }
-                    }
+                    nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                        .Add(TimeSpan.FromSeconds(Int32.Parse(eventData.MinInterval.Value)));
                 }
-                else if (eventData.Action.Value == "updateDatabase")
-                {
 
+                if (now >= nextUpdate)
+                {
+                    executeAction = true;
                 }
             }
+
+            if (executeAction)
+            {
+                if (eventData.Action != null && eventData.Action.Value != null)
+                {
+                    if (eventData.Action.Value == "calculatecfp")
+                    {
+                        OnCalculateCfpRequestReceived();
+                    }
+                    else if (eventData.Action.Value == "updateDatabase")
+                    {
+                        //toDo
+                    }
+                    eventData.LastUpdate.Value = now.ToString();
+
+                    //toDo: 
+                    eventData.Transmitted.Value = now.ToString();
+                }
+            }
+            else
+            {
+                //ToDo: Do we need max interval for MQTT in event elements?
+                if (eventData.MaxInterval != null
+                        && eventData.MaxInterval.Value != null
+                            && Int32.TryParse(eventData.MaxInterval.Value, out int result))
+                {
+                    var nextMaxActionUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                        .Add(TimeSpan.FromSeconds(result));
+
+                    if (now > nextMaxActionUpdate)
+                    {
+                        //ToDo: Do we need max interval for MQTT in event elements?
+                    }
+                }
+            }
+
         }
     }
 
@@ -416,22 +429,17 @@ public class EventService : IEventService
 
             var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
 
-            var payloadObject = new
+            var payloadElementObject = new
             {
-                specversion = "1.0",
                 source = sourceString,
                 subject = new
                 {
                     semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "",
                     schema = schemaType
                 },
-                id = $"{Guid.NewGuid()}",
-                time = DateTime.UtcNow.ToString("o"),
-                datacontenttype = "application/json",
-                lastUpdate = eventData.LastUpdate.Value,
             };
 
-            payloadList.Add(payloadObject);
+            payloadList.Add(payloadElementObject);
         }
         else
         {
@@ -452,9 +460,8 @@ public class EventService : IEventService
                 var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
                 schemaType += eventPayloadEntry.modelType;
 
-                var payloadObject = new
+                var payloadElementObject = new
                 {
-                    specversion = "1.0",
                     type = eventPayloadEntry.entryType,
                     source = sourceString,
                     subject = new
@@ -464,24 +471,31 @@ public class EventService : IEventService
                         idShortPath = eventPayloadEntry.idShortPath,
                         schema = schemaType
                     },
-                    id = $"{Guid.NewGuid()}",
-                    time = DateTime.UtcNow.ToString("o"),
-                    datacontenttype = "application/json",
                     data = eventPayloadEntry.payloadJsonObj,
                 };
 
-                payloadList.Add(payloadObject);
+                payloadList.Add(payloadElementObject);
             }
         }
 
         if (payloadList.Count > 0)
         {
-            var jsonArray = JsonSerializer.Serialize(payloadList);
+            var payloadObject = new
+            {
+                specversion = "1.0",
+                id = $"{Guid.NewGuid()}",
+                transmitted = DateTime.UtcNow.ToString("o"),
+                datacontenttype = "application/json",
+                time = eventData.LastUpdate.Value,
+                elements = payloadList
+            };
+
+            var payloadObjString = JsonSerializer.Serialize(payloadObject);
 
             try
             {
                 var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                    eventData.UserName.Value, eventData.PassWord.Value, jsonArray);
+                    eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
 
                 var now = DateTime.UtcNow;
 
