@@ -13,7 +13,7 @@
 
 using AasxServer;
 using Extensions;
-using Org.Webpki.JsonCanonicalizer;
+// using Org.Webpki.JsonCanonicalizer;
 using SampleClient;
 using System;
 using System.Collections.Generic;
@@ -685,8 +685,9 @@ namespace AasxTimeSeries
                     json.Value = s;
 
                     Console.WriteLine("Canonicalize");
-                    JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
-                    string            result            = jsonCanonicalizer.GetEncodedString();
+                    // JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
+                    // string            result            = jsonCanonicalizer.GetEncodedString();
+                    string result = s;
                     canonical.Value = result;
                     subject.Value   = certificate.Subject;
 
