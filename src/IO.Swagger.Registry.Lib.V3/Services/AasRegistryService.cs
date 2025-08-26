@@ -64,7 +64,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     Base64UrlEncoder.Encode(ad.Id);
                 // _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
                 Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
-                e.Interface = "AAS-1.0";
+                e.Interface = "AAS-3.0";
                 ad.Endpoints = new List<Models.Endpoint>
                 {
                     e
@@ -94,7 +94,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             AasxServer.Program.externalRepository + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
                             Base64UrlEncoder.Encode(sd.Id);
-                        esm.Interface = "SUBMODEL-1.0";
+                        esm.Interface = "SUBMODEL-3.0";
                         sd.Endpoints = new List<Models.Endpoint>
                         {
                             esm
