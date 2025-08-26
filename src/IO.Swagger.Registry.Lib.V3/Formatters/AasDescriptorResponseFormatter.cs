@@ -79,7 +79,7 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
                 json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-            if (typeof(SubmodelDescriptor).IsAssignableFrom(context.ObjectType))
+            else if (typeof(SubmodelDescriptor).IsAssignableFrom(context.ObjectType))
             {
                 JsonObject? json = DescriptorSerializer.ToJsonObject(context.Object);
                 var writer = new Utf8JsonWriter(response.Body);

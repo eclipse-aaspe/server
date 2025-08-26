@@ -280,7 +280,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
             }
         }
 
-        var output = _paginationService.GetPaginatedList(submodelDescriptors, new Models.PaginationParameters(cursor, limit));
+        var output = _paginationService.GetPaginatedList(submodelDescriptors, new PaginationParameters(cursor, limit));
         return new ObjectResult(output);
     }
 
