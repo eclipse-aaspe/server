@@ -1487,6 +1487,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
         var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
 
+        var domain = dbEventRequest.Domain;
         var diff = dbEventRequest.Diff;
         var wp = dbEventRequest.IsWithPayload;
         var limSm = dbEventRequest.LimitSm;
@@ -1499,59 +1500,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         List<String> diffEntry = new List<String>();
         string changes = "CREATE UPDATE DELETE";
 
-        if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
-        {
-            IReferable data = null;
-            if (eventData.DataSubmodel != null)
-            {
-                data = eventData.DataSubmodel;
-            }
-            if (eventData.DataCollection != null)
-            {
-                data = eventData.DataCollection;
-                // OUT: data
-                // IN: data.sme[0], copy
-                /*
-                if (eventData.direction != null && eventData.direction.Value == "IN")
-                {
-                    data = null;
-                    if (eventData.dataCollection is SubmodelElementCollection sme && sme.Value != null && sme.Value.Count == 1 && sme.Value[0] is SubmodelElementCollection smc)
-                    {
-                        data = smc;
-                    }
-                }
-                */
-                /*
-                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
-                {
-                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
-                    {
-                        data = eventData.dataCollection.Value[0];
-                    }
-                }
-                */
-            }
-            // if (data == null)
-            if (data == null || (data is SubmodelElementCollection smc && (smc.Value == null || smc.Value.Count == 0)))
-            {
-                return null;
-            }
-            int depth = 0;
-            if (eventData.Direction != null && eventData.Direction.Value == "IN" && eventData.Mode != null && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
-            {
-                depth = 1;
-            }
-
-            eventPayload = _eventService.CollectPayload(securityCondition, changes, depth,
-            eventData.StatusData, eventData.DataReference, data, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, wp, smOnly, limSm, offSm, limSme, offSme);
-        }
-        else // database
-        {
-            eventPayload = _eventService.CollectPayload(securityCondition, changes, 0,
-            eventData.StatusData, eventData.DataReference, null, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, wp, smOnly, limSm, limSme, offSm, offSme);
-        }
+        eventPayload = _eventService.CollectPayload(securityCondition, domain, changes, 0,
+        eventData.StatusData, eventData.ConditionSM, eventData.ConditionSME,
+        diff, diffEntry, wp, smOnly, limSm, limSme, offSm, offSme);
 
         if (eventPayload.elements.Count == 0 && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         {

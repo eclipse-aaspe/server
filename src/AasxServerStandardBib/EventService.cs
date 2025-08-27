@@ -364,6 +364,11 @@ public class EventService : IEventService
             c = eventData.Changes.Value;
         }
 
+        string domain = "";
+        if (eventData.Domain != null)
+        {
+            domain = eventData.Domain.Value;
+        }
 
         var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
 
@@ -377,8 +382,7 @@ public class EventService : IEventService
             d = "status";
         }
 
-        var e = CollectPayload(null, c, 0, eventData.StatusData,
-            eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
+        var e = CollectPayload(null, domain, c, 0, eventData.StatusData, eventData.ConditionSM, eventData.ConditionSME,
             d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
 
 
@@ -456,11 +460,11 @@ public class EventService : IEventService
 
             foreach (var eventPayloadEntry in e.elements)
             {
-                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.Subject.id);
+                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.subject.id);
 
                 if (eventPayloadEntry.payloadType == "sme")
                 {
-                    sourceString += "/submodel-elements/" + eventPayloadEntry.Subject.id;
+                    sourceString += "/submodel-elements/" + eventPayloadEntry.subject.id;
                 }
 
                 var payloadElementObject = new
@@ -469,10 +473,10 @@ public class EventService : IEventService
                     source = sourceString,
                     subject = new
                     {
-                        semanticId = eventPayloadEntry.Subject.semanticId,
-                        id = eventPayloadEntry.Subject.id,
-                        idShortPath = eventPayloadEntry.Subject.idShortPath,
-                        schema = eventPayloadEntry.Subject.schema
+                        semanticId = eventPayloadEntry.subject.semanticId,
+                        id = eventPayloadEntry.subject.id,
+                        idShortPath = eventPayloadEntry.subject.idShortPath,
+                        schema = eventPayloadEntry.subject.schema
                     },
                     data = eventPayloadEntry.data,
                 };
@@ -682,8 +686,8 @@ public class EventService : IEventService
                 {
                     e.data = j;
                 }
-                e.Subject.id = submodelId;
-                e.Subject.idShortPath = idShortPath + sme.IdShort;
+                e.subject.id = submodelId;
+                e.subject.idShortPath = idShortPath + sme.IdShort;
 
                 //ToDo: Find correct Semantic Id
                 //e.semanticId = sme.SemanticId.GetAsIdentifier();
@@ -699,8 +703,8 @@ public class EventService : IEventService
                 e.type = entryType;
                 e.time = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
                 e.payloadType = "sme";
-                e.Subject.id = submodelId;
-                e.Subject.idShortPath = idShortPath + sme.IdShort;
+                e.subject.id = submodelId;
+                e.subject.idShortPath = idShortPath + sme.IdShort;
                 if (children != null || children.Count != 0)
                 {
                     foreach (var child in children)
@@ -722,13 +726,14 @@ public class EventService : IEventService
         return count;
     }
 
-    public EventPayload CollectPayload(Dictionary<string, string> securityCondition, string changes, int depth, SubmodelElementCollection statusData,
-        ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
+    public EventPayload CollectPayload(Dictionary<string, string> securityCondition, string domain, string changes, int depth, SubmodelElementCollection statusData,
+        AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme)
     {
         var e = new EventPayload();
         e.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
         e.time = "";
+        e.domain = domain;
         e.elements = new List<EventPayloadEntry>();
 
         var isInitial = diff == "init";
@@ -938,15 +943,15 @@ public class EventService : IEventService
                                 var entry = new EventPayloadEntry();
                                 entry.type = entryType;
                                 entry.payloadType = "sme";
-                                entry.Subject.schema = EventPayloadEntry.SCHEMA + CrudOperator.GetModelType(sme.SMEType);
-                                entry.Subject.idShortPath = idShortPath;
-                                entry.Subject.id = sm.Identifier;
+                                entry.subject.schema = EventPayloadEntry.SCHEMA + CrudOperator.GetModelType(sme.SMEType);
+                                entry.subject.idShortPath = idShortPath;
+                                entry.subject.id = sm.Identifier;
                                 entry.time = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
                                 entry.notDeletedIdShortList = notDeletedIdShortList;
 
                                 if (sm.SemanticId != null)
                                 {
-                                    entry.Subject.semanticId = sme.SemanticId;
+                                    entry.subject.semanticId = sme.SemanticId;
                                 }
 
                                 if (entryType != "DELETE" && withPayload)
@@ -964,8 +969,8 @@ public class EventService : IEventService
                                 }
 
                                 e.elements.Add(entry);
-                                diffEntry.Add(entry.type + " " + entry.Subject.idShortPath);
-                                Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.Subject.idShortPath}");
+                                diffEntry.Add(entry.type + " " + entry.subject.idShortPath);
+                                Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.subject.idShortPath}");
                                 countSME++;
                             }
                         }
@@ -982,14 +987,14 @@ public class EventService : IEventService
                     var entry = new EventPayloadEntry();
                     entry.type = entryType;
                     entry.payloadType = "sm";
-                    entry.Subject.schema = EventPayloadEntry.SCHEMA + "submodel";
+                    entry.subject.schema = EventPayloadEntry.SCHEMA + "submodel";
                     entry.idShortPath = sm.IdShort;
-                    entry.Subject.id = sm.Identifier;
+                    entry.subject.id = sm.Identifier;
                     entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
                     if (sm.SemanticId != null)
                     {
-                        entry.Subject.semanticId = sm.SemanticId;
+                        entry.subject.semanticId = sm.SemanticId;
                     }
 
                     if (withPayload)
@@ -1135,7 +1140,7 @@ public class EventService : IEventService
             {
                 foreach (var entry in eventPayload.elements)
                 {
-                    var submodelId = entry.Subject.id;
+                    var submodelId = entry.subject.id;
                     ISubmodel receiveSubmodel = null;
                     IAssetAdministrationShell aas = null;
 
@@ -1247,7 +1252,7 @@ public class EventService : IEventService
                     }
                     else
                     {
-                        if (entry.Subject.id != entriesSubmodel.Last().Subject.id)
+                        if (entry.subject.id != entriesSubmodel.Last().subject.id)
                         {
                             changeSubmodel = true;
                         }
@@ -1263,7 +1268,7 @@ public class EventService : IEventService
                     }
                     if (changeSubmodel)
                     {
-                        var submodelIdentifier = entriesSubmodel.Last().Subject.id;
+                        var submodelIdentifier = entriesSubmodel.Last().subject.id;
                         List<int> smeDelete = [];
                         using (var db = new AasContext())
                         {
@@ -1806,6 +1811,10 @@ public class EventService : IEventService
                 case "messagecondition":
                     if (p != null)
                         eventDto.MessageCondition = p;
+                    break;
+                case "domain":
+                    if (p != null)
+                        eventDto.Domain = p;
                     break;
             }
         }

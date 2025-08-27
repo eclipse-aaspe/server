@@ -25,7 +25,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public const string SCHEMA = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
     public string? idShortPath;
 
-    public EventPayloadEntrySubject Subject { get; set; }
+    public EventPayloadEntrySubject subject { get; set; }
 
 
     public string time { get; set; } //latest timeStamp
@@ -46,13 +46,13 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
         payloadType = "";
 
         data = new JsonObject();;
-        Subject = new EventPayloadEntrySubject();
+        subject = new EventPayloadEntrySubject();
         notDeletedIdShortList = new List<string>();
     }
 
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.Subject.id, other.Subject.id);
+        var result = string.Compare(this.subject.id, other.subject.id);
 
         if (result == 0)
         {
@@ -75,7 +75,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
         if (result == 0)
         {
-            result = string.Compare(this.Subject.idShortPath, other.Subject.idShortPath);
+            result = string.Compare(this.subject.idShortPath, other.subject.idShortPath);
         }
 
         return result;

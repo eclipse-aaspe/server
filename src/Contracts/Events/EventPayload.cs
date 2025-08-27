@@ -29,6 +29,7 @@ public class EventPayload
     public string specVersion { get; set; } //current spec version, to be changed in static variable
     public string time { get; set; } //latest timeStamp for all entries
     public string transmitted { get; set; } // timestamp of GET or PUT
+    public string domain { get; set; } // domain (like phoenixcontact.com)
 
 
     public int countSM { get; set; }
@@ -42,6 +43,7 @@ public class EventPayload
         specVersion = SPEC_VERSION;
         time = "";
         transmitted = "";
+        domain = "";
 
         countSM = 0;
 

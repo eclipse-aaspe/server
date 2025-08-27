@@ -1965,10 +1965,14 @@ namespace AasxServer
                                 {
                                     if (eventData.Status != null)
                                     {
-                                        eventData.Message.Value = "ERROR: " +
-                                            response.StatusCode.ToString() + " ; " +
-                                            response.Content.ReadAsStringAsync().Result +
-                                            " ; RECONNECT " + requestPath;
+                                        if (eventData.Message != null)
+                                        {
+                                            eventData.Message.Value = "ERROR: " +
+                                                response.StatusCode.ToString() + " ; " +
+                                                response.Content.ReadAsStringAsync().Result +
+                                                " ; RECONNECT " + requestPath;
+                                        }
+
                                         eventData.Status.SetTimeStamp(now);
                                         // d = eventData.LastUpdate.Value = "reconnect";
                                         eventData.LastUpdate.SetTimeStamp(now);
@@ -2061,9 +2065,12 @@ namespace AasxServer
                     }
                     catch (Exception ex)
                     {
-                        eventData.Message.Value = "ERROR: " +
-                            ex.Message +
-                            " ; RECONNECT " + requestPath;
+                        if (eventData.Message != null)
+                        {
+                            eventData.Message.Value = "ERROR: " +
+                                ex.Message +
+                                " ; RECONNECT " + requestPath;
+                        }
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
                         eventData.Status.SetTimeStamp(now);
@@ -2112,8 +2119,14 @@ namespace AasxServer
                         c = eventData.Changes.Value;
                     }
 
-                    var e = _eventService.CollectPayload(null, c, 0, eventData.StatusData,
-                        eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
+                    string domain = "";
+                    if (eventData.Domain != null)
+                    {
+                        domain = eventData.Domain.Value;
+                    }
+
+                    var e = _eventService.CollectPayload(null, domain, c, 0, eventData.StatusData,
+                        eventData.ConditionSM, eventData.ConditionSME,
                         d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
                     {
@@ -2169,10 +2182,13 @@ namespace AasxServer
                                 {
                                     if (eventData.Status != null)
                                     {
-                                        eventData.Message.Value = "ERROR: " +
-                                            response.StatusCode.ToString() + " ; " +
-                                            response.Content.ReadAsStringAsync().Result +
-                                            " ; PUT " + requestPath;
+                                        if (eventData.Message != null)
+                                        {
+                                            eventData.Message.Value = "ERROR: " +
+                                                response.StatusCode.ToString() + " ; " +
+                                                response.Content.ReadAsStringAsync().Result +
+                                                " ; PUT " + requestPath;
+                                        }
                                         eventData.Status.SetTimeStamp(now);
                                         // d = eventData.LastUpdate.Value = "reconnect";
                                         eventData.LastUpdate.SetTimeStamp(now);
