@@ -32,6 +32,7 @@ using System.Text.RegularExpressions;
 using AasxServer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 public class EventService : IEventService
 {
@@ -294,6 +295,9 @@ public class EventService : IEventService
             source = eventData.DataSubmodel;
         }
 
+        TimeSpan minInterval = TimeSpan.Zero;
+        TimeSpan maxInterval = TimeSpan.Zero;
+
         var d = "";
         if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value == "init")
         {
@@ -311,10 +315,14 @@ public class EventService : IEventService
 
                 if (eventData.MinInterval != null
                     && eventData.MinInterval.Value != null
-                    && Int32.TryParse(eventData.MinInterval.Value, out int result))
+                    && Int32.TryParse(eventData.MinInterval.Value, out int minResult))
                 {
+
+                    minInterval = TimeSpan.FromSeconds(minResult);
+
                     var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                        .Add(TimeSpan.FromSeconds(result));
+                        .Add(minInterval);
+
 
                     var now = DateTime.UtcNow;
 
@@ -322,6 +330,14 @@ public class EventService : IEventService
                     {
                         return;
                     }
+                }
+
+                if (eventData.MaxInterval != null
+                    && eventData.MaxInterval.Value != null
+                    && Int32.TryParse(eventData.MaxInterval.Value, out int maxResult))
+                {
+
+                    maxInterval = TimeSpan.FromSeconds(maxResult);
                 }
             }
         }
@@ -358,17 +374,21 @@ public class EventService : IEventService
             wp = false;
         }
 
-        string c = "";
-        if (eventData.Changes != null)
-        {
-            c = eventData.Changes.Value;
-        }
-
         string domain = "";
         if (eventData.Domain != null)
         {
             domain = eventData.Domain.Value;
         }
+
+        DateTime transmitted = DateTime.MinValue;
+        if (eventData.Transmitted != null)
+        {
+            if (eventData.Transmitted.Value != null)
+            {
+                transmitted = DateTime.Parse(eventData.Transmitted.Value);
+            }
+        }
+
 
         var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
 
@@ -377,14 +397,16 @@ public class EventService : IEventService
             clientId += $"/submodel-elements/{idShortPath}.{eventData.IdShort}";
         }
 
-        if (pbee)
+        var sourceString = "";
+
+        if (eventData.IdShort != null)
         {
-            d = "status";
+            sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
         }
+        var semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
 
-        var e = CollectPayload(null, domain, c, 0, eventData.StatusData, eventData.ConditionSM, eventData.ConditionSME,
-            d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
-
+        var e = CollectPayload(null, false, sourceString, semanticId, domain, null, eventData.ConditionSM, eventData.ConditionSME,
+            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
 
         bool sendStatus = false;
 
@@ -426,167 +448,100 @@ public class EventService : IEventService
             }
         }
 
-        var payloadList = new List<object>();
-
-        if (sendStatus)
+        var options = new JsonSerializerOptions
         {
-            var sourceString = "";
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
 
-            if (eventData.IdShort != null)
-            {
-                sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
-            }
+        var payloadObjString = JsonSerializer.Serialize(e, options);
 
-            var schemaType = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
-
-            var payloadElementObject = new
-            {
-                source = sourceString,
-                subject = new
-                {
-                    semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "",
-                    schema = schemaType
-                },
-            };
-
-            payloadList.Add(payloadElementObject);
-        }
-        else
+        try
         {
-            foreach (var diff in diffEntry)
+            var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
+                eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
+
+            var now = DateTime.UtcNow;
+
+            bool isSucceeded = false;
+
+            if (result != null && result.IsSuccess)
             {
-                Console.WriteLine(diff);
+                isSucceeded = true;
+                Console.WriteLine("MQTT message sent.");
             }
 
-            foreach (var eventPayloadEntry in e.elements)
+            if (isSucceeded)
             {
-                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(eventPayloadEntry.subject.id);
-
-                if (eventPayloadEntry.payloadType == "sme")
+                if (eventData.Transmitted != null)
                 {
-                    sourceString += "/submodel-elements/" + eventPayloadEntry.subject.id;
+                    eventData.Transmitted.Value = e.transmitted;
+                    eventData.Transmitted.SetTimeStamp(now);
                 }
-
-                var payloadElementObject = new
+                var dt = DateTime.Parse(e.time);
+                if (eventData.LastUpdate != null)
                 {
-                    type = eventPayloadEntry.type,
-                    source = sourceString,
-                    subject = new
+                    eventData.LastUpdate.Value = e.time;
+                    eventData.LastUpdate.SetTimeStamp(dt);
+                }
+                if (eventData.Status != null)
+                {
+                    if (eventData.Message != null)
                     {
-                        semanticId = eventPayloadEntry.subject.semanticId,
-                        id = eventPayloadEntry.subject.id,
-                        idShortPath = eventPayloadEntry.subject.idShortPath,
-                        schema = eventPayloadEntry.subject.schema
-                    },
-                    data = eventPayloadEntry.data,
-                };
-
-                payloadList.Add(payloadElementObject);
+                        //ToDo: Is message really correct? 
+                        eventData.Message.Value = "on";
+                    }
+                    eventData.Status.SetTimeStamp(now);
+                }
+                if (eventData.Diff != null && diffEntry.Count > 0)
+                {
+                    eventData.Diff.Value = new List<ISubmodelElement>();
+                    int i = 0;
+                    foreach (var dif in diffEntry)
+                    {
+                        var p = new Property(DataTypeDefXsd.String);
+                        p.IdShort = "diff" + i;
+                        p.Value = dif;
+                        p.SetTimeStamp(dt);
+                        eventData.Diff.Value.Add(p);
+                        p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
+                        i++;
+                    }
+                    eventData.Diff.SetTimeStamp(dt);
+                }
+                Program.signalNewData(2);
             }
-        }
-
-        if (payloadList.Count > 0)
-        {
-            var payloadObject = new
+            else
             {
-                specversion = "1.0",
-                id = $"{Guid.NewGuid()}",
-                transmitted = DateTime.UtcNow.ToString("o"),
-                datacontenttype = "application/json",
-                time = eventData.LastUpdate.Value,
-                elements = payloadList
-            };
+                var statusCode = "";
 
-            var payloadObjString = JsonSerializer.Serialize(payloadObject);
-
-            try
-            {
-                var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                    eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
-
-                var now = DateTime.UtcNow;
-
-                bool isSucceeded = false;
-
-                if (result != null && result.IsSuccess)
+                if (result != null)
                 {
-                    isSucceeded = true;
-                    Console.WriteLine("MQTT message sent.");
+                    statusCode = result.ReasonCode.ToString();
                 }
 
-                if (isSucceeded)
-                {
-                    if (eventData.Transmitted != null)
-                    {
-                        eventData.Transmitted.Value = e.transmitted;
-                        eventData.Transmitted.SetTimeStamp(now);
-                    }
-                    var dt = DateTime.Parse(e.time);
-                    if (eventData.LastUpdate != null)
-                    {
-                        eventData.LastUpdate.Value = e.time;
-                        eventData.LastUpdate.SetTimeStamp(dt);
-                    }
-                    if (eventData.Status != null)
-                    {
-                        if (eventData.Message != null)
-                        {
-                            //ToDo: Is message really correct? 
-                            eventData.Message.Value = "on";
-                        }
-                        eventData.Status.SetTimeStamp(now);
-                    }
-                    if (eventData.Diff != null && diffEntry.Count > 0)
-                    {
-                        eventData.Diff.Value = new List<ISubmodelElement>();
-                        int i = 0;
-                        foreach (var dif in diffEntry)
-                        {
-                            var p = new Property(DataTypeDefXsd.String);
-                            p.IdShort = "diff" + i;
-                            p.Value = dif;
-                            p.SetTimeStamp(dt);
-                            eventData.Diff.Value.Add(p);
-                            p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
-                            i++;
-                        }
-                        eventData.Diff.SetTimeStamp(dt);
-                    }
-                    Program.signalNewData(2);
-                }
-                else
-                {
-                    var statusCode = "";
-
-                    if (result != null)
-                    {
-                        statusCode = result.ReasonCode.ToString();
-                    }
-
-                    if (eventData.Status != null)
-                    {
-                        eventData.Message.Value = "ERROR: " +
-                            statusCode + " ; " +
-                            " ; PUT " + eventData.MessageBroker.Value;
-                        eventData.Status.SetTimeStamp(now);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (eventData.Message != null)
+                if (eventData.Status != null)
                 {
                     eventData.Message.Value = "ERROR: " +
-                        ex.Message +
+                        statusCode + " ; " +
                         " ; PUT " + eventData.MessageBroker.Value;
+                    eventData.Status.SetTimeStamp(now);
                 }
-                var now = DateTime.UtcNow;
-                eventData.Status.SetTimeStamp(now);
-                // d = eventData.LastUpdate.Value = "reconnect";
             }
-
-            eventData.env.setWrite(true);
         }
+        catch (Exception ex)
+        {
+            if (eventData.Message != null)
+            {
+                eventData.Message.Value = "ERROR: " +
+                    ex.Message +
+                    " ; PUT " + eventData.MessageBroker.Value;
+            }
+            var now = DateTime.UtcNow;
+            eventData.Status.SetTimeStamp(now);
+            // d = eventData.LastUpdate.Value = "reconnect";
+        }
+
+        eventData.env.setWrite(true);
     }
 
     private int CollectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
@@ -726,23 +681,40 @@ public class EventService : IEventService
         return count;
     }
 
-    public EventPayload CollectPayload(Dictionary<string, string> securityCondition, string domain, string changes, int depth, SubmodelElementCollection statusData,
-        AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
-        string diff, List<String> diffEntry, bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme)
+    public EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
+        string basicEventElementSemanticId, string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
+        string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
+        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme)
     {
-        var e = new EventPayload();
-        e.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
-        e.time = "";
-        e.domain = domain;
-        e.elements = new List<EventPayloadEntry>();
+        var lastUpdate = "";
 
-        var isInitial = diff == "init";
-        var isStatus = diff == "status";
+        if (!diff.IsNullOrEmpty()
+            && diff != "status"
+            && diff != "init")
+        {
+            lastUpdate = diff;
+        }
+
+        var eventPayload = new EventPayload(isREST);
+
+        //ToDo: Clarify if both is needed
+        //eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+        eventPayload.transmitted = DateTime.UtcNow.ToString("o");
+
+        eventPayload.time = "";
+        eventPayload.domain = domain;
+
+        eventPayload.elements = new List<EventPayloadEntry>();
+
+        if (!basicEventElementSourceString.IsNullOrEmpty())
+        {
+            diff = "status";
+        }
 
         if (statusData != null && statusData.Value != null)
         {
             var j = Jsonization.Serialize.ToJsonObject(statusData);
-            e.statusData = j;
+            eventPayload.statusData = j;
             /*
             if (depth == 0)
             {
@@ -816,8 +788,23 @@ public class EventService : IEventService
                     }
 
                 }
-                e.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-                return e;
+                eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+
+                if (!basicEventElementSourceString.IsNullOrEmpty())
+                {
+                    eventPayload.elements.Add(new EventPayloadEntry()
+                    {
+                        source = basicEventElementSourceString,
+                        subject = new EventPayloadEntrySubject()
+                        {
+                            semanticId = basicEventElementSemanticId,
+                            schema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement"
+                        }
+                    });
+                }
+
+
+                return eventPayload;
             }
 
             var diffTime = new DateTime();
@@ -940,8 +927,12 @@ public class EventService : IEventService
                                 }
                                 */
 
+                                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(sm.Identifier);
+                                sourceString += "/submodel-elements/" + idShortPath;
+
                                 var entry = new EventPayloadEntry();
                                 entry.type = entryType;
+                                entry.source = sourceString;
                                 entry.payloadType = "sme";
                                 entry.subject.schema = EventPayloadEntry.SCHEMA + CrudOperator.GetModelType(sme.SMEType);
                                 entry.subject.idShortPath = idShortPath;
@@ -968,7 +959,7 @@ public class EventService : IEventService
                                     }
                                 }
 
-                                e.elements.Add(entry);
+                                eventPayload.elements.Add(entry);
                                 diffEntry.Add(entry.type + " " + entry.subject.idShortPath);
                                 Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.subject.idShortPath}");
                                 countSME++;
@@ -984,7 +975,10 @@ public class EventService : IEventService
                         timeStampMax = sm.TimeStampTree;
                     }
 
+                    var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(sm.Identifier);
+
                     var entry = new EventPayloadEntry();
+                    entry.source = sourceString;
                     entry.type = entryType;
                     entry.payloadType = "sm";
                     entry.subject.schema = EventPayloadEntry.SCHEMA + "submodel";
@@ -1012,7 +1006,7 @@ public class EventService : IEventService
 
                     diffEntry.Add(entry.type + " " + entry.idShortPath);
                     Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
-                    e.elements.Add(entry);
+                    eventPayload.elements.Add(entry);
                     countSM++;
                 }
             }
@@ -1027,20 +1021,20 @@ public class EventService : IEventService
                     timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).DefaultIfEmpty().Max();
                 }
             }
-            e.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-            e.countSM = countSM;
+            eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+            eventPayload.countSM = countSM;
             //e.status.countSME = countSME;
             if (countSM == limitSm)
             {
-                e.cursor = $"offsetSM={offsetSm + limitSm}";
+                eventPayload.cursor = $"offsetSM={offsetSm + limitSm}";
             }
             else if (countSM == limitSm)
             {
-                e.cursor = $"offsetSME={offsetSme + limitSme}";
+                eventPayload.cursor = $"offsetSME={offsetSme + limitSme}";
             }
         }
 
-        return e;
+        return eventPayload;
     }
 
     public int ChangeData(string json, EventDto eventData, AdminShellPackageEnv[] env, IReferable referable, out string transmit, out string lastDiffValue, out string statusValue, List<String> diffEntry, int packageIndex = -1)
@@ -1709,10 +1703,6 @@ public class EventService : IEventService
                 case "mode":
                     if (p != null)
                         eventDto.Mode = p;
-                    break;
-                case "changes":
-                    if (p != null)
-                        eventDto.Changes = p;
                     break;
                 case "authentication":
                     if (smec != null)

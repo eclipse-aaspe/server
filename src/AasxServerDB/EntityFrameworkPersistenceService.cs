@@ -1487,7 +1487,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
         var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
 
-        var domain = dbEventRequest.Domain;
         var diff = dbEventRequest.Diff;
         var wp = dbEventRequest.IsWithPayload;
         var limSm = dbEventRequest.LimitSm;
@@ -1496,13 +1495,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var offSme = dbEventRequest.OffsetSme;
         var smOnly = dbEventRequest.IsSubmodelsOnly;
 
-        var eventPayload = new Contracts.Events.EventPayload();
+        var eventPayload = new Contracts.Events.EventPayload(true);
         List<String> diffEntry = new List<String>();
-        string changes = "CREATE UPDATE DELETE";
 
-        eventPayload = _eventService.CollectPayload(securityCondition, domain, changes, 0,
+        string domain = "";
+        if (eventData.Domain != null)
+        {
+            domain = eventData.Domain.Value;
+        }
+
+        eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain,
         eventData.StatusData, eventData.ConditionSM, eventData.ConditionSME,
-        diff, diffEntry, wp, smOnly, limSm, limSme, offSm, offSme);
+        diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme);
 
         if (eventPayload.elements.Count == 0 && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         {

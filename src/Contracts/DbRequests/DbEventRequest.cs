@@ -32,8 +32,6 @@ public class DbEventRequest
     public ISubmodel Submodel { get; set; }
 
     //For Read request
-    public string Domain { get; set; }
-
     public bool IsWithPayload { get; set; }
 
     public bool IsSubmodelsOnly { get; set; }

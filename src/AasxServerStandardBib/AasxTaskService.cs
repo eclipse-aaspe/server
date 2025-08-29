@@ -40,6 +40,7 @@ namespace AasxServer
     using Contracts.Events;
     using MQTTnet;
     using System.Security.Authentication;
+    using System.Text.Json.Serialization;
 
     public class AasxTask
     {
@@ -2081,7 +2082,46 @@ namespace AasxServer
 
                 if (d != "reconnect")
                 {
+                    TimeSpan minInterval = TimeSpan.Zero;
+                    TimeSpan maxInterval = TimeSpan.Zero;
+
                     List<String> diffEntry = new List<String>();
+
+                    if (eventData.MinInterval != null
+                    && eventData.MinInterval.Value != null
+                    && Int32.TryParse(eventData.MinInterval.Value, out int minResult))
+                    {
+
+                        minInterval = TimeSpan.FromSeconds(minResult);
+
+                        var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                            .Add(minInterval);
+
+
+                        var now = DateTime.UtcNow;
+
+                        if (now < nextUpdate)
+                        {
+                            return;
+                        }
+                    }
+
+                    if (eventData.MaxInterval != null
+                        && eventData.MaxInterval.Value != null
+                        && Int32.TryParse(eventData.MaxInterval.Value, out int maxResult))
+                    {
+
+                        maxInterval = TimeSpan.FromSeconds(maxResult);
+                    }
+
+                    DateTime transmitted = DateTime.MinValue;
+                    if (eventData.Transmitted != null)
+                    {
+                        if (eventData.Transmitted.Value != null)
+                        {
+                            transmitted = DateTime.Parse(eventData.Transmitted.Value);
+                        }
+                    }
 
                     bool wp = false;
 
@@ -2104,19 +2144,12 @@ namespace AasxServer
                         smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
                     }
 
-                    //ToDo: Do we need this for HTTP, also? (like for MQTT)
-                    //bool pbee = false;
+                    bool pbee = false;
 
-                    //if (eventData.PublishBasicEventElement != null
-                    //        && eventData.PublishBasicEventElement.Value != null)
-                    //{
-                    //    pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
-                    //}
-
-                    string c = "";
-                    if (eventData.Changes != null)
+                    if (eventData.PublishBasicEventElement != null
+                            && eventData.PublishBasicEventElement.Value != null)
                     {
-                        c = eventData.Changes.Value;
+                        pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
                     }
 
                     string domain = "";
@@ -2125,9 +2158,18 @@ namespace AasxServer
                         domain = eventData.Domain.Value;
                     }
 
-                    var e = _eventService.CollectPayload(null, domain, c, 0, eventData.StatusData,
+                    var sourceString = "";
+
+                    if (eventData.IdShort != null)
+                    {
+                        sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+                    }
+                    var semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
+
+
+                    var e = _eventService.CollectPayload(null, false, sourceString, semanticId, domain, null,
                         eventData.ConditionSM, eventData.ConditionSME,
-                        d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
+                        d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
                     {
                         Console.WriteLine(diff);
@@ -2135,7 +2177,12 @@ namespace AasxServer
 
                     Console.WriteLine("PUT Events: " + requestPath + "/" + d);
 
-                    var json = System.Text.Json.JsonSerializer.Serialize(e);
+                    var options = new JsonSerializerOptions
+                    {
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    };
+
+                    var json = System.Text.Json.JsonSerializer.Serialize(e, options);
 
                     /*
                     handler = new HttpClientHandler();

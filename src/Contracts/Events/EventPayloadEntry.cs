@@ -32,6 +32,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public string type { get; set; } // CREATE, UPDATE, DELETE
     //public string source { get; set; } // link to source
     public string payloadType { get; set; } // Submodel, SME, AAS
+    public string source { get; set; } // link to source
 
     public JsonObject data { get; set; } // JSON Serialization
 
@@ -42,12 +43,10 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     {
         type = "";
         time = "";
-        //source = "";
-        payloadType = "";
 
-        data = new JsonObject();;
+        data = new JsonObject();
         subject = new EventPayloadEntrySubject();
-        notDeletedIdShortList = new List<string>();
+        //notDeletedIdShortList = new List<string>();
     }
 
     public int CompareTo(EventPayloadEntry other)

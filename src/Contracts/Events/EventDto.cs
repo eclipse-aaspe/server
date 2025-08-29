@@ -45,7 +45,6 @@ public class EventDto
 
     public AasCore.Aas3_0.Property Direction = null;
     public AasCore.Aas3_0.Property Mode = null;
-    public AasCore.Aas3_0.Property Changes = null;
     public AasCore.Aas3_0.Property EndPoint = null;
     public Submodel DataSubmodel = null;
     public ISubmodelElement DataCollection = null;
