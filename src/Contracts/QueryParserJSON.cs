@@ -110,7 +110,7 @@ public class QueryGrammarJSON : Grammar
                                             ("\"$regex\":" + stringItems) |
                                             ("\"$boolean\":" + booleanLiteral))
                                             + ToTerm("}");
-        matchExpression.Rule = ToTerm("{") + (("\"$match\":" + matchExpressionArray) |
+        matchExpression.Rule = ToTerm("{") + ( /* ("\"$match\":" + matchExpressionArray) | nested match currently not implemented */
                                            ("\"$eq\":" + comparisonItems) |
                                            ("\"$ne\":" + comparisonItems) |
                                            ("\"$gt\":" + comparisonItems) |
@@ -307,6 +307,9 @@ public class QueryGrammarJSON : Grammar
                 case "$and":
                     op = "&&";
                     break;
+                case "$match":
+                    op = "$match";
+                    break;
                 case "$not":
                     op = "!";
                     break;
@@ -361,6 +364,7 @@ public class QueryGrammarJSON : Grammar
                         }
                     }
                     break;
+                case "$match":
                 case "$and":
                 case "$or":
                     if (eList?.Count > 0)
@@ -369,7 +373,18 @@ public class QueryGrammarJSON : Grammar
                         par[0] = createExpression(mode, eList[0]);
                         if (eList.Count == 1)
                         {
-                            return par[0];
+                            if (op != "$match")
+                            {
+                                return par[0];
+                            }
+                            else
+                            {
+                                if (par[0] != null && par[0] != "$SKIP")
+                                {
+                                    return "$$match$$" + par[0] + "$$match$$";
+                                }
+                                return par[0];
+                            }
                         }
                         else
                         {
@@ -397,24 +412,48 @@ public class QueryGrammarJSON : Grammar
                                     return "true";
                                 }
                             }
-                            var result = "";
-                            int count = 0;
-                            for (int i = 0; i < eList.Count; i++)
+                            if (op != "$match")
                             {
-                                if (par[i] != null && par[i] != "$SKIP")
+                                var result = "";
+                                int count = 0;
+                                for (int i = 0; i < eList.Count; i++)
                                 {
-                                    count++;
-                                    if (result == "")
+                                    if (par[i] != null && par[i] != "$SKIP")
                                     {
-                                        result = par[i];
-                                    }
-                                    else
-                                    {
-                                        result += " " + op + " " + par[i];
+                                        count++;
+                                        if (result == "")
+                                        {
+                                            result = par[i];
+                                        }
+                                        else
+                                        {
+                                            result += " " + op + " " + par[i];
+                                        }
                                     }
                                 }
+                                return "(" + result + ")"; // + "[" + skipCount + "/" + eList.Count + "]";
                             }
-                            return "(" + result + ")"; // + "[" + skipCount + "/" + eList.Count + "]";
+                            else
+                            {
+                                var result = "$$match$$";
+                                int count = 0;
+                                for (int i = 0; i < eList.Count; i++)
+                                {
+                                    if (par[i] != null && par[i] != "$SKIP")
+                                    {
+                                        count++;
+                                        if (result == "")
+                                        {
+                                            result += par[i];
+                                        }
+                                        else
+                                        {
+                                            result += "$$" + par[i];
+                                        }
+                                    }
+                                }
+                                return result + "$$match$$";
+                            }
                         }
                     }
                     break;
@@ -500,6 +539,13 @@ public class QueryGrammarJSON : Grammar
 
                         if (value.Contains("$sme."))
                         {
+                            var tag = "path";
+                            /*
+                            if (value.Contains("[]"))
+                            {
+                                tag = "match";
+                            }
+                            */
                             // $sme with idShortPath
                             value = value.Replace("$sme.", "");
                             var split = value.Split("#");
@@ -509,7 +555,7 @@ public class QueryGrammarJSON : Grammar
                                 return value;
                             }
 
-                            return $"$$tag$$path$${split[0]}$${value}$$";
+                            return $"$$tag$${tag}$${split[0]}$${value}$$";
                         }
 
                         return ReplaceField(mode, value, smeValue);
