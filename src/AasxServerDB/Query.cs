@@ -33,6 +33,7 @@ using HotChocolate.Types.Relay;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Text.Json;
 using System.Numerics;
+using System.Text.RegularExpressions;
 
 public class CombinedValue
 {
@@ -468,7 +469,7 @@ public partial class Query
                 pathAllCondition = "";
                 var iCondition = 0;
                 // foreach (var match in splitMatch)
-                var conditionCount = splitMatch.Count();
+                var conditionCount = splitMatch.Where(s => s.Contains("$$tag$$path$$")).Count();
                 for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
                 {
                     var match = splitMatch[iMatch];
@@ -478,7 +479,7 @@ public partial class Query
                     }
                     else
                     {
-                        pathAllCondition += $"c.c[{iCondition}]";
+                        pathAllCondition += $"c.Conditions[{iCondition}]";
 
                         List<string> idShortPath = [];
                         var idShortPathSplit = new List<List<string>>();
@@ -604,14 +605,21 @@ public partial class Query
                             smeList[iExp] = smeListCompare.Select("I").Distinct();
                         }
                         var condition = new List<bool>();
-                        for (var i = 0; i < iCondition; i++)
+                        var sCondition = "";
+                        for (var i = 0; i < conditionCount; i++)
                         {
                             condition.Add(false);
+                            if (i != 0)
+                            {
+                                sCondition += ", ";
+                            }
+                            sCondition += $"{i == iCondition} as c{i}";
                         }
-                        condition.Add(true);
+                        condition[iCondition] = true;
 
                         // var smIDs = smeList.Last().Select($"new (SMid, true as c{iCondition})");
-                        var smIDs = smeList.Last().Select("SMId").Cast<int>().Select(smID => new SmDto { SMId = smID, Conditions = condition.ToList() });
+                        var smIDs = smeList.Last().Select($"new (SMid, {sCondition})");
+                        // var smIDs = smeList.Last().Select("SMId").Cast<int>().Select(smID => new SmDto { SMId = smID, Conditions = condition.ToList() });
                         if (smIDs != null)
                         {
                             if (smFound == null)
@@ -630,19 +638,40 @@ public partial class Query
                                     cOuter3 += $", false as c{i}";
                                 }
 
+                                /*
+                                var smFoundDTO = smFound as IQueryable<SmDto>;
+                                var smFoundJoin = smFoundDTO.Join(
+                                    smIDs,
+                                    outer => outer.SMId,
+                                    inner => inner.SMId,
+                                    (outer, inner) => new SmDto
+                                    {
+                                        SMId = outer.SMId,
+                                        Conditions = outer.Conditions
+                                    }
+                                );
+                                */
+
                                 var smFoundJoin = smFound.Join(
                                     smIDs,
                                     "SMid",
                                     "SMid",
-                                    $"new(outer.SMId, {cOuter1}, inner.c{iCondition} as c{iCondition})"
+                                    // $"new(outer.SMId, {cOuter1}, inner.c{iCondition} as c{iCondition})"
+                                    $"new(outer.SMId, {sCondition})"
                                 );
+                                /*
+                                var smContains = smFoundJoin.Select(s => s.SMId);
+                                var smMissingOuter = smFoundDTO.Where(s => !smContains.Contains(s.SMId));
+                                var smMissingInner = smIDs.Where(s => !smContains.Contains(s.SMId));
+                                var combined = smFoundJoin.Concat(smMissingOuter).Concat(smMissingInner);
+                                */
                                 var smContains = smFoundJoin.Select("SMId");
                                 var smMissingOuter = smFound
-                                    .Where("!@0.Contains(SMId)", smContains)
-                                    .Select($"new (SMId, {cOuter2}, false as c{iCondition})");
+                                    .Where("!@0.Contains(SMId)", smContains);
+                                // .Select($"new (SMId, {cOuter2}, false as c{iCondition})");
                                 var smMissingInner = smIDs
-                                    .Where("!@0.Contains(SMId)", smContains)
-                                    .Select($"new (SMId, {cOuter3}, true as c{iCondition})");
+                                    .Where("!@0.Contains(SMId)", smContains);
+                                    // .Select($"new (SMId, {cOuter3}, true as c{iCondition})");
                                 var combined = smFoundJoin
                                     .Cast<dynamic>().AsQueryable()
                                     .Concat(smMissingOuter.Cast<dynamic>().AsQueryable())
@@ -651,8 +680,6 @@ public partial class Query
                                 var smSelect1 = smFoundJoin.Select("SMId");
                                 var smSelect2 = smMissingOuter.Select("SMId");
                                 var smSelect3 = smMissingInner.Select("SMId");
-
-
                                 var smSelect4 = combined.Select("SMId");
                                 var smSelect5 = smFound.Select("SMId");
 
