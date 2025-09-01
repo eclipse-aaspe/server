@@ -465,11 +465,10 @@ public partial class Query
             {
                 IQueryable smFound = null;
                 var splitMatch = pathAllConditionRaw.Split("$$match$$");
-                // pathAllCondition = splitMatch[0];
                 pathAllCondition = "";
                 var iCondition = 0;
-                // foreach (var match in splitMatch)
                 var conditionCount = splitMatch.Where(s => s.Contains("$$tag$$path$$")).Count();
+                var smContains = new IQueryable[conditionCount];
                 for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
                 {
                     var match = splitMatch[iMatch];
@@ -479,8 +478,7 @@ public partial class Query
                     }
                     else
                     {
-                        pathAllCondition += $"c.Conditions[{iCondition}]";
-
+                        var matchCondition = "false";
                         List<string> idShortPath = [];
                         var idShortPathSplit = new List<List<string>>();
                         List<string> field = [];
@@ -538,7 +536,6 @@ public partial class Query
                         var smeList = new List<IQueryable>();
                         for (var iExp = 0; iExp < expSME.Count; iExp++)
                         {
-                            // var path = "Path1,";
                             var index = "Index1,";
                             var sme = db.SMESets.Where(expSME[iExp]);
                             var svalue = db.SValueSets.Where(distinctExp[iExp].Replace("svalue", "value"));
@@ -548,9 +545,7 @@ public partial class Query
                                 "SMEId",
                                 "new (outer.SMId," +
                                     "outer.IdShortPath," +
-                                    // "outer.IdShortPath.Substring(0, outer.IdShortPath.IndexOf(\"]\") + 1) as Path1," +
                                     "outer.IdShortPath.IndexOf(\"]\") + 1 as Index1," +
-                                    // "inner.Value as Value" +
                                     ")"
                                 );
                             for (var i = 1; i < idShortPathSplit[iExp].Count - 1; i++)
@@ -558,21 +553,16 @@ public partial class Query
                                 joinSmeValuePath = joinSmeValuePath
                                     .Select("new (SMId," +
                                         "IdShortPath," +
-                                        // path +
                                         index +
-                                        // $"IdShortPath.Substring(0, Path{i}.Length + IdShortPath.Substring(Path{i}.Length).IndexOf(\"]\") + 1) as Path{i + 1}," +
                                         $"(IdShortPath.Substring(Index{i}).IndexOf(\"]\") + 1  + Index{i}) as Index{i + 1}," +
-                                        // "Value as Value" +
                                         ")"
                                     );
-                                // path += $" Path{i + 1},";
                                 index += $" Index{i + 1},";
                             }
                             smeList.Add(joinSmeValuePath);
                         }
                         for (var iExp = 1; iExp < expSME.Count; iExp++)
                         {
-                            // var path = "";
                             var index = "";
                             var pathMax = 0;
                             while (pathMax < idShortPathSplit[iExp].Count &&
@@ -580,7 +570,6 @@ public partial class Query
                                 idShortPathSplit[iExp][pathMax] == idShortPathSplit[iExp - 1][pathMax])
                             {
                                 pathMax++;
-                                // path += $"Path{pathMax}, ";
                                 index += $"Index{pathMax}, ";
                             }
 
@@ -589,13 +578,10 @@ public partial class Query
                                 "SMId",
                                 "SMId",
                                 "new (outer.SMId as SMId," +
-                                    // $"outer.Path{pathMax} as OPath, inner.Path{pathMax} as IPath," +
-                                    // $"outer.IdShortPath.Substring(0, outer.Index{pathMax}) as OPath, inner.IdShortPath.Substring(0, inner.Index{pathMax}) as IPath," +
                                     "outer as O," +
                                     "inner as I" +
                                     ")"
                             ).Distinct();
-                            // smeListCompare = smeListCompare.Where("OPath == IPath");
                             index = $"Index{pathMax}";
                             smeListCompare = smeListCompare.Where(
                                     $"o.{index} == i.{index} && " +
@@ -604,129 +590,20 @@ public partial class Query
                             smeList[iExp - 1] = smeListCompare.Select("O").Distinct();
                             smeList[iExp] = smeListCompare.Select("I").Distinct();
                         }
-                        var condition = new List<bool>();
-                        var sCondition = "";
-                        for (var i = 0; i < conditionCount; i++)
-                        {
-                            condition.Add(false);
-                            if (i != 0)
-                            {
-                                sCondition += ", ";
-                            }
-                            sCondition += $"{i == iCondition} as c{i}";
-                        }
-                        condition[iCondition] = true;
-
-                        // var smIDs = smeList.Last().Select($"new (SMid, true as c{iCondition})");
-                        var smIDs = smeList.Last().Select($"new (SMid, {sCondition})");
-                        // var smIDs = smeList.Last().Select("SMId").Cast<int>().Select(smID => new SmDto { SMId = smID, Conditions = condition.ToList() });
-                        if (smIDs != null)
-                        {
-                            if (smFound == null)
-                            {
-                                smFound = smIDs;
-                            }
-                            else
-                            {
-                                var cOuter1 = "outer.c0 as c0";
-                                var cOuter2 = "c0";
-                                var cOuter3 = "false as c0";
-                                for (var i = 1; i < iCondition; i++)
-                                {
-                                    cOuter1 += $", outer.c{i} as c{i}";
-                                    cOuter2 += $", c{i}";
-                                    cOuter3 += $", false as c{i}";
-                                }
-
-                                /*
-                                var smFoundDTO = smFound as IQueryable<SmDto>;
-                                var smFoundJoin = smFoundDTO.Join(
-                                    smIDs,
-                                    outer => outer.SMId,
-                                    inner => inner.SMId,
-                                    (outer, inner) => new SmDto
-                                    {
-                                        SMId = outer.SMId,
-                                        Conditions = outer.Conditions
-                                    }
-                                );
-                                */
-
-                                var smFoundJoin = smFound.Join(
-                                    smIDs,
-                                    "SMid",
-                                    "SMid",
-                                    // $"new(outer.SMId, {cOuter1}, inner.c{iCondition} as c{iCondition})"
-                                    $"new(outer.SMId, {sCondition})"
-                                );
-                                /*
-                                var smContains = smFoundJoin.Select(s => s.SMId);
-                                var smMissingOuter = smFoundDTO.Where(s => !smContains.Contains(s.SMId));
-                                var smMissingInner = smIDs.Where(s => !smContains.Contains(s.SMId));
-                                var combined = smFoundJoin.Concat(smMissingOuter).Concat(smMissingInner);
-                                */
-                                var smContains = smFoundJoin.Select("SMId");
-                                var smMissingOuter = smFound
-                                    .Where("!@0.Contains(SMId)", smContains);
-                                // .Select($"new (SMId, {cOuter2}, false as c{iCondition})");
-                                var smMissingInner = smIDs
-                                    .Where("!@0.Contains(SMId)", smContains);
-                                    // .Select($"new (SMId, {cOuter3}, true as c{iCondition})");
-                                var combined = smFoundJoin
-                                    .Cast<dynamic>().AsQueryable()
-                                    .Concat(smMissingOuter.Cast<dynamic>().AsQueryable())
-                                    .Concat(smMissingInner.Cast<dynamic>().AsQueryable());
-                                smFound = combined.Distinct();
-                                var smSelect1 = smFoundJoin.Select("SMId");
-                                var smSelect2 = smMissingOuter.Select("SMId");
-                                var smSelect3 = smMissingInner.Select("SMId");
-                                var smSelect4 = combined.Select("SMId");
-                                var smSelect5 = smFound.Select("SMId");
-
-                                /* Alternative does not work yet
-                                var smFoundFiltered = smFound
-                                    .GroupJoin(
-                                        smIDs,
-                                        "SMId", // Schlüssel in smFound
-                                        "SMId", // Schlüssel in smIDs
-                                        "new (outer as found, inner as idsGroup)"
-                                    )
-                                    .SelectMany(
-                                        "idsGroup.DefaultIfEmpty()",
-                                        "new (found as found, inner as id)"
-                                    )
-                                    .Where("id == null")
-                                    .Select($"new (found.SMid as SMId, {cOuter2}, false as c{iCondition})");
-                                */
-                            }
-                        }
+                        smContains[iCondition] = smeList.Last().Select("SMId");
+                        pathAllCondition += $"@{iCondition}.Contains(Id)";
                         iCondition++;
                     }
-                    // pathAllCondition += ")";
                 }
 
-                if (smFound == null)
+                var parameters = new object[conditionCount];
+                for (var i = 0; i < conditionCount; i++)
                 {
-                    return null;
+                    parameters[i] = smContains[i];
                 }
+                smTable = db.SMSets.Where(pathAllCondition, parameters).Skip(pageFrom).Take(pageSize).Distinct();
 
-                var smSelect = smFound.Select("SMId");
-                smFound = smFound.Skip(pageFrom).Take(pageSize);
-
-                // smTable = db.SMSets.Where(s => smFound != null && smFound.Contains(s.Id));
-                var smTable1 = db.SMSets.Join(
-                    smSelect,
-                    "Id",
-                    "SMId",
-                    "new (outer.Id as Id)"
-                )
-                .Distinct();
-                // .Where(pathAllCondition);
-
-                var smTable2 = smTable1.Select("sm") as IQueryable<SMSet>;
-
-                // Convert to CombinedSMSMEV
-                var resultSM = smTable2.Select(sm => new CombinedSMResult { SM_Id = sm.Id, Identifier = sm.Identifier, TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree) })
+                var resultSM = smTable.Select(sm => new CombinedSMResult { SM_Id = sm.Id, Identifier = sm.Identifier, TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree) })
                     .Distinct()
                     .Skip(pageFrom).Take(pageSize);
                 return resultSM;
