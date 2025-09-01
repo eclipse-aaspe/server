@@ -2087,39 +2087,38 @@ namespace AasxServer
 
                     List<String> diffEntry = new List<String>();
 
-                    if (eventData.MinInterval != null
-                    && eventData.MinInterval.Value != null
-                    && Int32.TryParse(eventData.MinInterval.Value, out int minResult))
-                    {
-
-                        minInterval = TimeSpan.FromSeconds(minResult);
-
-                        var nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
-                            .Add(minInterval);
-
-
-                        var now = DateTime.UtcNow;
-
-                        if (now < nextUpdate)
-                        {
-                            return;
-                        }
-                    }
-
-                    if (eventData.MaxInterval != null
-                        && eventData.MaxInterval.Value != null
-                        && Int32.TryParse(eventData.MaxInterval.Value, out int maxResult))
-                    {
-
-                        maxInterval = TimeSpan.FromSeconds(maxResult);
-                    }
-
                     DateTime transmitted = DateTime.MinValue;
                     if (eventData.Transmitted != null)
                     {
-                        if (eventData.Transmitted.Value != null)
+                        if (!eventData.Transmitted.Value.IsNullOrEmpty())
                         {
                             transmitted = DateTime.Parse(eventData.Transmitted.Value);
+
+                        }
+
+                        if (eventData.MinInterval != null
+                                && eventData.MinInterval.Value != null
+                                && Int32.TryParse(eventData.MinInterval.Value, out int minResult))
+                        {
+                            minInterval = TimeSpan.FromSeconds(minResult);
+
+                            var nextTransmit = transmitted
+                                .Add(minInterval);
+
+
+                            var now = DateTime.UtcNow;
+
+                            if (now < nextTransmit)
+                            {
+                                return;
+                            }
+                        }
+
+                        if (eventData.MaxInterval != null
+                            && eventData.MaxInterval.Value != null
+                            && Int32.TryParse(eventData.MaxInterval.Value, out int maxResult))
+                        {
+                            maxInterval = TimeSpan.FromSeconds(maxResult);
                         }
                     }
 
