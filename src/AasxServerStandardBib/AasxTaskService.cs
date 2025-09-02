@@ -2158,13 +2158,16 @@ namespace AasxServer
                     }
 
                     var sourceString = "";
-
-                    if (eventData.IdShort != null)
+                    var semanticId = "";
+                    if (pbee)
                     {
-                        sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
-                    }
-                    var semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
+                        if (eventData.IdShort != null)
+                        {
+                            sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+                        }
 
+                        semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
+                    }
 
                     var e = _eventService.CollectPayload(null, false, sourceString, semanticId, domain, null,
                         eventData.ConditionSM, eventData.ConditionSME,

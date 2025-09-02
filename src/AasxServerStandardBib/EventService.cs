@@ -387,12 +387,16 @@ public class EventService : IEventService
         }
 
         var sourceString = "";
-
-        if (eventData.IdShort != null)
+        var semanticId = "";
+        if (pbee)
         {
-            sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+            if (eventData.IdShort != null)
+            {
+                sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+            }
+
+            semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
         }
-        var semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
 
         var e = CollectPayload(null, false, sourceString, semanticId, domain, null, eventData.ConditionSM, eventData.ConditionSME,
             d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
@@ -404,93 +408,102 @@ public class EventService : IEventService
 
         if (e.elements.Count > 0)
         {
-            var payloadObjString = JsonSerializer.Serialize(e, options);
+            var elements = e.elements.Copy();
 
-            try
+            foreach (var element in elements)
             {
-                var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                    eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
+                e.elements = [element];
 
-                var now = DateTime.UtcNow;
+                var payloadObjString = JsonSerializer.Serialize(e, options);
 
-                bool isSucceeded = false;
-
-                if (result != null && result.IsSuccess)
+                try
                 {
-                    isSucceeded = true;
-                    Console.WriteLine("MQTT message sent.");
-                }
+                    var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
+                        eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
 
-                if (isSucceeded)
-                {
-                    if (eventData.Transmitted != null)
+                    var now = DateTime.UtcNow;
+
+                    bool isSucceeded = false;
+
+                    if (result != null && result.IsSuccess)
                     {
-                        eventData.Transmitted.Value = e.transmitted;
-                        eventData.Transmitted.SetTimeStamp(now);
+                        isSucceeded = true;
+                        Console.WriteLine("MQTT message sent.");
                     }
-                    var dt = DateTime.Parse(e.time);
-                    if (eventData.LastUpdate != null)
+
+                    if (isSucceeded)
                     {
-                        eventData.LastUpdate.Value = e.time;
-                        eventData.LastUpdate.SetTimeStamp(dt);
-                    }
-                    if (eventData.Status != null)
-                    {
-                        if (eventData.Message != null)
+                        if (eventData.Transmitted != null)
                         {
-                            //ToDo: Is message really correct? 
-                            eventData.Message.Value = "on";
+                            eventData.Transmitted.Value = e.transmitted;
+                            eventData.Transmitted.SetTimeStamp(now);
                         }
-                        eventData.Status.SetTimeStamp(now);
-                    }
-                    if (eventData.Diff != null && diffEntry.Count > 0)
-                    {
-                        eventData.Diff.Value = new List<ISubmodelElement>();
-                        int i = 0;
-                        foreach (var dif in diffEntry)
+                        var dt = DateTime.Parse(e.time);
+                        if (eventData.LastUpdate != null)
                         {
-                            var p = new Property(DataTypeDefXsd.String);
-                            p.IdShort = "diff" + i;
-                            p.Value = dif;
-                            p.SetTimeStamp(dt);
-                            eventData.Diff.Value.Add(p);
-                            p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
-                            i++;
+                            eventData.LastUpdate.Value = e.time;
+                            eventData.LastUpdate.SetTimeStamp(dt);
                         }
-                        eventData.Diff.SetTimeStamp(dt);
+                        if (eventData.Status != null)
+                        {
+                            if (eventData.Message != null)
+                            {
+                                //ToDo: Is message really correct? 
+                                eventData.Message.Value = "on";
+                            }
+                            eventData.Status.SetTimeStamp(now);
+                        }
+                        if (eventData.Diff != null && diffEntry.Count > 0)
+                        {
+                            eventData.Diff.Value = new List<ISubmodelElement>();
+                            int i = 0;
+                            foreach (var dif in diffEntry)
+                            {
+                                var p = new Property(DataTypeDefXsd.String);
+                                p.IdShort = "diff" + i;
+                                p.Value = dif;
+                                p.SetTimeStamp(dt);
+                                eventData.Diff.Value.Add(p);
+                                p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
+                                i++;
+                            }
+                            eventData.Diff.SetTimeStamp(dt);
+                        }
+                        Program.signalNewData(2);
                     }
-                    Program.signalNewData(2);
-                }
-                else
-                {
-                    var statusCode = "";
-
-                    if (result != null)
+                    else
                     {
-                        statusCode = result.ReasonCode.ToString();
-                    }
+                        var statusCode = "";
 
-                    if (eventData.Status != null)
+                        if (result != null)
+                        {
+                            statusCode = result.ReasonCode.ToString();
+                        }
+
+                        if (eventData.Status != null)
+                        {
+                            eventData.Message.Value = "ERROR: " +
+                                statusCode + " ; " +
+                                " ; PUT " + eventData.MessageBroker.Value;
+                            eventData.Status.SetTimeStamp(now);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (eventData.Message != null)
                     {
                         eventData.Message.Value = "ERROR: " +
-                            statusCode + " ; " +
+                            ex.Message +
                             " ; PUT " + eventData.MessageBroker.Value;
-                        eventData.Status.SetTimeStamp(now);
                     }
+                    var now = DateTime.UtcNow;
+                    eventData.Status.SetTimeStamp(now);
+                    // d = eventData.LastUpdate.Value = "reconnect";
                 }
+
             }
-            catch (Exception ex)
-            {
-                if (eventData.Message != null)
-                {
-                    eventData.Message.Value = "ERROR: " +
-                        ex.Message +
-                        " ; PUT " + eventData.MessageBroker.Value;
-                }
-                var now = DateTime.UtcNow;
-                eventData.Status.SetTimeStamp(now);
-                // d = eventData.LastUpdate.Value = "reconnect";
-            }
+
 
             eventData.env.setWrite(true);
         }
@@ -649,7 +662,6 @@ public class EventService : IEventService
             var nextUpdate = transmitted
                 .Add(minInterval);
 
-
             var now = DateTime.UtcNow;
 
             if (now < nextUpdate)
@@ -658,6 +670,7 @@ public class EventService : IEventService
             }
 
             diffTime = DateTime.Parse(diff);
+            diffTime = diffTime.AddMilliseconds(1);
         }
 
 
@@ -741,11 +754,15 @@ public class EventService : IEventService
                 }
             }
 
-            if (timeStampMax < diffTime)
+            if (timeStampMax > diffTime)
             {
                 if (!basicEventElementSourceString.IsNullOrEmpty())
                 {
                     diff = "status";
+                }
+                else
+                {
+                    bool test = true;
                 }
             }
             else
@@ -769,11 +786,9 @@ public class EventService : IEventService
             {
                 eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
 
-                if (!basicEventElementSourceString.IsNullOrEmpty())
-                {
-                    eventPayload.elements =
-                    [
-                        new EventPayloadEntry()
+                eventPayload.elements =
+                [
+                    new EventPayloadEntry()
                         {
                             source = basicEventElementSourceString,
                             subject = new EventPayloadEntrySubject()
@@ -783,15 +798,11 @@ public class EventService : IEventService
                             }
                         },
                     ];
-                }
 
                 return eventPayload;
             }
             eventPayload.elements = new List<EventPayloadEntry>();
 
-            diff = TimeStamp.TimeStamp.DateTimeToString(diffTime);
-            var diffTime1 = diffTime.AddMilliseconds(1);
-            var diff1 = TimeStamp.TimeStamp.DateTimeToString(diffTime1);
 
             IQueryable<SMSet> smSearchSet = db.SMSets;
             if (!searchSM.IsNullOrEmpty() && searchSM != "*")
@@ -799,15 +810,15 @@ public class EventService : IEventService
                 smSearchSet = smSearchSet.Where(searchSM);
             }
             // smSearchSet = smSearchSet.Where(timeStampExpression[i]);
-            smSearchSet = smSearchSet.Where(sm => (sm.TimeStampCreate > diffTime1) ||
-                ((sm.TimeStampTree != sm.TimeStampCreate) && (sm.TimeStampTree > diffTime1) && (sm.TimeStampCreate <= diffTime1)));
+            smSearchSet = smSearchSet.Where(sm => (sm.TimeStampCreate > diffTime) ||
+                ((sm.TimeStampTree != sm.TimeStampCreate) && (sm.TimeStampTree > diffTime) && (sm.TimeStampCreate <= diffTime)));
             smSearchSet = smSearchSet.OrderBy(sm => sm.TimeStampTree).Skip(offsetSm).Take(limitSm);
             var smSearchList = smSearchSet.ToList();
 
             foreach (var sm in smSearchList)
             {
                 var entryType = "UPDATE";
-                if (sm.TimeStampCreate > diffTime1)
+                if (sm.TimeStampCreate > diffTime)
                 {
                     entryType = "CREATE";
                 }
@@ -816,14 +827,14 @@ public class EventService : IEventService
 
                 if (!smOnly)
                 {
-                    if (sm.TimeStampCreate <= diffTime1)
+                    if (sm.TimeStampCreate <= diffTime)
                     {
                         var smeSearchSM = db.SMESets.Where(sme => sme.SMId == sm.Id);
                         var smeSearchTimeStamp = smeSearchSM.Where(sme =>
-                                sme.TimeStampCreate > diffTime1
-                                || sme.TimeStampDelete > diffTime1
-                                || (sme.TimeStampCreate <= diffTime1 && sme.TimeStampDelete <= diffTime1
-                                    && sme.TimeStampTree != sme.TimeStampCreate && sme.TimeStampTree > diffTime1)
+                                sme.TimeStampCreate > diffTime
+                                || sme.TimeStampDelete > diffTime
+                                || (sme.TimeStampCreate <= diffTime && sme.TimeStampDelete <= diffTime
+                                    && sme.TimeStampTree != sme.TimeStampCreate && sme.TimeStampTree > diffTime)
                             )
                             .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
                         if (smeSearchTimeStamp.Count != 0)
@@ -844,7 +855,7 @@ public class EventService : IEventService
                                     continue;
                                 }
                                 var notDeletedIdShortList = new List<string>();
-                                if (sme.TimeStampDelete > diffTime1)
+                                if (sme.TimeStampDelete > diffTime)
                                 {
                                     entryType = "DELETE";
                                     var children = smeSearchSM.Where(c => sme.Id == c.ParentSMEId).ToList();
@@ -857,10 +868,10 @@ public class EventService : IEventService
                                 {
                                     var totalChildren = db.SMESets.Where(s => s.ParentSMEId == sme.Id).ToList();
                                     var allChildren = smeSearchTimeStamp.Where(s => s.ParentSMEId == sme.Id).ToList();
-                                    var createChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampCreate > diffTime1).ToList();
-                                    var updateChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampTree > diffTime1).ToList();
-                                    var deleteChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampDelete > diffTime1).ToList();
-                                    if (sme.TimeStampCreate > diffTime1)
+                                    var createChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampCreate > diffTime).ToList();
+                                    var updateChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampTree > diffTime).ToList();
+                                    var deleteChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampDelete > diffTime).ToList();
+                                    if (sme.TimeStampCreate > diffTime)
                                     {
                                         if (allChildren.Count == 0 || totalChildren.Count == createChildren.Count)
                                         {
