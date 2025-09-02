@@ -397,17 +397,6 @@ public class EventService : IEventService
         var e = CollectPayload(null, false, sourceString, semanticId, domain, null, eventData.ConditionSM, eventData.ConditionSME,
             d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
 
-        bool sendStatus = false;
-
-        if (pbee)
-        {
-            if (e.time != eventData.LastUpdate.Value)
-            {
-                eventData.LastUpdate.Value = e.time;
-                sendStatus = true;
-            }
-        }
-
         var options = new JsonSerializerOptions
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -772,6 +761,10 @@ public class EventService : IEventService
                 if (now > nextTransmit)
                 {
                     diff = "status";
+                }
+                else
+                {
+                    return eventPayload;
                 }
             }
 
