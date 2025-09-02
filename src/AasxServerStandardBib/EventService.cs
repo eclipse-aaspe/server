@@ -210,19 +210,19 @@ public class EventService : IEventService
             return;
         }
 
-        if (eventData.LastUpdate != null)
+        if (eventData.Transmitted != null)
         {
             var nextUpdate = DateTime.UtcNow;
             var now = nextUpdate;
             var executeAction = false;
 
-            executeAction = string.IsNullOrEmpty(eventData.LastUpdate.Value);
+            executeAction = string.IsNullOrEmpty(eventData.Transmitted.Value);
             if (!executeAction)
             {
                 if (eventData.MinInterval != null
                     && eventData.MinInterval.Value != null)
                 {
-                    nextUpdate = DateTime.Parse(eventData.LastUpdate.Value)
+                    nextUpdate = DateTime.Parse(eventData.Transmitted.Value)
                         .Add(TimeSpan.FromSeconds(Int32.Parse(eventData.MinInterval.Value)));
                 }
 
@@ -243,11 +243,11 @@ public class EventService : IEventService
                     else if (eventData.Action.Value == "updateDatabase")
                     {
                         //toDo
-                    }
-                    eventData.LastUpdate.Value = now.ToString();
+                        //eventData.LastUpdate.Value = TimeStamp.TimeStamp.DateTimeToString(now);
 
-                    //toDo: 
-                    eventData.Transmitted.Value = now.ToString();
+                    }
+
+                    eventData.Transmitted.Value = TimeStamp.TimeStamp.DateTimeToString(now);
                 }
             }
             else
@@ -368,17 +368,6 @@ public class EventService : IEventService
             {
 
                 minInterval = TimeSpan.FromSeconds(minResult);
-
-                var nextUpdate = transmitted
-                    .Add(minInterval);
-
-
-                var now = DateTime.UtcNow;
-
-                if (now < nextUpdate)
-                {
-                    return;
-                }
             }
 
             if (eventData.MaxInterval != null
@@ -660,16 +649,28 @@ public class EventService : IEventService
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
         bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme)
     {
+        var eventPayload = new EventPayload(isREST);
+
         var diffTime = new DateTime();
 
         if (!diff.IsNullOrEmpty()
             && diff != "status"
             && diff != "init")
         {
+            var nextUpdate = transmitted
+                .Add(minInterval);
+
+
+            var now = DateTime.UtcNow;
+
+            if (now < nextUpdate)
+            {
+                return eventPayload;
+            }
+
             diffTime = DateTime.Parse(diff);
         }
 
-        var eventPayload = new EventPayload(isREST);
 
         eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
@@ -760,7 +761,9 @@ public class EventService : IEventService
                 {
                     diff = "status";
                 }
-
+            }
+            else
+            {
                 var nextTransmit = transmitted
                     .Add(maxInterval);
 
