@@ -1508,7 +1508,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         eventData.StatusData, eventData.ConditionSM, eventData.ConditionSME,
         diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme);
 
-        if (eventPayload.elements.Count == 0 && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
+        if ((eventPayload.elements == null || eventPayload.elements.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         {
             eventPayload.time = eventData.LastUpdate.Value;
         }

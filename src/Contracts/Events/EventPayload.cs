@@ -57,6 +57,9 @@ public class EventPayload
             countSM = 0;
             statusData = new JsonObject();
         }
-        elements = new List<EventPayloadEntry>();
+        else
+        {
+            elements = new List<EventPayloadEntry>();
+        }
     }
 }

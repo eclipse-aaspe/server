@@ -666,9 +666,6 @@ public class EventService : IEventService
         eventPayload.time = "";
         eventPayload.domain = domain;
 
-        eventPayload.elements = new List<EventPayloadEntry>();
-
-
         if (statusData != null && statusData.Value != null)
         {
             var j = Jsonization.Serialize.ToJsonObject(statusData);
@@ -774,19 +771,23 @@ public class EventService : IEventService
 
                 if (!basicEventElementSourceString.IsNullOrEmpty())
                 {
-                    eventPayload.elements.Add(new EventPayloadEntry()
-                    {
-                        source = basicEventElementSourceString,
-                        subject = new EventPayloadEntrySubject()
+                    eventPayload.elements =
+                    [
+                        new EventPayloadEntry()
                         {
-                            semanticId = basicEventElementSemanticId,
-                            schema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement"
-                        }
-                    });
+                            source = basicEventElementSourceString,
+                            subject = new EventPayloadEntrySubject()
+                            {
+                                semanticId = basicEventElementSemanticId,
+                                schema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement"
+                            }
+                        },
+                    ];
                 }
 
                 return eventPayload;
             }
+            eventPayload.elements = new List<EventPayloadEntry>();
 
             diff = TimeStamp.TimeStamp.DateTimeToString(diffTime);
             var diffTime1 = diffTime.AddMilliseconds(1);
