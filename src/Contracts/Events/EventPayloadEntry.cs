@@ -27,7 +27,6 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
     public EventPayloadEntrySubject subject { get; set; }
 
-
     public string time { get; set; } //latest timeStamp
     public string type { get; set; } // CREATE, UPDATE, DELETE
     //public string source { get; set; } // link to source
@@ -51,7 +50,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.subject.id, other.subject.id);
+        var result = string.Compare(this.subject.submodelId, other.subject.submodelId);
 
         if (result == 0)
         {

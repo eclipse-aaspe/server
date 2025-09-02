@@ -593,7 +593,7 @@ public class EventService : IEventService
                 {
                     e.data = j;
                 }
-                e.subject.id = submodelId;
+                e.subject.submodelId = submodelId;
                 e.subject.idShortPath = idShortPath + sme.IdShort;
 
                 //ToDo: Find correct Semantic Id
@@ -610,7 +610,7 @@ public class EventService : IEventService
                 e.type = entryType;
                 e.time = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
                 e.payloadType = "sme";
-                e.subject.id = submodelId;
+                e.subject.submodelId = submodelId;
                 e.subject.idShortPath = idShortPath + sme.IdShort;
                 if (children != null || children.Count != 0)
                 {
@@ -913,7 +913,7 @@ public class EventService : IEventService
                                 entry.payloadType = "sme";
                                 entry.subject.schema = EventPayloadEntry.SCHEMA + CrudOperator.GetModelType(sme.SMEType);
                                 entry.subject.idShortPath = idShortPath;
-                                entry.subject.id = sm.Identifier;
+                                entry.subject.submodelId = sm.Identifier;
                                 entry.time = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
                                 entry.notDeletedIdShortList = notDeletedIdShortList;
 
@@ -960,7 +960,7 @@ public class EventService : IEventService
                     entry.payloadType = "sm";
                     entry.subject.schema = EventPayloadEntry.SCHEMA + "submodel";
                     entry.idShortPath = sm.IdShort;
-                    entry.subject.id = sm.Identifier;
+                    entry.subject.submodelId = sm.Identifier;
                     entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
                     if (sm.SemanticId != null)
@@ -1116,7 +1116,7 @@ public class EventService : IEventService
                 }
                 else
                 {
-                    if (entry.subject.id != entriesSubmodel.Last().subject.id)
+                    if (entry.subject.submodelId != entriesSubmodel.Last().subject.submodelId)
                     {
                         changeSubmodel = true;
                     }
@@ -1132,7 +1132,7 @@ public class EventService : IEventService
                 }
                 if (changeSubmodel)
                 {
-                    var submodelIdentifier = entriesSubmodel.Last().subject.id;
+                    var submodelIdentifier = entriesSubmodel.Last().subject.submodelId;
                     List<int> smeDelete = [];
                     using (var db = new AasContext())
                     {
