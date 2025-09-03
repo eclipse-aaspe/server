@@ -764,26 +764,22 @@ public class EventService : IEventService
                 {
                     diff = "status";
                 }
-                else
-                {
-                    bool test = true;
-                }
             }
             else
             {
-                var nextTransmit = transmitted
-                    .Add(maxInterval);
-
-                var now = DateTime.UtcNow;
-
-                if (now > nextTransmit)
+                if (maxInterval != TimeSpan.Zero)
                 {
-                    diff = "status";
+                    var nextTransmit = transmitted
+                         .Add(maxInterval);
+
+                    var now = DateTime.UtcNow;
+
+                    if (now > nextTransmit)
+                    {
+                        diff = "status";
+                    }
                 }
-                else
-                {
-                    return eventPayload;
-                }
+                return eventPayload;
             }
 
             if (diff == "status")
