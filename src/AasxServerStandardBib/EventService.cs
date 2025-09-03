@@ -480,7 +480,8 @@ public class EventService : IEventService
                             statusCode = result.ReasonCode.ToString();
                         }
 
-                        if (eventData.Status != null)
+                        if (eventData.Status != null
+                            && eventData.Message != null)
                         {
                             eventData.Message.Value = "ERROR: " +
                                 statusCode + " ; " +
