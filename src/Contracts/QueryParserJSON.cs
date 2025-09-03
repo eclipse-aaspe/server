@@ -53,7 +53,8 @@ public class QueryGrammarJSON : Grammar
         // Define non-terminals
         var json = new NonTerminal("json");
         var query = new NonTerminal("query");
-        var selectLiteral = ToTerm("\"id\"");
+        var selectLiteralId = ToTerm("\"id\"");
+        var selectLiteralMatch = ToTerm("\"match\"");
         var logicalExpression = new NonTerminal("logical_expression");
         var matchExpression = new NonTerminal("match_expression");
         var comparisonItems = new NonTerminal("comparison_items");
@@ -90,7 +91,7 @@ public class QueryGrammarJSON : Grammar
         json.Rule = (query | allAccessPermissionRules);
 
         query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") +
-            (ToTerm("\"$select\":") + selectLiteral + ToTerm(",")).Q() +
+            (ToTerm("\"$select\":") + (selectLiteralId | selectLiteralMatch) + ToTerm(",")).Q() +
             "\"$condition\":" + logicalExpression +
             ToTerm("}") + ToTerm("}");
 

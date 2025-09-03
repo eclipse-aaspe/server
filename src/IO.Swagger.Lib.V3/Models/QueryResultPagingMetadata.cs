@@ -16,7 +16,8 @@ namespace IO.Swagger.Lib.V3.Models;
 public enum ResultType
 {
     Identifier,
-    Submodel
+    Submodel,
+    SubmodelElement
 }
 
 public partial class QueryResultPagingMetadata

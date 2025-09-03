@@ -1134,6 +1134,10 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             return tcs.Ids.ConvertAll(r => r as object);
         }
+        if (tcs.SubmodelElements != null)
+        {
+            return tcs.SubmodelElements.ConvertAll(r => r as object);
+        }
 
         return tcs.Submodels.ConvertAll(r => r as object);
     }

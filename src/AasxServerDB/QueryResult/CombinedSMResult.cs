@@ -24,6 +24,7 @@ namespace AasxServerDB
             public int? SM_Id { get; set; }
             public string? Identifier { get; set; }
             public string? TimeStampTree { get; set; }
+            public List<string>? MatchPathList { get; set; }
         }
     }
 }

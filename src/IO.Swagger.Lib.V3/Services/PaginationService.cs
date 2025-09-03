@@ -73,6 +73,10 @@ namespace IO.Swagger.Lib.V3.Services
                 {
                     pagingMetadata.resultType = ResultType.Submodel.ToString();
                 }
+                if (paginatedList.First() is ISubmodelElement)
+                {
+                    pagingMetadata.resultType = ResultType.SubmodelElement.ToString();
+                }
             }
 
             if (paginatedList.Count < paginationParameters.Limit)

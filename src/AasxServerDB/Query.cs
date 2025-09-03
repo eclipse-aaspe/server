@@ -34,6 +34,8 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Text.Json;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Runtime.Intrinsics.X86;
 
 public class CombinedValue
 {
@@ -54,6 +56,7 @@ public class SMEResultRaw
 public class SubmodelsQueryResult
 {
     public List<ISubmodel> Submodels { get; set; }
+    public List<ISubmodelElement> SubmodelElements { get; set; }
     public List<string> Ids { get; set; }
 }
 
@@ -308,8 +311,9 @@ public partial class Query
 
 
             var submodelsResult = new SubmodelsQueryResult();
+            submodelsResult.SubmodelElements = [];
 
-            if (!qResult.WithSelect)
+            if (!qResult.WithSelectId && !qResult.WithSelectMatch)
             {
                 var timeStamp = DateTime.UtcNow;
                 var submodels = new List<ISubmodel>();
@@ -331,7 +335,39 @@ public partial class Query
             }
             else
             {
-                submodelsResult.Ids = result.Select(sm => sm.smIdentifier).Distinct().ToList();
+                if (qResult.WithSelectId)
+                {
+                    submodelsResult.Ids = result.Select(sm => sm.smIdentifier).Distinct().ToList();
+                }
+                if (qResult.WithSelectMatch)
+                {
+                    var smIdList = result.Where(sm => sm.smId != null).Select(sm => sm.smId).Distinct().ToList();
+                    var smMatchPathList = qResult.MatchPathList;
+                    if (smIdList != null && smMatchPathList != null)
+                    {
+                        var smList = db.SMSets.Where(sm =>
+                            smIdList.Contains(sm.Id));
+                        var smeList = db.SMESets.Where(sme =>
+                            smIdList.Contains(sme.SMId) && sme.IdShortPath != null && smMatchPathList.Contains(sme.IdShortPath)
+                        );
+
+                        foreach (var sme in smeList)
+                        {
+                            List<SMESet> list = [sme];
+                            var sm = smList.FirstOrDefault(sm => sm.Id == sme.SMId);
+                            if (sm != null)
+                            {
+                                var smeTree = CrudOperator.GetTree(db, sm, list);
+                                var smeMerged = CrudOperator.GetSmeMerged(db, null, smeTree, sm);
+                                var obj = CrudOperator.ReadSubmodelElement(sme, smeMerged);
+                                if (obj != null)
+                                {
+                                    submodelsResult.SubmodelElements.Add(obj);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             return submodelsResult;
         }
@@ -407,9 +443,10 @@ public partial class Query
         {
             return null;
         }
-        if (conditionsExpression.TryGetValue("select", out _))
+        if (conditionsExpression.TryGetValue("select", out var sel))
         {
-            qResult.WithSelect = true;
+            qResult.WithSelectId = sel == "id";
+            qResult.WithSelectMatch = sel == "match";
         }
 
         var withPathSme = false;
@@ -463,12 +500,12 @@ public partial class Query
 
             if (withMatch)
             {
-                IQueryable smFound = null;
                 var splitMatch = pathAllConditionRaw.Split("$$match$$");
                 pathAllCondition = "";
                 var iCondition = 0;
                 var conditionCount = splitMatch.Where(s => s.Contains("$$tag$$path$$")).Count();
                 var smContains = new IQueryable[conditionCount];
+                List<string> matchPathList = [];
                 for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
                 {
                     var match = splitMatch[iMatch];
@@ -590,12 +627,18 @@ public partial class Query
                             smeList[iExp - 1] = smeListCompare.Select("O").Distinct();
                             smeList[iExp] = smeListCompare.Select("I").Distinct();
                         }
+                        var pm = smeList.Last().Select($"new (IdShortPath.Substring(0, Index1) as IdShortPath)").FirstOrDefault()?.IdShortPath;
+                        if (pm != null)
+                        {
+                            matchPathList.Add(pm);
+                        }
                         smContains[iCondition] = smeList.Last().Select("SMId");
                         pathAllCondition += $"@{iCondition}.Contains(Id)";
                         iCondition++;
                     }
                 }
 
+                qResult.MatchPathList = matchPathList;
                 var parameters = new object[conditionCount];
                 for (var i = 0; i < conditionCount; i++)
                 {
@@ -603,9 +646,14 @@ public partial class Query
                 }
                 smTable = db.SMSets.Where(pathAllCondition, parameters).Skip(pageFrom).Take(pageSize).Distinct();
 
-                var resultSM = smTable.Select(sm => new CombinedSMResult { SM_Id = sm.Id, Identifier = sm.Identifier, TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree) })
-                    .Distinct()
-                    .Skip(pageFrom).Take(pageSize);
+                var resultSM = smTable.Select(sm => new CombinedSMResult
+                {
+                    SM_Id = sm.Id,
+                    Identifier = sm.Identifier,
+                    TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree)
+                })
+                .Distinct()
+                .Skip(pageFrom).Take(pageSize);
                 return resultSM;
             }
             else
@@ -2106,7 +2154,7 @@ public partial class Query
                     }
                     if (!isValid)
                     {
-                        messages.Add("âŒ JSON not valid:");
+                        messages.Add("JSON not valid:");
                         /*
                         foreach (var error in validationErrors)
                         {
@@ -2118,7 +2166,7 @@ public partial class Query
                 }
                 else
                 {
-                    messages.Add("âŒ jsonschema-query.txt not found.");
+                    messages.Add("jsonschema-query.txt not found.");
                     return null;
                 }
 
@@ -2130,7 +2178,7 @@ public partial class Query
 
                 if (query.Select != null)
                 {
-                    condition["select"] = "true";
+                    condition["select"] = query.Select;
                 }
 
                 var value = "";

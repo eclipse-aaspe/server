@@ -667,7 +667,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         else
                         {
-                            result.Ids = queryResult.Ids;
+                            if (queryResult.Ids != null)
+                            {
+                                result.Ids = queryResult.Ids;
+                            }
+                            else
+                            {
+                                result.SubmodelElements = queryResult.SubmodelElements;
+                            }
                         }
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:
