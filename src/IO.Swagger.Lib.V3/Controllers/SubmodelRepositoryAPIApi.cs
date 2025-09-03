@@ -100,13 +100,79 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
     // Events
     [HttpGet]
-    [Route("/submodels/{submodelIdentifier}/events/{eventName}/{diff}")]
+    [Route("/submodels/{submodelIdentifier}/events/{eventName}/status")]
     [ValidateModelState]
-    [SwaggerOperation("GetEventMessages")]
+    [SwaggerOperation("GetEventStatus")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public async virtual Task<IActionResult> GetEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "", bool? submodelsOnly = false)
+    public async virtual Task<IActionResult> GetEventStatus([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string eventName)
+    {
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
+        Submodel submodel = null;
+        int packageIndex = 0;
+        while (packageIndex < Program.env.Length)
+        {
+            var env = Program.env[packageIndex];
+            var s = env?.AasEnv?.Submodels?.Where(sm => sm.Id == decodedSubmodelIdentifier).FirstOrDefault();
+            if (s != null)
+            {
+                submodel = (Submodel)s;
+                break;
+            }
+            packageIndex++;
+        }
+
+        if (submodel != null)
+        {
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            if (!Program.noSecurity)
+            {
+                bool isAllowed = InitSecurity(securityConfig);
+                if (!isAllowed)
+                {
+                    throw new NotAllowed($"NOT ALLOWED: API route");
+                }
+            }
+
+            var eventRequest = new DbEventRequest()
+            {
+                DbEventRequestType = DbEventRequestType.Status,
+                Env = Program.env,
+                PackageIndex = packageIndex,
+                EventName = eventName,
+                Submodel = submodel,
+            };
+
+            var eventPayload = await _dbRequestHandlerService.ReadEventMessages(securityConfig, eventRequest);
+
+            Program.signalNewData(2);
+
+            if (eventPayload == null)
+            {
+                return NoContent();
+            }
+
+            return new ObjectResult(eventPayload);
+        }
+
+        return NoContent();
+    }
+
+    [HttpGet]
+    [Route("/submodels/{submodelIdentifier}/events/{eventName}/submodels")]
+    [ValidateModelState]
+    [SwaggerOperation("GetEventStatus")]
+    [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    public async virtual Task<IActionResult> GetEventSubmodels([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
+        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, [FromQuery]string? time = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -148,10 +214,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 wp = (bool)withPayload;
             }
             bool smOnly = false;
-            if (submodelsOnly.HasValue)
-            {
-                smOnly = (bool)submodelsOnly;
-            }
             int limSm = 1000;
             if (limitSm.HasValue && limitSm != null)
             {
@@ -173,24 +235,24 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 offSme = (int)offsetSme;
             }
 
-            string sourceUrl = Program.externalBlazor + $"/{submodelIdentifier}/events/" + eventName;
-            if (diff.StartsWith("refresh="))
-            {
-                diff = diff.Replace("refresh=", "");
-                Response.Headers["Refresh"] = diff;
-                int s = Convert.ToInt32(diff);
-                diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
-            }
+            //ToDo: Find out whether we need refresh
+            //if (diff.StartsWith("refresh="))
+            //{
+            //    diff = diff.Replace("refresh=", "");
+            //    Response.Headers["Refresh"] = diff;
+            //    int s = Convert.ToInt32(diff);
+            //    diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
+            //}
 
             var eventRequest = new DbEventRequest()
             {
+                DbEventRequestType = DbEventRequestType.Submodels,
                 Env = Program.env,
                 PackageIndex = packageIndex,
                 EventName = eventName,
                 Submodel = submodel,
-                Diff = diff,
+                Time = time,
                 IsWithPayload = wp,
-                IsSubmodelsOnly = smOnly,
                 LimitSm = limSm,
                 LimitSme = limSme,
                 OffsetSm = offSm,
@@ -211,6 +273,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         return NoContent();
     }
+
 
     static bool debug = false;
     static bool isRunning = false;

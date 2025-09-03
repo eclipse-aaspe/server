@@ -677,7 +677,6 @@ public class EventService : IEventService
             diffTime = diffTime.AddMilliseconds(1);
         }
 
-
         eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
         eventPayload.time = "";
@@ -802,7 +801,6 @@ public class EventService : IEventService
                 return eventPayload;
             }
             eventPayload.elements = new List<EventPayloadEntry>();
-
 
             IQueryable<SMSet> smSearchSet = db.SMSets;
             if (!searchSM.IsNullOrEmpty() && searchSM != "*")

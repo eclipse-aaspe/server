@@ -15,33 +15,19 @@ namespace IO.Swagger.Controllers;
 
 using AasxServer;
 using System.Threading.Tasks;
-using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using Contracts;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
-using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
-using IO.Swagger.Lib.V3.Services;
 using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using IO.Swagger.Models;
-using System.Collections.Generic;
-using Contracts.DbRequests;
 using Contracts.Exceptions;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using Microsoft.AspNetCore.SignalR;
 using Contracts.Pagination;
-using System.Reflection.Emit;
-using System.Xml.Linq;
-using ScottPlot;
-using Contracts.QueryResult;
 using AdminShellNS.Extensions;
-using System.Security.Claims;
 using Contracts.Security;
 
 /// <summary>
@@ -53,24 +39,14 @@ public class QueryRepositoryAPIApiController : ControllerBase
 {
     private readonly IAppLogger<QueryRepositoryAPIApiController> _logger;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
-    private readonly ILevelExtentModifierService _levelExtentModifierService;
     private readonly IPaginationService _paginationService;
-    private readonly QueryGrammarJSON _grammar;
-    private readonly IValidateSerializationModifierService _validateModifierService;
-    private readonly IAuthorizationService _authorizationService;
 
     public QueryRepositoryAPIApiController(IAppLogger<QueryRepositoryAPIApiController> logger, IDbRequestHandlerService dbRequestHandlerService,
-        ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
-        QueryGrammarJSON grammar, IValidateSerializationModifierService validateModifierService,
-        IAuthorizationService authorizationService)
+        IPaginationService paginationService)
     {
         _logger = logger;
         _dbRequestHandlerService = dbRequestHandlerService;
-        _levelExtentModifierService = levelExtentModifierService;
         _paginationService = paginationService;
-        _grammar = grammar;
-        _validateModifierService = validateModifierService;
-        _authorizationService = authorizationService;
     }
 
     /// <summary>

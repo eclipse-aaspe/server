@@ -1662,7 +1662,6 @@ namespace AasxServer
             {
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
-
                     _eventService.PublishMqttMessage(eventData, submodelId, idShortPath);
                     return;
                 }
@@ -2284,9 +2283,13 @@ namespace AasxServer
                     }
                     catch (Exception ex)
                     {
-                        eventData.Message.Value = "ERROR: " +
+                        if (eventData.Message != null)
+                        {
+                            eventData.Message.Value = "ERROR: " +
                             ex.Message +
                             " ; PUT " + requestPath;
+                        }
+
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
                         // d = eventData.LastUpdate.Value = "reconnect";

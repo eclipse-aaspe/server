@@ -1486,14 +1486,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
         var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
+        eventData = _eventService.TryAddDto(eventData);
 
-        var diff = dbEventRequest.Diff;
+        var time = dbEventRequest.Time;
         var wp = dbEventRequest.IsWithPayload;
         var limSm = dbEventRequest.LimitSm;
         var offSm = dbEventRequest.OffsetSm;
         var limSme = dbEventRequest.LimitSme;
         var offSme = dbEventRequest.OffsetSme;
-        var smOnly = dbEventRequest.IsSubmodelsOnly;
+        var requestType = dbEventRequest.DbEventRequestType;
 
         var eventPayload = new Contracts.Events.EventPayload(true);
         List<String> diffEntry = new List<String>();
@@ -1502,6 +1503,29 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (eventData.Domain != null)
         {
             domain = eventData.Domain.Value;
+        }
+
+        bool smOnly = false;
+
+        var diff = "";
+
+        switch (requestType)
+        {
+            case DbEventRequestType.Status:
+                diff = "status";
+                break;
+            case DbEventRequestType.Submodels:
+                smOnly = true;
+                diff = time;
+                break;
+            case DbEventRequestType.SubmodelElements:
+                diff = time;
+                break;
+            case DbEventRequestType.Shells:
+                diff = time;
+                break;
+            default:
+                break;
         }
 
         eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain,
@@ -1554,6 +1578,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         var op = _eventService.FindEvent(eventRequest.Submodel, eventRequest.EventName);
         var eventData = _eventService.ParseData(op, eventRequest.Env[eventRequest.PackageIndex]);
+        eventData = _eventService.TryAddDto(eventData);
 
         string transmitted = "";
         string lastDiffValue = "";
