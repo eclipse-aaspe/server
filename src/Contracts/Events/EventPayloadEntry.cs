@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
-    public const string SCHEMA = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
+    public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
     public string? idShortPath;
 
     public EventPayloadEntrySubject subject { get; set; }
@@ -30,7 +30,6 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public string time { get; set; } //latest timeStamp
     public string type { get; set; } // CREATE, UPDATE, DELETE
     //public string source { get; set; } // link to source
-    public string payloadType { get; set; } // Submodel, SME, AAS
     public string source { get; set; } // link to source
 
     public JsonObject data { get; set; } // JSON Serialization
@@ -54,13 +53,19 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
         if (result == 0)
         {
-            if (this.payloadType == other.payloadType)
+            var typeInSchema = this.subject.schema.Split('/')?.Last().ToLower();
+            var otherTypeInSchema = other.subject.schema.Split('/')?.Last().ToLower();
+
+            bool isBothSubmodel = typeInSchema == "submodel" && otherTypeInSchema == "submodel";
+            bool isBothSubmodelElement = typeInSchema != "submodel" && otherTypeInSchema != "submodel";
+
+            if (isBothSubmodel || isBothSubmodelElement)
             {
                 result = 0;
             }
             else
             {
-                if (this.payloadType == "sm")
+                if (typeInSchema == "submodel")
                 {
                     result = -1;
                 }

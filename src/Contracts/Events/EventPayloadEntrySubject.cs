@@ -12,7 +12,7 @@ public class EventPayloadEntrySubject
     public string submodelId { get; set; } // ID of related Submodel
     public string semanticId { get; set; }
     public string idShortPath { get; set; } // for SMEs only
-    public string schema { get; set; } // Submodel, Property, ..
+    public string schema { get; set; } // SCHEMA_URL + model type
 
     public EventPayloadEntrySubject()
     {

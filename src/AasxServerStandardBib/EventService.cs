@@ -601,7 +601,6 @@ public class EventService : IEventService
                 var e = new EventPayloadEntry();
                 e.type = entryType;
                 e.time = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
-                e.payloadType = "sme";
                 if (withPayload)
                 {
                     e.data = j;
@@ -622,13 +621,17 @@ public class EventService : IEventService
                 var e = new EventPayloadEntry();
                 e.type = entryType;
                 e.time = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
-                e.payloadType = "sme";
                 e.subject.submodelId = submodelId;
                 e.subject.idShortPath = idShortPath + sme.IdShort;
                 if (children != null || children.Count != 0)
                 {
                     foreach (var child in children)
                     {
+                        if (e.notDeletedIdShortList == null)
+                        {
+                            e.notDeletedIdShortList = new List<string>();
+                        }
+
                         e.notDeletedIdShortList.Add(child.IdShort);
                     }
                 }
@@ -921,12 +924,15 @@ public class EventService : IEventService
                                 var entry = new EventPayloadEntry();
                                 entry.type = entryType;
                                 entry.source = sourceString;
-                                entry.payloadType = "sme";
-                                entry.subject.schema = EventPayloadEntry.SCHEMA + CrudOperator.GetModelType(sme.SMEType);
+                                entry.subject.schema = EventPayloadEntry.SCHEMA_URL + CrudOperator.GetModelType(sme.SMEType);
                                 entry.subject.idShortPath = idShortPath;
                                 entry.subject.submodelId = sm.Identifier;
                                 entry.time = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
-                                entry.notDeletedIdShortList = notDeletedIdShortList;
+
+                                if (notDeletedIdShortList != null && notDeletedIdShortList.Count > 0)
+                                {
+                                    entry.notDeletedIdShortList = notDeletedIdShortList;
+                                }
 
                                 if (sm.SemanticId != null)
                                 {
@@ -949,7 +955,7 @@ public class EventService : IEventService
 
                                 eventPayload.elements.Add(entry);
                                 diffEntry.Add(entry.type + " " + entry.subject.idShortPath);
-                                Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.subject.idShortPath}");
+                                Console.WriteLine($"Event {entry.type} Schema: {entry.subject.schema} idShortPath: {entry.subject.idShortPath}");
                                 countSME++;
                             }
                         }
@@ -968,8 +974,7 @@ public class EventService : IEventService
                     var entry = new EventPayloadEntry();
                     entry.source = sourceString;
                     entry.type = entryType;
-                    entry.payloadType = "sm";
-                    entry.subject.schema = EventPayloadEntry.SCHEMA + "submodel";
+                    entry.subject.schema = EventPayloadEntry.SCHEMA_URL + "submodel";
                     entry.idShortPath = sm.IdShort;
                     entry.subject.submodelId = sm.Identifier;
                     entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
@@ -993,7 +998,7 @@ public class EventService : IEventService
                     }
 
                     diffEntry.Add(entry.type + " " + entry.idShortPath);
-                    Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
+                    Console.WriteLine($"Event {entry.type} Type: {entry.subject.schema} idShortPath: {entry.idShortPath}");
                     eventPayload.elements.Add(entry);
                     countSM++;
                 }
@@ -1082,9 +1087,9 @@ public class EventService : IEventService
         var entriesSubmodel = new List<EventPayloadEntry>();
         foreach (var entry in eventPayload.elements)
         {
-            Console.WriteLine($"Event {entry.type} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
+            Console.WriteLine($"Event {entry.type} Type: {entry.subject.schema} idShortPath: {entry.idShortPath}");
             Submodel receiveSM = null;
-            if (entry.payloadType == "sm")
+            if (entry.subject.schema.Split("/")?.Last().ToLower() == "submodel")
             {
                 if (entry.data != null)
                 {
@@ -1117,7 +1122,7 @@ public class EventService : IEventService
                     }
                 }
             }
-            if (entry.payloadType == "sme")
+            if (entry.subject.schema.Split("/")?.Last().ToLower() != "submodel")
             {
                 bool changeSubmodel = false;
                 bool addEntry = false;
