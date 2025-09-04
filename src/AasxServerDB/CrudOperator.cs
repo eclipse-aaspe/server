@@ -651,7 +651,8 @@ namespace AasxServerDB
             return output;
         }
 
-        public static Submodel? ReadSubmodel(AasContext db, SMSet? smDB = null, string submodelIdentifier = "", Dictionary<string, string>? securityCondition = null)
+        public static Submodel? ReadSubmodel(AasContext db, SMSet? smDB = null, string submodelIdentifier = "",
+            Dictionary<string, string>? securityCondition = null, Dictionary<string, string>? condition = null)
         {
             if (!submodelIdentifier.IsNullOrEmpty())
             {
@@ -700,7 +701,13 @@ namespace AasxServerDB
 
             var smeMerged = GetSmeMerged(db, null, SMEQueryAll, smDB);
 
-            if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null && securityCondition?["all"] != "")
+            var sCondition = "true";
+            if (securityCondition?["all"] != null && securityCondition?["all"] != "")
+            {
+                sCondition = securityCondition["all"];
+            }
+
+            if (smeMerged != null && smeMerged.Count != 0)
             {
                 // at least 1 exists
                 var mergeForCondition = smeMerged.Select(sme => new
@@ -712,24 +719,33 @@ namespace AasxServerDB
                         (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
                 }).Distinct();
                 // at least 1 must exist to also approve security condition for SME
-                var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
+                var resultCondition = mergeForCondition.AsQueryable().Where(sCondition);
                 if (!resultCondition.Any())
                 {
                     return null;
                 }
-                else
+
+                var filter = "true";
+                if (securityCondition?["filter-all"] != null && securityCondition?["filter-all"] != "")
                 {
-                    if (securityCondition.TryGetValue("filter-all", out var filter) && filter != "")
+                    filter = securityCondition?["filter-all"];
+                }
+                if (condition?["filter-all"] != null && condition?["filter-all"] != "")
+                {
+                    if (filter == "true")
                     {
-                        resultCondition = mergeForCondition.AsQueryable().Where(filter);
-                        var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
-                        smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+                        filter = condition?["filter-all"];
+                    }
+                    else
+                    {
+                        filter = $"({filter} && {condition?["filter-all"]})";
                     }
                 }
-            }
 
-            if (smeMerged != null)
-            {
+                resultCondition = mergeForCondition.AsQueryable().Where(filter);
+                var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
+                smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+
                 LoadSME(submodel, null, null, null, smeMerged);
             }
 

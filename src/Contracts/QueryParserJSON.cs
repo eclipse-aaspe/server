@@ -93,6 +93,7 @@ public class QueryGrammarJSON : Grammar
         query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") +
             (ToTerm("\"$select\":") + (selectLiteralId | selectLiteralMatch) + ToTerm(",")).Q() +
             "\"$condition\":" + logicalExpression +
+            (ToTerm(",") + "\"$filter\":" + logicalExpression).Q() +
             ToTerm("}") + ToTerm("}");
 
         logicalExpression.Rule = ToTerm("{") + (("\"$and\":" + logicalExpressionArray) |
@@ -569,7 +570,15 @@ public class QueryGrammarJSON : Grammar
                     }
                     if (obj is string)
                     {
-                        return "\"" + (obj as string) + "\"";
+                        var v = obj as string;
+                        if (v == "$null")
+                        {
+                            return "null";
+                        }
+                        else
+                        {
+                            return "\"" + v + "\"";
+                        }
                     }
                     break;
                 case "$numVal":

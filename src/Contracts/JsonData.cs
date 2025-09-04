@@ -106,6 +106,11 @@ public class Query
     public LogicalExpression Condition { get; set; }
 
     public Dictionary<string, string> _query_conditions = [];
+
+    [JsonProperty("$filter")]
+    public LogicalExpression Filter { get; set; }
+
+    public Dictionary<string, string> _filter_conditions = [];
 }
 
 public class LogicalExpression

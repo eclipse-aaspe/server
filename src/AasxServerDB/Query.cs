@@ -102,7 +102,8 @@ public partial class Query
         Console.WriteLine("\nSearchSMs");
 
         watch.Restart();
-        var query = GetSMs(noSecurity, securityCondition, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        Dictionary<string, string>? condition;
+        var query = GetSMs(noSecurity, securityCondition, out condition, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -148,7 +149,9 @@ public partial class Query
         Console.WriteLine("\nCountSMs");
 
         watch.Restart();
-        var query = GetSMs(securityConfig.NoSecurity, securityCondition, new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        Dictionary<string, string>? condition;
+        var query = GetSMs(securityConfig.NoSecurity, securityCondition, out condition,
+            new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated.");
@@ -253,7 +256,7 @@ public partial class Query
         return result;
     }
 
-    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition,  int pageFrom, int pageSize, string expression)
+    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition, int pageFrom, int pageSize, string expression)
     {
         var qResult = new QResult()
         {
@@ -277,7 +280,9 @@ public partial class Query
 
         expression = "$JSONGRAMMAR " + expression;
 
-        var query = GetSMs(noSecurity, securityCondition, qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
+        Dictionary<string, string>? condition;
+        var query = GetSMs(noSecurity, securityCondition, out condition,
+            qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -309,7 +314,6 @@ public partial class Query
                 securityConditionSM = "true";
             */
 
-
             var submodelsResult = new SubmodelsQueryResult();
             submodelsResult.SubmodelElements = [];
 
@@ -322,7 +326,7 @@ public partial class Query
                 var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                 foreach (var sm in smList.Select(selector: submodelDB =>
-                    CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+                    CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition, condition)))
                 {
                     if (sm.TimeStamp == DateTime.MinValue)
                     {
@@ -387,9 +391,12 @@ public partial class Query
         public List<bool> Conditions { get; set; } = new List<bool>();
     }
 
-    private IQueryable? GetSMs(bool noSecurity, Dictionary<string, string>? securityCondition, QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
+    private IQueryable? GetSMs(bool noSecurity, Dictionary<string, string>? securityCondition, out Dictionary<string, string>? condition,
+        QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
         string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
+        condition = null;
+
         // parameter
         var messages = qResult.Messages ?? [];
         var rawSQL = qResult.SQL ?? [];
@@ -448,6 +455,7 @@ public partial class Query
         {
             return null;
         }
+        condition = conditionsExpression;
         if (conditionsExpression.TryGetValue("select", out var sel))
         {
             qResult.WithSelectId = sel == "id";
@@ -2121,10 +2129,15 @@ public partial class Query
                                 // mode: all, sm., sme., svalue, mvalue
                                 List<LogicalExpression?> logicalExpressions = [];
                                 List<Dictionary<string, string>> conditions = [];
-                                if (deserializedData.Query != null)
+                                if (deserializedData.Query != null && deserializedData.Query.Condition != null)
                                 {
                                     logicalExpressions.Add(deserializedData.Query.Condition);
                                     conditions.Add(deserializedData.Query._query_conditions);
+                                    if (deserializedData.Query.Filter != null)
+                                    {
+                                        logicalExpressions.Add(deserializedData.Query.Filter);
+                                        conditions.Add(deserializedData.Query._filter_conditions);
+                                    }
                                 }
                                 if (logicalExpressions.Count != 0)
                                 {
@@ -2188,6 +2201,10 @@ public partial class Query
 
                 var value = "";
                 condition["all"] = query._query_conditions["all"];
+                if (query._filter_conditions != null)
+                {
+                    condition["filter-all"] = query._filter_conditions["all"];
+                }
                 if (condition["all"].Contains("$$path$$"))
                 {
                     messages.Add("PATH SEARCH");
