@@ -2201,7 +2201,7 @@ public partial class Query
 
                 var value = "";
                 condition["all"] = query._query_conditions["all"];
-                if (query._filter_conditions != null)
+                if (query._filter_conditions != null && query._filter_conditions.Count != 0)
                 {
                     condition["filter-all"] = query._filter_conditions["all"];
                 }
