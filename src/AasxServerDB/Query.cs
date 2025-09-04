@@ -353,16 +353,16 @@ public partial class Query
 
                         foreach (var sme in smeList)
                         {
-                            List<SMESet> list = [sme];
                             var sm = smList.FirstOrDefault(sm => sm.Id == sme.SMId);
                             if (sm != null)
                             {
-                                var smeTree = CrudOperator.GetTree(db, sm, list);
+                                var smeTree = CrudOperator.GetTree(db, sm, [sme]);
                                 var smeMerged = CrudOperator.GetSmeMerged(db, null, smeTree, sm);
-                                var obj = CrudOperator.ReadSubmodelElement(sme, smeMerged);
-                                if (obj != null)
+                                var readSme = CrudOperator.ReadSubmodelElement(sme, smeMerged);
+                                if (readSme != null)
                                 {
-                                    submodelsResult.SubmodelElements.Add(obj);
+                                    readSme.Extensions = [new Extension("IdShortPath", value: sme.IdShortPath)];
+                                    submodelsResult.SubmodelElements.Add(readSme);
                                 }
                             }
                         }
