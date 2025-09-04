@@ -168,7 +168,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [HttpGet]
     [Route("/submodels/{submodelIdentifier}/events/{eventName}/submodels")]
     [ValidateModelState]
-    [SwaggerOperation("GetEventStatus")]
+    [SwaggerOperation("GetEventSubmodels")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public async virtual Task<IActionResult> GetEventSubmodels([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
