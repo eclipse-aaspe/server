@@ -45,7 +45,6 @@ public class EventDto
 
     public AasCore.Aas3_0.Property Direction = null;
     public AasCore.Aas3_0.Property Mode = null;
-    public AasCore.Aas3_0.Property Changes = null;
     public AasCore.Aas3_0.Property EndPoint = null;
     public Submodel DataSubmodel = null;
     public ISubmodelElement DataCollection = null;
@@ -76,8 +75,8 @@ public class EventDto
     public SubmodelElementCollection Diff = null;
 
 
-    // MQTT:// without TLS and MQTTS:// with TLS, then URL:PORT
-    public AasCore.Aas3_0.Property MessageBroker = null;
+    public AasCore.Aas3_0.Property MessageBroker = null;  // MQTT:// without TLS and MQTTS:// with TLS, then URL:PORT
     public AasCore.Aas3_0.Property MessageTopicType = null;
+    public AasCore.Aas3_0.Property Domain = null;
 }
 

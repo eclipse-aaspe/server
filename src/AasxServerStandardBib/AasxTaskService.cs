@@ -40,6 +40,7 @@ namespace AasxServer
     using Contracts.Events;
     using MQTTnet;
     using System.Security.Authentication;
+    using System.Text.Json.Serialization;
 
     public class AasxTask
     {
@@ -1661,7 +1662,6 @@ namespace AasxServer
             {
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
-
                     _eventService.PublishMqttMessage(eventData, submodelId, idShortPath);
                     return;
                 }
@@ -1965,10 +1965,14 @@ namespace AasxServer
                                 {
                                     if (eventData.Status != null)
                                     {
-                                        eventData.Message.Value = "ERROR: " +
-                                            response.StatusCode.ToString() + " ; " +
-                                            response.Content.ReadAsStringAsync().Result +
-                                            " ; RECONNECT " + requestPath;
+                                        if (eventData.Message != null)
+                                        {
+                                            eventData.Message.Value = "ERROR: " +
+                                                response.StatusCode.ToString() + " ; " +
+                                                response.Content.ReadAsStringAsync().Result +
+                                                " ; RECONNECT " + requestPath;
+                                        }
+
                                         eventData.Status.SetTimeStamp(now);
                                         // d = eventData.LastUpdate.Value = "reconnect";
                                         eventData.LastUpdate.SetTimeStamp(now);
@@ -2022,7 +2026,7 @@ namespace AasxServer
                                                     }
 
                                                     var dt = eventData.StatusData.TimeStamp;
-                                                    d = eventPayload.status.lastUpdate;
+                                                    d = eventPayload.time;
                                                     if (d == "")
                                                     {
                                                         d = "init";
@@ -2061,9 +2065,12 @@ namespace AasxServer
                     }
                     catch (Exception ex)
                     {
-                        eventData.Message.Value = "ERROR: " +
-                            ex.Message +
-                            " ; RECONNECT " + requestPath;
+                        if (eventData.Message != null)
+                        {
+                            eventData.Message.Value = "ERROR: " +
+                                ex.Message +
+                                " ; RECONNECT " + requestPath;
+                        }
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
                         eventData.Status.SetTimeStamp(now);
@@ -2074,7 +2081,45 @@ namespace AasxServer
 
                 if (d != "reconnect")
                 {
+                    TimeSpan minInterval = TimeSpan.Zero;
+                    TimeSpan maxInterval = TimeSpan.Zero;
+
                     List<String> diffEntry = new List<String>();
+
+                    DateTime transmitted = DateTime.MinValue;
+                    if (eventData.Transmitted != null)
+                    {
+                        if (!eventData.Transmitted.Value.IsNullOrEmpty())
+                        {
+                            transmitted = DateTime.Parse(eventData.Transmitted.Value);
+
+                        }
+
+                        if (eventData.MinInterval != null
+                                && eventData.MinInterval.Value != null
+                                && Int32.TryParse(eventData.MinInterval.Value, out int minResult))
+                        {
+                            minInterval = TimeSpan.FromSeconds(minResult);
+
+                            var nextTransmit = transmitted
+                                .Add(minInterval);
+
+
+                            var now = DateTime.UtcNow;
+
+                            if (now < nextTransmit)
+                            {
+                                return;
+                            }
+                        }
+
+                        if (eventData.MaxInterval != null
+                            && eventData.MaxInterval.Value != null
+                            && Int32.TryParse(eventData.MaxInterval.Value, out int maxResult))
+                        {
+                            maxInterval = TimeSpan.FromSeconds(maxResult);
+                        }
+                    }
 
                     bool wp = false;
 
@@ -2097,24 +2142,35 @@ namespace AasxServer
                         smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
                     }
 
-                    //ToDo: Do we need this for HTTP, also? (like for MQTT)
-                    //bool pbee = false;
+                    bool pbee = false;
 
-                    //if (eventData.PublishBasicEventElement != null
-                    //        && eventData.PublishBasicEventElement.Value != null)
-                    //{
-                    //    pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
-                    //}
-
-                    string c = "";
-                    if (eventData.Changes != null)
+                    if (eventData.PublishBasicEventElement != null
+                            && eventData.PublishBasicEventElement.Value != null)
                     {
-                        c = eventData.Changes.Value;
+                        pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
                     }
 
-                    var e = _eventService.CollectPayload(null, c, 0, eventData.StatusData,
-                        eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
-                        d, diffEntry, wp, smOnly, 1000, 1000, 0, 0);
+                    string domain = "";
+                    if (eventData.Domain != null)
+                    {
+                        domain = eventData.Domain.Value;
+                    }
+
+                    var sourceString = "";
+                    var semanticId = "";
+                    if (pbee)
+                    {
+                        if (eventData.IdShort != null)
+                        {
+                            sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+                        }
+
+                        semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
+                    }
+
+                    var e = _eventService.CollectPayload(null, false, sourceString, semanticId, domain, null,
+                        eventData.ConditionSM, eventData.ConditionSME,
+                        d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
                     {
                         Console.WriteLine(diff);
@@ -2122,7 +2178,12 @@ namespace AasxServer
 
                     Console.WriteLine("PUT Events: " + requestPath + "/" + d);
 
-                    var json = System.Text.Json.JsonSerializer.Serialize(e);
+                    var options = new JsonSerializerOptions
+                    {
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    };
+
+                    var json = System.Text.Json.JsonSerializer.Serialize(e, options);
 
                     /*
                     handler = new HttpClientHandler();
@@ -2169,10 +2230,13 @@ namespace AasxServer
                                 {
                                     if (eventData.Status != null)
                                     {
-                                        eventData.Message.Value = "ERROR: " +
-                                            response.StatusCode.ToString() + " ; " +
-                                            response.Content.ReadAsStringAsync().Result +
-                                            " ; PUT " + requestPath;
+                                        if (eventData.Message != null)
+                                        {
+                                            eventData.Message.Value = "ERROR: " +
+                                                response.StatusCode.ToString() + " ; " +
+                                                response.Content.ReadAsStringAsync().Result +
+                                                " ; PUT " + requestPath;
+                                        }
                                         eventData.Status.SetTimeStamp(now);
                                         // d = eventData.LastUpdate.Value = "reconnect";
                                         eventData.LastUpdate.SetTimeStamp(now);
@@ -2182,13 +2246,13 @@ namespace AasxServer
                                 {
                                     if (eventData.Transmitted != null)
                                     {
-                                        eventData.Transmitted.Value = e.status.transmitted;
+                                        eventData.Transmitted.Value = e.transmitted;
                                         eventData.Transmitted.SetTimeStamp(now);
                                     }
-                                    var dt = DateTime.Parse(e.status.lastUpdate);
+                                    var dt = DateTime.Parse(e.time);
                                     if (eventData.LastUpdate != null)
                                     {
-                                        eventData.LastUpdate.Value = e.status.lastUpdate;
+                                        eventData.LastUpdate.Value = e.time;
                                         eventData.LastUpdate.SetTimeStamp(dt);
                                     }
                                     if (eventData.Status != null)
@@ -2219,9 +2283,13 @@ namespace AasxServer
                     }
                     catch (Exception ex)
                     {
-                        eventData.Message.Value = "ERROR: " +
+                        if (eventData.Message != null)
+                        {
+                            eventData.Message.Value = "ERROR: " +
                             ex.Message +
                             " ; PUT " + requestPath;
+                        }
+
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
                         // d = eventData.LastUpdate.Value = "reconnect";

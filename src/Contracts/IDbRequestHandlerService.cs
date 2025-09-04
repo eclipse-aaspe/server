@@ -65,8 +65,11 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream);
     Task<DbRequestResult> DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier);
 
+
+
     Task<Events.EventPayload> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
     Task<DbRequestResult> UpdateEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
+
 
     Task<List<IConceptDescription>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null);
     Task<IConceptDescription> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier);

@@ -21,6 +21,15 @@ using AasCore.Aas3_0;
 using AdminShellNS;
 using Contracts.Events;
 
+
+public enum DbEventRequestType
+{
+    Status,
+    Submodels,
+    SubmodelElements,
+    Shells
+}
+
 public class DbEventRequest
 {
     public AdminShellPackageEnv[] Env { get; set; }
@@ -32,9 +41,9 @@ public class DbEventRequest
     public ISubmodel Submodel { get; set; }
 
     //For Read request
-    public bool IsWithPayload { get; set; }
+    public DbEventRequestType DbEventRequestType { get; set; }
 
-    public bool IsSubmodelsOnly { get; set; }
+    public bool IsWithPayload { get; set; }
 
     public int LimitSm { get; set; }
 
@@ -44,7 +53,7 @@ public class DbEventRequest
 
     public int OffsetSme { get; set; }
 
-    public string Diff { get; set; } = string.Empty;
+    public string Time { get; set; } = string.Empty;
 
     //For Update request
     public string Body { get; set; } = string.Empty;
