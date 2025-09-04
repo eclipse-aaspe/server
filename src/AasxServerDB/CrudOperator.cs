@@ -606,6 +606,11 @@ namespace AasxServerDB
                         }
                     }
                 }
+                else
+                {
+                    condition.Add("all", "true");
+                    condition.Add("sm.", "true");
+                }
 
                 if (condition.TryGetValue("sm.", out _))
                 {
