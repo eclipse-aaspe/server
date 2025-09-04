@@ -361,7 +361,12 @@ public partial class Query
                                 var readSme = CrudOperator.ReadSubmodelElement(sme, smeMerged);
                                 if (readSme != null)
                                 {
-                                    readSme.Extensions = [new Extension("IdShortPath", value: sme.IdShortPath)];
+                                    readSme.Extensions = [
+                                        new Extension("id", value: sm.Identifier),
+                                        new Extension("idShort", value: sm.IdShort),
+                                        new Extension("semanticId", value: sm.SemanticId),
+                                        new Extension("matchIdShortPath", value: sme.IdShortPath)
+                                    ];
                                     submodelsResult.SubmodelElements.Add(readSme);
                                 }
                             }
