@@ -366,6 +366,11 @@ namespace IO.Swagger.Lib.V3.Formatters
                             var json = Jsonization.Serialize.ToJsonObject(item as IClass);
                             jsonArray.Add(json);
                         }
+                        else if (resultType == ResultType.SubmodelValue.ToString())
+                        {
+                            var json = ValueOnlyJsonSerializer.ToJsonObject(item as IValueDTO);
+                            jsonArray.Add(json);
+                        }
                         else
                         {
                             jsonArray.Add(item as string);

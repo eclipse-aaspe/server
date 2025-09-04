@@ -15,6 +15,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS.Models;
 using Contracts;
 using Contracts.Pagination;
+using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Models;
@@ -72,6 +73,10 @@ namespace IO.Swagger.Lib.V3.Services
                 if (paginatedList.First() is ISubmodel)
                 {
                     pagingMetadata.resultType = ResultType.Submodel.ToString();
+                }
+                if (paginatedList.First() is SubmodelValue)
+                {
+                    pagingMetadata.resultType = ResultType.SubmodelValue.ToString();
                 }
                 if (paginatedList.First() is ISubmodelElement)
                 {

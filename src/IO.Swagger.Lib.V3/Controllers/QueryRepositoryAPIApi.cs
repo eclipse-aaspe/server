@@ -29,6 +29,10 @@ using Contracts.Exceptions;
 using Contracts.Pagination;
 using AdminShellNS.Extensions;
 using Contracts.Security;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 /// <summary>
 /// 
@@ -40,13 +44,15 @@ public class QueryRepositoryAPIApiController : ControllerBase
     private readonly IAppLogger<QueryRepositoryAPIApiController> _logger;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
     private readonly IPaginationService _paginationService;
+    private readonly IMappingService _mappingService;
 
     public QueryRepositoryAPIApiController(IAppLogger<QueryRepositoryAPIApiController> logger, IDbRequestHandlerService dbRequestHandlerService,
-        IPaginationService paginationService)
+        IPaginationService paginationService, IMappingService mappingService)
     {
         _logger = logger;
         _dbRequestHandlerService = dbRequestHandlerService;
         _paginationService = paginationService;
+        _mappingService = mappingService;
     }
 
     /// <summary>
@@ -90,5 +96,67 @@ public class QueryRepositoryAPIApiController : ControllerBase
         var submodelsPagedList = _paginationService.GetPaginatedQueryResult(list, paginationParameters);
 
         return new ObjectResult(submodelsPagedList);
+    }
+
+    /// <summary>
+    /// Query Submodels and return value serialization
+    /// </summary>
+    /// <response code="201">Query created successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("query/submodels/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("PostSubmodelsValue")]
+    [Consumes("text/plain")]
+    [SwaggerResponse(statusCode: 200, type: typeof(QueryResult), description: "Submodels created successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> PostSubmodelsValue([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+    {
+        //Validate level and extent
+        //var levelEnum = _validateModifierService.ValidateLevel(level);
+        //var extentEnum = _validateModifierService.ValidateExtent(extent);
+
+        _logger.LogInformation($"Received request to query submodels.");
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
+        var paginationParameters = new PaginationParameters(cursor, limit);
+
+        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
+
+        if (list.IsNullOrEmpty())
+        {
+            throw new NotFoundException("Queried submodels could not be found!");
+        }
+
+        try
+        {
+            var submodels = list.Cast<Submodel>().ToList();
+
+            var valueList = new List<object>();
+            foreach (var submodel in submodels)
+            {
+                var submodelValue = _mappingService.Map(submodel, "value");
+                if (submodelValue != null)
+                {
+                    valueList.Add(submodelValue);
+                }
+            }
+
+            var submodelsPagedList = _paginationService.GetPaginatedQueryResult(valueList, paginationParameters);
+            return new ObjectResult(submodelsPagedList);
+        }
+        catch (InvalidCastException)
+        {
+            throw new InvalidCastException("List contains non-Submodel items.");
+        }
     }
 }

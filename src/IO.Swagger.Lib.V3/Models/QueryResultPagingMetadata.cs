@@ -17,6 +17,7 @@ public enum ResultType
 {
     Identifier,
     Submodel,
+    SubmodelValue,
     SubmodelElement
 }
 
