@@ -30,8 +30,6 @@ public enum EventPayloadEntryType
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
     public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
-    public string? idShortPath;
-    public string id;
 
     public EventPayloadEntrySubject subject { get; set; }
     public string time { get; set; } //latest timeStamp
@@ -40,7 +38,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public EventPayloadEntryType eventPayloadEntryType { get; private set; } // eventPayloadEntryType
 
     public string type { get; private set; } // Created, Updated, Deleted
-
+    public string id { get; set; }
     public string source { get; set; } // link to source
     public JsonObject data { get; set; } // JSON Serialization
     public string dataschema { get; set; } // SCHEMA_URL + model type
@@ -52,6 +50,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
         type = "";
         time = "";
         dataschema = "";
+        id = "";
 
         data = new JsonObject();
         subject = new EventPayloadEntrySubject();

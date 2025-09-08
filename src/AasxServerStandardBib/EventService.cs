@@ -412,7 +412,17 @@ public class EventService : IEventService
 
             foreach (var element in elements)
             {
-                e.elements = [element];
+                e.type = element.type;
+                e.source = element.source;
+                e.data = element.data;
+                e.dataschema = element.dataschema;
+                e.id = element.id;
+
+                if (element.subject != null) {
+                    e.subject = element.subject;
+                }
+
+                e.elements = null;
 
                 var payloadObjString = JsonSerializer.Serialize(e, options);
 
@@ -784,12 +794,6 @@ public class EventService : IEventService
             if (diff == "status")
             {
                 eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-
-                eventPayload.elements = new List<EventPayloadEntry>();
-                var entryyy = new EventPayloadEntry();
-                entryyy.SetType(EventPayloadEntryType.Created);
-                eventPayload.elements.Add(entryyy);
-
                 return eventPayload;
             }
             eventPayload.elements = new List<EventPayloadEntry>();
@@ -954,6 +958,11 @@ public class EventService : IEventService
                                 }
 
                                 entry.id = $"{entry.source}-{entry.time}";
+                                if (!basicEventElementSourceString.IsNullOrEmpty())
+                                {
+                                    entry.subject = null;
+                                }
+
                                 eventPayload.elements.Add(entry);
 
                                 diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.subject.idShortPath);
@@ -986,7 +995,7 @@ public class EventService : IEventService
                     else
                     {
                         entry.dataschema = EventPayloadEntry.SCHEMA_URL + "submodel";
-                        entry.idShortPath = sm.IdShort;
+                        entry.subject.idShortPath = sm.IdShort;
                         entry.subject.id = sm.Identifier;
 
                         if (sm.SemanticId != null)
@@ -1008,8 +1017,15 @@ public class EventService : IEventService
                         }
                     }
 
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.idShortPath);
-                    Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.idShortPath}");
+                    entry.id = $"{entry.source}-{entry.time}";
+
+                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.subject.idShortPath);
+                    Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.subject.idShortPath}");
+
+                    if (!basicEventElementSourceString.IsNullOrEmpty())
+                    {
+                        entry.subject = null;
+                    }
                     eventPayload.elements.Add(entry);
                     countSM++;
                 }
@@ -1026,15 +1042,19 @@ public class EventService : IEventService
                 }
             }
             eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-            eventPayload.countSM = countSM;
-            //e.status.countSME = countSME;
-            if (countSM == limitSm)
+
+            if (basicEventElementSourceString.IsNullOrEmpty())
             {
-                eventPayload.cursor = $"offsetSM={offsetSm + limitSm}";
-            }
-            else if (countSM == limitSm)
-            {
-                eventPayload.cursor = $"offsetSME={offsetSme + limitSme}";
+                eventPayload.countSM = countSM;
+                //e.status.countSME = countSME;
+                if (countSM == limitSm)
+                {
+                    eventPayload.cursor = $"offsetSM={offsetSm + limitSm}";
+                }
+                else if (countSM == limitSm)
+                {
+                    eventPayload.cursor = $"offsetSME={offsetSme + limitSme}";
+                }
             }
         }
 
@@ -1098,7 +1118,7 @@ public class EventService : IEventService
         var entriesSubmodel = new List<EventPayloadEntry>();
         foreach (var entry in eventPayload.elements)
         {
-            Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.idShortPath}");
+            Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.subject.idShortPath}");
             Submodel receiveSM = null;
             if (entry.dataschema.Split("/")?.Last().ToLower() == "submodel")
             {
@@ -1200,7 +1220,7 @@ public class EventService : IEventService
                                 }
                                 if (receiveSme != null)
                                 {
-                                    visitor.idShortPath = e.idShortPath;
+                                    visitor.idShortPath = e.subject.idShortPath;
                                     visitor.update = e.eventPayloadEntryType == EventPayloadEntryType.Updated;
                                     var receiveSmeDB = visitor.VisitSMESet(receiveSme);
                                     if (receiveSmeDB != null)
@@ -1208,12 +1228,12 @@ public class EventService : IEventService
                                         receiveSmeDB.SMId = smDBId;
 
                                         var parentPath = "";
-                                        if (e.idShortPath.Contains("."))
+                                        if (e.subject.idShortPath.Contains("."))
                                         {
-                                            int lastDotIndex = e.idShortPath.LastIndexOf('.');
+                                            int lastDotIndex = e.subject.idShortPath.LastIndexOf('.');
                                             if (lastDotIndex != -1)
                                             {
-                                                parentPath = e.idShortPath.Substring(0, lastDotIndex);
+                                                parentPath = e.subject.idShortPath.Substring(0, lastDotIndex);
                                             }
                                         }
                                         else
@@ -1230,7 +1250,7 @@ public class EventService : IEventService
                                                     if (parentDB != null)
                                                     {
                                                         receiveSmeDB.ParentSMEId = parentDB.smeSet.Id;
-                                                        receiveSmeDB.IdShortPath = e.idShortPath;
+                                                        receiveSmeDB.IdShortPath = e.subject.idShortPath;
                                                         change = true;
                                                     }
                                                 }
@@ -1262,7 +1282,7 @@ public class EventService : IEventService
                                     if (e.eventPayloadEntryType == EventPayloadEntryType.Deleted)
                                     {
                                         var notDeleted = e.notDeletedIdShortList;
-                                        var parentPath = e.idShortPath;
+                                        var parentPath = e.subject.idShortPath;
                                         db.SaveChanges();
                                         var deletePathList = smeSmMerged.Where(
                                             sme => sme.smeSet.IdShort != null
@@ -1324,16 +1344,16 @@ public class EventService : IEventService
 
         if (entry.eventPayloadEntryType == EventPayloadEntryType.Created)
         {
-            if (entry.idShortPath.StartsWith(idShortPath))
+            if (entry.subject.idShortPath.StartsWith(idShortPath))
             {
-                var path = entry.idShortPath;
+                var path = entry.subject.idShortPath;
                 if (idShortPath != "")
                 {
                     path = path.Replace(idShortPath, "");
                 }
                 if (!path.Contains("."))
                 {
-                    Console.WriteLine("Event CREATE SME: " + entry.idShortPath);
+                    Console.WriteLine("Event CREATE SME: " + entry.subject.idShortPath);
                     receiveSme.TimeStampCreate = dt;
                     receiveSme.TimeStampDelete = new DateTime();
                     int i = 0;
@@ -1357,7 +1377,7 @@ public class EventService : IEventService
                     }
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.idShortPath);
+                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.subject.idShortPath);
                     count++;
                     return count;
                 }
@@ -1385,20 +1405,20 @@ public class EventService : IEventService
             for (int i = 0; i < submodelElements.Count; i++)
             {
                 var sme = submodelElements[i];
-                if (entry.idShortPath == idShortPath + sme.IdShort)
+                if (entry.subject.idShortPath == idShortPath + sme.IdShort)
                 {
-                    Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
+                    Console.WriteLine("Event UPDATE SME: " + entry.subject.idShortPath);
                     receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
                     receiveSme.TimeStampDelete = submodelElements[i].TimeStampDelete;
                     submodelElements[i] = receiveSme;
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.idShortPath);
+                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.subject.idShortPath);
                     count++;
                     return count;
                 }
                 var path = idShortPath + sme.IdShort + ".";
-                if (entry.idShortPath.StartsWith(path))
+                if (entry.subject.idShortPath.StartsWith(path))
                 {
                     switch (sme)
                     {
@@ -1429,9 +1449,9 @@ public class EventService : IEventService
                             children = sml.Value;
                             break;
                     }
-                    if (entry.idShortPath == idShortPath + sme.IdShort)
+                    if (entry.subject.idShortPath == idShortPath + sme.IdShort)
                     {
-                        Console.WriteLine("Event DELETE SME: " + entry.idShortPath);
+                        Console.WriteLine("Event DELETE SME: " + entry.subject.idShortPath);
                         if (children.Count != 0)
                         {
                             int c = 0;
@@ -1449,12 +1469,12 @@ public class EventService : IEventService
                                 }
                             }
                         }
-                        diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.idShortPath + ".*");
+                        diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.subject.idShortPath + ".*");
                         count++;
                         break;
                     }
                     var path = idShortPath + sme.IdShort + ".";
-                    if (entry.idShortPath.StartsWith(path))
+                    if (entry.subject.idShortPath.StartsWith(path))
                     {
                         count += ChangeSubmodelElement(eventData, entry, sme, children, path, diffEntry);
                     }

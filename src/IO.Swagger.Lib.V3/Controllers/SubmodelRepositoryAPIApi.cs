@@ -176,13 +176,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     }
 
     [HttpGet]
-    [Route("/submodels/{submodelIdentifier}/events/{eventName}/submodels")]
+    [Route("/submodels/{submodelIdentifier}/events/{eventName}")]
     [ValidateModelState]
     [SwaggerOperation("GetEventSubmodels")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public async virtual Task<IActionResult> GetEventSubmodels([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, [FromQuery] string? time = "")
+        [FromQuery] bool? include, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, [FromQuery] string? time = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -219,9 +219,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
 
             bool wp = false;
-            if (withPayload.HasValue && withPayload != null)
+            if (include.HasValue && include != null)
             {
-                wp = (bool)withPayload;
+                wp = (bool)include;
             }
             bool smOnly = false;
             int limSm = 1000;
