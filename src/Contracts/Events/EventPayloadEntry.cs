@@ -59,7 +59,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
     public void SetType(EventPayloadEntryType type)
     {
-        //this.type = type.ToString();
+        this.type = type.ToString();
         this.eventPayloadEntryType = type;
     }
 
