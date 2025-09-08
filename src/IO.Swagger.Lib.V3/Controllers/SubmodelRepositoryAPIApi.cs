@@ -56,6 +56,8 @@ using Contracts.DbRequests;
 using Contracts.Exceptions;
 using Contracts.Pagination;
 using Contracts.Security;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 /// <summary>
 /// 
@@ -159,7 +161,15 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 return NoContent();
             }
 
-            return new ObjectResult(eventPayload);
+            var options = new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+
+            var payloadObjString = System.Text.Json.JsonSerializer.Serialize(eventPayload, options);
+
+            return new ObjectResult(payloadObjString);
         }
 
         return NoContent();
@@ -172,7 +182,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public async virtual Task<IActionResult> GetEventSubmodels([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, [FromQuery]string? time = "")
+        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, [FromQuery] string? time = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -268,7 +278,15 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 return NoContent();
             }
 
-            return new ObjectResult(eventPayload);
+            var options = new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+
+            var payloadObjString = System.Text.Json.JsonSerializer.Serialize(eventPayload, options);
+
+            return new ObjectResult(payloadObjString);
         }
 
         return NoContent();
