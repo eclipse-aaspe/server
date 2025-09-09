@@ -14,47 +14,62 @@
 namespace Contracts.Events;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
+
+public enum EventPayloadEntryType
+{
+    Created,
+    Updated,
+    Deleted
+}
 
 
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
     public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
-    public string? idShortPath;
 
     public EventPayloadEntrySubject subject { get; set; }
-
     public string time { get; set; } //latest timeStamp
-    public string type { get; set; } // CREATE, UPDATE, DELETE
-    //public string source { get; set; } // link to source
-    public string source { get; set; } // link to source
 
+    [JsonIgnore]
+    public EventPayloadEntryType eventPayloadEntryType { get; private set; } // eventPayloadEntryType
+
+    public string type { get; private set; } // Created, Updated, Deleted
+    public string id { get; set; }
+    public string source { get; set; } // link to source
     public JsonObject data { get; set; } // JSON Serialization
+    public string dataschema { get; set; } // SCHEMA_URL + model type
 
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
-
 
     public EventPayloadEntry()
     {
         type = "";
         time = "";
+        dataschema = "";
+        id = "";
 
         data = new JsonObject();
         subject = new EventPayloadEntrySubject();
-        //notDeletedIdShortList = new List<string>();
+    }
+
+    public void SetType(EventPayloadEntryType type)
+    {
+        this.type = type.ToString();
+        this.eventPayloadEntryType = type;
     }
 
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.subject.submodelId, other.subject.submodelId);
+        var result = string.Compare(this.subject.id, other.subject.id);
 
         if (result == 0)
         {
-            var typeInSchema = this.subject.schema.Split('/')?.Last().ToLower();
-            var otherTypeInSchema = other.subject.schema.Split('/')?.Last().ToLower();
+            var typeInSchema = this.dataschema.Split('/')?.Last().ToLower();
+            var otherTypeInSchema = other.dataschema.Split('/')?.Last().ToLower();
 
             bool isBothSubmodel = typeInSchema == "submodel" && otherTypeInSchema == "submodel";
             bool isBothSubmodelElement = typeInSchema != "submodel" && otherTypeInSchema != "submodel";

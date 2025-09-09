@@ -14,11 +14,7 @@
 namespace Contracts.Events;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 public class EventPayload
 {
@@ -41,6 +37,14 @@ public class EventPayload
     public JsonObject statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
     public List<EventPayloadEntry> elements { get; set; }
 
+    //Event payload entry
+    public string type { get; set; } // Created, Updated, Deleted
+    public string source { get; set; } // link to source
+    public JsonObject data { get; set; } // JSON Serialization
+    public string dataschema { get; set; } // SCHEMA_URL + model type
+    public EventPayloadEntrySubject subject { get; set; }
+
+
     public EventPayload(bool isREST)
     {
         specversion = SPEC_VERSION;
@@ -50,16 +54,13 @@ public class EventPayload
         time = "";
         transmitted = "";
         domain = "";
+        elements = new List<EventPayloadEntry>();
 
         if (isREST)
         {
             cursor = "";
             countSM = 0;
             statusData = new JsonObject();
-        }
-        else
-        {
-            elements = new List<EventPayloadEntry>();
         }
     }
 }
