@@ -36,6 +36,10 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Runtime.Intrinsics.X86;
+using System.Drawing;
+using static AasxServerDB.CrudOperator;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 public class CombinedValue
 {
@@ -118,7 +122,7 @@ public partial class Query
 
             watch.Restart();
             int lastId = 0;
-            var result = GetSMResult(qResult, (IQueryable<CombinedSMResult>)query, withLastId, out lastId);
+            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, withLastId, out lastId);
             qResult.LastID = lastId;
             qResult.Count = result.Count;
             text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
@@ -296,7 +300,7 @@ public partial class Query
 
             watch.Restart();
             int lastId = 0;
-            var result = GetSMResult(qResult, (IQueryable<CombinedSMResult>)query, false, out lastId);
+            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, false, out lastId);
             text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
             Console.WriteLine(text);
             text = "SMs found ";
@@ -328,12 +332,34 @@ public partial class Query
                 foreach (var sm in smList.Select(selector: submodelDB =>
                     CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition, condition)))
                 {
-                    if (sm.TimeStamp == DateTime.MinValue)
+                    if (sm != null)
                     {
-                        sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
-                        sm.SetTimeStamp(timeStamp);
+                        var aasId = result.FirstOrDefault(r => r.smIdentifier == sm.Id)?.aasId;
+                        if (aasId != null)
+                        {
+                            var aasSet = db.AASSets.FirstOrDefault(a => a.Id == aasId);
+                            if (aasSet != null)
+                            {
+                                sm.Extensions ??= [];
+                                sm.Extensions.Add(new Extension("$aas#id", value: aasSet.Identifier));
+                                if (aasSet.IdShort != null)
+                                {
+                                    sm.Extensions.Add(new Extension("$aas#idShort", value: aasSet.IdShort));
+                                }
+                                if (aasSet.GlobalAssetId != null)
+                                {
+                                    sm.Extensions.Add(new Extension("$aas#globalAssetId", value: aasSet.GlobalAssetId));
+                                }
+                            }
+                        }
+
+                        if (sm.TimeStamp == DateTime.MinValue)
+                        {
+                            sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                            sm.SetTimeStamp(timeStamp);
+                        }
+                        submodels.Add(sm);
                     }
-                    submodels.Add(sm);
                 }
                 submodelsResult.Submodels = submodels;
             }
@@ -365,12 +391,20 @@ public partial class Query
                                 var readSme = CrudOperator.ReadSubmodelElement(sme, smeMerged);
                                 if (readSme != null)
                                 {
-                                    readSme.Extensions = [
-                                        new Extension("id", value: sm.Identifier),
-                                        new Extension("idShort", value: sm.IdShort),
-                                        new Extension("semanticId", value: sm.SemanticId),
-                                        new Extension("matchIdShortPath", value: sme.IdShortPath)
-                                    ];
+                                    readSme.Extensions ??= [];
+                                    readSme.Extensions.Add(new Extension("sm#id", value: sm.Identifier));
+                                    if (sm.IdShort != null)
+                                    {
+                                        readSme.Extensions.Add(new Extension("sm#idShort", value: sm.IdShort));
+                                    }
+                                    if (sm.SemanticId != null)
+                                    {
+                                        readSme.Extensions.Add(new Extension("sm#semanticId", value: sm.SemanticId));
+                                    }
+                                    if (sme.IdShortPath != null)
+                                    {
+                                        readSme.Extensions.Add(new Extension("sme#IdShortPath", value: sme.IdShortPath));
+                                    }
                                     submodelsResult.SubmodelElements.Add(readSme);
                                 }
                             }
@@ -395,6 +429,7 @@ public partial class Query
         QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
         string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
+        IQueryable<CombinedSMResultWithAas>? result = null;
         condition = null;
 
         // parameter
@@ -455,6 +490,30 @@ public partial class Query
         {
             return null;
         }
+
+        conditionsExpression.TryGetValue("aas", out var conditionAas);
+        IQueryable<SMRefSet> smRef = null;
+        IQueryable<int?> smRefId = null;
+        if (!string.IsNullOrEmpty(conditionAas))
+        {
+            var aas = db.AASSets.Where(conditionAas).Select(a => new { a.Id });
+
+            smRef = db.SMRefSets.Join(
+                aas,
+                smRef => smRef.AASId,
+                aas => aas.Id,
+                (smRef, aas) => smRef
+            );
+
+            smRefId = db.SMSets.Join(
+                smRef,
+                sm => sm.Identifier,
+                smRef => smRef.Identifier,
+                (sm, smRef) => new { id = (int?)sm.Id }
+            )
+            .Select(s => s.id);
+        }
+
         condition = conditionsExpression;
         if (conditionsExpression.TryGetValue("select", out var sel))
         {
@@ -657,17 +716,27 @@ public partial class Query
                 {
                     parameters[i] = smContains[i];
                 }
-                smTable = db.SMSets.Where(pathAllCondition, parameters).Skip(pageFrom).Take(pageSize).Distinct();
+                smTable = db.SMSets;
+                if (smRef != null)
+                {
+                    var smRefString = smRef.Select<string>("Identifier");
+                    smTable = smTable.Where(s => smRefString.Contains(s.Identifier));
+                }
+                smTable = smTable.Where(pathAllCondition, parameters).Skip(pageFrom).Take(pageSize).Distinct();
 
-                var resultSM = smTable.Select(sm => new CombinedSMResult
+                var resultSMPath = smTable.Select(sm => new CombinedSMResult
                 {
                     SM_Id = sm.Id,
                     Identifier = sm.Identifier,
-                    TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree)
-                })
-                .Distinct()
-                .Skip(pageFrom).Take(pageSize);
-                return resultSM;
+                    TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree),
+                    MatchPathList = null
+                });
+
+                // resultSMPath = resultSMPath.Skip(pageFrom).Take(pageSize);
+                result = CombineSMWithAas(db, resultSMPath, smRef);
+                result = result.Skip(pageFrom).Take(pageSize);
+
+                return result;
             }
             else
             {
@@ -711,7 +780,13 @@ public partial class Query
 
                     // Pre-Search to check path conditions for submodels
                     // restrict sm only for path
-                    smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
+                    smTable = db.SMSets;
+                    if (smRef != null)
+                    {
+                        var smRefString = smRef.Select<string>("Identifier");
+                        smTable = smTable.Where(s => smRefString.Contains(s.Identifier));
+                    }
+                    smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
                     smeTable = db.SMESets;
                     if (smeCondition != "")
                     {
@@ -842,7 +917,13 @@ public partial class Query
             if (!skip)
             {
                 // restrict all tables seperate
-                smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
+                smTable = db.SMSets;
+                smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
+                if (smRefId != null)
+                {
+                    var smRefIdList = smRefId.ToList();
+                    smTable = smTable.Where(s => smRefIdList.Contains(s.Id));
+                }
                 smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
                 sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
                 iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
@@ -863,7 +944,7 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
+                var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.Identifier", "SM_Identifier").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
                 comTable = comTable.Where(combi);
             }
         }
@@ -898,7 +979,7 @@ public partial class Query
             if (index == 0)
             {
                 smRawSQL = smRawSQL.Replace("SELECT *",
-                    $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree"
+                    $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList,"
                     );
             }
             else
@@ -907,15 +988,23 @@ public partial class Query
                 index = smRawSQL.IndexOf("FROM");
                 if (index == -1)
                     return null;
-                smRawSQL = smRawSQL.Substring(index);
                 var prefix = "";
+                var split = smRawSQL.Substring(0, index).Split(" ");
+                smRawSQL = smRawSQL.Substring(index);
+                if (split[1].Contains("."))
+                {
+                    split = split[1].Split(".");
+                    prefix = split.First().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
+                }
+                /*
                 var split = smRawSQL.Split(" ");
                 var count = split.Length;
                 if (split[count - 2] == "AS")
                 {
                     prefix = split.Last().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
                 }
-                smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+                */
+                smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, {prefix}SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList \n {smRawSQL}";
             }
         }
         else
@@ -924,16 +1013,19 @@ public partial class Query
             if (index == -1)
                 return null;
             smRawSQL = smRawSQL.Substring(index);
-            smRawSQL = $"SELECT DISTINCT s.Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            smRawSQL = $"SELECT DISTINCT s.Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree, null AS MatchPathList \n {smRawSQL}";
         }
 
-        var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
+        var qp = GetQueryPlan(db, smRawSQL);
+
+        var resultSM = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
 
         // select for count
         if (withCount)
         {
             // var qCount = comTable.Select(sm => sm.SM_Identifier);
             // return qCount;
+            result = CombineSMWithAas(db, resultSM, smRef);
             return result;
         }
 
@@ -942,6 +1034,7 @@ public partial class Query
             var text = "-- Start totalCount at " + watch.ElapsedMilliseconds + " ms";
             Console.WriteLine(text);
             messages.Add(text);
+            result = CombineSMWithAas(db, resultSM, smRef);
             qResult.TotalCount = result.Count();
             text = "-- End totalCount at " + watch.ElapsedMilliseconds + " ms";
             Console.WriteLine(text);
@@ -957,10 +1050,15 @@ public partial class Query
             {
                 Console.WriteLine("OrderBy");
                 messages.Add("OrderBy");
-                result = result.OrderBy(sm => sm.SM_Id).Skip(pageFrom).Take(pageSize);
+                resultSM = resultSM.OrderBy(sm => sm.SM_Id);
+                // resultSM = resultSM.Skip(pageFrom).Take(pageSize);
+                result = CombineSMWithAas(db, resultSM, smRef);
+                result = result.Skip(pageFrom).Take(pageSize);
             }
             else
             {
+                // resultSM = resultSM.Skip(pageFrom).Take(pageSize);
+                result = CombineSMWithAas(db, resultSM, smRef);
                 result = result.Skip(pageFrom).Take(pageSize);
             }
             var text = "Using pageFrom and pageSize.";
@@ -975,10 +1073,14 @@ public partial class Query
                 {
                     Console.WriteLine("OrderBy");
                     messages.Add("OrderBy");
+                    // resultSM = resultSM.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
+                    result = CombineSMWithAas(db, resultSM, smRef);
                     result = result.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
                 }
                 else
                 {
+                    // resultSM = resultSM.Where(sm => sm.SM_Id > lastID).Take(pageSize);
+                    result = CombineSMWithAas(db, resultSM, smRef);
                     result = result.Where(sm => sm.SM_Id > lastID).Take(pageSize);
                 }
                 var text = "Using lastID and pageSize.";
@@ -991,14 +1093,71 @@ public partial class Query
         // var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
 
         // return raw SQL
-        smRawSQL = result.ToQueryString();
-        var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
-        rawSQL.AddRange(rawSqlSplit);
+        if (result != null)
+        {
+            smRawSQL = result.ToQueryString();
+            var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
+            rawSQL.AddRange(rawSqlSplit);
+        }
 
         return result;
     }
 
-    private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResult> query, bool withLastID, out int lastID)
+    private static string GetQueryPlan(AasContext db, string smRawSQL)
+    {
+        var qp = "";
+        using var connection = new SqliteConnection(db.Database.GetDbConnection().ConnectionString);
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "EXPLAIN QUERY PLAN\n" + smRawSQL;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            qp += reader.GetString(3) + "\n";
+        }
+
+        return qp;
+    }
+
+    private static IQueryable<CombinedSMResultWithAas> CombineSMWithAas(AasContext db, IQueryable<CombinedSMResult> smResult, IQueryable<SMRefSet>? smRef)
+    {
+        IQueryable<CombinedSMResultWithAas> smResultWithAas;
+        if (smRef != null)
+        {
+            var smRefDict = smRef
+                .Where(r => r.Identifier != null && r.AASId != null)
+                .Take(10000)
+                .ToDictionary(r => r.Identifier!, r => r.AASId);
+
+            smResultWithAas = smResult
+                .Select(s => new CombinedSMResultWithAas
+                {
+                    AAS_Id = s.Identifier != null ? smRefDict[s.Identifier] : null,
+                    SM_Id = s.SM_Id,
+                    Identifier = s.Identifier,
+                    TimeStampTree = s.TimeStampTree,
+                    MatchPathList = null
+                });
+
+            //var smRawSQL = smResultWithAas.ToQueryString();
+            //var qp = GetQueryPlan(db, smRawSQL);
+            return smResultWithAas;
+        }
+        else
+        {
+            smResultWithAas = smResult.Select(r1 => new CombinedSMResultWithAas
+            {
+                AAS_Id = null,
+                SM_Id = r1.SM_Id,
+                Identifier = r1.Identifier,
+                TimeStampTree = r1.TimeStampTree,
+                MatchPathList = null
+            });
+        }
+        return smResultWithAas;
+    }
+
+    private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResultWithAas> query, bool withLastID, out int lastID)
     {
         var messages = qResult.Messages ?? [];
 
@@ -1008,6 +1167,7 @@ public partial class Query
             var resultWithSMID = query
                 .Select(sm => new
                 {
+                    sm.AAS_Id,
                     sm.SM_Id,
                     sm.Identifier,
                     sm.TimeStampTree,
@@ -1055,6 +1215,7 @@ public partial class Query
             var result = resultWithSMID
                 .Select(sm => new SMResult()
                 {
+                    aasId = sm.AAS_Id,
                     smId = sm.SM_Id,
                     smIdentifier = sm.Identifier,
                     timeStampTree = sm.TimeStampTree,
@@ -1068,6 +1229,7 @@ public partial class Query
             var result = query
                 .Select(sm => new SMResult()
                 {
+                    aasId = sm.AAS_Id,
                     smId = sm.SM_Id,
                     smIdentifier = sm.Identifier,
                     timeStampTree = sm.TimeStampTree,
@@ -2148,6 +2310,8 @@ public partial class Query
                                         {
                                             QueryGrammarJSON.createExpression("all", le);
                                             conditions[i].Add("all", le._expression);
+                                            QueryGrammarJSON.createExpression("aas.", le);
+                                            conditions[i].Add("aas.", le._expression);
                                             QueryGrammarJSON.createExpression("sm.", le);
                                             conditions[i].Add("sm.", le._expression);
                                             QueryGrammarJSON.createExpression("sme.", le);
@@ -2230,6 +2394,15 @@ public partial class Query
                 Console.WriteLine(text);
                 messages.Add(text);
 
+                condition["aas"] = query._query_conditions["aas."];
+                if (condition["aas"] == "$SKIP")
+                {
+                    condition["aas"] = "";
+                }
+                else
+                {
+                    condition["aas"] = condition["aas"].Replace("aas.", "");
+                }
                 condition["sm"] = query._query_conditions["sm."];
                 if (condition["sm"] == "$SKIP")
                 {

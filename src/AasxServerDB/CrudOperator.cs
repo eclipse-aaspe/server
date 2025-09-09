@@ -735,15 +735,18 @@ namespace AasxServerDB
                 {
                     filter = securityCondition?["filter-all"];
                 }
-                if (condition?["filter-all"] != null && condition?["filter-all"] != "")
+                if (condition != null && condition.TryGetValue("filter-all", out var filter2))
                 {
-                    if (filter == "true")
+                    if (filter2 != null)
                     {
-                        filter = condition?["filter-all"];
-                    }
-                    else
-                    {
-                        filter = $"({filter} && {condition?["filter-all"]})";
+                        if (filter == "true")
+                        {
+                            filter = filter2;
+                        }
+                        else
+                        {
+                            filter = $"({filter} && {filter2})";
+                        }
                     }
                 }
 

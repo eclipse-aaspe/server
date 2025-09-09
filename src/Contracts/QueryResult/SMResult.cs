@@ -15,6 +15,7 @@ namespace Contracts.QueryResult
 {
     public class SMResult
     {
+        public int? aasId { get; set; }
         public int? smId { get; set; }
         public string? smIdentifier { get; set; }
         public string? url { get; set; }

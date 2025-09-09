@@ -600,8 +600,10 @@ public class QueryGrammarJSON : Grammar
 
     public static string ReplaceField(string mode, string value, string smeValue)
     {
+        value = value.Replace("$aas#", "aas.");
         value = value.Replace("$sm#", "sm.");
         value = value.Replace("$sme#", "sme.");
+        value = value.Replace("sm.Id", "sm.Identifier");
         switch (mode)
         {
             case "all":
@@ -619,9 +621,19 @@ public class QueryGrammarJSON : Grammar
                         value = "mvalue";
                     }
                 }
+                if (value.StartsWith("aas."))
+                {
+                    value = "$SKIP";
+                }
                 break;
             case "sm.":
                 if (!value.StartsWith("sm."))
+                {
+                    value = "$SKIP";
+                }
+                break;
+            case "aas.":
+                if (!value.StartsWith("aas."))
                 {
                     value = "$SKIP";
                 }
