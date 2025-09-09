@@ -43,6 +43,7 @@ public class EventPayload
     public JsonObject data { get; set; } // JSON Serialization
     public string dataschema { get; set; } // SCHEMA_URL + model type
     public EventPayloadEntrySubject subject { get; set; }
+    public string basiceventelementsemanticId { get; set; }
 
 
     public EventPayload(bool isREST)
