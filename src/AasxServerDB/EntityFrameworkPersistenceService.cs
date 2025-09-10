@@ -35,10 +35,7 @@ using System.Threading.Tasks;
 using System.Linq.Dynamic.Core;
 using AasxServerDB.Entities;
 using Contracts.Security;
-using System.IO.Packaging;
-using System.Reflection.Metadata;
 using AdminShellNS.Models;
-using Microsoft.Extensions.Hosting;
 using System.IO.Compression;
 
 public class EntityFrameworkPersistenceService : IPersistenceService

@@ -768,7 +768,6 @@ public class EventService : IEventService
             }
 
             eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-            
             if (diff == "status")
             {
                 var statusEntry = new EventPayloadEntry();
@@ -818,7 +817,9 @@ public class EventService : IEventService
                         eventPayload.elements =
                         [
                             statusEntry,
-                ];
+                        ];
+
+                        return eventPayload;
                     }
                     else
                     {
