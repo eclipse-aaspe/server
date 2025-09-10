@@ -692,11 +692,6 @@ public class EventService : IEventService
             diffTime = diffTime.AddMilliseconds(1);
         }
 
-        if (!basicEventElementSourceString.IsNullOrEmpty())
-        {
-            diff = "status";
-        }
-
         eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
         eventPayload.time = "";
@@ -840,6 +835,28 @@ public class EventService : IEventService
                 {
                     return eventPayload;
                 }
+            }
+            else if (!basicEventElementSourceString.IsNullOrEmpty())
+            {
+                var statusEntry = new EventPayloadEntry();
+
+                if (!basicEventElementSourceString.IsNullOrEmpty())
+                {
+                    statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                    statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+
+                    statusEntry.SetType(EventPayloadEntryType.Updated);
+                    statusEntry.source = basicEventElementSourceString;
+                    eventPayload.basiceventelementsemanticId = basicEventElementSemanticId;
+                    statusEntry.subject = null;
+
+                };
+                eventPayload.elements =
+                [
+                    statusEntry,
+                        ];
+
+                return eventPayload;
             }
 
             eventPayload.elements = new List<EventPayloadEntry>();
