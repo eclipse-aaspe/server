@@ -422,6 +422,11 @@ public class EventService : IEventService
                     e.subject = element.subject;
                 }
 
+                if (!element.time.IsNullOrEmpty())
+                {
+                    e.time = element.time;
+                }
+
                 e.elements = null;
 
                 var payloadObjString = JsonSerializer.Serialize(e, options);
@@ -687,6 +692,11 @@ public class EventService : IEventService
             diffTime = diffTime.AddMilliseconds(1);
         }
 
+        if (!basicEventElementSourceString.IsNullOrEmpty())
+        {
+            diff = "status";
+        }
+
         eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
         eventPayload.time = "";
@@ -831,7 +841,6 @@ public class EventService : IEventService
                     return eventPayload;
                 }
             }
-
 
             eventPayload.elements = new List<EventPayloadEntry>();
 
