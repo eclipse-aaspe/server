@@ -1510,6 +1510,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
 
         bool smOnly = false;
+        if (eventData.SubmodelsOnly != null
+                && eventData.SubmodelsOnly.Value != null)
+        {
+            smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
+        }
 
         var diff = "";
 
@@ -1519,7 +1524,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 diff = "status";
                 break;
             case DbEventRequestType.Submodels:
-                smOnly = true;
                 diff = time;
                 break;
             case DbEventRequestType.SubmodelElements:
