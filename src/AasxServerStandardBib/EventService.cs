@@ -689,7 +689,7 @@ public class EventService : IEventService
             }
 
             diffTime = DateTime.Parse(diff);
-            diffTime = diffTime.AddMilliseconds(1);
+            //diffTime = diffTime.AddMilliseconds(1);
         }
 
         eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
