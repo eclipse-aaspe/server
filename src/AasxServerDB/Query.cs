@@ -979,7 +979,7 @@ public partial class Query
             if (index == 0)
             {
                 smRawSQL = smRawSQL.Replace("SELECT *",
-                    $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList,"
+                    $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList"
                     );
             }
             else
