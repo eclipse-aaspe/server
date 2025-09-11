@@ -117,6 +117,23 @@ namespace AasxServerDB
 
             return connectionString;
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<SMRefSet>()
+                .HasIndex(e => e.AASId)
+                .HasDatabaseName("IX_SMRefSet_AASId");
+
+            modelBuilder.Entity<AASSet>()
+                .HasIndex(e => e.GlobalAssetId)
+                .HasDatabaseName("IX_AASSet_GlobalAssetId");
+
+            modelBuilder.Entity<SMSet>()
+                .HasIndex(e => e.IdShort)
+                .HasDatabaseName("IX_SMSet_IdShort");
+        }
     }
 }
 

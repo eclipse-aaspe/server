@@ -26,5 +26,13 @@ namespace AasxServerDB
             public string? TimeStampTree { get; set; }
             public List<string>? MatchPathList { get; set; }
         }
+        private class CombinedSMResultWithAas
+        {
+            public int? AAS_Id { get; set; }
+            public int? SM_Id { get; set; }
+            public string? Identifier { get; set; }
+            public string? TimeStampTree { get; set; }
+            public List<string>? MatchPathList { get; set; }
+        }
     }
 }

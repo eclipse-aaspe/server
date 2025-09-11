@@ -731,19 +731,25 @@ namespace AasxServerDB
                 }
 
                 var filter = "true";
-                if (securityCondition?["filter-all"] != null && securityCondition?["filter-all"] != "")
+                if (securityCondition != null && securityCondition.TryGetValue("filter-all", out _))
                 {
-                    filter = securityCondition?["filter-all"];
-                }
-                if (condition?["filter-all"] != null && condition?["filter-all"] != "")
-                {
-                    if (filter == "true")
+                    if (securityCondition?["filter-all"] != null && securityCondition?["filter-all"] != "")
                     {
-                        filter = condition?["filter-all"];
+                        filter = securityCondition?["filter-all"];
                     }
-                    else
+                }
+                if (condition != null && condition.TryGetValue("filter-all", out var filter2))
+                {
+                    if (filter2 != null)
                     {
-                        filter = $"({filter} && {condition?["filter-all"]})";
+                        if (filter == "true")
+                        {
+                            filter = filter2;
+                        }
+                        else
+                        {
+                            filter = $"({filter} && {filter2})";
+                        }
                     }
                 }
 
