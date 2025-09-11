@@ -31,7 +31,7 @@ public class EventPayload
     public string id { get; set; } // message id
     public string datacontenttype { get; set; } // content type of transmitted data
 
-    public int? countSM { get; set; }
+    //public int? countSM { get; set; }
     public string cursor { get; set; }
 
     public JsonObject statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
@@ -60,7 +60,7 @@ public class EventPayload
         if (isREST)
         {
             cursor = "";
-            countSM = 0;
+            //countSM = 0;
             statusData = new JsonObject();
         }
     }

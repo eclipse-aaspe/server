@@ -1094,7 +1094,7 @@ public class EventService : IEventService
 
             if (basicEventElementSourceString.IsNullOrEmpty())
             {
-                eventPayload.countSM = countSM;
+                //eventPayload.countSM = countSM;
                 //e.status.countSME = countSME;
                 if (countSM == limitSm)
                 {
