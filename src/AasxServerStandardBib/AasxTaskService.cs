@@ -2133,7 +2133,11 @@ namespace AasxServer
                     {
                         wp = eventData.WithPayload.Value.ToLower() == "true";
                     }
-
+                    if (eventData.Include != null
+                        && eventData.Include.Value != null)
+                    {
+                        wp = eventData.Include.Value.ToLower() == "true";
+                    }
                     bool smOnly = false;
 
                     if (eventData.SubmodelsOnly != null

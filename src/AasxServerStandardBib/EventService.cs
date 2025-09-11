@@ -329,7 +329,11 @@ public class EventService : IEventService
         {
             wp = eventData.WithPayload.Value.ToLower() == "true";
         }
-
+        if (eventData.Include != null
+            && eventData.Include.Value != null)
+        {
+            wp = eventData.Include.Value.ToLower() == "true";
+        }
         bool smOnly = false;
 
         if (eventData.SubmodelsOnly != null
@@ -344,7 +348,11 @@ public class EventService : IEventService
                 && eventData.PublishBasicEventElement.Value != null)
         {
             pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
-            wp = false;
+
+            if (pbee)
+            {
+                wp = false;
+            }
         }
 
         string domain = "";
@@ -689,7 +697,8 @@ public class EventService : IEventService
             }
 
             diffTime = DateTime.Parse(diff);
-            //diffTime = diffTime.AddMilliseconds(1);
+            //ToDo: Find out, why commenting this out leads to spamming
+            diffTime = diffTime.AddMilliseconds(1);
         }
 
         eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
@@ -1739,9 +1748,14 @@ public class EventService : IEventService
                     if (p != null)
                         eventDto.MessageTopicType = p;
                     break;
+                //ToDo: Will be phased out in favour of include
                 case "withpayload":
                     if (p != null)
                         eventDto.WithPayload = p;
+                    break;
+                case "include":
+                    if (p != null)
+                        eventDto.Include = p;
                     break;
                 case "submodelsonly":
                     if (p != null)

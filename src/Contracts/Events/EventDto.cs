@@ -52,6 +52,7 @@ public class EventDto
     public SubmodelElementCollection StatusData = null;
     public AasCore.Aas3_0.Property NoPayload = null;
     public AasCore.Aas3_0.Property WithPayload = null;
+    public AasCore.Aas3_0.Property Include = null;
 
     public AasCore.Aas3_0.Property SubmodelsOnly = null;
     public AasCore.Aas3_0.Property PublishBasicEventElement = null;
