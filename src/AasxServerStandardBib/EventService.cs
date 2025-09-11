@@ -422,6 +422,11 @@ public class EventService : IEventService
                     e.subject = element.subject;
                 }
 
+                if (!element.time.IsNullOrEmpty())
+                {
+                    e.time = element.time;
+                }
+
                 e.elements = null;
 
                 var payloadObjString = JsonSerializer.Serialize(e, options);
@@ -767,6 +772,29 @@ public class EventService : IEventService
                 }
             }
 
+            eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+            if (diff == "status")
+            {
+                var statusEntry = new EventPayloadEntry();
+
+                if (!basicEventElementSourceString.IsNullOrEmpty())
+                {
+                    statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                    statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+
+                    statusEntry.SetType(EventPayloadEntryType.Updated);
+                    statusEntry.source = basicEventElementSourceString;
+                    eventPayload.basiceventelementsemanticId = basicEventElementSemanticId;
+                    statusEntry.subject = null;
+
+                };
+                eventPayload.elements =
+                [
+                    statusEntry,
+                ];
+                return eventPayload;
+            }
+
             if (timeStampMax <= diffTime)
             {
                 if (maxInterval != TimeSpan.Zero)
@@ -778,7 +806,25 @@ public class EventService : IEventService
 
                     if (now > nextTransmit)
                     {
-                        diff = "status";
+                        var statusEntry = new EventPayloadEntry();
+
+                        if (!basicEventElementSourceString.IsNullOrEmpty())
+                        {
+                            statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                            statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+
+                            statusEntry.SetType(EventPayloadEntryType.Updated);
+                            statusEntry.source = basicEventElementSourceString;
+                            eventPayload.basiceventelementsemanticId = basicEventElementSemanticId;
+                            statusEntry.subject = null;
+
+                        };
+                        eventPayload.elements =
+                        [
+                            statusEntry,
+                        ];
+
+                        return eventPayload;
                     }
                     else
                     {
@@ -790,12 +836,29 @@ public class EventService : IEventService
                     return eventPayload;
                 }
             }
-
-            if (diff == "status")
+            else if (!basicEventElementSourceString.IsNullOrEmpty())
             {
-                eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+                var statusEntry = new EventPayloadEntry();
+
+                if (!basicEventElementSourceString.IsNullOrEmpty())
+                {
+                    statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                    statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+
+                    statusEntry.SetType(EventPayloadEntryType.Updated);
+                    statusEntry.source = basicEventElementSourceString;
+                    eventPayload.basiceventelementsemanticId = basicEventElementSemanticId;
+                    statusEntry.subject = null;
+
+                };
+                eventPayload.elements =
+                [
+                    statusEntry,
+                        ];
+
                 return eventPayload;
             }
+
             eventPayload.elements = new List<EventPayloadEntry>();
 
             IQueryable<SMSet> smSearchSet = db.SMSets;
@@ -916,52 +979,38 @@ public class EventService : IEventService
                                 entry.SetType(entryType);
                                 entry.time = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
 
+                                entry.source = sourceString;
 
-                                if (!basicEventElementSourceString.IsNullOrEmpty())
+                                entry.subject.idShortPath = idShortPath;
+                                entry.subject.id = sm.Identifier;
+
+                                entry.dataschema = EventPayloadEntry.SCHEMA_URL + CrudOperator.GetModelType(sme.SMEType);
+
+                                if (notDeletedIdShortList != null && notDeletedIdShortList.Count > 0)
                                 {
-                                    entry.source = basicEventElementSourceString;
-                                    entry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                                    entry.notDeletedIdShortList = notDeletedIdShortList;
                                 }
-                                else
+
+                                if (sm.SemanticId != null)
                                 {
-                                    entry.source = sourceString;
+                                    entry.subject.semanticId = sme.SemanticId;
+                                }
 
-                                    entry.subject.idShortPath = idShortPath;
-                                    entry.subject.id = sm.Identifier;
-
-                                    entry.dataschema = EventPayloadEntry.SCHEMA_URL + CrudOperator.GetModelType(sme.SMEType);
-
-                                    if (notDeletedIdShortList != null && notDeletedIdShortList.Count > 0)
+                                if (entryType != EventPayloadEntryType.Deleted && withPayload)
+                                {
+                                    // var s = Converter.GetSubmodelElement(sme);
+                                    var s = CrudOperator.ReadSubmodelElement(sme, treeMerged);
+                                    if (s != null)
                                     {
-                                        entry.notDeletedIdShortList = notDeletedIdShortList;
-                                    }
-
-                                    if (sm.SemanticId != null)
-                                    {
-                                        entry.subject.semanticId = sme.SemanticId;
-                                    }
-
-                                    if (entryType != EventPayloadEntryType.Deleted && withPayload)
-                                    {
-                                        // var s = Converter.GetSubmodelElement(sme);
-                                        var s = CrudOperator.ReadSubmodelElement(sme, treeMerged);
-                                        if (s != null)
+                                        var j = Jsonization.Serialize.ToJsonObject(s);
+                                        if (j != null)
                                         {
-                                            var j = Jsonization.Serialize.ToJsonObject(s);
-                                            if (j != null)
-                                            {
-                                                entry.data = j;
-                                            }
+                                            entry.data = j;
                                         }
                                     }
-
                                 }
 
                                 entry.id = $"{entry.source}-{entry.time}";
-                                if (!basicEventElementSourceString.IsNullOrEmpty())
-                                {
-                                    entry.subject = null;
-                                }
 
                                 eventPayload.elements.Add(entry);
 
@@ -987,13 +1036,13 @@ public class EventService : IEventService
                     entry.SetType(entryType);
                     entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
-                    if (!basicEventElementSourceString.IsNullOrEmpty())
-                    {
-                        entry.source = basicEventElementSourceString;
-                        entry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
-                    }
-                    else
-                    {
+                    //if (!basicEventElementSourceString.IsNullOrEmpty())
+                    //{
+                    //    entry.source = basicEventElementSourceString;
+                    //    entry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                    //}
+                    //else
+                    //{
                         entry.dataschema = EventPayloadEntry.SCHEMA_URL + "submodel";
                         entry.subject.idShortPath = sm.IdShort;
                         entry.subject.id = sm.Identifier;
@@ -1015,17 +1064,17 @@ public class EventService : IEventService
                                 }
                             }
                         }
-                    }
+                    //}
 
                     entry.id = $"{entry.source}-{entry.time}";
 
                     diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.subject.idShortPath);
                     Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.subject.idShortPath}");
 
-                    if (!basicEventElementSourceString.IsNullOrEmpty())
-                    {
-                        entry.subject = null;
-                    }
+                    //if (!basicEventElementSourceString.IsNullOrEmpty())
+                    //{
+                    //    entry.subject = null;
+                    //}
                     eventPayload.elements.Add(entry);
                     countSM++;
                 }

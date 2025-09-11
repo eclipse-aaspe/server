@@ -182,7 +182,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public async virtual Task<IActionResult> GetEventSubmodels([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? include, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, [FromQuery] string? time = "")
+        [FromQuery] bool? include, [FromQuery] int? limitSm, [FromQuery] int? offsetSm, [FromQuery] string? time = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -235,15 +235,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 offSm = (int)offsetSm;
             }
             int limSme = 1000;
-            if (limitSme.HasValue && limitSme != null)
-            {
-                limSme = (int)limitSme;
-            }
             int offSme = 0;
-            if (offsetSme.HasValue && offsetSme != null)
-            {
-                offSme = (int)offsetSme;
-            }
 
             //ToDo: Find out whether we need refresh
             //if (diff.StartsWith("refresh="))
