@@ -1518,6 +1518,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var diff = "";
 
+        if (time.IsNullOrEmpty())
+        {
+            diff = "init";
+        }
+
+
         switch (requestType)
         {
             case DbEventRequestType.Status:

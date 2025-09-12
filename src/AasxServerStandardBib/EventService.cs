@@ -697,7 +697,6 @@ public class EventService : IEventService
             }
 
             diffTime = DateTime.Parse(diff);
-            //ToDo: Find out, why commenting this out leads to spamming
             diffTime = diffTime.AddMilliseconds(1);
         }
 
