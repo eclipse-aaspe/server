@@ -1516,13 +1516,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
         }
 
+
+
         var diff = "";
 
         if (time.IsNullOrEmpty())
         {
             diff = "init";
         }
-
 
         switch (requestType)
         {
@@ -1550,6 +1551,41 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             eventPayload.time = eventData.LastUpdate.Value;
         }
+
+ 
+        bool pbee = false;
+
+        if (eventData.PublishBasicEventElement != null
+                && eventData.PublishBasicEventElement.Value != null)
+        {
+            pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
+        }
+
+        if (pbee)
+        {
+            var parentSubmodel = op.GetParentSubmodel();
+            if (parentSubmodel != null)
+            {
+                //if (eventData.IdShort != null)
+                //{
+                //    sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
+                //}
+                //var basicEventElementSourceString =  
+            }
+            eventPayload.id = $"SOURCE_STRING_TO_BE_ADDED-{eventPayload.time}";
+        }
+        else
+        {
+            if (eventPayload.elements != null && eventPayload.elements.Count > 0)
+            {
+                foreach (var element in eventPayload.elements)
+                {
+                    element.id = null;
+                }
+            }
+
+        }
+
         if (diff != "status")
         {
             var timeStamp = DateTime.UtcNow;

@@ -789,6 +789,7 @@ public class EventService : IEventService
                 {
                     statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
                     statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+                    eventPayload.id = statusEntry.id;
 
                     statusEntry.SetType(EventPayloadEntryType.Updated);
                     statusEntry.source = basicEventElementSourceString;
@@ -820,19 +821,24 @@ public class EventService : IEventService
                         {
                             statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
                             statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+                            eventPayload.id = statusEntry.id;
 
                             statusEntry.SetType(EventPayloadEntryType.Updated);
                             statusEntry.source = basicEventElementSourceString;
                             eventPayload.basiceventelementsemanticId = basicEventElementSemanticId;
                             statusEntry.subject = null;
 
-                        };
-                        eventPayload.elements =
+                            eventPayload.elements =
                         [
                             statusEntry,
                         ];
 
-                        return eventPayload;
+                            return eventPayload;
+                        }
+                        else
+                        {
+                            //ToDo: Add element for non-basiceventelement keep alive message
+                        }
                     }
                     else
                     {
@@ -852,6 +858,7 @@ public class EventService : IEventService
                 {
                     statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
                     statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+                    eventPayload.id = statusEntry.id;
 
                     statusEntry.SetType(EventPayloadEntryType.Updated);
                     statusEntry.source = basicEventElementSourceString;

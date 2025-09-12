@@ -50,7 +50,7 @@ public class EventPayload
     {
         specversion = SPEC_VERSION;
         datacontenttype = DATA_CONTENT_TYPE;
-        id = $"{Guid.NewGuid()}";
+        id = null;
 
         time = "";
         transmitted = "";
