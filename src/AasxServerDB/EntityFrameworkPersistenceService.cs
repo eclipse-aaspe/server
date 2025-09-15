@@ -1516,8 +1516,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
         }
 
-
-
         var diff = "";
 
         if (time.IsNullOrEmpty())
@@ -1552,7 +1550,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             eventPayload.time = eventData.LastUpdate.Value;
         }
 
- 
+
         bool pbee = false;
 
         if (eventData.PublishBasicEventElement != null
@@ -1563,16 +1561,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (pbee)
         {
-            var parentSubmodel = op.GetParentSubmodel();
-            if (parentSubmodel != null)
+            var basicEventElementSourceString = "SOURCE_STRING_TO_BE_ADDED";
+
+            if (dbEventRequest.Submodel != null
+                && !dbEventRequest.EventName.IsNullOrEmpty()
+                    && !dbEventRequest.ExternalBlazor.IsNullOrEmpty())
             {
-                //if (eventData.IdShort != null)
-                //{
-                //    sourceString = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(submodelId)}/events/{idShortPath}.{eventData.IdShort}";
-                //}
-                //var basicEventElementSourceString =  
+                basicEventElementSourceString =
+                    $"{dbEventRequest.ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(dbEventRequest.Submodel.Id)}/events/{dbEventRequest.EventName}";
             }
-            eventPayload.id = $"SOURCE_STRING_TO_BE_ADDED-{eventPayload.time}";
+            eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
         }
         else
         {
@@ -1583,7 +1581,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     element.id = null;
                 }
             }
-
         }
 
         if (diff != "status")
@@ -1621,7 +1618,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
         return eventPayload;
-
     }
 
     private void UpdateEventMessages(AasContext db, Dictionary<string, string>? securityCondition, DbEventRequest eventRequest)

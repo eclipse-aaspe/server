@@ -259,6 +259,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 LimitSme = limSme,
                 OffsetSm = offSm,
                 OffsetSme = offSme,
+                ExternalBlazor = Program.externalBlazor
             };
 
             var eventPayload = await _dbRequestHandlerService.ReadEventMessages(securityConfig, eventRequest);

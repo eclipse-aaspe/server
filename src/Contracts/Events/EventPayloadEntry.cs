@@ -13,11 +13,13 @@
 
 namespace Contracts.Events;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Microsoft.IdentityModel.Tokens;
 
 public enum EventPayloadEntryType
 {
@@ -31,7 +33,6 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
     public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
 
-    public EventPayloadEntrySubject subject { get; set; }
     public string time { get; set; } //latest timeStamp
 
     [JsonIgnore]
@@ -40,10 +41,11 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     public string type { get; private set; } // Created, Updated, Deleted
     public string id { get; set; }
     public string source { get; set; } // link to source
+
     public JsonObject data { get; set; } // JSON Serialization
     public string dataschema { get; set; } // SCHEMA_URL + model type
-
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
+    public string semanticid { get; set; }
 
     public EventPayloadEntry()
     {
@@ -53,7 +55,6 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
         id = "";
 
         data = new JsonObject();
-        subject = new EventPayloadEntrySubject();
     }
 
     public void SetType(EventPayloadEntryType type)
@@ -62,9 +63,59 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
         this.eventPayloadEntryType = type;
     }
 
+    public string GetSubdmodelId()
+    {
+        var splittedSourceString = source.Split("/");
+
+        if (GetModelType()?.ToLower() == "basiceventelement")
+        {
+            return Base64UrlEncoder.Decode(splittedSourceString[^3]);
+        }
+        else if (GetModelType()?.ToLower() == "submodel")
+        {
+            return Base64UrlEncoder.Decode(splittedSourceString?.Last());
+        }
+        else if (!GetModelType().IsNullOrEmpty())
+        {
+            return Base64UrlEncoder.Decode(splittedSourceString[^2]);
+        }
+        else
+        {
+            return "undefined";
+        }
+    }
+
+    public string GetIdShortPath()
+    {
+        var splittedSourceString = source.Split("/");
+
+        if (GetModelType()?.ToLower() == "basiceventelement")
+        {
+            return splittedSourceString.Last();
+        }
+        else if (GetModelType()?.ToLower() == "submodel")
+        {
+            return String.Empty;
+        }
+        else if (!GetModelType().IsNullOrEmpty())
+        {
+            return splittedSourceString.Last();
+        }
+        else
+        {
+            return "undefined";
+        }
+    }
+
+
+    public string GetModelType()
+    {
+        return dataschema.Split("/")?.Last();
+    }
+
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.subject.id, other.subject.id);
+        var result = string.Compare(this.GetSubdmodelId(), other.GetSubdmodelId());
 
         if (result == 0)
         {
@@ -93,9 +144,11 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
         if (result == 0)
         {
-            result = string.Compare(this.subject.idShortPath, other.subject.idShortPath);
+            result = string.Compare(this.GetIdShortPath(), other.GetIdShortPath());
         }
 
         return result;
+
+        return 0;
     }
 }
