@@ -1550,7 +1550,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             eventPayload.time = eventData.LastUpdate.Value;
         }
 
- 
+
         bool pbee = false;
 
         if (eventData.PublishBasicEventElement != null
@@ -1581,7 +1581,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     element.id = null;
                 }
             }
-
         }
 
         if (diff != "status")
@@ -1619,7 +1618,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
         return eventPayload;
-
     }
 
     private void UpdateEventMessages(AasContext db, Dictionary<string, string>? securityCondition, DbEventRequest eventRequest)

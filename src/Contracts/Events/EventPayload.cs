@@ -42,8 +42,7 @@ public class EventPayload
     public string source { get; set; } // link to source
     public JsonObject data { get; set; } // JSON Serialization
     public string dataschema { get; set; } // SCHEMA_URL + model type
-    public EventPayloadEntrySubject subject { get; set; }
-    public string basiceventelementsemanticId { get; set; }
+    public string semanticid { get; set; }
 
 
     public EventPayload(bool isREST)
