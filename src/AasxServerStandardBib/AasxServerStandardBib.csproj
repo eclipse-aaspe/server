@@ -67,10 +67,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\LICENSE.txt">
-          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-          <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-        </None>
         <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
         <ProjectReference Include="..\AasxServerDB\AasxServerDB.csproj" />
         <ProjectReference Include="..\Contracts\Contracts.csproj" />
