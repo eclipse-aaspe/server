@@ -1,21 +1,66 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 namespace Contracts.Events;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Nodes;
 
 public class EventPayload
 {
+    //ToDo: Delete, when db request handler is used for the events?
     public static object EventLock = new object();
-    public EventStatus status { get; set; }
-    public string statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
-    public List<EventPayloadEntry> eventEntries { get; set; }
 
-    public EventPayload()
+    private const string SPEC_VERSION = "1.0";
+    private const string DATA_CONTENT_TYPE = "application/json";
+
+    public string specversion { get; set; } //current spec version, to be changed in static variable
+    public string time { get; set; } //latest timeStamp for all entries
+    public string transmitted { get; set; } // timestamp of GET or PUT
+    public string domain { get; set; } // domain (like phoenixcontact.com)
+    public string id { get; set; } // message id
+    public string datacontenttype { get; set; } // content type of transmitted data
+
+    //public int? countSM { get; set; }
+    public string cursor { get; set; }
+
+    public JsonObject statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
+    public List<EventPayloadEntry> elements { get; set; }
+
+    //Event payload entry
+    public string type { get; set; } // Created, Updated, Deleted
+    public string source { get; set; } // link to source
+    public JsonObject data { get; set; } // JSON Serialization
+    public string dataschema { get; set; } // SCHEMA_URL + model type
+    public string semanticid { get; set; }
+
+
+    public EventPayload(bool isREST)
     {
-        status = new EventStatus();
-        statusData = "";
-        eventEntries = new List<EventPayloadEntry>();
+        specversion = SPEC_VERSION;
+        datacontenttype = DATA_CONTENT_TYPE;
+        id = null;
+
+        time = "";
+        transmitted = "";
+        domain = "";
+        elements = new List<EventPayloadEntry>();
+
+        if (isREST)
+        {
+            cursor = "";
+            //countSM = 0;
+            statusData = new JsonObject();
+        }
     }
 }

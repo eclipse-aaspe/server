@@ -1,0 +1,15 @@
+# connectionString = "Host=localhost;Database=AAS;Username=postgres;Password=postres;Include Error Detail=true;Port=5432";
+
+services:
+  aasx-server-postgres:
+    container_name: aasx-server-postgres
+    image: docker.io/library/postgres:15.3
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+#    command: postgres -c log_statement=all -c log_min_messages=info

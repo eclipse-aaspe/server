@@ -37,10 +37,8 @@
     <ItemGroup>
         <ProjectReference Include="..\AasSecurity\AasSecurity.csproj" />
         <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
-        <ProjectReference Include="..\es6numberserializer\es6numberserializer.csproj" />
         <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj" />
         <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj" />
-        <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
     </ItemGroup>
 
     <ProjectExtensions>
@@ -81,6 +79,7 @@
     <ItemGroup>
         <Folder Include="temp\" />
         <Folder Include="wwwroot\images\scottplot\" />
+        <Folder Include="wwwroot\webfonts\" />
     </ItemGroup>
 
     <ItemGroup>
@@ -90,7 +89,22 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Update="Pages\Trustlist.razor">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </Content>
+      <Content Update="Pages\Access.razor">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
         <None Update="accessrules.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="jsonschema-query.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="jsonschema-access.txt">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="LICENSE.TXT">

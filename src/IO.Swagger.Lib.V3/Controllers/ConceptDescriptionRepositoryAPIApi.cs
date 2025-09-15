@@ -112,6 +112,22 @@ namespace IO.Swagger.Controllers
             return NoContent();
         }
 
+        private static void PatchCD(IConceptDescription cd)
+        {
+            if (cd != null && cd.EmbeddedDataSpecifications != null && cd.EmbeddedDataSpecifications.Count != 0)
+            {
+                for (var i = 0; i < cd.EmbeddedDataSpecifications.Count; i++)
+                {
+                    var eds = cd.EmbeddedDataSpecifications[i];
+                    if (eds != null && eds.DataSpecification == null)
+                    {
+                        eds.DataSpecification = new Reference(ReferenceTypes.ExternalReference, new List<IKey>()
+                            { new Key(KeyTypes.GlobalReference, "https://admin-shell.io/DataSpecificationTemplates/DataSpecificationIec61360/3/0") });
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Returns all Concept Descriptions
         /// </summary>
@@ -146,6 +162,11 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             cdList = await _dbRequestHandlerService.ReadPagedConceptDescriptions(paginationParameters, securityConfig, idShort, reqIsCaseOf, reqDataSpecificationRef);
+
+            foreach (var cd in cdList)
+            {
+                PatchCD(cd);
+            }
 
             var authResult = _authorizationService.AuthorizeAsync(User, cdList, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
@@ -189,6 +210,8 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
+
+            PatchCD(output);
 
             var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
             if (!authResult.Succeeded)

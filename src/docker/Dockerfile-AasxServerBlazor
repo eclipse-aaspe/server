@@ -24,5 +24,7 @@ EXPOSE 5001/tcp
 EXPOSE 5001/udp
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
+COPY ./src/AasxServerBlazor/appsettings.json /AasxServerBlazor/appsettings.json
+
 WORKDIR /AasxServerBlazor
 ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]

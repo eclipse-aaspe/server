@@ -1,44 +1,137 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 namespace Contracts.Events;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using Microsoft.IdentityModel.Tokens;
+
+public enum EventPayloadEntryType
+{
+    Created,
+    Updated,
+    Deleted
+}
+
 
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
-    public string entryType { get; set; } // CREATE, UPDATE, DELETE
-    public string lastUpdate { get; set; } // timeStamp for this entry
-    public string payloadType { get; set; } // Submodel, SME, AAS
-    public string payload { get; set; } // JSON Serialization
-    public string submodelId { get; set; } // ID of related Submodel
-    public string idShortPath { get; set; } // for SMEs only
+    public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
+
+    public string time { get; set; } //latest timeStamp
+
+    [JsonIgnore]
+    public EventPayloadEntryType eventPayloadEntryType { get; private set; } // eventPayloadEntryType
+
+    public string type { get; private set; } // Created, Updated, Deleted
+    public string id { get; set; }
+    public string source { get; set; } // link to source
+
+    public JsonObject data { get; set; } // JSON Serialization
+    public string dataschema { get; set; } // SCHEMA_URL + model type
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
+    public string semanticid { get; set; }
 
     public EventPayloadEntry()
     {
-        entryType = "";
-        lastUpdate = "";
-        payloadType = "";
-        payload = "";
-        submodelId = "";
-        idShortPath = "";
-        notDeletedIdShortList = new List<string>();
+        type = "";
+        time = "";
+        dataschema = "";
+        id = "";
+
+        data = new JsonObject();
+    }
+
+    public void SetType(EventPayloadEntryType type)
+    {
+        this.type = type.ToString();
+        this.eventPayloadEntryType = type;
+    }
+
+    public string GetSubdmodelId()
+    {
+        var splittedSourceString = source.Split("/");
+
+        if (GetModelType()?.ToLower() == "basiceventelement")
+        {
+            return Base64UrlEncoder.Decode(splittedSourceString[^3]);
+        }
+        else if (GetModelType()?.ToLower() == "submodel")
+        {
+            return Base64UrlEncoder.Decode(splittedSourceString?.Last());
+        }
+        else if (!GetModelType().IsNullOrEmpty())
+        {
+            return Base64UrlEncoder.Decode(splittedSourceString[^2]);
+        }
+        else
+        {
+            return "undefined";
+        }
+    }
+
+    public string GetIdShortPath()
+    {
+        var splittedSourceString = source.Split("/");
+
+        if (GetModelType()?.ToLower() == "basiceventelement")
+        {
+            return splittedSourceString.Last();
+        }
+        else if (GetModelType()?.ToLower() == "submodel")
+        {
+            return String.Empty;
+        }
+        else if (!GetModelType().IsNullOrEmpty())
+        {
+            return splittedSourceString.Last();
+        }
+        else
+        {
+            return "undefined";
+        }
+    }
+
+
+    public string GetModelType()
+    {
+        return dataschema.Split("/")?.Last();
     }
 
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.submodelId, other.submodelId);
+        var result = string.Compare(this.GetSubdmodelId(), other.GetSubdmodelId());
 
         if (result == 0)
         {
-            if (this.payloadType == other.payloadType)
+            var typeInSchema = this.dataschema.Split('/')?.Last().ToLower();
+            var otherTypeInSchema = other.dataschema.Split('/')?.Last().ToLower();
+
+            bool isBothSubmodel = typeInSchema == "submodel" && otherTypeInSchema == "submodel";
+            bool isBothSubmodelElement = typeInSchema != "submodel" && otherTypeInSchema != "submodel";
+
+            if (isBothSubmodel || isBothSubmodelElement)
             {
                 result = 0;
             }
             else
             {
-                if (this.payloadType == "sm")
+                if (typeInSchema == "submodel")
                 {
                     result = -1;
                 }
@@ -51,9 +144,11 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
         if (result == 0)
         {
-            result = string.Compare(this.idShortPath, other.idShortPath);
+            result = string.Compare(this.GetIdShortPath(), other.GetIdShortPath());
         }
 
         return result;
+
+        return 0;
     }
 }
