@@ -79,6 +79,7 @@
     <ItemGroup>
         <Folder Include="temp\" />
         <Folder Include="wwwroot\images\scottplot\" />
+        <Folder Include="wwwroot\webfonts\" />
     </ItemGroup>
 
     <ItemGroup>
