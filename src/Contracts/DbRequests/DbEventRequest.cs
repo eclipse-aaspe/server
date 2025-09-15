@@ -40,6 +40,8 @@ public class DbEventRequest
 
     public ISubmodel Submodel { get; set; }
 
+    public string ExternalBlazor { get; set; }
+
     //For Read request
     public DbEventRequestType DbEventRequestType { get; set; }
 
