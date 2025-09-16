@@ -14,10 +14,6 @@
 namespace Contracts;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using AdminShellNS;
 using Contracts.Events;
@@ -32,6 +28,8 @@ public interface IEventService
     void CheckMqttMessages(EventDto eventData, string submodelId, string idShortPath);
 
     public void PublishMqttMessage(EventDto eventDto, string submodelId, string idShortPath);
+
+    public void NotifySubmodelDeleted(Submodel submodel);
 
     public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,
         string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,

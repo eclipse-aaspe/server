@@ -419,7 +419,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-                            CrudOperator.DeleteSubmodel(db, submodelIdentifier);
+                            var deletedSubmodel = CrudOperator.DeleteSubmodel(db, submodelIdentifier, true);
+                            _eventService.NotifySubmodelDeleted(deletedSubmodel);
                         }
                         else
                         {

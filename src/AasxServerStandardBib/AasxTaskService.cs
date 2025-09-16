@@ -2123,16 +2123,6 @@ namespace AasxServer
 
                     bool wp = false;
 
-                    if (eventData.NoPayload != null
-                        && eventData.NoPayload.Value != null)
-                    {
-                        wp = eventData.NoPayload.Value.ToLower() == "false";
-                    }
-                    if (eventData.WithPayload != null
-                        && eventData.WithPayload.Value != null)
-                    {
-                        wp = eventData.WithPayload.Value.ToLower() == "true";
-                    }
                     if (eventData.Include != null
                         && eventData.Include.Value != null)
                     {

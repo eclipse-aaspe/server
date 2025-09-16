@@ -817,13 +817,24 @@ namespace AasxServerDB
             db.SMESets.Where(sme => sme.SMId == smDB.Id && !visitor.keepSme.Contains(sme.Id)).ExecuteDeleteAsync();
             db.SaveChanges();
         }
-        internal static void DeleteSubmodel(AasContext db, string submodelIdentifier)
+        internal static Submodel DeleteSubmodel(AasContext db, string submodelIdentifier, bool isLoadingSubmodel = false)
         {
+            Submodel submodel = null;
+
             using (var transaction = db.Database.BeginTransaction())
             {
                 try
                 {
                     var smDB = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+
+                    if (isLoadingSubmodel)
+                    {
+                        var submodeInDb = smDB.FirstOrDefault();
+                        if (submodeInDb != null) {
+                            submodel = ReadSubmodel(db, submodeInDb);
+                        }
+                    }
+
                     var smDBID = smDB.FirstOrDefault().Id;
                     var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
                     var smeDBIDList = smeDB.Select(sme => sme.Id).ToList();
@@ -840,9 +851,12 @@ namespace AasxServerDB
                 }
                 catch (Exception)
                 {
+                    submodel = null;
                     transaction.Rollback();
                 }
             }
+
+            return submodel;
         }
 
         public static List<ISubmodelElement>? ReadPagedSubmodelElements(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier)
