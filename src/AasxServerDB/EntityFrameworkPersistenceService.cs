@@ -235,7 +235,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 PackageEnv = new AdminShellPackageEnv(aasEnv),
                             };
                         }
-                        else if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out SMSet smDB, out _))
+                        else if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out SMSet smDB, out _))
                         {
                             //ToDo: Need to be tested
                             var smEnv = CrudOperator.GetEnvironment(db, securityCondition, smDb: smDB);
@@ -364,7 +364,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         result.Submodels = output;
                         break;
                     case DbRequestOp.ReadSubmodelById:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out _, out ISubmodel submodel);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel);
 
                         if (found)
                         {
@@ -382,7 +382,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         break;
                     case DbRequestOp.CreateSubmodel:
                         var newSubmodel = dbRequest.Context.Params.SubmodelBody;
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, out _, out _);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, false, out _, out _);
 
                         if (found)
                         {
@@ -399,7 +399,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.UpdateSubmodelById:
                         throw new NotImplementedException();
                     case DbRequestOp.ReplaceSubmodelById:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _);
 
                         if (found)
                         {
@@ -416,14 +416,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         break;
                     case DbRequestOp.DeleteSubmodelById:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out _, out ISubmodel deletedSubmodel))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, true, out _, out ISubmodel deletedSubmodel))
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
                             var isDeleted = CrudOperator.DeleteSubmodel(db, submodelIdentifier);
 
                             if (isDeleted)
                             {
-                                _eventService.NotifySubmodelDeleted(deletedSubmodel);
+                                _eventService.NotifyDeleted(deletedSubmodel);
                             }
                         }
                         else
@@ -459,7 +459,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         var newSubmodelElement = dbRequest.Context.Params.SubmodelElementBody;
 
-                        var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _);
+                        var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _);
                         if (smFound)
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
@@ -490,7 +490,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         };
                         break;
                     case DbRequestOp.ReplaceSubmodelElementByPath:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _);
                         if (found)
                         {
                             CrudOperator.ReplaceSubmodelElementByPath(
@@ -510,18 +510,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new NotImplementedException();
 
                     case DbRequestOp.DeleteSubmodelElementByPath:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out _,  out ISubmodel deletedSmeParentSubmodel))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _,  out ISubmodel deletedSmeParentSubmodel))
                         {
-                            bool isDeleted = CrudOperator.DeleteSubmodelElement(
+                            var sme = CrudOperator.DeleteSubmodelElement(
                                 db,
                                 securityCondition,
                                 aasIdentifier,
                                 submodelIdentifier,
                                 idShort);
 
-                            if (isDeleted)
+                            if (sme != null)
                             {
-                                _eventService.NotifySubmodelElementDeleted(deletedSmeParentSubmodel, idShort);
+                                _eventService.NotifyDeleted(deletedSmeParentSubmodel, idShort, CrudOperator.GetModelType(sme.SMEType), sme.SemanticId);
                             }
                         }
                         else
@@ -1240,7 +1240,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private string ReadFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
     {
-        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
+        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _))
         {
             var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
             content = null;
@@ -1295,7 +1295,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void ReplaceFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
     {
-        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
+        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _))
         {
             var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out _);
 
@@ -1344,7 +1344,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void DeleteFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
-        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
+        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _))
         {
             var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out _);
 
@@ -1812,7 +1812,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
     private bool IsSubmodelPresent(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier,
-        bool loadIntoMemory, out SMSet smDb, out ISubmodel output)
+        bool loadIntoMemory, bool loadIntoMemoryWithoutElements, out SMSet smDb, out ISubmodel output)
     {
         output = null;
         smDb = null;
@@ -1861,7 +1861,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (loadIntoMemory)
         {
-            output = CrudOperator.ReadSubmodel(db, smDB[0], securityCondition: securityCondition);
+            output = CrudOperator.ReadSubmodel(db, smDB[0], securityCondition: securityCondition, loadIntoMemoryWithoutElements: loadIntoMemoryWithoutElements);
             if (output != null)
             {
                 smDb = smDB[0];

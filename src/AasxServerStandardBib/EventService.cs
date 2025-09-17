@@ -910,7 +910,7 @@ public class EventService : IEventService
                                 var notDeletedIdShortList = new List<string>();
                                 if (sme.TimeStampDelete > diffTime)
                                 {
-                                    entryType = EventPayloadEntryType.Deleted;
+                                    entryType = EventPayloadEntryType.NotDeleted;
                                     var children = smeSearchSM.Where(c => sme.Id == c.ParentSMEId).ToList();
                                     foreach (var c in children)
                                     {
@@ -1926,12 +1926,12 @@ public class EventService : IEventService
         return eventDto;
     }
 
-    public async void NotifySubmodelDeleted(ISubmodel submodel)
+    public async void NotifyDeleted(ISubmodel submodel, string idShortPath, string smeModelType, string smeSemanticId)
     {
         var mqtttOutEventDtos = EventDtos.Where(eventData => eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT");
 
         string searchSM = string.Empty;
-        EventDto notificationEventDto = null;
+        List<EventDto> notificationEventDtos = new List<EventDto>();
 
         foreach (var mqttEventDto in mqtttOutEventDtos)
         {
@@ -1939,248 +1939,20 @@ public class EventService : IEventService
             {
                 searchSM = mqttEventDto.ConditionSM.Value;
 
+                var smList = new List<ISubmodel>() { submodel };
+
                 if (searchSM is "(*)" or "*" or "")
                 {
-                    notificationEventDto = mqttEventDto;
-                    break;
-                }
-
-                if (searchSM.Contains("idShort") && searchSM.Contains("==") && searchSM.Contains(submodel.IdShort))
-                {
-                    notificationEventDto = mqttEventDto;
-                    break;
-                }
-                if (searchSM.Contains("idShort") && searchSM.Contains("==") && searchSM.Contains(submodel.IdShort))
-                {
-                    notificationEventDto = mqttEventDto;
-                    break;
-                }
-                //ToDo: Security has allowed to delete the sm, do we need security check anyway?
-                //if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
-                //{
-                //    if (searchSM == string.Empty)
-                //    {
-                //        searchSM = securityCondition["sm."];
-                //    }
-                //    else
-                //    {
-                //        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
-                //    }
-                //}
-
-            }
-        }
-
-        if (notificationEventDto != null
-            && !_enableMqtt
-            && notificationEventDto.MessageBroker != null
-            && !notificationEventDto.MessageBroker.Value.IsNullOrEmpty()
-            && notificationEventDto.PassWord != null
-            && notificationEventDto.PassWord.Value != null
-            && notificationEventDto.UserName != null
-            && notificationEventDto.UserName.Value != null)
-        {
-            var eventPayload = new EventPayload(false);
-            List<String> diffEntry = new List<String>();
-
-            eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
-
-            if (notificationEventDto.Domain != null)
-            {
-                eventPayload.domain = notificationEventDto.Domain.Value;
-            }
-
-            eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
-
-            bool isPublishEventElement = notificationEventDto.PublishBasicEventElement != null
-                && notificationEventDto.PublishBasicEventElement.Value != null && notificationEventDto.PublishBasicEventElement.Value == "true";
-
-            if (isPublishEventElement)
-            {
-
-                if (notificationEventDto.IdShort != null)
-                {
-                    eventPayload.source = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(notificationEventDto.SubmodelId)}/events/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
-                }
-                eventPayload.semanticid = (notificationEventDto.SemanticId != null && notificationEventDto.SemanticId?.Keys != null) ? notificationEventDto.SemanticId?.Keys[0].Value : "";
-                eventPayload.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
-
-            }
-            else
-            {
-                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodel.Id);
-
-                eventPayload.source = sourceString;
-                eventPayload.dataschema = EventPayloadEntry.SCHEMA_URL + "submodel";
-
-                if (submodel.SemanticId != null)
-                {
-                    eventPayload.semanticid = (submodel.SemanticId != null && submodel.SemanticId?.Keys != null) ? submodel.SemanticId?.Keys[0].Value : "";
-                }
-
-                bool withPayloadInclude = notificationEventDto.Include != null
-                    && notificationEventDto.Include.Value != null && notificationEventDto.Include.Value == "true";
-
-                if (withPayloadInclude)
-                {
-                    if (submodel != null)
-                    {
-                        var j = Jsonization.Serialize.ToJsonObject(submodel);
-                        if (j != null)
-                        {
-                            eventPayload.data = j;
-                        }
-                    }
-                }
-
-                //ToDo: Check diff entry
-                diffEntry.Add(eventPayload.type + " " + eventPayload.source);
-            }
-            eventPayload.id = $"{eventPayload.source}-{eventPayload.time}";
-            eventPayload.type = EventPayloadEntryType.Deleted.ToString();
-
-            var options = new JsonSerializerOptions
-            {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            var payloadObjString = JsonSerializer.Serialize(eventPayload, options);
-
-            try
-            {
-                var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(notificationEventDto.SubmodelId);
-
-                if (!notificationEventDto.IdShortPath.IsNullOrEmpty())
-                {
-                    clientId += $"/submodel-elements/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
-                }
-
-                var result = await _mqttClientService.PublishAsync(clientId, notificationEventDto.MessageBroker.Value,
-                    notificationEventDto.MessageTopicType.Value,
-                    notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, payloadObjString);
-
-                var now = DateTime.UtcNow;
-
-                bool isSucceeded = false;
-
-                if (result != null && result.IsSuccess)
-                {
-                    isSucceeded = true;
-                    Console.WriteLine("MQTT message sent.");
-                }
-
-                if (isSucceeded)
-                {
-                    if (notificationEventDto.Transmitted != null)
-                    {
-                        notificationEventDto.Transmitted.Value = eventPayload.transmitted;
-                        notificationEventDto.Transmitted.SetTimeStamp(now);
-                    }
-                    var dt = DateTime.Parse(eventPayload.time);
-                    if (notificationEventDto.LastUpdate != null)
-                    {
-                        notificationEventDto.LastUpdate.Value = eventPayload.time;
-                        notificationEventDto.LastUpdate.SetTimeStamp(dt);
-                    }
-                    if (notificationEventDto.Status != null)
-                    {
-                        if (notificationEventDto.Message != null)
-                        {
-                            //ToDo: Is message really correct? 
-                            notificationEventDto.Message.Value = "on";
-                        }
-                        notificationEventDto.Status.SetTimeStamp(now);
-                    }
-                    if (notificationEventDto.Diff != null && diffEntry.Count > 0)
-                    {
-                        notificationEventDto.Diff.Value = new List<ISubmodelElement>();
-                        int i = 0;
-                        foreach (var dif in diffEntry)
-                        {
-                            var p = new Property(DataTypeDefXsd.String);
-                            p.IdShort = "diff" + i;
-                            p.Value = dif;
-                            p.SetTimeStamp(dt);
-                            notificationEventDto.Diff.Value.Add(p);
-                            p.SetAllParentsAndTimestamps(notificationEventDto.Diff, dt, dt, DateTime.MinValue);
-                            i++;
-                        }
-                        notificationEventDto.Diff.SetTimeStamp(dt);
-                    }
-                    Program.signalNewData(2);
+                    notificationEventDtos.Add(mqttEventDto);
                 }
                 else
                 {
-                    var statusCode = "";
+                    var queryable = smList.AsQueryable().Where(searchSM).ToList();
 
-                    if (result != null)
+                    if (queryable.Any())
                     {
-                        statusCode = result.ReasonCode.ToString();
+                        notificationEventDtos.Add(mqttEventDto);
                     }
-
-                    if (notificationEventDto.Status != null
-                        && notificationEventDto.Message != null)
-                    {
-                        notificationEventDto.Message.Value = "ERROR: " +
-                            statusCode + " ; " +
-                            " ; PUT " + notificationEventDto.MessageBroker.Value;
-                        notificationEventDto.Status.SetTimeStamp(now);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (notificationEventDto.Message != null)
-                {
-                    notificationEventDto.Message.Value = "ERROR: " +
-                        ex.Message +
-                        " ; PUT " + notificationEventDto.MessageBroker.Value;
-                }
-                var now = DateTime.UtcNow;
-                notificationEventDto.Status.SetTimeStamp(now);
-                // d = eventData.LastUpdate.Value = "reconnect";
-            }
-        }
-
-        notificationEventDto.env.setWrite(true);
-    }
-
-    public async void NotifySubmodelElementDeleted(ISubmodel parentSubmodel, string idShortPath)
-    {
-        var mqtttOutEventDtos = EventDtos.Where(eventData => eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT");
-
-        string searchSM = string.Empty;
-        EventDto notificationEventDto = null;
-
-        foreach (var mqttEventDto in mqtttOutEventDtos)
-        {
-            if (mqttEventDto.ConditionSM != null && mqttEventDto.ConditionSM.Value != null)
-            {
-                searchSM = mqttEventDto.ConditionSM.Value;
-
-                //ToDo: Use correct syntax?
-                if (searchSM is "(*)" or "*" or "")
-                {
-                    notificationEventDto = mqttEventDto;
-                    break;
-                }
-
-                if (searchSM.Contains("idShort") && searchSM.Contains("==") && searchSM.Contains(parentSubmodel.IdShort))
-                {
-                    notificationEventDto = mqttEventDto;
-                    break;
-                }
-                if (searchSM.Contains("idShort") && searchSM.Contains("==") && searchSM.Contains(parentSubmodel.IdShort))
-                {
-                    notificationEventDto = mqttEventDto;
-                    break;
-                }
-                //ToDo: Add search sme
-                string searchSME = string.Empty;
-
-                if (mqttEventDto.ConditionSME != null && mqttEventDto.ConditionSME.Value != null)
-                {
-                    searchSME = mqttEventDto.ConditionSME.Value;
                 }
 
                 //ToDo: Security has allowed to delete the sm, do we need security check anyway?
@@ -2195,205 +1967,186 @@ public class EventService : IEventService
                 //        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
                 //    }
                 //}
-
-                //if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
-                //{
-                //    if (searchSME == string.Empty)
-                //    {
-                //        searchSME = securityCondition["sme."];
-                //    }
-                //    else
-                //    {
-                //        searchSME = $"({securityCondition["sme."]})&&({searchSME})";
-                //    }
-                //}
-
             }
         }
 
-        if (notificationEventDto != null
-            && !_enableMqtt
-            && notificationEventDto.MessageBroker != null
-            && !notificationEventDto.MessageBroker.Value.IsNullOrEmpty()
-            && notificationEventDto.PassWord != null
-            && notificationEventDto.PassWord.Value != null
-            && notificationEventDto.UserName != null
-            && notificationEventDto.UserName.Value != null)
+        if (notificationEventDtos.Any()
+            && !_enableMqtt)
         {
             var eventPayload = new EventPayload(false);
             List<String> diffEntry = new List<String>();
 
             eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
-            if (notificationEventDto.Domain != null)
+            foreach (var notificationEventDto in notificationEventDtos)
             {
-                eventPayload.domain = notificationEventDto.Domain.Value;
-            }
-
-            eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
-
-            bool isPublishEventElement = notificationEventDto.PublishBasicEventElement != null
-                && notificationEventDto.PublishBasicEventElement.Value != null && notificationEventDto.PublishBasicEventElement.Value == "true";
-
-            if (isPublishEventElement)
-            {
-
-                if (notificationEventDto.IdShort != null)
-                {
-                    eventPayload.source = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(notificationEventDto.SubmodelId)}/events/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
-                }
-                eventPayload.semanticid = (notificationEventDto.SemanticId != null && notificationEventDto.SemanticId?.Keys != null) ? notificationEventDto.SemanticId?.Keys[0].Value : "";
-                eventPayload.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
-
-            }
-            else
-            {
-                bool isSubmodelMode = notificationEventDto.SubmodelsOnly != null
-                    && notificationEventDto.SubmodelsOnly.Value != null && notificationEventDto.SubmodelsOnly.Value == "true";
-
-                if (isSubmodelMode)
+                if (notificationEventDto.MessageBroker != null
+                    && !notificationEventDto.MessageBroker.Value.IsNullOrEmpty()
+                    && notificationEventDto.PassWord != null
+                    && notificationEventDto.PassWord.Value != null
+                    && notificationEventDto.UserName != null
+                    && notificationEventDto.UserName.Value != null)
                 {
 
-                    var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(parentSubmodel.Id);
-
-                    eventPayload.source = sourceString;
-                    eventPayload.dataschema = EventPayloadEntry.SCHEMA_URL + "submodel";
-
-                    if (parentSubmodel.SemanticId != null)
+                    if (notificationEventDto.Domain != null)
                     {
-                        eventPayload.semanticid = (parentSubmodel.SemanticId != null && parentSubmodel.SemanticId?.Keys != null) ? parentSubmodel.SemanticId?.Keys[0].Value : "";
+                        eventPayload.domain = notificationEventDto.Domain.Value;
                     }
 
-                    bool withPayloadInclude = notificationEventDto.Include != null
-                        && notificationEventDto.Include.Value != null && notificationEventDto.Include.Value == "true";
+                    eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
-                    if (withPayloadInclude)
+                    bool isPublishEventElement = notificationEventDto.PublishBasicEventElement != null
+                        && notificationEventDto.PublishBasicEventElement.Value != null && notificationEventDto.PublishBasicEventElement.Value == "true";
+
+                    if (isPublishEventElement)
                     {
-                        if (parentSubmodel != null)
+
+                        if (notificationEventDto.IdShort != null)
                         {
-                            var j = Jsonization.Serialize.ToJsonObject(parentSubmodel);
-                            if (j != null)
+                            eventPayload.source = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(notificationEventDto.SubmodelId)}/events/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
+                        }
+                        eventPayload.semanticid = (notificationEventDto.SemanticId != null && notificationEventDto.SemanticId?.Keys != null) ? notificationEventDto.SemanticId?.Keys[0].Value : "";
+                        eventPayload.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+
+                    }
+                    else
+                    {
+                        var submmodelsOnly = notificationEventDto.SubmodelsOnly != null
+                            && notificationEventDto.SubmodelsOnly.Value != null && notificationEventDto.SubmodelsOnly.Value == "true";
+                        var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodel.Id);
+
+                        if (submmodelsOnly
+                            && !idShortPath.IsNullOrEmpty())
+                        {
+                            sourceString += "/submodel-elements/" + idShortPath;
+                            eventPayload.semanticid = smeSemanticId;
+                            eventPayload.dataschema = EventPayloadEntry.SCHEMA_URL + smeModelType;
+                        }
+                        else
+                        {
+                            eventPayload.dataschema = EventPayloadEntry.SCHEMA_URL + "submodel";
+
+                            if (submodel.SemanticId != null)
                             {
-                                eventPayload.data = j;
+                                eventPayload.semanticid = (submodel.SemanticId != null && submodel.SemanticId?.Keys != null) ? submodel.SemanticId?.Keys[0].Value : "";
+                            }
+
+                        }
+                        eventPayload.source = sourceString;
+
+                        //ToDo: Check diff entry
+                        diffEntry.Add(eventPayload.type + " " + eventPayload.source);
+                    }
+
+
+                    eventPayload.id = $"{eventPayload.source}-{eventPayload.time}";
+                    eventPayload.type = EventPayloadEntryType.Deleted.ToString();
+
+                    var options = new JsonSerializerOptions
+                    {
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    };
+
+                    var payloadObjString = JsonSerializer.Serialize(eventPayload, options);
+
+                    try
+                    {
+                        var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(notificationEventDto.SubmodelId);
+
+                        if (!notificationEventDto.IdShortPath.IsNullOrEmpty())
+                        {
+                            clientId += $"/submodel-elements/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
+                        }
+
+                        var result = await _mqttClientService.PublishAsync(clientId, notificationEventDto.MessageBroker.Value,
+                            notificationEventDto.MessageTopicType.Value,
+                            notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, payloadObjString);
+
+                        var now = DateTime.UtcNow;
+
+                        bool isSucceeded = false;
+
+                        if (result != null && result.IsSuccess)
+                        {
+                            isSucceeded = true;
+                            Console.WriteLine("MQTT message sent.");
+                        }
+
+                        if (isSucceeded)
+                        {
+                            if (notificationEventDto.Transmitted != null)
+                            {
+                                notificationEventDto.Transmitted.Value = eventPayload.transmitted;
+                                notificationEventDto.Transmitted.SetTimeStamp(now);
+                            }
+                            var dt = DateTime.Parse(eventPayload.time);
+                            if (notificationEventDto.LastUpdate != null)
+                            {
+                                notificationEventDto.LastUpdate.Value = eventPayload.time;
+                                notificationEventDto.LastUpdate.SetTimeStamp(dt);
+                            }
+                            if (notificationEventDto.Status != null)
+                            {
+                                if (notificationEventDto.Message != null)
+                                {
+                                    //ToDo: Is message really correct? 
+                                    notificationEventDto.Message.Value = "on";
+                                }
+                                notificationEventDto.Status.SetTimeStamp(now);
+                            }
+                            if (notificationEventDto.Diff != null && diffEntry.Count > 0)
+                            {
+                                notificationEventDto.Diff.Value = new List<ISubmodelElement>();
+                                int i = 0;
+                                foreach (var dif in diffEntry)
+                                {
+                                    var p = new Property(DataTypeDefXsd.String);
+                                    p.IdShort = "diff" + i;
+                                    p.Value = dif;
+                                    p.SetTimeStamp(dt);
+                                    notificationEventDto.Diff.Value.Add(p);
+                                    p.SetAllParentsAndTimestamps(notificationEventDto.Diff, dt, dt, DateTime.MinValue);
+                                    i++;
+                                }
+                                notificationEventDto.Diff.SetTimeStamp(dt);
+                            }
+                            Program.signalNewData(2);
+                        }
+                        else
+                        {
+                            var statusCode = "";
+
+                            if (result != null)
+                            {
+                                statusCode = result.ReasonCode.ToString();
+                            }
+
+                            if (notificationEventDto.Status != null
+                                && notificationEventDto.Message != null)
+                            {
+                                notificationEventDto.Message.Value = "ERROR: " +
+                                    statusCode + " ; " +
+                                    " ; PUT " + notificationEventDto.MessageBroker.Value;
+                                notificationEventDto.Status.SetTimeStamp(now);
                             }
                         }
                     }
-
-                    //ToDo: Check diff entry
-                    diffEntry.Add(eventPayload.type + " " + eventPayload.source);
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-
-            }
-            eventPayload.id = $"{eventPayload.source}-{eventPayload.time}";
-            eventPayload.type = EventPayloadEntryType.Deleted.ToString();
-
-            var options = new JsonSerializerOptions
-            {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            var payloadObjString = JsonSerializer.Serialize(eventPayload, options);
-
-            try
-            {
-                var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(notificationEventDto.SubmodelId);
-
-                if (!notificationEventDto.IdShortPath.IsNullOrEmpty())
-                {
-                    clientId += $"/submodel-elements/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
-                }
-
-                var result = await _mqttClientService.PublishAsync(clientId, notificationEventDto.MessageBroker.Value,
-                    notificationEventDto.MessageTopicType.Value,
-                    notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, payloadObjString);
-
-                var now = DateTime.UtcNow;
-
-                bool isSucceeded = false;
-
-                if (result != null && result.IsSuccess)
-                {
-                    isSucceeded = true;
-                    Console.WriteLine("MQTT message sent.");
-                }
-
-                if (isSucceeded)
-                {
-                    if (notificationEventDto.Transmitted != null)
-                    {
-                        notificationEventDto.Transmitted.Value = eventPayload.transmitted;
-                        notificationEventDto.Transmitted.SetTimeStamp(now);
-                    }
-                    var dt = DateTime.Parse(eventPayload.time);
-                    if (notificationEventDto.LastUpdate != null)
-                    {
-                        notificationEventDto.LastUpdate.Value = eventPayload.time;
-                        notificationEventDto.LastUpdate.SetTimeStamp(dt);
-                    }
-                    if (notificationEventDto.Status != null)
+                    catch (Exception ex)
                     {
                         if (notificationEventDto.Message != null)
                         {
-                            //ToDo: Is message really correct? 
-                            notificationEventDto.Message.Value = "on";
+                            notificationEventDto.Message.Value = "ERROR: " +
+                                ex.Message +
+                                " ; PUT " + notificationEventDto.MessageBroker.Value;
                         }
+                        var now = DateTime.UtcNow;
                         notificationEventDto.Status.SetTimeStamp(now);
+                        // d = eventData.LastUpdate.Value = "reconnect";
                     }
-                    if (notificationEventDto.Diff != null && diffEntry.Count > 0)
-                    {
-                        notificationEventDto.Diff.Value = new List<ISubmodelElement>();
-                        int i = 0;
-                        foreach (var dif in diffEntry)
-                        {
-                            var p = new Property(DataTypeDefXsd.String);
-                            p.IdShort = "diff" + i;
-                            p.Value = dif;
-                            p.SetTimeStamp(dt);
-                            notificationEventDto.Diff.Value.Add(p);
-                            p.SetAllParentsAndTimestamps(notificationEventDto.Diff, dt, dt, DateTime.MinValue);
-                            i++;
-                        }
-                        notificationEventDto.Diff.SetTimeStamp(dt);
-                    }
-                    Program.signalNewData(2);
                 }
-                else
-                {
-                    var statusCode = "";
 
-                    if (result != null)
-                    {
-                        statusCode = result.ReasonCode.ToString();
-                    }
-
-                    if (notificationEventDto.Status != null
-                        && notificationEventDto.Message != null)
-                    {
-                        notificationEventDto.Message.Value = "ERROR: " +
-                            statusCode + " ; " +
-                            " ; PUT " + notificationEventDto.MessageBroker.Value;
-                        notificationEventDto.Status.SetTimeStamp(now);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (notificationEventDto.Message != null)
-                {
-                    notificationEventDto.Message.Value = "ERROR: " +
-                        ex.Message +
-                        " ; PUT " + notificationEventDto.MessageBroker.Value;
-                }
-                var now = DateTime.UtcNow;
-                notificationEventDto.Status.SetTimeStamp(now);
-                // d = eventData.LastUpdate.Value = "reconnect";
+                notificationEventDto.env.setWrite(true);
             }
         }
-
-        notificationEventDto.env.setWrite(true);
     }
 }

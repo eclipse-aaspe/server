@@ -29,9 +29,7 @@ public interface IEventService
 
     public void PublishMqttMessage(EventDto eventDto, string submodelId, string idShortPath);
 
-    public void NotifySubmodelDeleted(ISubmodel submodel);
-
-    public void NotifySubmodelElementDeleted(ISubmodel parentSubmodel, string idShortPath);
+    public void NotifyDeleted(ISubmodel submodel, string idShortPath = "", string smeModelType = "", string smeSemanticId = "");
 
     public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,
         string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,

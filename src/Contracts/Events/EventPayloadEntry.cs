@@ -25,7 +25,8 @@ public enum EventPayloadEntryType
 {
     Created,
     Updated,
-    Deleted
+    Deleted,
+    NotDeleted
 }
 
 
@@ -38,7 +39,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
     [JsonIgnore]
     public EventPayloadEntryType eventPayloadEntryType { get; private set; } // eventPayloadEntryType
 
-    public string type { get; private set; } // Created, Updated, Deleted
+    public string type { get; private set; } // Created, Updated, Deleted, NotDeleted
     public string id { get; set; }
     public string source { get; set; } // link to source
 

@@ -657,7 +657,7 @@ namespace AasxServerDB
         }
 
         public static Submodel? ReadSubmodel(AasContext db, SMSet? smDB = null, string submodelIdentifier = "",
-            Dictionary<string, string>? securityCondition = null, Dictionary<string, string>? condition = null)
+            Dictionary<string, string>? securityCondition = null, Dictionary<string, string>? condition = null, bool loadIntoMemoryWithoutElements = false)
         {
             if (!submodelIdentifier.IsNullOrEmpty())
             {
@@ -704,60 +704,63 @@ namespace AasxServerDB
                 submodelElements: new List<ISubmodelElement>()
             );
 
-            var smeMerged = GetSmeMerged(db, null, SMEQueryAll, smDB);
-
-            var sCondition = "true";
-            if (securityCondition?["all"] != null && securityCondition?["all"] != "")
+            if (!loadIntoMemoryWithoutElements)
             {
-                sCondition = securityCondition["all"];
-            }
+                var smeMerged = GetSmeMerged(db, null, SMEQueryAll, smDB);
 
-            if (smeMerged != null && smeMerged.Count != 0)
-            {
-                // at least 1 exists
-                var mergeForCondition = smeMerged.Select(sme => new
+                var sCondition = "true";
+                if (securityCondition?["all"] != null && securityCondition?["all"] != "")
                 {
-                    sm = sme.smSet,
-                    sme = sme.smeSet,
-                    svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
-                    mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
-                        (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
-                }).Distinct();
-                // at least 1 must exist to also approve security condition for SME
-                var resultCondition = mergeForCondition.AsQueryable().Where(sCondition);
-                if (!resultCondition.Any())
-                {
-                    return null;
+                    sCondition = securityCondition["all"];
                 }
 
-                var filter = "true";
-                if (securityCondition != null && securityCondition.TryGetValue("filter-all", out _))
+                if (smeMerged != null && smeMerged.Count != 0)
                 {
-                    if (securityCondition?["filter-all"] != null && securityCondition?["filter-all"] != "")
+                    // at least 1 exists
+                    var mergeForCondition = smeMerged.Select(sme => new
                     {
-                        filter = securityCondition?["filter-all"];
+                        sm = sme.smSet,
+                        sme = sme.smeSet,
+                        svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
+                        mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
+                            (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
+                    }).Distinct();
+                    // at least 1 must exist to also approve security condition for SME
+                    var resultCondition = mergeForCondition.AsQueryable().Where(sCondition);
+                    if (!resultCondition.Any())
+                    {
+                        return null;
                     }
-                }
-                if (condition != null && condition.TryGetValue("filter-all", out var filter2))
-                {
-                    if (filter2 != null)
+
+                    var filter = "true";
+                    if (securityCondition != null && securityCondition.TryGetValue("filter-all", out _))
                     {
-                        if (filter == "true")
+                        if (securityCondition?["filter-all"] != null && securityCondition?["filter-all"] != "")
                         {
-                            filter = filter2;
-                        }
-                        else
-                        {
-                            filter = $"({filter} && {filter2})";
+                            filter = securityCondition?["filter-all"];
                         }
                     }
+                    if (condition != null && condition.TryGetValue("filter-all", out var filter2))
+                    {
+                        if (filter2 != null)
+                        {
+                            if (filter == "true")
+                            {
+                                filter = filter2;
+                            }
+                            else
+                            {
+                                filter = $"({filter} && {filter2})";
+                            }
+                        }
+                    }
+
+                    resultCondition = mergeForCondition.AsQueryable().Where(filter);
+                    var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
+                    smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+
+                    LoadSME(submodel, null, null, null, smeMerged);
                 }
-
-                resultCondition = mergeForCondition.AsQueryable().Where(filter);
-                var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
-                smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
-
-                LoadSME(submodel, null, null, null, smeMerged);
             }
 
             submodel.TimeStampCreate = smDB.TimeStampCreate;
@@ -1124,9 +1127,9 @@ namespace AasxServerDB
             //_submodelService.UpdateSubmodelElementByPath(submodelIdentifier, idShortPath, newSme);
         }
 
-        public static bool DeleteSubmodelElement(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
+        public static SMESet DeleteSubmodelElement(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
-            bool isDeleted = false;
+            SMESet deletedSme = null;
 
             var now = DateTime.UtcNow;
 
@@ -1142,13 +1145,13 @@ namespace AasxServerDB
                             .Where(aas => aas.Identifier == aasIdentifier).ToList();
                         if (aasDB.Count != 1)
                         {
-                            return isDeleted;
+                            return deletedSme;
                         }
                         var aasDBId = aasDB[0].Id;
                         var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
                         if (smRefDBQuery.Count != 1)
                         {
-                            return isDeleted;
+                            return deletedSme;
                         }
                     }
 
@@ -1159,20 +1162,20 @@ namespace AasxServerDB
                     var smDB = smDBQuery.ToList();
                     if (smDB == null || smDB.Count != 1)
                     {
-                        return isDeleted;
+                        return deletedSme;
                     }
                     var smDBId = smDB[0].Id;
 
                     var idShortPathElements = idShortPath.Split(".");
                     if (idShortPathElements.Length == 0)
                     {
-                        return isDeleted;
+                        return deletedSme;
                     }
                     var idShort = idShortPathElements[0];
                     var smeParent = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null && sme.IdShort == idShort).ToList();
                     if (smeParent == null || smeParent.Count != 1)
                     {
-                        return isDeleted;
+                        return deletedSme;
                     }
                     var parentId = smeParent[0].Id;
                     var smeFound = smeParent;
@@ -1193,11 +1196,11 @@ namespace AasxServerDB
                         smeFound = smeFoundDB.ToList();
                         if (smeFound == null || smeFound.Count != 1)
                         {
-                            return isDeleted;
+                            return deletedSme;
                         }
                         parentId = smeFound[0].Id;
                     }
-
+                    deletedSme = smeParent[0];
                     var smeFoundTreeIds = CrudOperator.GetTree(db, smDB[0], smeFound)?.Select(s => s.Id);
                     if (smeFoundTreeIds?.Count() > 0)
                     {
@@ -1210,15 +1213,15 @@ namespace AasxServerDB
                         db.SaveChanges();
                     }
                     transaction.Commit();
-                    isDeleted = true;
+ 
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    isDeleted = false;
+                    deletedSme = null;
                 }
             }
-            return isDeleted;
+            return deletedSme;
         }
 
         public static ISubmodelElement? ReadSubmodelElement(SMESet smeSet)
