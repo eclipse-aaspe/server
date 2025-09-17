@@ -510,7 +510,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new NotImplementedException();
 
                     case DbRequestOp.DeleteSubmodelElementByPath:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out _,  out ISubmodel deletedSmeParentSubmodel))
                         {
                             bool isDeleted = CrudOperator.DeleteSubmodelElement(
                                 db,
@@ -521,7 +521,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                             if (isDeleted)
                             {
-                                _eventService.NotifySubmodelElementDeleted(submodelIdentifier, idShort);
+                                _eventService.NotifySubmodelElementDeleted(deletedSmeParentSubmodel, idShort);
                             }
                         }
                         else

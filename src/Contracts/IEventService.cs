@@ -31,7 +31,7 @@ public interface IEventService
 
     public void NotifySubmodelDeleted(ISubmodel submodel);
 
-    public void NotifySubmodelElementDeleted(string submodelIdentifier, string idShortPath);
+    public void NotifySubmodelElementDeleted(ISubmodel parentSubmodel, string idShortPath);
 
     public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,
         string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
