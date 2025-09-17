@@ -40,7 +40,7 @@ and success of this project:
 * [Harish Itian](https://github.com/harishpakala) ([Otto Von Guericke University](https://www.ovgu.de))
 * [Juilee Tikekar](https://github.com/jjtikekar) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Juilee Tikekar](https://github.com/juileetikekar) ([Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/))
-* Lea Blidh([Phoenix Contact](https://www.phoenixcontact.com/))
+* Lea Blidh ([Phoenix Contact](https://www.phoenixcontact.com/))
 * [Magnus Redeker](https://github.com/magnus-redeker) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Marko Ristin](https://github.com/mristin) ([ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/))
 * [Marta Fullen](https://github.com/martafullen) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
