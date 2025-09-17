@@ -40,7 +40,7 @@ and success of this project:
 * [Harish Itian](https://github.com/harishpakala) ([Otto Von Guericke University](https://www.ovgu.de))
 * [Juilee Tikekar](https://github.com/jjtikekar) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Juilee Tikekar](https://github.com/juileetikekar) ([Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/))
-* [Lea Blidh]([Phoenix Contact](https://www.phoenixcontact.com/))
+* Lea Blidh([Phoenix Contact](https://www.phoenixcontact.com/))
 * [Magnus Redeker](https://github.com/magnus-redeker) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Marko Ristin](https://github.com/mristin) ([ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/))
 * [Marta Fullen](https://github.com/martafullen) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
@@ -49,11 +49,9 @@ and success of this project:
 * [Oliver Fries](https://github.com/Freezor) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [SAidta](https://github.com/SAidta) ([Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/))
 * [Sten Gruener](https://github.com/StenGruener) ([ABB Asea Brown Boveri Ltd](https://new.abb.com/))
-* [Wadim Hamm](https://github.com/whamm86) ([ABB Asea Brown Boveri Ltd](https://new.abb.com/))
-* Andre B <36893478+abroering@users.noreply.github.com>
+* [Wadim Hamm](https://github.com/whamm86) ([Phoenix Contact](https://www.phoenixcontact.com/))
 * Emil Alipiev <10422347+EmilAlipiev@users.noreply.github.com>
-* Sudip Adhikari <93717810+SAidta@users.noreply.github.com>
-* magnus-redeker <71870532+magnus-redeker@users.noreply.github.com>
+
 
 
 
