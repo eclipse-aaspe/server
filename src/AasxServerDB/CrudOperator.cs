@@ -817,23 +817,15 @@ namespace AasxServerDB
             db.SMESets.Where(sme => sme.SMId == smDB.Id && !visitor.keepSme.Contains(sme.Id)).ExecuteDeleteAsync();
             db.SaveChanges();
         }
-        internal static Submodel DeleteSubmodel(AasContext db, string submodelIdentifier, bool isLoadingSubmodel = false)
+        internal static bool DeleteSubmodel(AasContext db, string submodelIdentifier)
         {
-            Submodel submodel = null;
+            bool isDeleted = false;
 
             using (var transaction = db.Database.BeginTransaction())
             {
                 try
                 {
                     var smDB = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-
-                    if (isLoadingSubmodel)
-                    {
-                        var submodeInDb = smDB.FirstOrDefault();
-                        if (submodeInDb != null) {
-                            submodel = ReadSubmodel(db, submodeInDb);
-                        }
-                    }
 
                     var smDBID = smDB.FirstOrDefault().Id;
                     var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
@@ -848,15 +840,16 @@ namespace AasxServerDB
 
                     db.SaveChanges();
                     transaction.Commit();
+                    isDeleted = true;
                 }
                 catch (Exception)
                 {
-                    submodel = null;
+                    isDeleted = false;
                     transaction.Rollback();
                 }
             }
 
-            return submodel;
+            return isDeleted;
         }
 
         public static List<ISubmodelElement>? ReadPagedSubmodelElements(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier)
@@ -1131,8 +1124,10 @@ namespace AasxServerDB
             //_submodelService.UpdateSubmodelElementByPath(submodelIdentifier, idShortPath, newSme);
         }
 
-        public static void DeleteSubmodelElement(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
+        public static bool DeleteSubmodelElement(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
+            bool isDeleted = false;
+
             var now = DateTime.UtcNow;
 
             using (var transaction = db.Database.BeginTransaction())
@@ -1147,13 +1142,13 @@ namespace AasxServerDB
                             .Where(aas => aas.Identifier == aasIdentifier).ToList();
                         if (aasDB.Count != 1)
                         {
-                            return;
+                            return isDeleted;
                         }
                         var aasDBId = aasDB[0].Id;
                         var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
                         if (smRefDBQuery.Count != 1)
                         {
-                            return;
+                            return isDeleted;
                         }
                     }
 
@@ -1164,20 +1159,20 @@ namespace AasxServerDB
                     var smDB = smDBQuery.ToList();
                     if (smDB == null || smDB.Count != 1)
                     {
-                        return;
+                        return isDeleted;
                     }
                     var smDBId = smDB[0].Id;
 
                     var idShortPathElements = idShortPath.Split(".");
                     if (idShortPathElements.Length == 0)
                     {
-                        return;
+                        return isDeleted;
                     }
                     var idShort = idShortPathElements[0];
                     var smeParent = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null && sme.IdShort == idShort).ToList();
                     if (smeParent == null || smeParent.Count != 1)
                     {
-                        return;
+                        return isDeleted;
                     }
                     var parentId = smeParent[0].Id;
                     var smeFound = smeParent;
@@ -1198,7 +1193,7 @@ namespace AasxServerDB
                         smeFound = smeFoundDB.ToList();
                         if (smeFound == null || smeFound.Count != 1)
                         {
-                            return;
+                            return isDeleted;
                         }
                         parentId = smeFound[0].Id;
                     }
@@ -1215,12 +1210,15 @@ namespace AasxServerDB
                         db.SaveChanges();
                     }
                     transaction.Commit();
+                    isDeleted = true;
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
+                    isDeleted = false;
                 }
             }
+            return isDeleted;
         }
 
         public static ISubmodelElement? ReadSubmodelElement(SMESet smeSet)

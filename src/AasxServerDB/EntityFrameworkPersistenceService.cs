@@ -416,11 +416,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         break;
                     case DbRequestOp.DeleteSubmodelById:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out _, out ISubmodel deletedSubmodel))
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-                            var deletedSubmodel = CrudOperator.DeleteSubmodel(db, submodelIdentifier, true);
-                            _eventService.NotifySubmodelDeleted(deletedSubmodel);
+                            var isDeleted = CrudOperator.DeleteSubmodel(db, submodelIdentifier);
+
+                            if (isDeleted)
+                            {
+                                _eventService.NotifySubmodelDeleted(deletedSubmodel);
+                            }
                         }
                         else
                         {
@@ -508,12 +512,17 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.DeleteSubmodelElementByPath:
                         if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _, out _))
                         {
-                            CrudOperator.DeleteSubmodelElement(
+                            bool isDeleted = CrudOperator.DeleteSubmodelElement(
                                 db,
                                 securityCondition,
                                 aasIdentifier,
                                 submodelIdentifier,
                                 idShort);
+
+                            if (isDeleted)
+                            {
+                                _eventService.NotifySubmodelElementDeleted(submodelIdentifier, idShort);
+                            }
                         }
                         else
                         {

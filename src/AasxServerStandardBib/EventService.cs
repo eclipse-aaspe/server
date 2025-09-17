@@ -1926,7 +1926,7 @@ public class EventService : IEventService
         return eventDto;
     }
 
-    public async void NotifySubmodelDeleted(AasCore.Aas3_0.Submodel submodel)
+    public async void NotifySubmodelDeleted(ISubmodel submodel)
     {
         var mqtttOutEventDtos = EventDtos.Where(eventData => eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT");
 
@@ -2140,4 +2140,6 @@ public class EventService : IEventService
 
         notificationEventDto.env.setWrite(true);
     }
+
+    public void NotifySubmodelElementDeleted(string submodelIdentifier, string idShortPath) => throw new NotImplementedException();
 }
