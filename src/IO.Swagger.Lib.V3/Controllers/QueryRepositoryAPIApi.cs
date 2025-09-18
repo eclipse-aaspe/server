@@ -79,55 +79,8 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor)
-    {
-        string expression;
-
-        using (var reader = new StreamReader(Request.Body))
-        {
-            var rawBody = await reader.ReadToEndAsync();
-
-            if (Request.ContentType?.Contains("application/json") == true)
-            {
-                try
-                {
-                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(rawBody);
-                    expression = jsonElement.ToString(); // oder jsonElement.GetRawText()
-                }
-                catch (JsonException ex)
-                {
-                    throw new OperationNotSupported($"Invalid JSON: {ex.Message}");
-                }
-            }
-            else if (Request.ContentType?.Contains("text/plain") == true)
-            {
-                expression = rawBody;
-            }
-            else
-            {
-                throw new OperationNotSupported("Unsupported content type.");
-            }
-        }
-
-        //Validate level and extent
-        //var levelEnum = _validateModifierService.ValidateLevel(level);
-        //var extentEnum = _validateModifierService.ValidateExtent(extent);
-
-        _logger.LogInformation($"Received request to query submodels.");
-
-        var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
-        var paginationParameters = new PaginationParameters(cursor, limit);
-
-        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
-
-        if (list.IsNullOrEmpty())
-        {
-            throw new NotFoundException("Queried submodels could not be found!");
-        }
-        var submodelsPagedList = _paginationService.GetPaginatedQueryResult(list, paginationParameters);
-
-        return new ObjectResult(submodelsPagedList);
-    }
+    public virtual async Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor)
+        => await HandleSubmodelQueryAsync(limit, cursor, mapToValue: false);
 
     /// <summary>
     /// Query Submodels and return value serialization
@@ -143,20 +96,45 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [Route("query/submodels/$value")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodelsValue")]
-    [Consumes("text/plain")]
+    [Consumes("text/plain", "application/json")]
     [SwaggerResponse(statusCode: 200, type: typeof(QueryResult), description: "Submodels created successfully")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> PostSubmodelsValue([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
-    {
-        //Validate level and extent
-        //var levelEnum = _validateModifierService.ValidateLevel(level);
-        //var extentEnum = _validateModifierService.ValidateExtent(extent);
+    public virtual async Task<IActionResult> PostSubmodelsValue([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryAsync(limit, cursor, mapToValue: true);
 
-        _logger.LogInformation($"Received request to query submodels.");
+    private async Task<IActionResult> HandleSubmodelQueryAsync(int? limit, string? cursor, bool mapToValue)
+    {
+        string expression;
+
+        using var reader = new StreamReader(Request.Body);
+        var rawBody = await reader.ReadToEndAsync();
+
+        if (Request.ContentType?.Contains("application/json") == true)
+        {
+            try
+            {
+                var jsonElement = JsonSerializer.Deserialize<JsonElement>(rawBody);
+                expression = jsonElement.ToString(); // oder jsonElement.GetRawText()
+            }
+            catch (JsonException ex)
+            {
+                throw new OperationNotSupported($"Invalid JSON: {ex.Message}");
+            }
+        }
+        else if (Request.ContentType?.Contains("text/plain") == true)
+        {
+            expression = rawBody;
+        }
+        else
+        {
+            throw new OperationNotSupported("Unsupported content type.");
+        }
+
+        _logger.LogInformation("Received request to query submodels.");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
         var paginationParameters = new PaginationParameters(cursor, limit);
@@ -168,26 +146,34 @@ public class QueryRepositoryAPIApiController : ControllerBase
             throw new NotFoundException("Queried submodels could not be found!");
         }
 
-        try
+        if (mapToValue)
         {
-            var submodels = list.Cast<Submodel>().ToList();
-
-            var valueList = new List<object>();
-            foreach (var submodel in submodels)
+            try
             {
-                var submodelValue = _mappingService.Map(submodel, "value");
-                if (submodelValue != null)
-                {
-                    valueList.Add(submodelValue);
-                }
-            }
+                var submodels = list.Cast<Submodel>().ToList();
+                var valueList = new List<object>();
 
-            var submodelsPagedList = _paginationService.GetPaginatedQueryResult(valueList, paginationParameters);
-            return new ObjectResult(submodelsPagedList);
+                foreach (var submodel in submodels)
+                {
+                    var submodelValue = _mappingService.Map(submodel, "value");
+                    if (submodelValue != null)
+                    {
+                        valueList.Add(submodelValue);
+                    }
+                }
+
+                var submodelsPagedList = _paginationService.GetPaginatedQueryResult(valueList, paginationParameters);
+                return new ObjectResult(submodelsPagedList);
+            }
+            catch (InvalidCastException)
+            {
+                throw new InvalidCastException("List contains non-Submodel items.");
+            }
         }
-        catch (InvalidCastException)
+        else
         {
-            throw new InvalidCastException("List contains non-Submodel items.");
+            var submodelsPagedList = _paginationService.GetPaginatedQueryResult(list, paginationParameters);
+            return new ObjectResult(submodelsPagedList);
         }
     }
 }
