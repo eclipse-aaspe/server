@@ -33,6 +33,9 @@ using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.IO;
+using System.Text.Json;
+using AasxServerStandardBib.Exceptions;
 
 /// <summary>
 /// 
@@ -69,15 +72,43 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [Route("query/submodels")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodels")]
-    [Consumes("text/plain")]
+    [Consumes("text/plain", "application/json")]
     [SwaggerResponse(statusCode: 200, type: typeof(QueryResult), description: "Submodels created successfully")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+    public async virtual Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor)
     {
+        string expression;
+
+        using (var reader = new StreamReader(Request.Body))
+        {
+            var rawBody = await reader.ReadToEndAsync();
+
+            if (Request.ContentType?.Contains("application/json") == true)
+            {
+                try
+                {
+                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(rawBody);
+                    expression = jsonElement.ToString(); // oder jsonElement.GetRawText()
+                }
+                catch (JsonException ex)
+                {
+                    throw new OperationNotSupported($"Invalid JSON: {ex.Message}");
+                }
+            }
+            else if (Request.ContentType?.Contains("text/plain") == true)
+            {
+                expression = rawBody;
+            }
+            else
+            {
+                throw new OperationNotSupported("Unsupported content type.");
+            }
+        }
+
         //Validate level and extent
         //var levelEnum = _validateModifierService.ValidateLevel(level);
         //var extentEnum = _validateModifierService.ValidateExtent(extent);
