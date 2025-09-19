@@ -16,6 +16,7 @@ namespace IO.Swagger.Lib.V3.Models;
 public enum ResultType
 {
     Identifier,
+    AssetAdministrationShell,
     Submodel,
     SubmodelValue,
     SubmodelElement
@@ -32,6 +33,4 @@ public partial class QueryResultPagingMetadata
     /// Gets or Sets Result Type
     /// </summary>
     public string? resultType { get; set; }
-
 }
-

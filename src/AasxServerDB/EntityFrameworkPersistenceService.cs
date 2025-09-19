@@ -656,9 +656,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QueryGetSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.ResultType, queryRequest.Expression);
 
-                        if (queryResult.Submodels != null)
+                        if (queryResult.Shells != null)
+                        {
+                            result.AssetAdministrationShells = queryResult.Shells;
+                        }
+                        else if (queryResult.Submodels != null)
                         {
                             result.Submodels = queryResult.Submodels;
                         }

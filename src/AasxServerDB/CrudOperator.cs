@@ -632,7 +632,8 @@ namespace AasxServerDB
                 }
 
                 qresult = querySM.SearchSMs(condition, db, withTotalCount: false, withLastId: false, semanticId: "",
-                identifier: "", diff: "", pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit, expression: "$all");
+                identifier: "", diff: "", pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit,
+                expression: "$all");
             }
 
             var smList = qresult.SMResults.Select(sm => sm.smId).ToList();

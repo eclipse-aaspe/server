@@ -59,6 +59,7 @@ public class SMEResultRaw
 
 public class SubmodelsQueryResult
 {
+    public List<IAssetAdministrationShell> Shells { get; set; }
     public List<ISubmodel> Submodels { get; set; }
     public List<ISubmodelElement> SubmodelElements { get; set; }
     public List<string> Ids { get; set; }
@@ -122,7 +123,7 @@ public partial class Query
 
             watch.Restart();
             int lastId = 0;
-            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, withLastId, out lastId);
+            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, "Submodel", withLastId, out lastId);
             qResult.LastID = lastId;
             qResult.Count = result.Count;
             text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
@@ -260,7 +261,7 @@ public partial class Query
         return result;
     }
 
-    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition, int pageFrom, int pageSize, string expression)
+    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition, int pageFrom, int pageSize, string resultType, string expression)
     {
         var qResult = new QResult()
         {
@@ -300,7 +301,7 @@ public partial class Query
 
             watch.Restart();
             int lastId = 0;
-            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, false, out lastId);
+            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, resultType, false, out lastId);
             text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
             Console.WriteLine(text);
             text = "SMs found ";
@@ -318,10 +319,34 @@ public partial class Query
                 securityConditionSM = "true";
             */
 
-            var submodelsResult = new SubmodelsQueryResult();
-            submodelsResult.SubmodelElements = [];
+            var submodelsResult = new SubmodelsQueryResult
+            {
+                Ids = [],
+                Shells = [],
+                Submodels = [],
+                SubmodelElements = []
+            };
 
-            if (!qResult.WithSelectId && !qResult.WithSelectMatch)
+            if (resultType == "AssetAdministrationShell")
+            {
+                var timeStamp = DateTime.UtcNow;
+                var shells = new List<IAssetAdministrationShell>();
+
+                var aasIdList = result.Select(sm => sm.aasId).Distinct();
+                var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+
+                for (var i = 0; i < aasList.Count; i++)
+                {
+                    var aasDB = aasList[i];
+                    var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
+                    if (aas != null)
+                    {
+                        shells.Add(aas);
+                    }
+                }
+                submodelsResult.Shells = shells;
+            }
+            else if (!qResult.WithSelectId && !qResult.WithSelectMatch)
             {
                 var timeStamp = DateTime.UtcNow;
                 var submodels = new List<ISubmodel>();
@@ -330,7 +355,7 @@ public partial class Query
                 var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                 foreach (var sm in smList.Select(selector: submodelDB =>
-                    CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition, condition)))
+                    ReadSubmodel(db, smDB: submodelDB, "", securityCondition, condition)))
                 {
                     if (sm != null)
                     {
@@ -1157,11 +1182,11 @@ public partial class Query
         return smResultWithAas;
     }
 
-    private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResultWithAas> query, bool withLastID, out int lastID)
+    private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResultWithAas> query, string resultType, bool withLastID, out int lastID)
     {
         var messages = qResult.Messages ?? [];
-
         lastID = 0;
+
         if (withLastID)
         {
             var resultWithSMID = query

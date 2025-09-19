@@ -29,6 +29,7 @@ public class DbQueryRequest
 
     public string Expression { get; set; }
 
+    public string ResultType { get; set; }
     //Submodel Element Request
     public string Requested { get; set; }
     public string SmSemanticId { get; set; }
