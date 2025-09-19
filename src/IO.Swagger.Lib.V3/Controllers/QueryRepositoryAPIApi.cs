@@ -130,6 +130,30 @@ public class QueryRepositoryAPIApiController : ControllerBase
     public virtual async Task<IActionResult> PostSubmodelsValue([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
         => await HandleSubmodelQueryAsync(limit, cursor, ResultType.SubmodelValue);
 
+    /// <summary>
+    /// Query Submodel Elements
+    /// </summary>
+    /// <response code="201">Query created successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("query/submodel-elements")]
+    [ValidateModelState]
+    [SwaggerOperation("PostSubmodelElements")]
+    [Consumes("text/plain", "application/json")]
+    [SwaggerResponse(statusCode: 200, type: typeof(QueryResult), description: "Submodels created successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PostSubmodelElements([FromQuery] int? limit, [FromQuery] string? cursor)
+        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.SubmodelElement);
+
     private async Task<IActionResult> HandleSubmodelQueryAsync(int? limit, string? cursor, ResultType resultType)
     {
         string expression;
