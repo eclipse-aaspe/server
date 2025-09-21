@@ -325,6 +325,7 @@ public partial class Query
                     var smeTree = GetTree(db, sm, smeSmList.ToList());
                     var smeMerged = GetSmeMerged(db, null, smeTree, sm);
 
+                    /*
                     var mergeForCondition = smeMerged.Select(sme => new
                     {
                         sm = sme.smSet,
@@ -354,6 +355,8 @@ public partial class Query
                     var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
                     smeMerged = smeMerged.Where(m => m.smeSet != null && resultConditionIDs.Contains(m.smeSet.Id)).ToList();
                     var smeSmListMerged = smeMerged.Where(m => smeSmList.Contains(m.smeSet)).Select(m => m.smeSet).Distinct().ToList();
+                    */
+                    var smeSmListMerged = smeSmList;
 
                     foreach (var sme in smeSmListMerged)
                     {
@@ -1061,6 +1064,11 @@ public partial class Query
 
         if (resultType == "SubmodelElement")
         {
+            if (condition != null && condition.TryGetValue("filter-all", out var filter))
+            {
+                filter = filter.Replace("sme.", "SME_");
+                comTable = comTable.Where(filter);
+            }
             var resultSME = comTable.Select("new (SM_Id as SM_Id, SME_Id as SME_Id)").Distinct().Skip(pageFrom).Take(pageSize);
             return resultSME;
         }
