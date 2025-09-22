@@ -1575,6 +1575,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     $"{dbEventRequest.ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(dbEventRequest.Submodel.Id)}/events/{dbEventRequest.EventName}";
             }
             eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+            eventPayload.id = _eventService.GetSha1Base64(eventPayload.id);
         }
         else
         {
@@ -1582,7 +1583,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 foreach (var element in eventPayload.elements)
                 {
-                    element.id = null;
+                    // element.id = null;
                 }
             }
         }

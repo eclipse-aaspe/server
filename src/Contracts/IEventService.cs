@@ -33,6 +33,7 @@ public interface IEventService
 
     public void PublishMqttMessage(EventDto eventDto, string submodelId, string idShortPath);
 
+    public string GetSha1Base64(string input);
     public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,
         string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval, bool withPayload,
