@@ -23,6 +23,7 @@ using IdentityModel.Client;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.Identity.Client;
+using static System.Net.WebRequestMethods;
 
 var tenant = "common"; // Damit auch externe Konten wie @live.de funktionieren
 var clientId = "865f6ac0-cdbc-44c6-98cc-3e35c39ecb6e"; // aus der App-Registrierung
@@ -31,6 +32,7 @@ var scopes = new[] { "openid", "profile", "email" }; // für ID Token im JWT-For
 List<string> configUrlList = [
     "https://www.admin-shell-io.com/50001/.well-known/openid-configuration",
     "https://auth.aas-voyager.com/.well-known/openid-configuration",
+    "https://idp.admin-shell-io.com/api/.well-known/openid-configuration/",
     "https://credential.aas-voyager.com/token"
     ];
 for (var i = 0; i < configUrlList.Count; i++)
@@ -248,6 +250,15 @@ var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
         { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
         { "client_assertion", jwt }
     })
+    /*
+    Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    {
+        { "grant_type", "client_credentials" },
+        { "scope", "read write" },
+        { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+        { "client_assertion", jwt }
+    })
+    */
 };
 request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
