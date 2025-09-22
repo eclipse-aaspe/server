@@ -177,3 +177,8 @@ img {
     color: blue;
     text-decoration: underline;
 }
+
+.bold-icon {
+  -webkit-text-stroke: 1px;
+}
+

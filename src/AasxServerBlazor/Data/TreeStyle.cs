@@ -18,8 +18,13 @@ namespace MW.Blazor
     {
         public static readonly TreeStyle Bootstrap = new()
         {
-            ExpandNodeIconClass = "far fa-plus-square cursor-pointer",
-            CollapseNodeIconClass = "far fa-minus-square cursor-pointer",
+            // change to bootstrap icons
+            // ExpandNodeIconClass = "far fa-plus-square cursor-pointer",
+            // CollapseNodeIconClass = "far fa-minus-square cursor-pointer",
+            // ExpandNodeIconClass = "bi bi-plus-square cursor-pointer",
+            // CollapseNodeIconClass = "bi bi-dash-square cursor-pointer",
+            ExpandNodeIconClass = "bi bi-plus-square fs-2 bold-icon",
+            CollapseNodeIconClass = "bi bi-dash-square fs-2 bold-icon",
             NodeTitleClass = "p-1 cursor-pointer",
             NodeTitleSelectedClass = "bg-primary text-white"
         };
