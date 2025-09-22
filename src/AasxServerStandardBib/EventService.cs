@@ -804,10 +804,12 @@ public class EventService : IEventService
                     eventPayload.semanticid = basicEventElementSemanticId;
 
                 };
+                /*
                 eventPayload.elements =
                 [
                     statusEntry,
                 ];
+                */
                 return eventPayload;
             }
 
@@ -836,9 +838,9 @@ public class EventService : IEventService
                             eventPayload.semanticid = basicEventElementSemanticId;
 
                             eventPayload.elements =
-                        [
-                            statusEntry,
-                        ];
+                            [
+                                statusEntry,
+                            ];
 
                             return eventPayload;
                         }
