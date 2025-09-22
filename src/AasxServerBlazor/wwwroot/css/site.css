@@ -179,6 +179,7 @@ img {
 }
 
 .bold-icon {
-  -webkit-text-stroke: 1px;
+    -webkit-text-stroke: 1px;
+    color: blue;
 }
 
