@@ -368,11 +368,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (found)
                         {
-                            scopedLogger.LogDebug($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
+                            scopedLogger.LogDebug($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
                         }
                         else
                         {
-                            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
                         }
 
                         result.Submodels = new List<ISubmodel>
@@ -1203,7 +1203,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new NotFoundException($"Package wit id {packageIdentifier} not found.");
+            throw new NotFoundException($"Package with id {packageIdentifier} not found.");
 
         }
 
@@ -1283,7 +1283,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
 
