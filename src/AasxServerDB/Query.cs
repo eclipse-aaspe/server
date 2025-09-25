@@ -396,16 +396,27 @@ public partial class Query
                     var timeStamp = DateTime.UtcNow;
                     var shells = new List<IAssetAdministrationShell>();
 
-                    var aasIdList = result.Select(sm => sm.aasId).Distinct();
-                    var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+                    var aasIdList = result.Where(r => r.aasId != null).Select(r => r.aasId).Distinct();
 
-                    for (var i = 0; i < aasList.Count; i++)
+                    if (aasIdList.IsNullOrEmpty())
                     {
-                        var aasDB = aasList[i];
-                        var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
-                        if (aas != null)
+                        var smIdentifierList = result.Select(r => r.smIdentifier).Distinct();
+
+                        aasIdList = db.SMRefSets.Where(sm => smIdentifierList.Contains(sm.Identifier)).
+                            Select(s => s.AASId);
+                    }
+                    if (!aasIdList.IsNullOrEmpty())
+                    {
+                        var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+
+                        for (var i = 0; i < aasList.Count; i++)
                         {
-                            shells.Add(aas);
+                            var aasDB = aasList[i];
+                            var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
+                            if (aas != null)
+                            {
+                                shells.Add(aas);
+                            }
                         }
                     }
                     submodelsResult.Shells = shells;
