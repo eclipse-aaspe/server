@@ -357,6 +357,10 @@ public class FileService
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                     {
                         var archiveFile = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                        if (archiveFile == null)
+                        {
+                            return false;
+                        }
                         using var tempStream = archiveFile.Open();
                         var ms = new MemoryStream();
                         tempStream.CopyTo(ms);
