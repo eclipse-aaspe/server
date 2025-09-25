@@ -413,6 +413,18 @@ public partial class Query
                         {
                             var aasDB = aasList[i];
                             var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
+                            if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
+                            {
+                                if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
+                                {
+                                    if (filterAas.Contains("globalAssetId"))
+                                    {
+                                        aas.Submodels = null;
+                                        aas.Description = null;
+                                        aas.DisplayName = null;
+                                    }
+                                }
+                            }
                             if (aas != null)
                             {
                                 shells.Add(aas);
@@ -2481,6 +2493,7 @@ public partial class Query
                 if (query._filter_conditions != null && query._filter_conditions.Count != 0)
                 {
                     condition["filter-all"] = query._filter_conditions["all"];
+                    condition["filter-aas"] = query._filter_conditions["aas."];
                 }
                 if (condition["all"].Contains("$$path$$"))
                 {
