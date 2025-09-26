@@ -246,7 +246,8 @@ var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
     Content = new FormUrlEncodedContent(new Dictionary<string, string>
     {
         { "grant_type", "client_credentials" },
-        { "scope", "resource1.scope1" },
+        // { "scope", "resource1.scope1" },
+        { "scope", "factoryx" },
         { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
         { "client_assertion", jwt }
     })
