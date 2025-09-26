@@ -37,10 +37,6 @@ Swashbuckle is licensed under the MIT license (MIT, see below)
 TailWind is licensed under the MIT license (MIT, see below)
 TreeComponent is licensed under the MIT license (MIT, see below)
 
-BananaCakePop.Middleware is licensed under the ChilliCream license (see below)
-
---------------------------------------------------------------------------------------------------------------
-
 
 With respect to AASPE Server
 ============================
@@ -861,6 +857,9 @@ SOFTWARE.
 
 With respect to BananaCakePop.Middleware
 ========================================
+
+You can switch on Hotchocalate by the GRAPHQL compile option.
+But be aware that this will include BananaCakePop.Middleware, which uses the Chillicream License.
 
 https://www.nuget.org/packages/BananaCakePop.Middleware/16.0.1
 https://www.nuget.org/packages/BananaCakePop.Middleware/16.0.1/License
