@@ -1446,7 +1446,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 submodel.Extensions.Add(new Extension("$sign_x5c", value: x5cString));
                 submodel.Extensions.Add(new Extension("$sign_signature", value: signature));
 
-                submodel.SubmodelElements = [];
+                // submodel.SubmodelElements = [];
 
                 return new ObjectResult(submodel);
             }
