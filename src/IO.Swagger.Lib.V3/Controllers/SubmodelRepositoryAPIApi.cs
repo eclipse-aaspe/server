@@ -1440,11 +1440,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 {
                 }
 
-                submodel.Extensions.Add(new Extension("$signed", value: ""));
-                submodel.Extensions.Add(new Extension("$signed_submodel", value: submodelText));
-                submodel.Extensions.Add(new Extension("$signed_algorithm", value: "RS256"));
-                submodel.Extensions.Add(new Extension("$signed_x5c", value: x5cString));
-                submodel.Extensions.Add(new Extension("$signed_signature", value: signature));
+                submodel.Extensions.Add(new Extension("$sign", value: ""));
+                submodel.Extensions.Add(new Extension("$sign_submodel", value: submodelText));
+                submodel.Extensions.Add(new Extension("$sign_algorithm", value: "RS256"));
+                submodel.Extensions.Add(new Extension("$sign_x5c", value: x5cString));
+                submodel.Extensions.Add(new Extension("$sign_signature", value: signature));
 
                 submodel.SubmodelElements = [];
 
