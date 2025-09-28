@@ -58,6 +58,11 @@ using Contracts.Pagination;
 using Contracts.Security;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json.Nodes;
 
 /// <summary>
 /// 
@@ -1339,6 +1344,115 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         //TODO:jtikekar @Andreas, in earlier API policy set as getPolicy
         //Response.Headers.Add("policy", policy);
         return new ObjectResult(output);
+    }
+
+    /// <summary>
+    /// Returns a specific Submodel signed
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="extent">Determines to which extent the resource is being serialized</param>
+    /// <response code="200">Requested Submodel</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/$sign")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelByIdSigned")]
+    [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelByIdSigned([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
+    {
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+        var extentEnum = _validateModifierService.ValidateExtent(extent);
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+
+        string certFile = "Andreas_Orzelski_Chain.pfx";
+        string certPW = "i40";
+        if (System.IO.File.Exists(certFile))
+        {
+            var submodelText = Jsonization.Serialize.ToJsonObject(submodel).ToJsonString();
+
+            var mStrm = new MemoryStream(Encoding.UTF8.GetBytes(submodelText));
+            var node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+            var s = Jsonization.Deserialize.SubmodelFrom(node);
+
+            submodel.Extensions ??= [];
+            using (var certificate = new X509Certificate2(certFile, certPW))
+            {
+                if (certificate == null)
+                {
+                    throw new NotAllowed($"");
+                }
+
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                var x5cString = "";
+                for (var j = xc.Count - 1; j >= 0; j--)
+                {
+                    var c = Convert.ToBase64String(xc[j].GetRawCertData());
+                    if (x5cString != "")
+                    {
+                        x5cString += ", ";
+                    }
+                    x5cString += c;
+                }
+
+                var signature = "";
+                try
+                {
+                    using (RSA rsa = certificate.GetRSAPrivateKey())
+                    {
+                        if (rsa == null)
+                        {
+                            throw new NotAllowed($"");
+                        }
+
+                        var data = Encoding.UTF8.GetBytes(submodelText);
+                        var signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                        signature = Convert.ToBase64String(signed);
+                    }
+                }
+                // ReSharper disable EmptyGeneralCatchClause
+                catch
+                {
+                }
+
+                submodel.Extensions.Add(new Extension("$signed", value: ""));
+                submodel.Extensions.Add(new Extension("$signed_submodel", value: submodelText));
+                submodel.Extensions.Add(new Extension("$signed_algorithm", value: "RS256"));
+                submodel.Extensions.Add(new Extension("$signed_x5c", value: x5cString));
+                submodel.Extensions.Add(new Extension("$signed_signature", value: signature));
+
+                submodel.SubmodelElements = [];
+
+                return new ObjectResult(submodel);
+            }
+        }
+
+        throw new NotAllowed($"");
     }
 
     /// <summary>
