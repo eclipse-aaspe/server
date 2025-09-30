@@ -986,17 +986,6 @@ namespace AasSecurity
                 }
             }
 
-            if (conditionSM != "" && !objPath.Contains('.') && aasResource is Submodel s)
-            {
-                List<Submodel> submodels = new List<Submodel>();
-                submodels.Add(s);
-                var c = conditionSM;
-                var x = submodels.AsQueryable().Where(c);
-                if (x.Any())
-                {
-                    return true;
-                }
-            }
             if (conditionSME != "" && objPath.Contains('.') && aasResource is Submodel s2 && s2.SubmodelElements != null)
             {
                 var submodelElements = s2.SubmodelElements;
@@ -1031,6 +1020,17 @@ namespace AasSecurity
                             break;
                     }
                     i++;
+                }
+            }
+            if (conditionSM != "" && (conditionSME == "" || !objPath.Contains('.')) && aasResource is Submodel s)
+            {
+                List<Submodel> submodels = new List<Submodel>();
+                submodels.Add(s);
+                var c = conditionSM;
+                var x = submodels.AsQueryable().Where(c);
+                if (x.Any())
+                {
+                    return true;
                 }
             }
 

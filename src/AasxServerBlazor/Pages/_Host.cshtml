@@ -1,6 +1,7 @@
-﻿@page "/"
+@page "/"
 @namespace AasxServerBlazor.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -10,18 +11,11 @@
     <title>AasxServerBlazor</title>
     <base href="~/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/bootstrap-icons/bootstrap-icons.css" />
     <link rel="stylesheet" href="css/site.css" />
-    <!--
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    -->
-    <link rel="stylesheet" href="css/all.css" />
     <link rel="stylesheet" href="css/treeStyles.css" />
-    @{
-        // if (System.IO.File.Exists("TAILWIND.DAT"))
-        {
-            <script src="https://cdn.tailwindcss.com"></script>
-        }
-    }
+
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <script type="text/javascript">
         var interval = setInterval(cyclic, 1000);

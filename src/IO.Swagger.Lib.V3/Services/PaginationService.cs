@@ -82,6 +82,10 @@ namespace IO.Swagger.Lib.V3.Services
                 {
                     pagingMetadata.resultType = ResultType.SubmodelElement.ToString();
                 }
+                if (paginatedList.First() is IAssetAdministrationShell)
+                {
+                    pagingMetadata.resultType = ResultType.AssetAdministrationShell.ToString();
+                }
             }
 
             if (paginatedList.Count < paginationParameters.Limit)

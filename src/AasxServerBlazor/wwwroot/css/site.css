@@ -1,5 +1,3 @@
-@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
-
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -179,3 +177,9 @@ img {
     color: blue;
     text-decoration: underline;
 }
+
+.bold-icon {
+    -webkit-text-stroke: 1px;
+    color: blue;
+}
+

@@ -31,6 +31,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using AasxServer;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 
 public class EventService : IEventService
 {
@@ -657,6 +658,13 @@ public class EventService : IEventService
     //    return count;
     //}
 
+    public string GetSha1Base64(string input)
+    {
+        using var sha1 = SHA1.Create();
+        var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
+        return Convert.ToBase64String(hashBytes);
+    }
+
     public EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
         string basicEventElementSemanticId, string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
@@ -773,6 +781,7 @@ public class EventService : IEventService
                 {
                     statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
                     statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+                    statusEntry.id = GetSha1Base64(statusEntry.id);
                     eventPayload.id = statusEntry.id;
 
                     statusEntry.SetType(EventPayloadEntryType.Updated);
@@ -780,10 +789,12 @@ public class EventService : IEventService
                     eventPayload.semanticid = basicEventElementSemanticId;
 
                 };
+                /*
                 eventPayload.elements =
                 [
                     statusEntry,
                 ];
+                */
                 return eventPayload;
             }
 
@@ -804,6 +815,7 @@ public class EventService : IEventService
                         {
                             statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
                             statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+                            statusEntry.id = GetSha1Base64(statusEntry.id);
                             eventPayload.id = statusEntry.id;
 
                             statusEntry.SetType(EventPayloadEntryType.Updated);
@@ -811,9 +823,9 @@ public class EventService : IEventService
                             eventPayload.semanticid = basicEventElementSemanticId;
 
                             eventPayload.elements =
-                        [
-                            statusEntry,
-                        ];
+                            [
+                                statusEntry,
+                            ];
 
                             return eventPayload;
                         }
@@ -840,6 +852,7 @@ public class EventService : IEventService
                 {
                     statusEntry.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
                     statusEntry.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+                    statusEntry.id = GetSha1Base64(statusEntry.id);
                     eventPayload.id = statusEntry.id;
 
                     statusEntry.SetType(EventPayloadEntryType.Updated);
@@ -1004,6 +1017,7 @@ public class EventService : IEventService
                                 }
 
                                 entry.id = $"{entry.source}-{entry.time}";
+                                entry.id = GetSha1Base64(entry.id);
 
                                 eventPayload.elements.Add(entry);
 
@@ -1050,6 +1064,7 @@ public class EventService : IEventService
                     }
 
                     entry.id = $"{entry.source}-{entry.time}";
+                    entry.id = GetSha1Base64(entry.id);
 
                     diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
                     Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.GetIdShortPath()}");

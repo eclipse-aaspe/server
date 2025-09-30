@@ -1105,7 +1105,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression)
+    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string resultType, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1113,6 +1113,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
             {
                 PageFrom = paginationParameters.Cursor,
                 PageSize = paginationParameters.Limit,
+                ResultType = resultType,
                 Expression = expression
             }
         };
@@ -1134,12 +1135,20 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             return tcs.Ids.ConvertAll(r => r as object);
         }
-        if (tcs.SubmodelElements != null)
+        else if (tcs.SubmodelElements != null)
         {
             return tcs.SubmodelElements.ConvertAll(r => r as object);
         }
+        else if (tcs.Submodels != null)
+        {
+            return tcs.Submodels.ConvertAll(r => r as object);
+        }
+        else if (tcs.AssetAdministrationShells != null)
+        {
+            return tcs.AssetAdministrationShells.ConvertAll(r => r as object);
+        }
 
-        return tcs.Submodels.ConvertAll(r => r as object);
+        return [];
     }
 
     public async Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId)

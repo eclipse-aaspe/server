@@ -356,7 +356,12 @@ namespace IO.Swagger.Lib.V3.Formatters
 
                     foreach (var item in queryResult.result)
                     {
-                        if (resultType == ResultType.Submodel.ToString())
+                        if (resultType == ResultType.AssetAdministrationShell.ToString())
+                        {
+                            var json = Jsonization.Serialize.ToJsonObject(item as IClass);
+                            jsonArray.Add(json);
+                        }
+                        else if (resultType == ResultType.Submodel.ToString())
                         {
                             var json = Jsonization.Serialize.ToJsonObject(item as IClass);
                             jsonArray.Add(json);

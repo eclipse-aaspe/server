@@ -368,11 +368,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (found)
                         {
-                            scopedLogger.LogDebug($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
+                            scopedLogger.LogDebug($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
                         }
                         else
                         {
-                            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
                         }
 
                         result.Submodels = new List<ISubmodel>
@@ -666,15 +666,19 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QueryGetSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.ResultType, queryRequest.Expression);
 
-                        if (queryResult.Submodels != null)
+                        if (queryResult.Shells != null && queryResult.Shells.Count != 0)
+                        {
+                            result.AssetAdministrationShells = queryResult.Shells;
+                        }
+                        else if (queryResult.Submodels != null && queryResult.Submodels.Count != 0)
                         {
                             result.Submodels = queryResult.Submodels;
                         }
                         else
                         {
-                            if (queryResult.Ids != null)
+                            if (queryResult.Ids != null && queryResult.Ids.Count != 0)
                             {
                                 result.Ids = queryResult.Ids;
                             }
@@ -1209,7 +1213,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new NotFoundException($"Package wit id {packageIdentifier} not found.");
+            throw new NotFoundException($"Package with id {packageIdentifier} not found.");
 
         }
 
@@ -1289,7 +1293,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
 
@@ -1581,6 +1585,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     $"{dbEventRequest.ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(dbEventRequest.Submodel.Id)}/events/{dbEventRequest.EventName}";
             }
             eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
+            eventPayload.id = _eventService.GetSha1Base64(eventPayload.id);
         }
         else
         {
@@ -1588,7 +1593,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 foreach (var element in eventPayload.elements)
                 {
-                    element.id = null;
+                    // element.id = null;
                 }
             }
         }

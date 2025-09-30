@@ -1446,7 +1446,7 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false, string aasId = null)
+        public Stream? GetLocalThumbnailStream(ref Uri thumbUri, bool init = false, string aasId = null)
         {
             // DB
             if (withDb && !init && !string.IsNullOrEmpty(aasId))
@@ -1475,6 +1475,10 @@ namespace AdminShellNS
                             using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                             {
                                 var archiveFile = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                                if (archiveFile == null)
+                                {
+                                    return null;
+                                }
                                 using var tempStream = archiveFile.Open();
                                 var ms = new MemoryStream();
                                 tempStream.CopyTo(ms);
