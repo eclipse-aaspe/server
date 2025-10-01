@@ -1986,7 +1986,7 @@ public class EventService : IEventService
         }
 
         if (notificationEventDtos.Any()
-            && !_enableMqtt)
+            && _enableMqtt)
         {
             var eventPayload = new EventPayload(false);
             List<String> diffEntry = new List<String>();
