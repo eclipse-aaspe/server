@@ -394,7 +394,7 @@ public class EventService : IEventService
             semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
         }
 
-        var e = CollectPayload(null, false, sourceString, semanticId, domain, null, eventData.ConditionSM, eventData.ConditionSME,
+        var e = CollectPayload(null, false, sourceString, semanticId, domain, eventData.ConditionSM, eventData.ConditionSME,
             d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
 
         var options = new JsonSerializerOptions
@@ -666,9 +666,9 @@ public class EventService : IEventService
     }
 
     public EventPayload CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
-        string basicEventElementSemanticId, string domain, SubmodelElementCollection statusData, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
+        string basicEventElementSemanticId, string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
-        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme)
+        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme, SubmodelElementCollection statusData = null)
     {
         var eventPayload = new EventPayload(isREST);
 
@@ -697,6 +697,8 @@ public class EventService : IEventService
         eventPayload.time = "";
         eventPayload.domain = domain;
 
+
+        //ToDo: Currently never used, to be deleted?
         if (statusData != null && statusData.Value != null)
         {
             var j = Jsonization.Serialize.ToJsonObject(statusData);

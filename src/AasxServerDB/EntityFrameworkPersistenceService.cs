@@ -1555,8 +1555,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
         }
 
-        eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain,
-            eventData.StatusData, eventData.ConditionSM, eventData.ConditionSME,
+        eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
             diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme);
 
         if ((eventPayload.elements == null || eventPayload.elements.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")

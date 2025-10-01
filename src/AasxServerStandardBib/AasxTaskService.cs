@@ -2162,7 +2162,7 @@ namespace AasxServer
                         semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
                     }
 
-                    var e = _eventService.CollectPayload(null, false, sourceString, semanticId, domain, null,
+                    var e = _eventService.CollectPayload(null, false, sourceString, semanticId, domain,
                         eventData.ConditionSM, eventData.ConditionSME,
                         d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
