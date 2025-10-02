@@ -1500,7 +1500,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    private Contracts.Events.EventPayload ReadEventMessages(Dictionary<string, string>? securityCondition, DbEventRequest dbEventRequest)
+    private List<Contracts.Events.EventPayload> ReadEventMessages(Dictionary<string, string>? securityCondition, DbEventRequest dbEventRequest)
     {
         var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
         var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
@@ -1514,7 +1514,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var offSme = dbEventRequest.OffsetSme;
         var requestType = dbEventRequest.DbEventRequestType;
 
-        var eventPayload = new Contracts.Events.EventPayload(true);
         List<String> diffEntry = new List<String>();
 
         string domain = "";
@@ -1555,60 +1554,51 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
         }
 
-        eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
+        var eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
             diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme);
 
-        if ((eventPayload.elements == null || eventPayload.elements.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
-        {
-            eventPayload.time = eventData.LastUpdate.Value;
-        }
+        //if ((eventPayload == null || eventPayload.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
+        //{
+        //    eventPayload[0].time = eventData.LastUpdate.Value;
+        //}
 
 
-        bool pbee = false;
+        //bool pbee = false;
 
-        if (eventData.PublishBasicEventElement != null
-                && eventData.PublishBasicEventElement.Value != null)
-        {
-            pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
-        }
+        //if (eventData.PublishBasicEventElement != null
+        //        && eventData.PublishBasicEventElement.Value != null)
+        //{
+        //    pbee = eventData.PublishBasicEventElement.Value.ToLower() == "true";
+        //}
 
-        if (pbee)
-        {
-            var basicEventElementSourceString = "SOURCE_STRING_TO_BE_ADDED";
+        //if (pbee)
+        //{
+        //    var basicEventElementSourceString = "SOURCE_STRING_TO_BE_ADDED";
 
-            if (dbEventRequest.Submodel != null
-                && !dbEventRequest.EventName.IsNullOrEmpty()
-                    && !dbEventRequest.ExternalBlazor.IsNullOrEmpty())
-            {
-                basicEventElementSourceString =
-                    $"{dbEventRequest.ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(dbEventRequest.Submodel.Id)}/events/{dbEventRequest.EventName}";
-            }
-            eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
-            eventPayload.id = _eventService.GetSha1Base64(eventPayload.id);
-        }
-        else
-        {
-            if (eventPayload.elements != null && eventPayload.elements.Count > 0)
-            {
-                foreach (var element in eventPayload.elements)
-                {
-                    // element.id = null;
-                }
-            }
-        }
+        //    if (dbEventRequest.Submodel != null
+        //        && !dbEventRequest.EventName.IsNullOrEmpty()
+        //            && !dbEventRequest.ExternalBlazor.IsNullOrEmpty())
+        //    {
+        //        basicEventElementSourceString =
+        //            $"{dbEventRequest.ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(dbEventRequest.Submodel.Id)}/events/{dbEventRequest.EventName}";
+        //    }
+        //    eventPayload[0].id = $"{basicEventElementSourceString}-{eventPayload[0].time}";
+        //    eventPayload[0].id = _eventService.GetSha1Base64(eventPayload[0].id);
+        //}
 
-        if (diff != "status")
+        if (diff != "status"
+            && eventPayload.Any())
         {
             var timeStamp = DateTime.UtcNow;
             if (eventData.Transmitted != null)
             {
-                eventData.Transmitted.Value = eventPayload.transmitted;
+                eventData.Transmitted.Value = eventPayload[0].transmitted;
                 eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
             }
-            var dt = DateTime.Parse(eventPayload.time);
+            var dt = DateTime.Parse(eventPayload[0].time);
             if (eventData.LastUpdate != null)
             {
-                eventData.LastUpdate.Value = eventPayload.time;
+                eventData.LastUpdate.Value = eventPayload[0].time;
                 eventData.LastUpdate.SetTimeStamp(dt);
             }
             if (eventData.Diff != null)

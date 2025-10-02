@@ -787,7 +787,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<Contracts.Events.EventPayload> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
+    public async Task<List<Contracts.Events.EventPayload>> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
     {
         var parameters = new DbRequestParams()
         {

@@ -67,7 +67,7 @@ public interface IDbRequestHandlerService
 
 
 
-    Task<Events.EventPayload> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
+    Task<List<Events.EventPayload>> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
     Task<DbRequestResult> UpdateEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
 
 

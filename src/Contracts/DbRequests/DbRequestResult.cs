@@ -40,7 +40,7 @@ public class DbRequestResult
 
     public IAssetInformation AssetInformation { get; set; }
 
-    public Events.EventPayload EventPayload { get; set; }
+    public List<Events.EventPayload> EventPayload { get; set; }
 
     // Queries
     public QResult QueryResult { get; set; }

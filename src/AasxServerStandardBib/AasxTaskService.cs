@@ -2240,13 +2240,13 @@ namespace AasxServer
                                 {
                                     if (eventData.Transmitted != null)
                                     {
-                                        eventData.Transmitted.Value = e.transmitted;
+                                        eventData.Transmitted.Value = e[0].transmitted;
                                         eventData.Transmitted.SetTimeStamp(now);
                                     }
-                                    var dt = DateTime.Parse(e.time);
+                                    var dt = DateTime.Parse(e[0].time);
                                     if (eventData.LastUpdate != null)
                                     {
-                                        eventData.LastUpdate.Value = e.time;
+                                        eventData.LastUpdate.Value = e[0].time;
                                         eventData.LastUpdate.SetTimeStamp(dt);
                                     }
                                     if (eventData.Status != null)
