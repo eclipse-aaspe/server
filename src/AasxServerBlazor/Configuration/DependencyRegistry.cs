@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AasxServerBlazor.Configuration;
 
+using AasxServer;
 using AasxServerDB;
 using AasxServerStandardBib;
 using Contracts;
@@ -81,7 +82,9 @@ public static class DependencyRegistry
         services.AddSingleton<ISecurityService>(provider => provider.GetRequiredService<SecurityService>());
         services.AddSingleton<IContractSecurityRules>(provider => provider.GetRequiredService<SecurityService>());
 
-
         services.AddTransient<QueryGrammarJSON>();
+
+        services.AddSingleton<MqttClientService>();
+        services.AddSingleton<AasxTaskService>();
     }
 }
