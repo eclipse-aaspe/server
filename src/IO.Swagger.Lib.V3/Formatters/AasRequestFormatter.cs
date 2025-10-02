@@ -29,10 +29,12 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
+    using System.Linq.Expressions;
     using System.Text;
     using System.Text.Json;
     using System.Text.Json.Serialization;
     using AdminShellNS;
+    using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
     public class AasRequestFormatter : InputFormatter
     {
@@ -72,10 +74,17 @@ namespace IO.Swagger.Lib.V3.Formatters
             var     request = context.HttpContext.Request;
             object? result  = null;
 
-            if (request.ContentType == "text/plain")
+            if (request.ContentType == "text/plain"
+                || request.Path.StartsWithSegments("/query"))
             {
                 using var reader = context.ReaderFactory(request.Body, Encoding.UTF8);
                 var content = reader.ReadToEndAsync().Result;
+
+                if (request.ContentType == "application/json")
+                {
+                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(content);
+                    return InputFormatterResult.SuccessAsync(jsonElement.ToString());
+                }
 
                 return InputFormatterResult.SuccessAsync(content);
             }
