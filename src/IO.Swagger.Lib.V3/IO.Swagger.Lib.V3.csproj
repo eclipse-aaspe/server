@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
     <PropertyGroup>
         <Description>IO.Swagger</Description>
         <Copyright>IO.Swagger</Copyright>
@@ -15,21 +15,22 @@
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
     </PropertyGroup>
     <ItemGroup>
-        <Using Include="AasCore.Aas3_0"/>
+        <Using Include="AasCore.Aas3_0" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2"/>
+        <PackageReference Include="CryptoEx" Version="2.0.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
     </ItemGroup>
     <ItemGroup>
-        <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4"/>
+        <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\AasSecurity\AasSecurity.csproj"/>
-        <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj"/>
-        <ProjectReference Include="..\DataTransferObjects\DataTransferObjects.csproj"/>
+        <ProjectReference Include="..\AasSecurity\AasSecurity.csproj" />
+        <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
+        <ProjectReference Include="..\DataTransferObjects\DataTransferObjects.csproj" />
     </ItemGroup>
 
     <ItemGroup>

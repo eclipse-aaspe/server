@@ -48,6 +48,9 @@ using Contracts.DbRequests;
 using Contracts.Exceptions;
 using Contracts.Pagination;
 using Contracts.Security;
+using CryptoEx.JWK;
+using CryptoEx.JWS;
+using CryptoEx.JWS.ETSI;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Attributes;
@@ -1563,6 +1566,141 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         throw new NotAllowed($"");
+    }
+
+    /// <summary>
+    /// Returns a specific Submodel signed
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="extent">Determines to which extent the resource is being serialized</param>
+    /// <response code="200">Requested Submodel</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/$sign3")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelByIdSigned3")]
+    [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelByIdSigned3([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
+    {
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+        var extentEnum = _validateModifierService.ValidateExtent(extent);
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+
+        string certFile = "Andreas_Orzelski_Chain.pfx";
+        string certPW = "i40";
+        if (System.IO.File.Exists(certFile))
+        {
+            var submodelText = Jsonization.Serialize.ToJsonObject(submodel).ToJsonString();
+
+            var mStrm = new MemoryStream(Encoding.UTF8.GetBytes(submodelText));
+            var node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+            var s = Jsonization.Deserialize.SubmodelFrom(node);
+
+            submodel.Extensions ??= [];
+            using (var certificate = new X509Certificate2(certFile, certPW))
+            {
+                if (certificate == null)
+                {
+                    throw new NotAllowed($"Certificate file can not be opened");
+                }
+
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                using (var ec = certificate.GetRSAPrivateKey())
+                {
+                    if (ec == null)
+                    {
+                        throw new NotAllowed($"Public key not available");
+                    }
+
+                    var signer = new ETSISigner(ec, HashAlgorithmName.SHA256);
+
+                    if (xc.Count > 1)
+                    {
+                        var additionalCertificates = new X509Certificate2[xc.Count - 1];
+                        var i = 0;
+                        for (var j = xc.Count - 2; j >= 0; j--)
+                        {
+                            additionalCertificates[i++] = xc[j];
+                        }
+                        signer.AttachSignersCertificate(certificate, additionalCertificates);
+                    }
+                    else
+                    {
+                        signer.AttachSignersCertificate(certificate);
+                    }
+
+                    signer.Sign(Encoding.UTF8.GetBytes(submodelText));
+                    var jades = signer.Encode(JWSEncodeTypeEnum.Full);
+
+                    submodel.Extensions.Add(new Extension($"$jades_{Guid.NewGuid()}", value: jades));
+
+                    var ok = signer.Verify(jades, out var payload, out var ctx);
+
+                    if (!ok)
+                    {
+                        throw new NotAllowed($"Jades can not be verified");
+                    }
+
+                    if (ctx.SigningCertificate != null && ctx.x509Certificate2s != null)
+                    {
+                        var leaf = ctx.SigningCertificate;
+
+                        var chain = new X509Chain
+                        {
+                            ChainPolicy = {
+                                RevocationMode   = X509RevocationMode.NoCheck,
+                                VerificationFlags= X509VerificationFlags.NoFlag,
+                                TrustMode = X509ChainTrustMode.CustomRootTrust
+                            }
+                        };
+
+                        chain.ChainPolicy.CustomTrustStore.Add(ctx.x509Certificate2s.Last());
+
+                        for (var i = 0; i < ctx.x509Certificate2s.Count - 1; i++)
+                        {
+                            chain.ChainPolicy.ExtraStore.Add(ctx.x509Certificate2s[i]);
+                        }
+
+                        var trusted = chain.Build(leaf);
+
+                        if (!trusted)
+                        {
+                            throw new NotAllowed($"Certificate chain not valid");
+                        }
+                    }
+                }
+
+                return new ObjectResult(submodel);
+            }
+        }
+
+        throw new NotAllowed($"Certificate file does not exist");
     }
 
     /// <summary>
