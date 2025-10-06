@@ -1446,7 +1446,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 {
                 }
 
-                submodel.Extensions.Add(new Extension("$sign", value: ""));
                 submodel.Extensions.Add(new Extension("$sign_submodel", value: submodelText));
                 submodel.Extensions.Add(new Extension("$sign_algorithm", value: "RS256"));
                 submodel.Extensions.Add(new Extension("$sign_x5c", value: x5cString));
@@ -1552,7 +1551,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
                         var jws = JWT.Encode(submodelText, rsa, JwsAlgorithm.RS256, headers);
 
-                        submodel.Extensions.Add(new Extension($"$sign_{Guid.NewGuid()}", value: jws));
+                        submodel.Extensions.Add(new Extension($"$jws__{Guid.NewGuid()}", value: jws));
 
                         return new ObjectResult(submodel);
                     }
@@ -1659,7 +1658,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                     signer.Sign(Encoding.UTF8.GetBytes(submodelText));
                     var jades = signer.Encode(JWSEncodeTypeEnum.Full);
 
-                    submodel.Extensions.Add(new Extension($"$jades_{Guid.NewGuid()}", value: jades));
+                    submodel.Extensions.Add(new Extension($"$jades__{Guid.NewGuid()}", value: jades));
 
                     var ok = signer.Verify(jades, out var payload, out var ctx);
 
