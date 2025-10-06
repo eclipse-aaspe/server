@@ -492,6 +492,9 @@ public class EventService : IEventService
                     }
                     var now = DateTime.UtcNow;
                     eventData.Status.SetTimeStamp(now);
+
+                    Console.WriteLine($"FAILED: Send MQTT message on message topic {eventData.MessageTopicType.Value}.");
+
                     // d = eventData.LastUpdate.Value = "reconnect";
                 }
             }

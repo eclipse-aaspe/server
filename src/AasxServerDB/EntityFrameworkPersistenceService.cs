@@ -1507,7 +1507,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         eventData = _eventService.TryAddDto(eventData);
 
         var time = dbEventRequest.Time;
-        var wp = dbEventRequest.IsWithPayload;
+        var wp = dbEventRequest.IsInclude;
         var limSm = dbEventRequest.LimitSm;
         var offSm = dbEventRequest.OffsetSm;
         var limSme = dbEventRequest.LimitSme;

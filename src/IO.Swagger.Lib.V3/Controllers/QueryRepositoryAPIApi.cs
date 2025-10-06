@@ -161,7 +161,6 @@ public class QueryRepositoryAPIApiController : ControllerBase
             throw new OperationNotSupported($"Expression body is empty");
         }
 
-
         _logger.LogInformation("Received request to query submodels.");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);

@@ -1715,7 +1715,7 @@ namespace AasxServer
                 {
                     requestPath += "/" + eventData.LastUpdate.Value;
                 }
-                requestPath += "?withPayload=true";
+                requestPath += "?include=true";
 
                 /*
                 if (false && !requestPath.Contains("localhost"))

@@ -262,7 +262,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 EventName = eventName,
                 Submodel = submodel,
                 Time = time,
-                IsWithPayload = wp,
+                IsInclude = wp,
                 LimitSm = limSm,
                 LimitSme = limSme,
                 OffsetSm = offSm,

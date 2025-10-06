@@ -45,7 +45,7 @@ public class DbEventRequest
     //For Read request
     public DbEventRequestType DbEventRequestType { get; set; }
 
-    public bool IsWithPayload { get; set; }
+    public bool IsInclude { get; set; }
 
     public int LimitSm { get; set; }
 
