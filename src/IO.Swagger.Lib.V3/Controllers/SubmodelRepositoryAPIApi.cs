@@ -1553,15 +1553,59 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
                         submodel.Extensions.Add(new Extension($"$jws__{Guid.NewGuid()}", value: jws));
 
+                        // Validate
+                        var parts = jws.Split('.');
+                        var headerJson = Encoding.UTF8.GetString(Base64Url.Decode(parts[0]));
+                        var header = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
+                        if (header == null)
+                        {
+                            throw new InvalidOperationException("header missing");
+                        }
+
+                        if (!header.TryGetValue("x5c", out var x5cElement))
+                        {
+                            throw new InvalidOperationException("x5c not found in header");
+                        }
+
+                        x5c = x5cElement.EnumerateArray().Select(x => x.GetString()).ToArray();
+                        if (x5c.Length == 0)
+                        {
+                            throw new InvalidOperationException("x5c is empty");
+                        }
+
+                        var certBytes = Convert.FromBase64String(x5c[0]);
+                        var signingCert = new X509Certificate2(certBytes);
+                        using var rsaPublic = signingCert.GetRSAPublicKey();
+
+                        var payload = JWT.Decode(jws, rsaPublic, JwsAlgorithm.RS256);
+
+                        var chain = new X509Chain
+                        {
+                            ChainPolicy = {
+                                RevocationMode   = X509RevocationMode.NoCheck,
+                                VerificationFlags= X509VerificationFlags.NoFlag,
+                                TrustMode = X509ChainTrustMode.CustomRootTrust
+                            }
+                        };
+
+                        var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+                        chain.ChainPolicy.CustomTrustStore.Add(root);
+
+                        for (i = 1; i < x5c.Length - 1; i++)
+                        {
+                            var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+                            chain.ChainPolicy.ExtraStore.Add(cert);
+                        }
+
+                        var isValid = chain.Build(signingCert);
+
                         return new ObjectResult(submodel);
                     }
-
                 }
                 // ReSharper disable EmptyGeneralCatchClause
                 catch
                 {
                 }
-
             }
         }
 
