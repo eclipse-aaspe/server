@@ -1536,6 +1536,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 {
                     { "alg", "RS256" },
                     { "typ", "JWS" },
+                    { "sigT", DateTime.UtcNow },
                     { "x5c", x5c }
                 };
 
