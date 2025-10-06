@@ -1466,6 +1466,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
     /// <param name="level">Determines the structural depth of the respective resource content</param>
     /// <param name="extent">Determines to which extent the resource is being serialized</param>
+    /// <param name="skipPayload">Payload is skipped, because it is already inside JWS</param>
     /// <response code="200">Requested Submodel</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -1484,7 +1485,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetSubmodelByIdSigned2([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
+    public async virtual Task<IActionResult> GetSubmodelByIdSigned2([FromRoute][Required] string submodelIdentifier,
+        [FromQuery] string? level, [FromQuery] string? extent, [FromQuery] string? skipPayload)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1511,6 +1513,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var mStrm = new MemoryStream(Encoding.UTF8.GetBytes(submodelText));
             var node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
             var s = Jsonization.Deserialize.SubmodelFrom(node);
+
+            if (skipPayload != null && skipPayload.ToLower() == "true")
+            {
+                submodel.SubmodelElements = null;
+            }
 
             submodel.Extensions ??= [];
             using (var certificate = new X509Certificate2(certFile, certPW))
