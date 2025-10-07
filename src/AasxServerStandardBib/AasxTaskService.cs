@@ -1624,7 +1624,7 @@ namespace AasxServer
 
             eventData = _eventService.TryAddDto(eventData);
             
-            if (false && eventData.AuthType != null)
+            if (eventData.AuthType != null)
             {
                 switch (eventData.AuthType.Value.ToLower())
                 {

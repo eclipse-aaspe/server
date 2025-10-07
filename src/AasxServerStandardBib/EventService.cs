@@ -89,7 +89,7 @@ public class EventService : IEventService
         _mqttClientService.MessageReceived += _mqttClientService_MessageReceived;
 
         var result = await _mqttClientService.SubscribeAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                                eventData.UserName.Value, eventData.PassWord.Value);
+                                eventData.UserName.Value, eventData.PassWord.Value, eventData?.AccessToken?.Value);
     }
 
     private void _mqttClientService_MessageReceived(object? sender, MqttClientServiceMessageReceivedEventArgs e)
@@ -411,7 +411,7 @@ public class EventService : IEventService
                 try
                 {
                     var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                        eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
+                        eventData.UserName.Value, eventData.PassWord.Value, eventData?.AccessToken?.Value, payloadObjString);
 
                     var now = DateTime.UtcNow;
 
@@ -1987,7 +1987,6 @@ public class EventService : IEventService
 
                     if (isPublishEventElement)
                     {
-
                         if (notificationEventDto.IdShort != null)
                         {
                             eventPayload.source = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(notificationEventDto.SubmodelId)}/events/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
@@ -2046,8 +2045,8 @@ public class EventService : IEventService
                         }
 
                         var result = await _mqttClientService.PublishAsync(clientId, notificationEventDto.MessageBroker.Value,
-                            notificationEventDto.MessageTopicType.Value,
-                            notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, payloadObjString);
+                        notificationEventDto.MessageTopicType.Value,
+                            notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, notificationEventDto?.AccessToken?.Value, payloadObjString);
 
                         var now = DateTime.UtcNow;
 
