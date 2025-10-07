@@ -1538,11 +1538,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                     x5c[i++] = c;
                 }
 
+                var guid = Guid.NewGuid().ToString();
                 var headers = new Dictionary<string, object>
                 {
                     { "alg", "RS256" },
                     { "typ", "JWS" },
                     { "sigT", DateTime.UtcNow },
+                    { "sid", guid },
                     { "x5c", x5c }
                 };
 
@@ -1558,7 +1560,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
                         var jws = JWT.Encode(submodelText, rsa, JwsAlgorithm.RS256, headers);
 
-                        submodel.Extensions.Add(new Extension($"$jws__{Guid.NewGuid()}", value: jws));
+                        submodel.Extensions.Add(new Extension($"$jws__{guid}", value: jws));
 
                         // Validate
                         var parts = jws.Split('.');
