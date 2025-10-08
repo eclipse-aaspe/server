@@ -1366,7 +1366,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("submodels/{submodelIdentifier}/$sign")]
+    [Route("submodels/{submodelIdentifier}/$sign00")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdSigned")]
     [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
@@ -1475,7 +1475,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("submodels/{submodelIdentifier}/$sign2")]
+    [Route("submodels/{submodelIdentifier}/$sign")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdSigned2")]
     [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
@@ -1608,7 +1608,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
                         var isValid = chain.Build(signingCert);
 
-                        return new ObjectResult(submodel);
+                        // return new ObjectResult(submodel);
+                        return new ObjectResult(jws);
                     }
                 }
                 // ReSharper disable EmptyGeneralCatchClause
@@ -1635,7 +1636,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("submodels/{submodelIdentifier}/$sign3")]
+    [Route("submodels/{submodelIdentifier}/$sign03")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdSigned3")]
     [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
