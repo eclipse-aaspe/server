@@ -71,13 +71,12 @@ public class EventService : IEventService
 
     public async void RegisterMqttMessage(EventDto eventData, string submodelId, string idShortPath)
     {
-        if (!_enableMqtt
-            || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty())
+        if (!IsPublishMqttConfigured(eventData))
         {
             //ToDo: logging?
             return;
         }
+
 
         var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
 
@@ -196,16 +195,9 @@ public class EventService : IEventService
 
     public async void CheckMqttMessages(EventDto eventData, string submodelId, string idShortPath)
     {
-        if (!_enableMqtt
-            || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty()
-            || eventData.PassWord == null
-            || eventData.PassWord.Value == null
-            || eventData.UserName == null
-            || eventData.UserName.Value == null)
+        if (!IsPublishMqttConfigured(eventData))
         {
             //ToDo: logging?
-            //ToDo: allow empty username or password?
             return;
         }
 
@@ -271,16 +263,9 @@ public class EventService : IEventService
 
     public async void PublishMqttMessage(EventDto eventData, string submodelId, string idShortPath)
     {
-        if (!_enableMqtt
-            || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty()
-            || eventData.PassWord == null
-            || eventData.PassWord.Value == null
-            || eventData.UserName == null
-            || eventData.UserName.Value == null)
+        if (!IsPublishMqttConfigured(eventData))
         {
             //ToDo: logging?
-            //ToDo: allow empty username or password?
             return;
         }
 
@@ -411,7 +396,7 @@ public class EventService : IEventService
                 try
                 {
                     var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                        eventData.UserName.Value, eventData.PassWord.Value, eventData?.AccessToken?.Value, payloadObjString);
+                        eventData?.UserName?.Value, eventData?.PassWord?.Value, eventData?.AccessToken?.Value, payloadObjString);
 
                     var now = DateTime.UtcNow;
 
@@ -501,6 +486,26 @@ public class EventService : IEventService
 
             eventData.env.setWrite(true);
         }
+    }
+
+    private bool IsPublishMqttConfigured(EventDto eventData)
+    {
+        if (!_enableMqtt)
+            return false;
+
+        bool isMessageBrokerPresent = eventData.MessageBroker != null
+            || !eventData.MessageBroker.Value.IsNullOrEmpty();
+
+        //ToDo: allow empty username or password or not?
+        bool isAuthenticationPresent = (eventData.PassWord != null
+            && eventData.PassWord.Value != null
+            && eventData.UserName != null
+            && eventData.UserName.Value != null)
+            || (eventData.AccessToken != null
+            && !eventData.AccessToken.Value.IsNullOrEmpty());
+
+        return isMessageBrokerPresent
+            && isAuthenticationPresent;
     }
 
     //private int CollectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, EventPayloadEntryType entryType,
@@ -1967,12 +1972,7 @@ public class EventService : IEventService
 
             foreach (var notificationEventDto in notificationEventDtos)
             {
-                if (notificationEventDto.MessageBroker != null
-                    && !notificationEventDto.MessageBroker.Value.IsNullOrEmpty()
-                    && notificationEventDto.PassWord != null
-                    && notificationEventDto.PassWord.Value != null
-                    && notificationEventDto.UserName != null
-                    && notificationEventDto.UserName.Value != null)
+                if (IsPublishMqttConfigured(notificationEventDto))
                 {
 
                     if (notificationEventDto.Domain != null)
@@ -2046,7 +2046,7 @@ public class EventService : IEventService
 
                         var result = await _mqttClientService.PublishAsync(clientId, notificationEventDto.MessageBroker.Value,
                         notificationEventDto.MessageTopicType.Value,
-                            notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, notificationEventDto?.AccessToken?.Value, payloadObjString);
+                            notificationEventDto?.UserName?.Value, notificationEventDto?.PassWord?.Value, notificationEventDto?.AccessToken?.Value, payloadObjString);
 
                         var now = DateTime.UtcNow;
 
