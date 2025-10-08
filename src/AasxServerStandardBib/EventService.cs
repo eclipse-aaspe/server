@@ -379,8 +379,15 @@ public class EventService : IEventService
             semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
         }
 
+        bool showTransmitted = false;
+        if (eventData.ShowTransmitted != null
+                && eventData.ShowTransmitted.Value != null)
+        {
+            showTransmitted = eventData.ShowTransmitted.Value.ToLower() == "true";
+        }
+
         var e = CollectPayload(null, false, sourceString, semanticId, domain, eventData.ConditionSM, eventData.ConditionSME,
-            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
+            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0, showTransmitted);
 
         var options = new JsonSerializerOptions
         {
@@ -660,7 +667,7 @@ public class EventService : IEventService
     public List<EventPayload> CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
         string basicEventElementSemanticId, string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
-        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme, SubmodelElementCollection statusData = null)
+        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme, bool showTransmitted, SubmodelElementCollection statusData = null)
     {
         var eventPayloadList = new List<EventPayload>();
 
@@ -686,7 +693,10 @@ public class EventService : IEventService
             diffTime = diffTime.AddMilliseconds(1);
         }
 
-        eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+        if (showTransmitted)
+        {
+            eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+        }
 
         eventPayload.time = "";
         eventPayload.domain = domain;
@@ -933,7 +943,10 @@ public class EventService : IEventService
 
                                 var entry = new EventPayload(isREST);
 
-                                entry.transmitted = eventPayload.transmitted;
+                                if (showTransmitted)
+                                {
+                                    entry.transmitted = eventPayload.transmitted;
+                                }
                                 entry.domain = eventPayload.domain;
 
 
@@ -996,7 +1009,10 @@ public class EventService : IEventService
 
                     var entry = new EventPayload(isREST);
 
-                    entry.transmitted = eventPayload.transmitted;
+                    if (showTransmitted)
+                    {
+                        entry.transmitted = eventPayload.transmitted;
+                    }
                     entry.domain = eventPayload.domain;
 
                     entry.source = sourceString;
@@ -1737,6 +1753,10 @@ public class EventService : IEventService
                     if (p != null)
                         eventDto.Domain = p;
                     break;
+                case "showtransmitted":
+                    if (p != null)
+                        eventDto.ShowTransmitted = p;
+                    break;
             }
         }
         /*
@@ -1968,12 +1988,16 @@ public class EventService : IEventService
             var eventPayload = new EventPayload(false);
             List<String> diffEntry = new List<String>();
 
-            eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
             foreach (var notificationEventDto in notificationEventDtos)
             {
                 if (IsPublishMqttConfigured(notificationEventDto))
                 {
+                    if (notificationEventDto.ShowTransmitted != null
+                        && notificationEventDto.ShowTransmitted.Value != null)
+                    {
+                        eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+                    }
 
                     if (notificationEventDto.Domain != null)
                     {

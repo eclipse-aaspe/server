@@ -1529,6 +1529,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
         }
 
+        bool showTransmitted = false;
+        if (eventData.ShowTransmitted != null
+                && eventData.ShowTransmitted.Value != null)
+        {
+            showTransmitted = eventData.ShowTransmitted.Value.ToLower() == "true";
+        }
+
         var diff = "";
 
         if (time.IsNullOrEmpty())
@@ -1555,7 +1562,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
 
         var eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme);
+            diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme, showTransmitted);
 
         //if ((eventPayload == null || eventPayload.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         //{

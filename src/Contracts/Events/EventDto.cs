@@ -57,6 +57,8 @@ public class EventDto
     public AasCore.Aas3_0.Property Action = null;
     public AasCore.Aas3_0.Property MessageCondition = null;
 
+    public AasCore.Aas3_0.Property ShowTransmitted = null;
+
     // memory || database
     public AasCore.Aas3_0.Property Persistence = null;
     // * = all SM, else query condition for SM
