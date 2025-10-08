@@ -858,6 +858,11 @@ SOFTWARE.
 With respect to BananaCakePop.Middleware
 ========================================
 
+If you use the default configuration Hotchocalate GRAPHQL will not be enabled in the built software.
+If you want to enable Hotchocalate you need to enable the corresponding complier switch by the GRAPHQL compile option.
+But be aware that this will include BananaCakePop.Middleware, which uses the Chillicream License. The Chillicream license is a proprietary license.
+We highly recommend reading the license terms before manipulating the compiler switch. You find the link to the license terms below.
+
 You can switch on Hotchocalate by the GRAPHQL compile option.
 But be aware that this will include BananaCakePop.Middleware, which uses the Chillicream License.
 
@@ -865,8 +870,7 @@ https://www.nuget.org/packages/BananaCakePop.Middleware/16.0.1
 https://www.nuget.org/packages/BananaCakePop.Middleware/16.0.1/License
 https://chillicream.com/licensing/chillicream-license
 
-This propriatary Chillicream component is specifically used when you open /graphql in the browser.
-This component has an own propriatary license as above.
+BananaCakePop.Middleware is specifically used when you open /graphql in the browser.
 It has been investigated by Eclipse EMO and received project approval by:
 https://gitlab.eclipse.org/eclipsefdn/emo-team/iplab/-/issues/15655
 https://gitlab.eclipse.org/eclipsefdn/emo-team/iplab/-/issues/14799
