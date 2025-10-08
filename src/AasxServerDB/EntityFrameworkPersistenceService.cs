@@ -1547,6 +1547,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             case DbEventRequestType.Status:
                 diff = "status";
+                showTransmitted = true;
                 break;
             case DbEventRequestType.Submodels:
                 diff = time;
@@ -1563,6 +1564,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
             diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme, showTransmitted);
+
+        if (requestType == DbEventRequestType.Status
+            && eventPayload.Any())
+        {
+            eventPayload[0].specversion = null;
+            eventPayload[0].datacontenttype = null;
+        }
 
         //if ((eventPayload == null || eventPayload.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         //{

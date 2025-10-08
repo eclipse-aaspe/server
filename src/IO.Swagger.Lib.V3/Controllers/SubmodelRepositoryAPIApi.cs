@@ -175,7 +175,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             };
 
 
-            var payloadObjString = System.Text.Json.JsonSerializer.Serialize(eventPayload, options);
+            var payloadObjString = System.Text.Json.JsonSerializer.Serialize(eventPayload[0], options);
 
             return new ObjectResult(payloadObjString);
         }
