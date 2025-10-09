@@ -31,6 +31,7 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
         {
             this.SupportedMediaTypes.Clear();
             this.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
+            this.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/xml"));
         }
 
         public static bool IsGenericListOfAasDesc(object o)

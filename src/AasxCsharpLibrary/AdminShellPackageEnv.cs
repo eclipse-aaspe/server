@@ -625,7 +625,8 @@ namespace AdminShellNS
                     thumbUri = x.TargetUri;
                     break;
                 }
-            if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
+            if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString)
+                && _aasEnv.AssetAdministrationShells != null)
             {
                 foreach (var aas in _aasEnv.AssetAdministrationShells)
                 {
@@ -947,7 +948,7 @@ namespace AdminShellNS
                     {
                         // create, as not existing
                         var frn = "aasenv-with-no-id";
-                        if (_aasEnv.AssetAdministrationShells.Count > 0)
+                        if (_aasEnv.AssetAdministrationShells != null && _aasEnv.AssetAdministrationShells.Count > 0)
                             frn = _aasEnv.AssetAdministrationShells[0].GetFriendlyName() ?? frn;
                         var aas_spec_fn = "/aasx/#/#.aas";
                         if (prefFmt == SerializationFormat.Json)
@@ -1455,6 +1456,11 @@ namespace AdminShellNS
                 fileName = fileName.Replace("/", "_");
                 fileName = fileName.Replace(".", "_");
                 fileName = fileName.Replace(":", "_");
+
+                if (_aasEnv.AssetAdministrationShells == null)
+                {
+                    return null;
+                }
 
                 var aas = _aasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id == aasId);
 

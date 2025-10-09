@@ -40,6 +40,9 @@ using IO.Swagger.Lib.V3.Models;
 using System.Text.Json.Serialization;
 using Npgsql.Internal;
 using AdminShellNS.Models;
+using Extensions;
+using Contracts.DbRequests;
+using System.Xml;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -49,6 +52,7 @@ namespace IO.Swagger.Lib.V3.Formatters
         {
             SupportedMediaTypes.Clear();
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/xml"));
         }
         public static bool IsGenericListOfIClass(object o)
         {
@@ -196,16 +200,25 @@ namespace IO.Swagger.Lib.V3.Formatters
                 //Validate modifiers
                 SerializationModifiersValidator.Validate((IClass)context.Object, level, extent);
 
-                JsonObject json = Jsonization.Serialize.ToJsonObject((IClass)context.Object);
-                var writer = new Utf8JsonWriter(response.Body);
-                json.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
+                if (response.ContentType == "application/json")
+                {
+                    JsonObject json = Jsonization.Serialize.ToJsonObject((IClass)context.Object);
+                    var writer = new Utf8JsonWriter(response.Body);
+                    json.WriteTo(writer);
+                    writer.FlushAsync().GetAwaiter().GetResult();
+                }
+                else if (response.ContentType == "application/xml")
+                {
+                    var writer = XmlWriter.Create(response.Body, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true , Async = true});
+                    Xmlization.Serialize.To((IClass)context.Object, writer);
+                    writer.FlushAsync().GetAwaiter().GetResult();
+                }
             }
             else if (IsGenericListOfIClass(context.Object))
             {
 
-                var           jsonArray         = new JsonArray();
-                IList         genericList       = (IList)context.Object;
+                var jsonArray = new JsonArray();
+                IList genericList = (IList)context.Object;
                 List<IClass?> contextObjectType = new List<IClass?>();
                 foreach (var generic in genericList)
                 {
@@ -272,7 +285,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonArray.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-            else if(typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
+            else if (typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
             {
                 JsonNode? json = MetadataJsonSerializer.ToJsonObject((IMetadataDTO)context.Object);
                 var writer = new Utf8JsonWriter(response.Body);
@@ -399,7 +412,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-            else if(typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
+            else if (typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
             {
                 JsonNode jsonNode = null;
                 var options = new JsonSerializerOptions
