@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MQTTclient": {
+      "commandName": "Project",
+      "commandLineArgs": "MQTT-OZ pw mqtt-broker.aas-voyager.com 8883"
+    }
+  }
+}

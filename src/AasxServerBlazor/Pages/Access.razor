@@ -1,0 +1,15 @@
+@page "/Access"
+
+<h1>Access Rules</h1>
+
+<pre>
+    @{
+        var lines = System.IO.File.ReadAllLines("accessrules.txt");
+
+        foreach (var line in lines)
+        {
+            @line<br />
+        }
+    }
+</pre>
+

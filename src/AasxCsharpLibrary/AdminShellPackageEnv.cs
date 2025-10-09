@@ -1,12 +1,15 @@
-/*
-Copyright (c) 2018-2021 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>
-Author: Michael Hoffmeister
-
-This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
-
-This source code may use other Open Source software components (see LICENSE.txt).
-*/
-
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
 
 
 using Extensions;
@@ -325,6 +328,10 @@ namespace AdminShellNS
             {
                 return _aasEnv;
             }
+            set
+            {
+                _aasEnv = value;
+            }
         }
 
         private static Environment? LoadXml(string fn)
@@ -618,11 +625,12 @@ namespace AdminShellNS
                     thumbUri = x.TargetUri;
                     break;
                 }
-            if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
+            if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString)
+                && _aasEnv.AssetAdministrationShells != null)
             {
-                if (_aasEnv.AssetAdministrationShells.Count > 0)
+                foreach (var aas in _aasEnv.AssetAdministrationShells)
                 {
-                    _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString); 
+                    aas.AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
                 }
             }
         }
@@ -686,7 +694,7 @@ namespace AdminShellNS
         //    return nss;
         //}
 
-        public bool SaveAs(string fn, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
+        public bool SaveAs(string fn, bool isLoadingFromZip = false, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
                 MemoryStream useMemoryStream = null, bool saveOnlyCopy = false)
         {
             if (fn.ToLower().EndsWith(".xml"))
@@ -940,7 +948,7 @@ namespace AdminShellNS
                     {
                         // create, as not existing
                         var frn = "aasenv-with-no-id";
-                        if (_aasEnv.AssetAdministrationShells.Count > 0)
+                        if (_aasEnv.AssetAdministrationShells != null && _aasEnv.AssetAdministrationShells.Count > 0)
                             frn = _aasEnv.AssetAdministrationShells[0].GetFriendlyName() ?? frn;
                         var aas_spec_fn = "/aasx/#/#.aas";
                         if (prefFmt == SerializationFormat.Json)
@@ -987,30 +995,34 @@ namespace AdminShellNS
 
                     //Handling of aas_suppl namespace from v2 to v3
                     //Need to check/test in detail, with thumbnails as well
-                    if (specPart != null)
+                    if (!isLoadingFromZip)
                     {
-
-                        xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
-                        if (xs != null)
+                        if (specPart != null)
                         {
-                            foreach (var x in xs.ToList())
+
+                            xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
+                            if (xs != null)
                             {
-                                var uri = x.TargetUri;
-                                PackagePart filePart = null;
-                                var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
-                                if (package.PartExists(absoluteURI))
+                                foreach (var x in xs.ToList())
                                 {
-                                    filePart = package.GetPart(absoluteURI);
+                                    var uri = x.TargetUri;
+                                    PackagePart filePart = null;
+                                    var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
+                                    if (package.PartExists(absoluteURI))
+                                    {
+                                        filePart = package.GetPart(absoluteURI);
+                                    }
+                                    //delete old type, because its not according to spec or something
+                                    //then replace with the current type
+                                    specPart.DeleteRelationship(x.Id);
+                                    specPart.CreateRelationship(
+                                        filePart.Uri, TargetMode.Internal,
+                                        "http://admin-shell.io/aasx/relationships/aas-suppl");
                                 }
-                                //delete old type, because its not according to spec or something
-                                //then replace with the current type
-                                specPart.DeleteRelationship(x.Id);
-                                specPart.CreateRelationship(
-                                    filePart.Uri, TargetMode.Internal,
-                                    "http://admin-shell.io/aasx/relationships/aas-suppl");
                             }
                         }
                     }
+
 
                     // there might be pending files to be deleted (first delete, then add,
                     // in case of identical files in both categories)
@@ -1053,7 +1065,6 @@ namespace AdminShellNS
                     // after this, there are no more pending for delete files
                     _pendingFilesToDelete.Clear();
 
-                    // write pending supplementary files
                     foreach (var psfAdd in _pendingFilesToAdd)
                     {
                         // make sure ..
@@ -1116,36 +1127,51 @@ namespace AdminShellNS
                                     // which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                                     mimeType = "application/octet-stream";
 
-                                // create new part and link
-                                filePart = package.CreatePart(psfAdd.Uri, mimeType, CompressionOption.Maximum);
+                                if (!package.PartExists(psfAdd.Uri))
+                                {
+                                    // create new part and link
+                                    filePart = package.CreatePart(psfAdd.Uri, mimeType, CompressionOption.Maximum);
+                                }
+                                else
+                                {
+                                    filePart = package.GetPart(psfAdd.Uri);
+                                }
+
                                 if (psfAdd.SpecialHandling ==
-                                    AdminShellPackageSupplementaryFile.SpecialHandlingType.None)
+                                        AdminShellPackageSupplementaryFile.SpecialHandlingType.None)
                                     specPart.CreateRelationship(
                                         filePart.Uri, TargetMode.Internal,
                                         "http://admin-shell.io/aasx/relationships/aas-suppl");
+
                                 if (psfAdd.SpecialHandling ==
-                                    AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail)
+                                        AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail)
                                     package.CreateRelationship(
                                         filePart.Uri, TargetMode.Internal,
                                         "http://schemas.openxmlformats.org/package/2006/" +
                                         "relationships/metadata/thumbnail");
+
                             }
 
                             // now should be able to write
-                            using (var s = filePart.GetStream(FileMode.Create))
+                            try
                             {
-                                if (psfAdd.SourceLocalPath != null)
+                                using (var s = filePart.GetStream(FileMode.Create))
                                 {
-                                    var bytes = System.IO.File.ReadAllBytes(psfAdd.SourceLocalPath);
-                                    s.Write(bytes, 0, bytes.Length);
-                                }
-
-                                if (psfAdd.SourceGetBytesDel != null)
-                                {
-                                    var bytes = psfAdd.SourceGetBytesDel();
-                                    if (bytes != null)
+                                    if (psfAdd.SourceLocalPath != null)
+                                    {
+                                        var bytes = System.IO.File.ReadAllBytes(psfAdd.SourceLocalPath);
                                         s.Write(bytes, 0, bytes.Length);
+                                    }
+                                    else if (psfAdd.SourceGetBytesDel != null)
+                                    {
+                                        var bytes = psfAdd.SourceGetBytesDel();
+                                        if (bytes != null)
+                                            s.Write(bytes, 0, bytes.Length);
+                                    }
                                 }
+                            }
+                            catch (Exception exception)
+                            {
                             }
                         }
                     }
@@ -1324,12 +1350,10 @@ namespace AdminShellNS
         }
 
         public static bool withDb = false;
-        public static bool withDbFiles = false;
         public static string dataPath = "";
-        public static void setGlobalOptions(bool _withDb, bool _withDbFiles, string _dataPath)
+        public static void setGlobalOptions(bool _withDb, string _dataPath)
         {
             withDb = _withDb;
-            withDbFiles = _withDbFiles;
             dataPath = _dataPath;
         }
 
@@ -1423,21 +1447,65 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
+        public Stream? GetLocalThumbnailStream(ref Uri thumbUri, bool init = false, string aasId = null)
         {
             // DB
-            if (withDb && withDbFiles && !init)
+            if (withDb && !init && !string.IsNullOrEmpty(aasId))
             {
-                string fcopy = Path.GetFileName(Filename) + "__thumbnail";
-                fcopy = fcopy.Replace("/", "_");
-                fcopy = fcopy.Replace(".", "_");
-                var s = System.IO.File.Open(dataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                return s;
+                var fileName = aasId;
+                fileName = fileName.Replace("/", "_");
+                fileName = fileName.Replace(".", "_");
+                fileName = fileName.Replace(":", "_");
+
+                if (_aasEnv.AssetAdministrationShells == null)
+                {
+                    return null;
+                }
+
+                var aas = _aasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id == aasId);
+
+                if (aas == null)
+                {
+                    return null;
+                }
+                var path = Path.Combine(dataPath, "files", "thumbnails", fileName + ".zip");
+
+                var assetInformation = aas.AssetInformation;
+
+                if (assetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(assetInformation.DefaultThumbnail.Path))
+                {
+                    try
+                    {
+                        using (var fileStream = new FileStream(path, FileMode.Open))
+                        {
+                            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                            {
+                                var archiveFile = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                                if (archiveFile == null)
+                                {
+                                    return null;
+                                }
+                                using var tempStream = archiveFile.Open();
+                                var ms = new MemoryStream();
+                                tempStream.CopyTo(ms);
+                                ms.Position = 0;
+                                return ms;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+                return null;
             }
 
             // access
             if (_openPackage == null)
-                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+            {
+                return null;
+                //throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+            }
             // get the thumbnail over the relationship
             PackagePart thumbPart = null;
             var xs = _openPackage.GetRelationshipsByType(
@@ -1474,10 +1542,10 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream()
+        public Stream GetLocalThumbnailStream(string aasId)
         {
             Uri dummy = null;
-            var result = GetLocalThumbnailStream(ref dummy);
+            var result = GetLocalThumbnailStream(ref dummy, aasId: aasId);
 
             // Post-condition
             if (!(result == null || result.CanRead))
@@ -1989,3 +2057,4 @@ namespace AdminShellNS
         }
     }
 }
+

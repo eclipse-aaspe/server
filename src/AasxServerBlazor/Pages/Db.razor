@@ -872,7 +872,7 @@
             if (url.EndsWith("/sme"))
             {
                 List<SMESet> data = PageRetriever.GetPageSMEData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
-                var merged = CrudOperator.GetSmeMerged(db, data, null);
+                var merged = CrudOperator.GetSmeMerged(db, null, data, null);
                 CrudOperator.CreateIdShortPath(db, data);
 
                 <span>

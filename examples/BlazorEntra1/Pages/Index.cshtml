@@ -1,0 +1,114 @@
+﻿@*
+    /********************************************************************************
+    * Copyright (c) 2025 Contributors to the Eclipse Foundation
+    *
+    * See the NOTICE file(s) distributed with this work for additional
+    * information regarding copyright ownership.
+    *
+    * This program and the accompanying materials are made available under the
+    * terms of the MIT License which is available at
+    * https://mit-license.org/
+    *
+    * SPDX-License-Identifier: MIT
+    ********************************************************************************/
+*@
+
+@page
+@using System
+@using System.Linq
+@using System.Threading.Tasks
+@using Microsoft.Identity.Client
+@using Microsoft.IdentityModel.JsonWebTokens
+@using Microsoft.IdentityModel.Protocols
+@using Microsoft.IdentityModel.Protocols.OpenIdConnect
+@using Microsoft.IdentityModel.Tokens
+
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+    var log = await GetIdAsync();
+}
+
+<div class="text-center">
+    <h1 class="display-4">Get an Entra ID</h1>
+    <p>@log</p>
+    <br />
+</div>
+
+@functions {
+    public async Task<string> GetIdAsync()
+    {
+        var output = new System.Text.StringBuilder();
+
+        var tenant = "common";
+        var clientId = "865f6ac0-cdbc-44c6-98cc-3e35c39ecb6e";
+        var scopes = new[] { "openid", "profile", "email" };
+
+        output.AppendLine("🔐 Starte Login...");
+
+        var app = PublicClientApplicationBuilder
+            .Create(clientId)
+            .WithAuthority(AzureCloudInstance.AzurePublic, tenant)
+            .WithDefaultRedirectUri()
+            .Build();
+
+        var result = await app
+            .AcquireTokenInteractive(scopes)
+            .WithPrompt(Prompt.SelectAccount)
+            .ExecuteAsync();
+
+        output.AppendLine("✅ ID Token:");
+        output.AppendLine(result.IdToken);
+        output.AppendLine("\n✅ ID Token erhalten.\n");
+
+        var handler = new JsonWebTokenHandler();
+        var jwtUnvalidated = handler.ReadJsonWebToken(result.IdToken);
+        var tenantIdClaim = jwtUnvalidated.Claims.First(c => c.Type == "tid").Value;
+
+        string metadataUrl = $"https://login.microsoftonline.com/{tenantIdClaim}/v2.0/.well-known/openid-configuration";
+        var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+            metadataUrl,
+            new OpenIdConnectConfigurationRetriever());
+        var openIdConfig = await configManager.GetConfigurationAsync();
+
+        output.AppendLine("Configured Issuer: " + openIdConfig.Issuer);
+
+        var validationParameters = new TokenValidationParameters
+        {
+            IssuerSigningKeys = openIdConfig.SigningKeys,
+            ValidIssuer = openIdConfig.Issuer,
+            ValidAudience = clientId,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+
+        var validationResult = await handler.ValidateTokenAsync(result.IdToken, validationParameters);
+
+        if (!validationResult.IsValid)
+        {
+            output.AppendLine("❌ Token-Validierung fehlgeschlagen:");
+            output.AppendLine(validationResult.Exception?.Message);
+            return output.ToString();
+        }
+
+        output.AppendLine("🔒 Token ist SIGNIERT und GÜLTIG!\n");
+        output.AppendLine("\n📋 JWT-Claims:\n");
+
+        var jwt = handler.ReadJsonWebToken(result.IdToken);
+        foreach (var claim in jwt.Claims)
+        {
+            output.AppendLine($"{claim.Type}: {claim.Value}");
+        }
+
+        output.AppendLine("\n📧 E-Mail (wenn vorhanden):");
+        output.AppendLine(jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value ??
+                          jwt.Claims.FirstOrDefault(c => c.Type == "upn")?.Value ??
+                          jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value ??
+                          "(nicht vorhanden)");
+
+        return output.ToString();
+    }
+}

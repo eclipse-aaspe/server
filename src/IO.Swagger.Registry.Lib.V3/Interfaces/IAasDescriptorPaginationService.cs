@@ -22,5 +22,6 @@ namespace IO.Swagger.Registry.Lib.V3.Interfaces
     public interface IAasDescriptorPaginationService
     {
         AasDescriptorPagedResult GetPaginatedList(List<AssetAdministrationShellDescriptor> sourceList, PaginationParameters paginationParameters);
+        SubmodelDescriptorPagedResult GetPaginatedList(List<SubmodelDescriptor> sourceList, PaginationParameters paginationParameters);
     }
 }
