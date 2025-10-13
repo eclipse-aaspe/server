@@ -93,6 +93,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                     if (operation.CrudType != DbRequestCrudType.Read)
                     {
                         _lock.Release();
+                        Program.signalNewData(2);
                     }
                     else
                     {
