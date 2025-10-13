@@ -151,12 +151,36 @@ switch (input)
         }
         break;
     case "f":
-        certificate = new X509Certificate2("../../../Andreas_Orzelski_Chain.pfx", "i40");
-
+        var name = "Andreas_Orzelski_Chain.pfx";
+        var pw = "i40";
+        // var name = "I40_IDTA_Sandeep_Rudra.pfx";
+        // var name = "idta-client.pfx";
+        certificate = new X509Certificate2($"../../../{name}", pw);
+        
         // Zertifikatskette vorbereiten
         var chain = new X509Certificate2Collection();
-        chain.Import("../../../Andreas_Orzelski_Chain.pfx", "i40");
+        chain.Import($"../../../{name}", pw);
         x5c = chain.Cast<X509Certificate2>().Reverse().Select(c => Convert.ToBase64String(c.RawData)).ToArray();
+
+        var ch2 = new X509Chain
+        {
+            ChainPolicy = {
+                RevocationMode   = X509RevocationMode.NoCheck,
+                VerificationFlags= X509VerificationFlags.NoFlag,
+                TrustMode = X509ChainTrustMode.CustomRootTrust
+            }
+        };
+
+        var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+        ch2.ChainPolicy.CustomTrustStore.Add(root);
+
+        for (var i = 1; i < x5c.Length - 1; i++)
+        {
+            var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+            ch2.ChainPolicy.ExtraStore.Add(cert);
+        }
+
+        var isValid = ch2.Build(certificate);
         break;
     case "e":
         Console.WriteLine("Entra ID?");
