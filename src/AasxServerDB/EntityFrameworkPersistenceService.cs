@@ -934,26 +934,29 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     && aasInEnv.AssetInformation.DefaultThumbnail != null
                         && aasInEnv.AssetInformation.DefaultThumbnail.Path != null)
                 {
-                    byte[] bytesFromThumbnailsFile()
+                    //check if it is not an external location
+                    if (aasInEnv.AssetInformation.DefaultThumbnail.Path.StartsWith('/') || aasInEnv.AssetInformation.DefaultThumbnail.Path.StartsWith('\\'))
                     {
-                        using (var fileStream = new FileStream(FileService.GetThumbnailZipPath(aasInEnv.Id), FileMode.Open))
+                        byte[] bytesFromThumbnailsFile()
                         {
-                            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                            using (var fileStream = new FileStream(FileService.GetThumbnailZipPath(aasInEnv.Id), FileMode.Open))
                             {
-                                var archiveFile = archive.GetEntry(aasInEnv.AssetInformation.DefaultThumbnail.Path);
-                                using var tempStream = archiveFile.Open();
-                                var ms = new MemoryStream();
-                                tempStream.CopyTo(ms);
-                                ms.Position = 0;
-                                return ms.ToByteArray();
+                                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                                {
+                                    var archiveFile = archive.GetEntry(aasInEnv.AssetInformation.DefaultThumbnail.Path);
+                                    using var tempStream = archiveFile.Open();
+                                    var ms = new MemoryStream();
+                                    tempStream.CopyTo(ms);
+                                    ms.Position = 0;
+                                    return ms.ToByteArray();
+                                }
                             }
                         }
+                        requestedPackage.AddSupplementaryFileToStore(null,
+                                                    aasInEnv.AssetInformation.DefaultThumbnail.Path,
+                                                    true,
+                                                    bytesFromThumbnailsFile);
                     }
-                    requestedPackage.AddSupplementaryFileToStore(null,
-                                                aasInEnv.AssetInformation.DefaultThumbnail.Path,
-                                                true,
-                                                bytesFromThumbnailsFile);
-
                 }
             }
         }
