@@ -79,8 +79,8 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual async Task<IActionResult> PostAssetAdminstrationShells([FromQuery] int? limit, [FromQuery] string? cursor)
-        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.AssetAdministrationShell);
+    public virtual async Task<IActionResult> PostAssetAdminstrationShells([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.AssetAdministrationShell, expression);
 
     /// <summary>
     /// Query Submodels
@@ -103,8 +103,8 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual async Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor)
-        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.Submodel);
+    public virtual async Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.Submodel, expression);
 
     /// <summary>
     /// Query Submodels and return value serialization
@@ -128,7 +128,7 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual async Task<IActionResult> PostSubmodelsValue([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
-        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.SubmodelValue);
+        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.SubmodelValue, expression);
 
     /// <summary>
     /// Query Submodel Elements
@@ -151,35 +151,14 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual async Task<IActionResult> PostSubmodelElements([FromQuery] int? limit, [FromQuery] string? cursor)
-        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.SubmodelElement);
+    public virtual async Task<IActionResult> PostSubmodelElements([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryAsync(limit, cursor, ResultType.SubmodelElement, expression);
 
-    private async Task<IActionResult> HandleSubmodelQueryAsync(int? limit, string? cursor, ResultType resultType)
+    private async Task<IActionResult> HandleSubmodelQueryAsync(int? limit, string? cursor, ResultType resultType, string? expression)
     {
-        string expression;
-
-        using var reader = new StreamReader(Request.Body);
-        var rawBody = await reader.ReadToEndAsync();
-
-        if (Request.ContentType?.Contains("application/json") == true)
+        if (expression == null)
         {
-            try
-            {
-                var jsonElement = JsonSerializer.Deserialize<JsonElement>(rawBody);
-                expression = jsonElement.ToString(); // oder jsonElement.GetRawText()
-            }
-            catch (JsonException ex)
-            {
-                throw new OperationNotSupported($"Invalid JSON: {ex.Message}");
-            }
-        }
-        else if (Request.ContentType?.Contains("text/plain") == true)
-        {
-            expression = rawBody;
-        }
-        else
-        {
-            throw new OperationNotSupported("Unsupported content type.");
+            throw new OperationNotSupported($"Expression body is empty");
         }
 
         _logger.LogInformation("Received request to query submodels.");

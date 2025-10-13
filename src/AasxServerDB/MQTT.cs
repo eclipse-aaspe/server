@@ -49,13 +49,21 @@ public class MqttClientService
         _mqttClients = new List<IMqttClient>();
     }
 
-    private async Task<MqttClientConnectResult> ConnectAsync(IMqttClient mqttClient, string clientId, string messageBroker, string userName, string password)
+    private async Task<MqttClientConnectResult> ConnectAsync(IMqttClient mqttClient, string clientId, string messageBroker, string userName, string password, string accessToken)
     {
         var messageBrokerData = messageBroker.Split(':');
 
         if (messageBrokerData.Length != 3)
         {
             return null;
+        }
+
+        var credUserName = userName;
+        var credPassword = password;
+
+        if (accessToken != null) {
+            credUserName = "jwt";
+            credPassword = accessToken;
         }
 
         bool withTLS = messageBrokerData[0].Equals("MQTTS", StringComparison.OrdinalIgnoreCase);
@@ -94,7 +102,7 @@ public class MqttClientService
             Console.WriteLine("MQTT disconnected.");
         }
     }
-    public async Task<MqttClientSubscribeResult> SubscribeAsync(string clientId, string messageBroker, string messageTopic, string userName, string password)
+    public async Task<MqttClientSubscribeResult> SubscribeAsync(string clientId, string messageBroker, string messageTopic, string userName, string password, string accessToken)
     {
         var mqttClient = _mqttClients.FirstOrDefault(cl => cl.Options.ClientId == clientId);
 
@@ -140,7 +148,7 @@ public class MqttClientService
 
         if (!mqttClient.IsConnected)
         {
-            var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password);
+            var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password, accessToken);
             if (result != null && result.ResultCode == MqttClientConnectResultCode.Success)
             {
                 _mqttClients.Add(mqttClient);
@@ -161,7 +169,7 @@ public class MqttClientService
         MessageReceived?.Invoke(this, result);
     }
 
-    public async Task<MqttClientPublishResult> PublishAsync(string clientId, string messageBroker, string messageTopic, string userName, string password, string payload)
+    public async Task<MqttClientPublishResult> PublishAsync(string clientId, string messageBroker, string messageTopic, string userName, string password, string accessToken, string payload)
     {
         var mqttClient = _mqttClients.FirstOrDefault(cl => cl.Options.ClientId == clientId);
 
@@ -172,7 +180,7 @@ public class MqttClientService
 
         if (!mqttClient.IsConnected)
         {
-            var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password);
+            var result = await ConnectAsync(mqttClient, clientId, messageBroker, userName, password, accessToken);
             if (result != null && result.ResultCode == MqttClientConnectResultCode.Success)
             {
                 _mqttClients.Add(mqttClient);

@@ -35,6 +35,7 @@ namespace IO.Swagger.Controllers
 {
     using System.Linq;
     using System.Net.Mime;
+    using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using AasSecurity.Exceptions;
     using AasxServer;
@@ -64,6 +65,18 @@ namespace IO.Swagger.Controllers
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
             _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         }
+
+
+        public enum ContentTypeOptions
+        {
+            [EnumMember(Value = "application/asset-administration-shell-package+xml")]
+            aasx,
+            [EnumMember(Value = "application/json")]
+            json,
+            [EnumMember(Value = "application/xml")]
+            xml
+        }
+
         /// <summary>
         /// Returns an appropriate serialization based on the specified format (see SerializationFormat)
         /// </summary>
@@ -79,15 +92,15 @@ namespace IO.Swagger.Controllers
         [HttpGet]
         [Route("serialization")]
         [ValidateModelState]
+        [Produces("application/json", "application/xml", "application/asset-administration-shell-package+xml")]
         [SwaggerOperation("GenerateSerializationByIds")]
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested serialization based on SerializationFormat")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual async Task<IActionResult> GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
-        [FromQuery] string? includeConceptDescriptions, [FromQuery] string? contentType)
+        [FromQuery] string? includeConceptDescriptions)
         {
             _logger.LogDebug($"Received a request an appropriate serialization");
 
@@ -111,15 +124,12 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            if (!HttpContext.Request.Headers.TryGetValue("Content-Type", out var isContentType))
+            if (!HttpContext.Request.Headers.TryGetValue("Accept", out var isResultType))
             {
-                if (contentType != null)
-                {
-                    isContentType = contentType;
-                }
+                isResultType = "application/json";
             }
 
-            bool createAASXPackage = isContentType.Equals("application/asset-administration-shell-package+xml");
+            bool createAASXPackage = isResultType.Equals("application/asset-administration-shell-package+xml");
 
             var result = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeCD, createAASXPackage);
 
@@ -135,17 +145,7 @@ namespace IO.Swagger.Controllers
                 await HttpContext.Response.Body.WriteAsync(fileRequestResult.Content);
                 return new EmptyResult();
             }
-            else if (isContentType.Equals("application/json"))
-            {
-                return new ObjectResult(result.Environment);
-            }
-
-            var outputBuilder = new System.Text.StringBuilder();
-            var writer = XmlWriter.Create(outputBuilder, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true });
-            Xmlization.Serialize.To(result.Environment, writer);
-            writer.Flush();
-            writer.Close();
-            return new ObjectResult(outputBuilder.ToString());
+            return new ObjectResult(result.Environment);
         }
     }
 }

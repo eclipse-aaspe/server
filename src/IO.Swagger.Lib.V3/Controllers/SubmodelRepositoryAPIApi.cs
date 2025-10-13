@@ -175,7 +175,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             };
 
 
-            var payloadObjString = System.Text.Json.JsonSerializer.Serialize(eventPayload, options);
+            var payloadObjString = System.Text.Json.JsonSerializer.Serialize(eventPayload[0], options);
 
             return new ObjectResult(payloadObjString);
         }
@@ -262,7 +262,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 EventName = eventName,
                 Submodel = submodel,
                 Time = time,
-                IsWithPayload = wp,
+                IsInclude = wp,
                 LimitSm = limSm,
                 LimitSme = limSme,
                 OffsetSm = offSm,

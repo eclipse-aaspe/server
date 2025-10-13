@@ -71,13 +71,12 @@ public class EventService : IEventService
 
     public async void RegisterMqttMessage(EventDto eventData, string submodelId, string idShortPath)
     {
-        if (!_enableMqtt
-            || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty())
+        if (!IsPublishMqttConfigured(eventData))
         {
             //ToDo: logging?
             return;
         }
+
 
         var clientId = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodelId);
 
@@ -89,7 +88,7 @@ public class EventService : IEventService
         _mqttClientService.MessageReceived += _mqttClientService_MessageReceived;
 
         var result = await _mqttClientService.SubscribeAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                                eventData.UserName.Value, eventData.PassWord.Value);
+                                eventData.UserName.Value, eventData.PassWord.Value, eventData?.AccessToken?.Value);
     }
 
     private void _mqttClientService_MessageReceived(object? sender, MqttClientServiceMessageReceivedEventArgs e)
@@ -196,16 +195,9 @@ public class EventService : IEventService
 
     public async void CheckMqttMessages(EventDto eventData, string submodelId, string idShortPath)
     {
-        if (!_enableMqtt
-            || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty()
-            || eventData.PassWord == null
-            || eventData.PassWord.Value == null
-            || eventData.UserName == null
-            || eventData.UserName.Value == null)
+        if (!IsPublishMqttConfigured(eventData))
         {
             //ToDo: logging?
-            //ToDo: allow empty username or password?
             return;
         }
 
@@ -271,16 +263,9 @@ public class EventService : IEventService
 
     public async void PublishMqttMessage(EventDto eventData, string submodelId, string idShortPath)
     {
-        if (!_enableMqtt
-            || eventData.MessageBroker == null
-            || eventData.MessageBroker.Value.IsNullOrEmpty()
-            || eventData.PassWord == null
-            || eventData.PassWord.Value == null
-            || eventData.UserName == null
-            || eventData.UserName.Value == null)
+        if (!IsPublishMqttConfigured(eventData))
         {
             //ToDo: logging?
-            //ToDo: allow empty username or password?
             return;
         }
 
@@ -394,8 +379,15 @@ public class EventService : IEventService
             semanticId = (eventData.SemanticId != null && eventData.SemanticId?.Keys != null) ? eventData.SemanticId?.Keys[0].Value : "";
         }
 
+        bool showTransmitted = false;
+        if (eventData.ShowTransmitted != null
+                && eventData.ShowTransmitted.Value != null)
+        {
+            showTransmitted = eventData.ShowTransmitted.Value.ToLower() == "true";
+        }
+
         var e = CollectPayload(null, false, sourceString, semanticId, domain, eventData.ConditionSM, eventData.ConditionSME,
-            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0);
+            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0, showTransmitted);
 
         var options = new JsonSerializerOptions
         {
@@ -411,7 +403,7 @@ public class EventService : IEventService
                 try
                 {
                     var result = await _mqttClientService.PublishAsync(clientId, eventData.MessageBroker.Value, eventData.MessageTopicType.Value,
-                        eventData.UserName.Value, eventData.PassWord.Value, payloadObjString);
+                        eventData?.UserName?.Value, eventData?.PassWord?.Value, eventData?.AccessToken?.Value, payloadObjString);
 
                     var now = DateTime.UtcNow;
 
@@ -492,12 +484,35 @@ public class EventService : IEventService
                     }
                     var now = DateTime.UtcNow;
                     eventData.Status.SetTimeStamp(now);
+
+                    Console.WriteLine($"FAILED: Send MQTT message on message topic {eventData.MessageTopicType.Value}.");
+
                     // d = eventData.LastUpdate.Value = "reconnect";
                 }
             }
 
             eventData.env.setWrite(true);
         }
+    }
+
+    private bool IsPublishMqttConfigured(EventDto eventData)
+    {
+        if (!_enableMqtt)
+            return false;
+
+        bool isMessageBrokerPresent = eventData.MessageBroker != null
+            || !eventData.MessageBroker.Value.IsNullOrEmpty();
+
+        //ToDo: allow empty username or password or not?
+        bool isAuthenticationPresent = (eventData.PassWord != null
+            && eventData.PassWord.Value != null
+            && eventData.UserName != null
+            && eventData.UserName.Value != null)
+            || (eventData.AccessToken != null
+            && !eventData.AccessToken.Value.IsNullOrEmpty());
+
+        return isMessageBrokerPresent
+            && isAuthenticationPresent;
     }
 
     //private int CollectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, EventPayloadEntryType entryType,
@@ -652,7 +667,7 @@ public class EventService : IEventService
     public List<EventPayload> CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
         string basicEventElementSemanticId, string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
-        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme, SubmodelElementCollection statusData = null)
+        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme, bool showTransmitted, SubmodelElementCollection statusData = null)
     {
         var eventPayloadList = new List<EventPayload>();
 
@@ -678,7 +693,10 @@ public class EventService : IEventService
             diffTime = diffTime.AddMilliseconds(1);
         }
 
-        eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+        if (showTransmitted)
+        {
+            eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+        }
 
         eventPayload.time = "";
         eventPayload.domain = domain;
@@ -925,7 +943,10 @@ public class EventService : IEventService
 
                                 var entry = new EventPayload(isREST);
 
-                                entry.transmitted = eventPayload.transmitted;
+                                if (showTransmitted)
+                                {
+                                    entry.transmitted = eventPayload.transmitted;
+                                }
                                 entry.domain = eventPayload.domain;
 
 
@@ -988,7 +1009,10 @@ public class EventService : IEventService
 
                     var entry = new EventPayload(isREST);
 
-                    entry.transmitted = eventPayload.transmitted;
+                    if (showTransmitted)
+                    {
+                        entry.transmitted = eventPayload.transmitted;
+                    }
                     entry.domain = eventPayload.domain;
 
                     entry.source = sourceString;
@@ -1729,6 +1753,10 @@ public class EventService : IEventService
                     if (p != null)
                         eventDto.Domain = p;
                     break;
+                case "showtransmitted":
+                    if (p != null)
+                        eventDto.ShowTransmitted = p;
+                    break;
             }
         }
         /*
@@ -1960,17 +1988,16 @@ public class EventService : IEventService
             var eventPayload = new EventPayload(false);
             List<String> diffEntry = new List<String>();
 
-            eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
 
             foreach (var notificationEventDto in notificationEventDtos)
             {
-                if (notificationEventDto.MessageBroker != null
-                    && !notificationEventDto.MessageBroker.Value.IsNullOrEmpty()
-                    && notificationEventDto.PassWord != null
-                    && notificationEventDto.PassWord.Value != null
-                    && notificationEventDto.UserName != null
-                    && notificationEventDto.UserName.Value != null)
+                if (IsPublishMqttConfigured(notificationEventDto))
                 {
+                    if (notificationEventDto.ShowTransmitted != null
+                        && notificationEventDto.ShowTransmitted.Value != null)
+                    {
+                        eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+                    }
 
                     if (notificationEventDto.Domain != null)
                     {
@@ -1984,7 +2011,6 @@ public class EventService : IEventService
 
                     if (isPublishEventElement)
                     {
-
                         if (notificationEventDto.IdShort != null)
                         {
                             eventPayload.source = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(notificationEventDto.SubmodelId)}/events/{notificationEventDto.IdShortPath}.{notificationEventDto.IdShort}";
@@ -2043,8 +2069,8 @@ public class EventService : IEventService
                         }
 
                         var result = await _mqttClientService.PublishAsync(clientId, notificationEventDto.MessageBroker.Value,
-                            notificationEventDto.MessageTopicType.Value,
-                            notificationEventDto.UserName.Value, notificationEventDto.PassWord.Value, payloadObjString);
+                        notificationEventDto.MessageTopicType.Value,
+                            notificationEventDto?.UserName?.Value, notificationEventDto?.PassWord?.Value, notificationEventDto?.AccessToken?.Value, payloadObjString);
 
                         var now = DateTime.UtcNow;
 

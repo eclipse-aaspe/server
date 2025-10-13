@@ -861,7 +861,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             result.FileRequestResult = new DbFileRequestResult()
                             {
                                 Content = content,
-                                File = "new_serialization.aasx",
+                                File = $"new_serialization-{DateTime.Now.ToString()}.aasx",
                                 FileSize = fileSize
                             };
                         }
@@ -926,75 +926,81 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private static void AddPackageFilesToAdd(Dictionary<string, string>? securityCondition, AasContext db, AasCore.Aas3_0.Environment environment, AdminShellPackageEnv requestedPackage)
     {
-        foreach (var aasInEnv in environment.AssetAdministrationShells)
+        if (environment.AssetAdministrationShells != null)
         {
-            if (aasInEnv.AssetInformation != null
-                && aasInEnv.AssetInformation.DefaultThumbnail != null
-                    && aasInEnv.AssetInformation.DefaultThumbnail.Path != null)
+            foreach (var aasInEnv in environment.AssetAdministrationShells)
             {
-                byte[] bytesFromThumbnailsFile()
+                if (aasInEnv.AssetInformation != null
+                    && aasInEnv.AssetInformation.DefaultThumbnail != null
+                        && aasInEnv.AssetInformation.DefaultThumbnail.Path != null)
                 {
-                    using (var fileStream = new FileStream(FileService.GetThumbnailZipPath(aasInEnv.Id), FileMode.Open))
+                    byte[] bytesFromThumbnailsFile()
                     {
-                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                        using (var fileStream = new FileStream(FileService.GetThumbnailZipPath(aasInEnv.Id), FileMode.Open))
                         {
-                            var archiveFile = archive.GetEntry(aasInEnv.AssetInformation.DefaultThumbnail.Path);
-                            using var tempStream = archiveFile.Open();
-                            var ms = new MemoryStream();
-                            tempStream.CopyTo(ms);
-                            ms.Position = 0;
-                            return ms.ToByteArray();
+                            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                            {
+                                var archiveFile = archive.GetEntry(aasInEnv.AssetInformation.DefaultThumbnail.Path);
+                                using var tempStream = archiveFile.Open();
+                                var ms = new MemoryStream();
+                                tempStream.CopyTo(ms);
+                                ms.Position = 0;
+                                return ms.ToByteArray();
+                            }
                         }
                     }
-                }
-                requestedPackage.AddSupplementaryFileToStore(null,
-                                            aasInEnv.AssetInformation.DefaultThumbnail.Path,
-                                            true,
-                                            bytesFromThumbnailsFile);
+                    requestedPackage.AddSupplementaryFileToStore(null,
+                                                aasInEnv.AssetInformation.DefaultThumbnail.Path,
+                                                true,
+                                                bytesFromThumbnailsFile);
 
+                }
             }
         }
 
-        foreach (var submodelInEnv in environment.Submodels)
+        if (environment.Submodels != null)
         {
-            var zipPath = FileService.GetFilesZipPath();
-
-            if (IsPackageEnvPresent(db, securityCondition, null, null, submodelInEnv.Id, false, out EnvSet env, out _))
+            foreach (var submodelInEnv in environment.Submodels)
             {
-                zipPath = FileService.GetFilesZipPath(env.Path);
-            }
+                var zipPath = FileService.GetFilesZipPath();
 
-            submodelInEnv.RecurseOnSubmodelElements(null, (state, parents, sme) =>
-            {
-                if (sme is AasCore.Aas3_0.File file
-                    && file.Value != null)
+                if (IsPackageEnvPresent(db, securityCondition, null, null, submodelInEnv.Id, false, out EnvSet env, out _))
                 {
-                    if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
-                    {
-                        byte[] bytesFromZipFile()
-                        {
-                            using (var fileStream = new FileStream(zipPath, FileMode.Open))
-                            {
-                                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
-                                {
-                                    var archiveFile = archive.GetEntry(file.Value);
-                                    using var tempStream = archiveFile.Open();
-                                    var ms = new MemoryStream();
-                                    tempStream.CopyTo(ms);
-                                    ms.Position = 0;
-                                    return ms.ToByteArray();
-                                }
-                            }
-                        }
-                        requestedPackage.AddSupplementaryFileToStore(null,
-                                                    file.Value,
-                                                    true,
-                                                    bytesFromZipFile);
-                    }
+                    zipPath = FileService.GetFilesZipPath(env.Path);
                 }
 
-                return true;
-            });
+                submodelInEnv.RecurseOnSubmodelElements(null, (state, parents, sme) =>
+                {
+                    if (sme is AasCore.Aas3_0.File file
+                        && file.Value != null)
+                    {
+                        if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                        {
+                            byte[] bytesFromZipFile()
+                            {
+                                using (var fileStream = new FileStream(zipPath, FileMode.Open))
+                                {
+                                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                                    {
+                                        var archiveFile = archive.GetEntry(file.Value);
+                                        using var tempStream = archiveFile.Open();
+                                        var ms = new MemoryStream();
+                                        tempStream.CopyTo(ms);
+                                        ms.Position = 0;
+                                        return ms.ToByteArray();
+                                    }
+                                }
+                            }
+                            requestedPackage.AddSupplementaryFileToStore(null,
+                                                        file.Value,
+                                                        true,
+                                                        bytesFromZipFile);
+                        }
+                    }
+
+                    return true;
+                });
+            }
         }
     }
 
@@ -1507,7 +1513,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         eventData = _eventService.TryAddDto(eventData);
 
         var time = dbEventRequest.Time;
-        var wp = dbEventRequest.IsWithPayload;
+        var wp = dbEventRequest.IsInclude;
         var limSm = dbEventRequest.LimitSm;
         var offSm = dbEventRequest.OffsetSm;
         var limSme = dbEventRequest.LimitSme;
@@ -1529,6 +1535,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             smOnly = eventData.SubmodelsOnly.Value.ToLower() == "true";
         }
 
+        bool showTransmitted = false;
+        if (eventData.ShowTransmitted != null
+                && eventData.ShowTransmitted.Value != null)
+        {
+            showTransmitted = eventData.ShowTransmitted.Value.ToLower() == "true";
+        }
+
         var diff = "";
 
         if (time.IsNullOrEmpty())
@@ -1540,6 +1553,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             case DbEventRequestType.Status:
                 diff = "status";
+                showTransmitted = true;
                 break;
             case DbEventRequestType.Submodels:
                 diff = time;
@@ -1555,7 +1569,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
 
         var eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme);
+            diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme, showTransmitted);
+
+        if (requestType == DbEventRequestType.Status
+            && eventPayload.Any())
+        {
+            eventPayload[0].specversion = null;
+            eventPayload[0].datacontenttype = null;
+        }
 
         //if ((eventPayload == null || eventPayload.Count == 0) && eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
         //{

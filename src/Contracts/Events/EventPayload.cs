@@ -67,13 +67,7 @@ public class EventPayload : IComparable<EventPayload>
         id = null;
 
         time = "";
-        transmitted = "";
         domain = "";
-
-        if (isREST)
-        {
-            cursor = "";
-        }
     }
 
     public void SetType(EventPayloadType type)
