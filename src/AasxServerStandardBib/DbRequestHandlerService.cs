@@ -199,6 +199,29 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.AssetAdministrationShells[0];
     }
 
+    public async Task<string> ReadAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            IsSigned = true,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadAssetAdministrationShellById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SignedIdentifier;
+    }
+
     public async Task<IAssetAdministrationShell> CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body)
     {
         var parameters = new DbRequestParams()
@@ -355,6 +378,31 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return tcs.Submodels[0];
+    }
+
+    public async Task<string> ReadSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, bool isSkipPayload)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IsSigned = true,
+            IsSkipPayload = isSkipPayload
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SignedIdentifier;
     }
 
     public async Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
@@ -876,6 +924,29 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return tcs.ConceptDescriptions[0];
+    }
+
+    public async Task<string> ReadConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ConceptDescriptionIdentifier = cdIdentifier,
+            IsSigned = true
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadConceptDescriptionById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SignedIdentifier;
     }
 
     public async Task<IConceptDescription> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body)

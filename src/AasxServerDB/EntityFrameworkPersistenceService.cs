@@ -37,6 +37,11 @@ using AasxServerDB.Entities;
 using Contracts.Security;
 using AdminShellNS.Models;
 using System.IO.Compression;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Jose;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -61,7 +66,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         using (var db = new AasContext())
         {
             bool isPostgres = AasContext.IsPostgres;
-        
+
             // Get database
             Console.WriteLine($"Use {(isPostgres ? "POSTGRES" : "SQLITE")}");
 
@@ -227,7 +232,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 EnvFileName = envSet.Path
                             };
                         }
-                        else if (IsAssetAdministrationShellPresent(db,aasIdentifier, false, out AASSet aasDB, out _))
+                        else if (IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasDB, out _))
                         {
                             var aasEnv = CrudOperator.GetEnvironment(db, securityCondition, aasDb: aasDB);
                             result.PackageEnv = new DbRequestPackageEnvResult()
@@ -267,10 +272,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
                         }
 
-                        result.AssetAdministrationShells = new List<IAssetAdministrationShell>
+                        if (dbRequest.Context.Params.IsSigned)
                         {
-                            aas
-                        };
+                            var signedAas = GetSignedIdentifiable(aas, dbRequest.Context.Params.IsSkipPayload);
+                            result.SignedIdentifier = signedAas;
+                        }
+                        else
+                        {
+                            result.AssetAdministrationShells = new List<IAssetAdministrationShell>
+                            {
+                                aas
+                            };
+                        }
                         break;
                     case DbRequestOp.CreateAssetAdministrationShell:
                         var body = dbRequest.Context.Params.AasBody;
@@ -375,10 +388,19 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
                         }
 
-                        result.Submodels = new List<ISubmodel>
+                        if (dbRequest.Context.Params.IsSigned)
                         {
-                            submodel
-                        };
+                            var signedSubmodel = GetSignedIdentifiable(submodel, dbRequest.Context.Params.IsSkipPayload);
+                            result.SignedIdentifier = signedSubmodel;
+                        }
+                        else
+                        {
+                            result.Submodels = new List<ISubmodel>
+                            {
+                                submodel
+                            };
+                        }
+
                         break;
                     case DbRequestOp.CreateSubmodel:
                         var newSubmodel = dbRequest.Context.Params.SubmodelBody;
@@ -510,7 +532,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new NotImplementedException();
 
                     case DbRequestOp.DeleteSubmodelElementByPath:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _,  out ISubmodel deletedSmeParentSubmodel))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel deletedSmeParentSubmodel))
                         {
                             var sme = CrudOperator.DeleteSubmodelElement(
                                 db,
@@ -772,10 +794,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         {
                             throw new NotFoundException($"Concept Description with id {conceptDescriptionIdentifier} not found.");
                         }
-                        result.ConceptDescriptions = new List<IConceptDescription>
+
+
+                        if (dbRequest.Context.Params.IsSigned)
                         {
-                            conceptDescription
-                        };
+                            var signedConceptDescription = GetSignedIdentifiable(conceptDescription, dbRequest.Context.Params.IsSkipPayload);
+                            result.SignedIdentifier = signedConceptDescription;
+                        }
+                        else
+                        {
+                            result.ConceptDescriptions = new List<IConceptDescription>
+                            {
+                                conceptDescription
+                            };
+                        }
+
                         break;
                     case DbRequestOp.CreateConceptDescription:
                         var conceptDescriptionBody = dbRequest.Context.Params.ConceptDescriptionBody;
@@ -1206,7 +1239,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else if (IsAssetAdministrationShellPresent(db, packageIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
-            requestedPackage = CrudOperator.GetPackageEnv(db, securityCondition, - 1, aas: aasDB);
+            requestedPackage = CrudOperator.GetPackageEnv(db, securityCondition, -1, aas: aasDB);
 
             requestedFileName = Path.Combine(AasContext.DataPath, aas.IdShort + ".aasx");
 
@@ -1972,7 +2005,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 if (loadIntoMemory)
                 {
-                    output = CrudOperator.ReadConceptDescription(db,cdDB);
+                    output = CrudOperator.ReadConceptDescription(db, cdDB);
                 }
                 return true;
             }
@@ -2058,4 +2091,123 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         FileService.InitFileSystem(reloadDBFiles);
     }
 
+    private string GetSignedIdentifiable(IIdentifiable identifiable, bool skipPayload)
+    {
+        string certFile = "Andreas_Orzelski_Chain.pfx";
+        string certPW = "i40";
+
+        if (System.IO.File.Exists(certFile))
+        {
+            //identifiable.Extensions ??= [];
+
+            if (skipPayload && identifiable is ISubmodel)
+            {
+                var submodel = (ISubmodel) identifiable;
+                submodel.SubmodelElements = null;
+
+                identifiable = submodel;
+            }
+
+            var submodelText = Jsonization.Serialize.ToJsonObject(identifiable).ToJsonString();
+
+            using (var certificate = new X509Certificate2(certFile, certPW))
+            {
+                if (certificate == null)
+                {
+                    return String.Empty;
+                }
+
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                var i = 0;
+                var x5c = new string[xc.Count];
+                for (var j = xc.Count - 1; j >= 0; j--)
+                {
+                    var c = Convert.ToBase64String(xc[j].GetRawCertData());
+                    x5c[i++] = c;
+                }
+
+                var guid = Guid.NewGuid().ToString();
+                var headers = new Dictionary<string, object>
+                {
+                    { "alg", "RS256" },
+                    { "typ", "JWS" },
+                    { "sigT", DateTime.UtcNow },
+                    { "sid", guid },
+                    { "x5c", x5c }
+                };
+
+                var signature = "";
+                try
+                {
+                    using (RSA rsa = certificate.GetRSAPrivateKey())
+                    {
+                        if (rsa == null)
+                        {
+                            return String.Empty;
+                        }
+
+                        var jws = JWT.Encode(submodelText, rsa, JwsAlgorithm.RS256, headers);
+
+                        //identifiable.Extensions.Add(new Extension($"$jws__{guid}", value: jws));
+
+                        // Validate
+                        var parts = jws.Split('.');
+                        var headerJson = Encoding.UTF8.GetString(Jose.Base64Url.Decode(parts[0]));
+                        var header = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
+                        if (header == null)
+                        {
+                            throw new InvalidOperationException("header missing");
+                        }
+
+                        if (!header.TryGetValue("x5c", out var x5cElement))
+                        {
+                            throw new InvalidOperationException("x5c not found in header");
+                        }
+
+                        x5c = x5cElement.EnumerateArray().Select(x => x.GetString()).ToArray();
+                        if (x5c.Length == 0)
+                        {
+                            throw new InvalidOperationException("x5c is empty");
+                        }
+
+                        var certBytes = Convert.FromBase64String(x5c[0]);
+                        var signingCert = new X509Certificate2(certBytes);
+                        using var rsaPublic = signingCert.GetRSAPublicKey();
+
+                        var payload = JWT.Decode(jws, rsaPublic, JwsAlgorithm.RS256);
+
+                        var chain = new X509Chain
+                        {
+                            ChainPolicy = {
+                                RevocationMode   = X509RevocationMode.NoCheck,
+                                VerificationFlags= X509VerificationFlags.NoFlag,
+                                TrustMode = X509ChainTrustMode.CustomRootTrust
+                            }
+                        };
+
+                        var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+                        chain.ChainPolicy.CustomTrustStore.Add(root);
+
+                        for (i = 1; i < x5c.Length - 1; i++)
+                        {
+                            var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+                            chain.ChainPolicy.ExtraStore.Add(cert);
+                        }
+
+                        var isValid = chain.Build(signingCert);
+
+                        // return identifiable;
+                        return jws;
+                    }
+                }
+                // ReSharper disable EmptyGeneral<<CatchClause
+                catch
+                {
+                }
+            }
+        }
+        return String.Empty;
+    }
 }

@@ -897,6 +897,52 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
+        /// Returns a specific Asset Administration Shell signed
+        /// </summary>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="200">Requested Asset Administration Shell</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpGet]
+        [Route("shells/{aasIdentifier}/$sign")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAssetAdministrationShellById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual async Task<IActionResult> GetAssetAdministrationShellByIdSigned([FromRoute][Required] string aasIdentifier)
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            _logger.LogInformation($"Received request to get the AAS with id {aasIdentifier}.");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var aasSigned = await _dbRequestHandlerService.ReadAssetAdministrationShellByIdSigned(securityConfig, decodedAasIdentifier);
+
+            if (!aasSigned.IsNullOrEmpty())
+            {
+                return new ObjectResult(aasSigned);
+            }
+            else
+            {
+                throw new NotAllowed($"");
+            }
+        }
+
+        /// <summary>
         /// Returns a specific Asset Administration Shell as a Reference
         /// </summary>
         /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
@@ -1203,6 +1249,73 @@ namespace IO.Swagger.Controllers
 
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
             return new ObjectResult(output);
+        }
+
+        /// <summary>
+        /// Returns the Submodel signed
+        /// </summary>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="level">Determines the structural depth of the respective resource content</param>
+        /// <param name="extent">Determines to which extent the resource is being serialized</param>
+        /// <response code="200">Requested Submodel</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpGet]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$sign")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSubmodelByIdSigned")]
+        [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> GetSubmodelByIdSigned([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier
+       /*, [FromQuery] string? level, [FromQuery] string? extent*/, [FromQuery] string? skipPayload)
+        {
+            ////Validate level and extent
+            //var levelEnum = _validateModifierService.ValidateLevel(level);
+            //var extentEnum = _validateModifierService.ValidateExtent(extent);
+
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            if (decodedSubmodelIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+            }
+
+            _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            bool isSkipPayload = false;
+
+            if (skipPayload != null && skipPayload.ToLower() == "true")
+            {
+                isSkipPayload = true;
+            }
+
+            var submodelStringSigned = await _dbRequestHandlerService.ReadSubmodelByIdSigned(securityConfig, aasIdentifier, decodedSubmodelIdentifier, isSkipPayload);
+
+            if (!submodelStringSigned.IsNullOrEmpty())
+            {
+                return new ObjectResult(submodelStringSigned);
+            }
+            else
+            {
+                throw new NotAllowed($"");
+            }
         }
 
         /// <summary>

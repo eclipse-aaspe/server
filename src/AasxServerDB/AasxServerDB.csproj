@@ -16,6 +16,7 @@
   <ItemGroup>
     <PackageReference Include="HotChocolate.Types" Version="13.9.6" />
     <PackageReference Include="Irony" Version="1.5.2" />
+    <PackageReference Include="jose-jwt" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">

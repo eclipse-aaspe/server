@@ -47,6 +47,8 @@ public class DbRequestParams
     public bool First { get; set; }
     public bool IncludeCD { get; set; }
     public bool CreateAASXPackage { get; set; }
+    public bool IsSigned { get; set; } = false;
+    public bool IsSkipPayload { get; set; }
 
 
     public IReference IsCaseOf { get; set; }

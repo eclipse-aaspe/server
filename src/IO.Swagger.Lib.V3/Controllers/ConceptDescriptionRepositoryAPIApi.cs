@@ -227,6 +227,50 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
+        /// Returns a specific Concept Description signed
+        /// </summary>
+        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="200">Requested Concept Description</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpGet]
+        [Route("concept-descriptions/{cdIdentifier}/$sign")]
+        [ValidateModelState]
+        [SwaggerOperation("GetConceptDescriptionById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> GetConceptDescriptionByIdSigned([FromRoute][Required] string cdIdentifier)
+        {
+            var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
+
+            _logger.LogInformation($"Received request to get concept description with id {decodedCdIdentifier}");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
+
+            PatchCD(output);
+
+            var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message);
+                }
+            }
+
+            return new ObjectResult(output);
+        }
+
+        /// <summary>
         /// Creates a new Concept Description
         /// </summary>
         /// <param name="body">Concept Description object</param>
