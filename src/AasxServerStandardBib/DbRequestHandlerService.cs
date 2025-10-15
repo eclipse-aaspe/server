@@ -27,6 +27,7 @@ using Contracts.DbRequests;
 using Contracts.Pagination;
 using Contracts.QueryResult;
 using Contracts.Security;
+using Jose;
 using Microsoft.Extensions.DependencyInjection;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
@@ -266,6 +267,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
+    public async Task<DbRequestResult> ReplaceAssetAdministrationShellByIdSigned(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body, string jws)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            AasBody = body,
+            IsSigned = true,
+            JWS = jws
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = security,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetAdministrationShellById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
     public async Task<DbRequestResult> DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
     {
         var parameters = new DbRequestParams()
@@ -435,6 +460,31 @@ public class DbRequestHandlerService : IDbRequestHandlerService
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
             SubmodelBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceSubmodelById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body, string jws)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            SubmodelBody = body,
+            IsSigned = true,
+            JWS = jws
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -977,6 +1027,31 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             ConceptDescriptionBody = body,
             ConceptDescriptionIdentifier = cdIdentifier
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceConceptDescriptionById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier, IConceptDescription body, string jws)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ConceptDescriptionBody = body,
+            ConceptDescriptionIdentifier = cdIdentifier,
+            IsSigned = true,
+            JWS = jws
         };
 
         var dbRequestContext = new DbRequestContext()

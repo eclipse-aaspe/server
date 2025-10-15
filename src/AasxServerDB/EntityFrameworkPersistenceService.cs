@@ -274,7 +274,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
-                            var signedAas = GetSignedIdentifiable(aas, dbRequest.Context.Params.IsSkipPayload);
+                            var signedAas = FileService.GetJWSFileIfExists(aas.Id);
+
+                            if (signedAas.IsNullOrEmpty())
+                            {
+                                signedAas = GetSignedIdentifiable(aas, dbRequest.Context.Params.IsSkipPayload);
+                            }
+
                             result.SignedIdentifier = signedAas;
                         }
                         else
@@ -308,6 +314,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         if (found)
                         {
                             CrudOperator.ReplaceAssetAdministrationShellById(db, aasDb, dbRequest.Context.Params.AasBody);
+
+                            if (dbRequest.Context.Params.IsSigned)
+                            {
+                                if (!FileService.SaveJWSFile(aasIdentifier, dbRequest.Context.Params.JWS))
+                                {
+                                    scopedLogger.LogError($"Save jws file for {aasIdentifier} failed.");
+                                }
+                            }
                         }
                         else
                         {
@@ -390,7 +404,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
-                            var signedSubmodel = GetSignedIdentifiable(submodel, dbRequest.Context.Params.IsSkipPayload);
+                            var signedSubmodel = FileService.GetJWSFileIfExists(submodel.Id);
+
+                            if (signedSubmodel.IsNullOrEmpty())
+                            {
+                                signedSubmodel = GetSignedIdentifiable(submodel, dbRequest.Context.Params.IsSkipPayload);
+                            }
                             result.SignedIdentifier = signedSubmodel;
                         }
                         else
@@ -426,6 +445,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         if (found)
                         {
                             CrudOperator.ReplaceSubmodelById(db, aasIdentifier, submodelIdentifier, dbRequest.Context.Params.SubmodelBody);
+
+                            if(dbRequest.Context.Params.IsSigned)
+                            {
+                                if (!FileService.SaveJWSFile(submodelIdentifier, dbRequest.Context.Params.JWS))
+                                {
+                                    scopedLogger.LogError($"Save jws file for {submodelIdentifier} failed.");
+                                }
+                            }
                         }
                         else
                         {
@@ -798,7 +825,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
-                            var signedConceptDescription = GetSignedIdentifiable(conceptDescription, dbRequest.Context.Params.IsSkipPayload);
+                            var signedConceptDescription = FileService.GetJWSFileIfExists(conceptDescription.Id);
+
+                            if (signedConceptDescription.IsNullOrEmpty())
+                            {
+                                signedConceptDescription = GetSignedIdentifiable(conceptDescription, dbRequest.Context.Params.IsSkipPayload);
+                            }
+
                             result.SignedIdentifier = signedConceptDescription;
                         }
                         else
@@ -837,6 +870,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 conceptDescriptionIdentifier,
                                 conceptDescriptionBody);
 
+
+                            if (dbRequest.Context.Params.IsSigned)
+                            {
+                                if (!FileService.SaveJWSFile(conceptDescriptionIdentifier, dbRequest.Context.Params.JWS))
+                                {
+                                    scopedLogger.LogError($"Save jws file for {conceptDescriptionIdentifier} failed.");
+                                }
+                            }
                             scopedLogger.LogDebug($"Concept description with id {conceptDescriptionIdentifier} updated successfully.");
                         }
                         else
@@ -2108,7 +2149,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 identifiable = submodel;
             }
 
-            var submodelText = Jsonization.Serialize.ToJsonObject(identifiable).ToJsonString();
+            var identifiableText = Jsonization.Serialize.ToJsonObject(identifiable).ToJsonString();
 
             using (var certificate = new X509Certificate2(certFile, certPW))
             {
@@ -2148,7 +2189,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             return String.Empty;
                         }
 
-                        var jws = JWT.Encode(submodelText, rsa, JwsAlgorithm.RS256, headers);
+                        var jws = JWT.Encode(identifiableText, rsa, JwsAlgorithm.RS256, headers);
 
                         //identifiable.Extensions.Add(new Extension($"$jws__{guid}", value: jws));
 

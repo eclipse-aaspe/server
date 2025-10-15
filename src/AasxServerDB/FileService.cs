@@ -19,15 +19,15 @@ using System.Text.RegularExpressions;
 using AasCore.Aas3_0;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;
-using AdminShellNS;
 using Contracts.Exceptions;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 public class FileService
 {
     public const string ThumnbnailsFolderName = "thumbnails";
+    public const string CertificatesFolderName = "jws_certs";
+
     public const string FilesFolderName = "files";
     public const string XmlFolderName = "xml";
 
@@ -53,6 +53,12 @@ public class FileService
     {
         return Path.Combine(AasContext.DataPath, FilesFolderName, ThumnbnailsFolderName, FormatToFileName(aasId) + ".zip");
     }
+
+    internal static string GetCertFilePath(string identifier)
+    {
+        return Path.Combine(AasContext.DataPath, FilesFolderName, CertificatesFolderName, $"{FormatToFileName(identifier)}.txt");
+    }
+
 
     internal static void CreateThumbnailZipFile(IAssetAdministrationShell aas, Stream thumbnailStreamFromPackage = null)
     {
@@ -107,6 +113,10 @@ public class FileService
         var thumbnailFolderPath = Path.Combine(filesPath, ThumnbnailsFolderName);
         if (!Directory.Exists(thumbnailFolderPath))
             Directory.CreateDirectory(thumbnailFolderPath);
+
+        var certFilesFolderPath = Path.Combine(filesPath, CertificatesFolderName);
+        if (!Directory.Exists(certFilesFolderPath))
+            Directory.CreateDirectory(certFilesFolderPath);
 
         var path = Path.Combine(filesPath, "_unpacked" + ".zip");
 
@@ -496,6 +506,34 @@ public class FileService
         }
 
         return isFileOperationSuceeded;
+    }
+
+    internal static bool SaveJWSFile(string identifier, string jws)
+    {
+        try
+        {
+            // Write the JWS to the file
+            System.IO.File.WriteAllText(GetCertFilePath(identifier), jws);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static string GetJWSFileIfExists(string identifier)
+    {
+        try
+        {
+            // Write the JWS to the file
+            return System.IO.File.ReadAllText(GetCertFilePath(identifier));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 }
 

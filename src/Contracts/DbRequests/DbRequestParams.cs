@@ -41,6 +41,7 @@ public class DbRequestParams
     public IConceptDescription ConceptDescriptionBody { get; set; }
     public IReference Reference { get; set; }
     public IAssetInformation AssetInformation { get; set; }
+    public string JWS { get; set; }
 
     //Metadata
     public IPaginationParameters PaginationParameters { get; set; }

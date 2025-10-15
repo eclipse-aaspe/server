@@ -45,6 +45,11 @@ using AasxServer;
 using IO.Swagger.Lib.V3.Models;
 using NJsonSchema.Validation;
 using Contracts.Pagination;
+using Jose;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json.Nodes;
+using System.Text.Json;
+using System.Text;
 
 namespace IO.Swagger.Controllers
 {
@@ -332,6 +337,126 @@ namespace IO.Swagger.Controllers
             await _dbRequestHandlerService.ReplaceConceptDescriptionById(securityConfig, body, decodedCdId);
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Updates an existing Concept Description signed
+        /// </summary>
+        /// <param name="jws">JWS signed Concept Description object</param>
+        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Concept Description updated successfully</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("concept-descriptions/{cdIdentifier}/$sign")]
+        [ValidateModelState]
+        [Consumes("text/plain")]
+        [SwaggerOperation("PutConceptDescriptionByIdSigned")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> PutConceptDescriptionByIdSigned([FromBody] string? jws, [FromRoute][Required] string cdIdentifier)
+        {
+            var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
+            IClass body = ProcessJWS(jws);
+
+            if (body is IConceptDescription)
+            {
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+                await _dbRequestHandlerService.ReplaceConceptDescriptionByIdSigned(securityConfig, decodedCdId, body as IConceptDescription, jws);
+            }
+
+            return NoContent();
+        }
+
+        private IClass ProcessJWS(string? jws)
+        {
+            string certFile = "Andreas_Orzelski_Chain.pfx";
+            string certPW = "i40";
+
+            IClass body = null;
+            if (System.IO.File.Exists(certFile))
+            {
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                var i = 0;
+                var x5c = new string[xc.Count];
+                for (var j = xc.Count - 1; j >= 0; j--)
+                {
+                    var c = Convert.ToBase64String(xc[j].GetRawCertData());
+                    x5c[i++] = c;
+                }
+
+                using (var certificate = new X509Certificate2(certFile, certPW))
+                {
+                    if (certificate == null)
+                    {
+                        return null;
+                    }
+
+                    // Validate
+                    var parts = jws.Split('.');
+                    var headerJson = Encoding.UTF8.GetString(Jose.Base64Url.Decode(parts[0]));
+                    var header = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
+                    if (header == null)
+                    {
+                        throw new InvalidOperationException("header missing");
+                    }
+
+                    if (!header.TryGetValue("x5c", out var x5cElement))
+                    {
+                        throw new InvalidOperationException("x5c not found in header");
+                    }
+
+                    x5c = x5cElement.EnumerateArray().Select(x => x.GetString()).ToArray();
+                    if (x5c.Length == 0)
+                    {
+                        throw new InvalidOperationException("x5c is empty");
+                    }
+
+                    var certBytes = Convert.FromBase64String(x5c[0]);
+                    var signingCert = new X509Certificate2(certBytes);
+                    using var rsaPublic = signingCert.GetRSAPublicKey();
+
+                    var payload = JWT.Decode(jws, rsaPublic, JwsAlgorithm.RS256);
+
+                    var chain = new X509Chain
+                    {
+                        ChainPolicy = {
+                                RevocationMode   = X509RevocationMode.NoCheck,
+                                VerificationFlags= X509VerificationFlags.NoFlag,
+                                TrustMode = X509ChainTrustMode.CustomRootTrust
+                            }
+                    };
+
+                    var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+                    chain.ChainPolicy.CustomTrustStore.Add(root);
+
+                    for (i = 1; i < x5c.Length - 1; i++)
+                    {
+                        var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+                        chain.ChainPolicy.ExtraStore.Add(cert);
+                    }
+
+                    var isValid = chain.Build(signingCert);
+
+                    if (isValid)
+                    {
+                        var node = System.Text.Json.JsonSerializer.Deserialize<JsonNode>(payload);
+                        body = Jsonization.Deserialize.SubmodelFrom(node);
+                    }
+                }
+            }
+
+            ProcessBody(body);
+
+            return body;
         }
 
         private void ProcessBody(IClass body)

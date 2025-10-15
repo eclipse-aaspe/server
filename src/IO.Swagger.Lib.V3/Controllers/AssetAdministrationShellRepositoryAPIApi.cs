@@ -53,6 +53,10 @@ namespace IO.Swagger.Controllers
     using Contracts.Exceptions;
     using Contracts.Security;
     using Microsoft.IdentityModel.Tokens;
+    using Jose;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text.Json;
+    using System.Text;
 
     /// <summary>
     /// 
@@ -2550,6 +2554,135 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
+        /// Updates an existing Asset Administration Shell signed
+        /// </summary>
+        /// <param name="jws">Asset Administration Shell object</param>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Asset Administration Shell updated successfully</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("shells/{aasIdentifier}/$sign")]
+        [ValidateModelState]
+        [Consumes("text/plain")]
+        [SwaggerOperation("PutAssetAdministrationShellByIdSigned")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> PutAssetAdministrationShellByIdSigned([FromBody] string? jws, [FromRoute][Required] string aasIdentifier)
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            var body = ProcessJWS(jws);
+
+            if (body is AssetAdministrationShell)
+            {
+                _logger.LogInformation($"Received request to replace the AAS with id {decodedAasIdentifier}");
+
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+                await _dbRequestHandlerService.ReplaceAssetAdministrationShellByIdSigned(securityConfig, decodedAasIdentifier, body as AssetAdministrationShell, jws);
+            }
+
+            return NoContent();
+        }
+
+        private IClass ProcessJWS(string? jws)
+        {
+            string certFile = "Andreas_Orzelski_Chain.pfx";
+            string certPW = "i40";
+
+            IClass body = null;
+            if (System.IO.File.Exists(certFile))
+            {
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                var i = 0;
+                var x5c = new string[xc.Count];
+                for (var j = xc.Count - 1; j >= 0; j--)
+                {
+                    var c = Convert.ToBase64String(xc[j].GetRawCertData());
+                    x5c[i++] = c;
+                }
+
+                using (var certificate = new X509Certificate2(certFile, certPW))
+                {
+                    if (certificate == null)
+                    {
+                        return null;
+                    }
+
+                    // Validate
+                    var parts = jws.Split('.');
+                    var headerJson = Encoding.UTF8.GetString(Jose.Base64Url.Decode(parts[0]));
+                    var header = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
+                    if (header == null)
+                    {
+                        throw new InvalidOperationException("header missing");
+                    }
+
+                    if (!header.TryGetValue("x5c", out var x5cElement))
+                    {
+                        throw new InvalidOperationException("x5c not found in header");
+                    }
+
+                    x5c = x5cElement.EnumerateArray().Select(x => x.GetString()).ToArray();
+                    if (x5c.Length == 0)
+                    {
+                        throw new InvalidOperationException("x5c is empty");
+                    }
+
+                    var certBytes = Convert.FromBase64String(x5c[0]);
+                    var signingCert = new X509Certificate2(certBytes);
+                    using var rsaPublic = signingCert.GetRSAPublicKey();
+
+                    var payload = JWT.Decode(jws, rsaPublic, JwsAlgorithm.RS256);
+
+                    var chain = new X509Chain
+                    {
+                        ChainPolicy = {
+                                RevocationMode   = X509RevocationMode.NoCheck,
+                                VerificationFlags= X509VerificationFlags.NoFlag,
+                                TrustMode = X509ChainTrustMode.CustomRootTrust
+                            }
+                    };
+
+                    var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+                    chain.ChainPolicy.CustomTrustStore.Add(root);
+
+                    for (i = 1; i < x5c.Length - 1; i++)
+                    {
+                        var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+                        chain.ChainPolicy.ExtraStore.Add(cert);
+                    }
+
+                    var isValid = chain.Build(signingCert);
+
+                    if (isValid)
+                    {
+                        var node = System.Text.Json.JsonSerializer.Deserialize<JsonNode>(payload);
+                        body = Jsonization.Deserialize.SubmodelFrom(node);
+                    }
+                }
+            }
+
+            ProcessBody(body);
+
+            return body;
+        }
+
+        /// <summary>
         /// Updates the Asset Information
         /// </summary>
         /// <param name="body">Asset Information object</param>
@@ -2628,10 +2761,64 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to replace a a submodel {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
+
             ProcessBody(body);
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.ReplaceSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body);
+
+            return NoContent();
+        }
+
+
+        /// <summary>
+        /// Updates the Submodel signed
+        /// </summary>
+        /// <param name="jws">Submodel object</param>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Submodel updated successfully</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$sign")]
+        [ValidateModelState]
+        [Consumes("text/plain")]
+        [SwaggerOperation("PutSubmodelByIdSignedAasRepository")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual async Task<IActionResult> PutSubmodelByIdSignedAasRepository([FromBody] string? jws, [FromRoute][Required] string aasIdentifier,
+        [FromRoute][Required] string submodelIdentifier)
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            if (decodedSubmodelIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+            }
+
+            _logger.LogInformation($"Received request to replace a a submodel {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
+
+            IClass body = ProcessJWS(jws);
+
+            if (body is ISubmodel)
+            {
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+                await _dbRequestHandlerService.ReplaceSubmodelByIdSigned(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body as ISubmodel, jws);
+            }
 
             return NoContent();
         }

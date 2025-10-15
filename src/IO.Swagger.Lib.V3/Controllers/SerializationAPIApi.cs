@@ -67,16 +67,6 @@ namespace IO.Swagger.Controllers
         }
 
 
-        public enum ContentTypeOptions
-        {
-            [EnumMember(Value = "application/asset-administration-shell-package+xml")]
-            aasx,
-            [EnumMember(Value = "application/json")]
-            json,
-            [EnumMember(Value = "application/xml")]
-            xml
-        }
-
         /// <summary>
         /// Returns an appropriate serialization based on the specified format (see SerializationFormat)
         /// </summary>
