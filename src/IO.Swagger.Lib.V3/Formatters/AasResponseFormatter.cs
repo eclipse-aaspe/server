@@ -52,7 +52,6 @@ namespace IO.Swagger.Lib.V3.Formatters
         {
             SupportedMediaTypes.Clear();
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
-            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/xml"));
         }
         public static bool IsGenericListOfIClass(object o)
         {
