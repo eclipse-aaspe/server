@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -71,6 +71,26 @@ namespace AasxServerDB
                 ;
         }
 
+        public static void PrintSection(IConfiguration section, string parentPath = "")
+        {
+            foreach (var child in section.GetChildren())
+            {
+                // build the “path” to this value
+                var currentPath = string.IsNullOrEmpty(parentPath)
+                                  ? child.Key
+                                  : $"{parentPath}:{child.Key}";
+
+                if (child.Value != null)
+                {
+                    // Leaf node with a value
+                    Console.WriteLine($"{currentPath} = {child.Value}");
+                }
+
+                // Recurse into any nested children
+                PrintSection(child, currentPath);
+            }
+        }
+
         protected static string GetConnectionString()
         {
             // Get configuration
@@ -81,6 +101,9 @@ namespace AasxServerDB
                     .Build();
             if (Config == null)
                 throw new Exception("No configuration");
+
+            // For problems with appsettings.json
+            // PrintSection(Config);
 
             // Get connection string
             var connectionString = Config["DatabaseConnection:ConnectionString"];
@@ -94,5 +117,23 @@ namespace AasxServerDB
 
             return connectionString;
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<SMRefSet>()
+                .HasIndex(e => e.AASId)
+                .HasDatabaseName("IX_SMRefSet_AASId");
+
+            modelBuilder.Entity<AASSet>()
+                .HasIndex(e => e.GlobalAssetId)
+                .HasDatabaseName("IX_AASSet_GlobalAssetId");
+
+            modelBuilder.Entity<SMSet>()
+                .HasIndex(e => e.IdShort)
+                .HasDatabaseName("IX_SMSet_IdShort");
+        }
     }
 }
+

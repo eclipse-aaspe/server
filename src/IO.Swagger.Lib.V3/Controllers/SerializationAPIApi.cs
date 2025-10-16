@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -34,16 +34,23 @@ using System.Xml;
 namespace IO.Swagger.Controllers
 {
     using System.Linq;
+    using System.Net.Mime;
+    using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using AasSecurity.Exceptions;
     using AasxServer;
     using AasxServerStandardBib;
     using Contracts;
+    using Contracts.DbRequests;
+    using IO.Swagger.Lib.V3.Exceptions;
     using IO.Swagger.Lib.V3.Models;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
 
     /// <summary>
     /// 
     /// </summary>
+    [Authorize(AuthenticationSchemes = "AasSecurityAuth")]
     [ApiController]
     public class SerializationAPIApiController : ControllerBase
     {
@@ -58,6 +65,8 @@ namespace IO.Swagger.Controllers
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
             _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         }
+
+
         /// <summary>
         /// Returns an appropriate serialization based on the specified format (see SerializationFormat)
         /// </summary>
@@ -73,15 +82,15 @@ namespace IO.Swagger.Controllers
         [HttpGet]
         [Route("serialization")]
         [ValidateModelState]
+        [Produces("application/json", "application/xml", "application/asset-administration-shell-package+xml")]
         [SwaggerOperation("GenerateSerializationByIds")]
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested serialization based on SerializationFormat")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual async Task<IActionResult> GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
-        [FromQuery] bool? includeConceptDescriptions = false)
+        [FromQuery] string? includeConceptDescriptions)
         {
             _logger.LogDebug($"Received a request an appropriate serialization");
 
@@ -90,20 +99,43 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var environment = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeConceptDescriptions);
+            bool includeCD = false;
 
-            HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);
-            if (!contentType.Equals("application/xml"))
+            if (includeConceptDescriptions != null)
             {
-                return new ObjectResult(environment);
+                includeConceptDescriptions = includeConceptDescriptions.ToLower();
+                if (includeConceptDescriptions == "true")
+                {
+                    includeCD = true;
+                }
+                else if (includeConceptDescriptions != "false")
+                {
+                    throw new NoIdentifierException(includeConceptDescriptions);
+                }
             }
 
-            var outputBuilder = new System.Text.StringBuilder();
-            var writer = XmlWriter.Create(outputBuilder, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true });
-            Xmlization.Serialize.To(environment, writer);
-            writer.Flush();
-            writer.Close();
-            return new ObjectResult(outputBuilder.ToString());
+            if (!HttpContext.Request.Headers.TryGetValue("Accept", out var isResultType))
+            {
+                isResultType = "application/json";
+            }
+
+            bool createAASXPackage = isResultType.Equals("application/asset-administration-shell-package+xml");
+
+            var result = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeCD, createAASXPackage);
+
+            if (createAASXPackage)
+            {
+                var fileRequestResult = result.FileRequestResult;
+                ContentDisposition contentDisposition = new() { FileName = fileRequestResult.File };
+
+                HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
+                HttpContext.Response.Headers.Append("X-FileName", fileRequestResult.File);
+
+                HttpContext.Response.ContentLength = fileRequestResult.FileSize;
+                await HttpContext.Response.Body.WriteAsync(fileRequestResult.Content);
+                return new EmptyResult();
+            }
+            return new ObjectResult(result.Environment);
         }
     }
 }

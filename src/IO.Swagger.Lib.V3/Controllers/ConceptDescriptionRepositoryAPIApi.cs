@@ -45,6 +45,11 @@ using AasxServer;
 using IO.Swagger.Lib.V3.Models;
 using NJsonSchema.Validation;
 using Contracts.Pagination;
+using Jose;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json.Nodes;
+using System.Text.Json;
+using System.Text;
 
 namespace IO.Swagger.Controllers
 {
@@ -78,7 +83,7 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
-        /// Deletes a Concept Description
+        /// Deletes the sign file of a Concept Description 
         /// </summary>
         /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="204">Concept Description deleted successfully</response>
@@ -88,15 +93,15 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("concept-descriptions/{cdIdentifier}")]
+        [Route("concept-descriptions/{cdIdentifier}/$sign")]
         [ValidateModelState]
-        [SwaggerOperation("DeleteConceptDescriptionById")]
+        [SwaggerOperation("DeleteConceptDescriptionByIdSigned")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public async virtual Task<IActionResult> DeleteConceptDescriptionById([FromRoute][Required] string cdIdentifier)
+        public async virtual Task<IActionResult> DeleteConceptDescriptionByIdSigned([FromRoute][Required] string cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
             if (decodedCdIdentifier == null)
@@ -107,9 +112,25 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            await _dbRequestHandlerService.DeleteConceptDescriptionById(securityConfig, decodedCdIdentifier);
+            await _dbRequestHandlerService.DeleteConceptDescriptionByIdSigned(securityConfig, decodedCdIdentifier);
 
             return NoContent();
+        }
+
+        private static void PatchCD(IConceptDescription cd)
+        {
+            if (cd != null && cd.EmbeddedDataSpecifications != null && cd.EmbeddedDataSpecifications.Count != 0)
+            {
+                for (var i = 0; i < cd.EmbeddedDataSpecifications.Count; i++)
+                {
+                    var eds = cd.EmbeddedDataSpecifications[i];
+                    if (eds != null && eds.DataSpecification == null)
+                    {
+                        eds.DataSpecification = new Reference(ReferenceTypes.ExternalReference, new List<IKey>()
+                            { new Key(KeyTypes.GlobalReference, "https://admin-shell.io/DataSpecificationTemplates/DataSpecificationIec61360/3/0") });
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -146,6 +167,11 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             cdList = await _dbRequestHandlerService.ReadPagedConceptDescriptions(paginationParameters, securityConfig, idShort, reqIsCaseOf, reqDataSpecificationRef);
+
+            foreach (var cd in cdList)
+            {
+                PatchCD(cd);
+            }
 
             var authResult = _authorizationService.AuthorizeAsync(User, cdList, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
@@ -189,6 +215,52 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
+
+            PatchCD(output);
+
+            var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message);
+                }
+            }
+
+            return new ObjectResult(output);
+        }
+
+        /// <summary>
+        /// Returns a specific Concept Description signed
+        /// </summary>
+        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="200">Requested Concept Description</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpGet]
+        [Route("concept-descriptions/{cdIdentifier}/$sign")]
+        [ValidateModelState]
+        [SwaggerOperation("GetConceptDescriptionById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> GetConceptDescriptionByIdSigned([FromRoute][Required] string cdIdentifier)
+        {
+            var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
+
+            _logger.LogInformation($"Received request to get concept description with id {decodedCdIdentifier}");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
+
+            PatchCD(output);
 
             var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
@@ -265,6 +337,126 @@ namespace IO.Swagger.Controllers
             await _dbRequestHandlerService.ReplaceConceptDescriptionById(securityConfig, body, decodedCdId);
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Updates an existing Concept Description signed
+        /// </summary>
+        /// <param name="jws">JWS signed Concept Description object</param>
+        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Concept Description updated successfully</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("concept-descriptions/{cdIdentifier}/$sign")]
+        [ValidateModelState]
+        [Consumes("text/plain")]
+        [SwaggerOperation("PutConceptDescriptionByIdSigned")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> PutConceptDescriptionByIdSigned([FromBody] string? jws, [FromRoute][Required] string cdIdentifier)
+        {
+            var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
+            IClass body = ProcessJWS(jws);
+
+            if (body is IConceptDescription)
+            {
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+                await _dbRequestHandlerService.ReplaceConceptDescriptionByIdSigned(securityConfig, decodedCdId, body as IConceptDescription, jws);
+            }
+
+            return NoContent();
+        }
+
+        private IConceptDescription ProcessJWS(string? jws)
+        {
+            string certFile = "Andreas_Orzelski_Chain.pfx";
+            string certPW = "i40";
+
+            IConceptDescription body = null;
+            if (System.IO.File.Exists(certFile))
+            {
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                var i = 0;
+                var x5c = new string[xc.Count];
+                for (var j = xc.Count - 1; j >= 0; j--)
+                {
+                    var c = Convert.ToBase64String(xc[j].GetRawCertData());
+                    x5c[i++] = c;
+                }
+
+                using (var certificate = new X509Certificate2(certFile, certPW))
+                {
+                    if (certificate == null)
+                    {
+                        return null;
+                    }
+
+                    // Validate
+                    var parts = jws.Split('.');
+                    var headerJson = Encoding.UTF8.GetString(Jose.Base64Url.Decode(parts[0]));
+                    var header = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(headerJson);
+                    if (header == null)
+                    {
+                        throw new InvalidOperationException("header missing");
+                    }
+
+                    if (!header.TryGetValue("x5c", out var x5cElement))
+                    {
+                        throw new InvalidOperationException("x5c not found in header");
+                    }
+
+                    x5c = x5cElement.EnumerateArray().Select(x => x.GetString()).ToArray();
+                    if (x5c.Length == 0)
+                    {
+                        throw new InvalidOperationException("x5c is empty");
+                    }
+
+                    var certBytes = Convert.FromBase64String(x5c[0]);
+                    var signingCert = new X509Certificate2(certBytes);
+                    using var rsaPublic = signingCert.GetRSAPublicKey();
+
+                    var payload = JWT.Decode(jws, rsaPublic, JwsAlgorithm.RS256);
+
+                    var chain = new X509Chain
+                    {
+                        ChainPolicy = {
+                                RevocationMode   = X509RevocationMode.NoCheck,
+                                VerificationFlags= X509VerificationFlags.NoFlag,
+                                TrustMode = X509ChainTrustMode.CustomRootTrust
+                            }
+                    };
+
+                    var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+                    chain.ChainPolicy.CustomTrustStore.Add(root);
+
+                    for (i = 1; i < x5c.Length - 1; i++)
+                    {
+                        var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+                        chain.ChainPolicy.ExtraStore.Add(cert);
+                    }
+
+                    var isValid = chain.Build(signingCert);
+
+                    if (isValid)
+                    {
+                        var node = System.Text.Json.JsonSerializer.Deserialize<JsonNode>(payload);
+                        body = Jsonization.Deserialize.ConceptDescriptionFrom(node);
+                    }
+                }
+            }
+
+            ProcessBody(body);
+
+            return body;
         }
 
         private void ProcessBody(IClass body)

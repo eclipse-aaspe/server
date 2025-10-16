@@ -108,9 +108,11 @@ internal class Startup
         services.AddTransient<IPersistenceService, EntityFrameworkPersistenceService>();
 
         // Add GraphQL services
+#if GRAPHQL
         services
             .AddGraphQLServer()
             .AddQueryType<Query>();
+#endif
 
         // Add framework services.
         services

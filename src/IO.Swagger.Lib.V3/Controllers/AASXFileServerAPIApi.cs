@@ -41,6 +41,9 @@ using System.Net.Mime;
 namespace IO.Swagger.Controllers;
 
 using System.Threading.Tasks;
+using AasxServer;
+using AdminShellNS;
+using AdminShellNS.Models;
 using Contracts;
 using Contracts.Exceptions;
 using Contracts.Pagination;
@@ -54,18 +57,16 @@ public class AASXFileServerAPIApiController : ControllerBase
 {
     private readonly IAppLogger<AASXFileServerAPIApiController> _logger;
     private readonly IBase64UrlDecoderService _decoderService;
-    private readonly IAasxFileServerInterfaceService _fileService;
+    private readonly IDbRequestHandlerService _dbRequestHandlerService;
     private readonly IPaginationService _paginationService;
     private readonly IAuthorizationService _authorizationService;
 
     public AASXFileServerAPIApiController(IAppLogger<AASXFileServerAPIApiController> logger, IBase64UrlDecoderService decoderService,
-                                          IAasxFileServerInterfaceService fileService, IPaginationService paginationService, IAuthorizationService authorizationService)
+                                          IDbRequestHandlerService dbRequestHandlerService, IPaginationService paginationService, IAuthorizationService authorizationService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        ;
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-        ;
-        _fileService          = fileService ?? throw new ArgumentNullException(nameof(fileService));
+        _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         _paginationService    = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
     }
@@ -91,30 +92,14 @@ public class AASXFileServerAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult DeleteAASXByPackageId([FromRoute] [Required] string packageId)
+    public virtual async Task<IActionResult> DeleteAASXByPackageId([FromRoute] [Required] string packageId)
     {
         var decodedPackageId = _decoderService.Decode("packageId", packageId);
 
         _logger.LogInformation($"Received request to delete the AASX Package with package id {decodedPackageId}");
-        var aas        = _fileService.GetAssetAdministrationShellByPackageId(decodedPackageId);
-        var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReasons               = authResult.Failure.FailureReasons;
-            var authorizationFailureReasons = failedReasons.ToList();
-            if (authorizationFailureReasons.Count != 0)
-            {
-                throw new NotAllowed(authorizationFailureReasons.First().Message); // TODO (jtikekar, 2023-09-04): write AuthResultMiddlewareHandler
-            }
 
-            if (HttpContext.Response.StatusCode == 307)
-            {
-                var url = HttpContext.Response.Headers["redirectInfo"].First();
-                return new RedirectResult(url ?? string.Empty);
-            }
-        }
-
-        _fileService.DeleteAASXByPackageId(decodedPackageId);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.DeleteAASXByPackageId(securityConfig, decodedPackageId);
 
         return NoContent();
     }
@@ -152,34 +137,16 @@ public class AASXFileServerAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedPackageId)} is null");
         }
 
-        var fileName = _fileService.GetAASXByPackageId(decodedPackageId, out var content, out var fileSize, out var aas);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        var fileRequestResult = await _dbRequestHandlerService.ReadAASXByPackageId(securityConfig, decodedPackageId);
 
-        var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReasons               = authResult.Failure.FailureReasons;
-            var authorizationFailureReasons = failedReasons.ToList();
-            if (authorizationFailureReasons.Count != 0)
-            {
-                throw new NotAllowed(authorizationFailureReasons.First().Message); // TODO (jtikekar, 2023-09-04): write AuthResultMiddlewareHandler
-            }
-
-            if (HttpContext.Response.StatusCode == 307)
-            {
-                var url = HttpContext.Response.Headers["redirectInfo"].First();
-                return new RedirectResult(url ?? string.Empty);
-            }
-        }
-
-        //content-disposition so that the aasx file can be downloaded from the web browser.
-        ContentDisposition contentDisposition = new() {FileName = fileName};
+        ContentDisposition contentDisposition = new() {FileName = fileRequestResult.File};
 
         HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
-        HttpContext.Response.Headers.Append("X-FileName", fileName);
+        HttpContext.Response.Headers.Append("X-FileName", fileRequestResult.File);
 
-
-        HttpContext.Response.ContentLength = fileSize;
-        await HttpContext.Response.Body.WriteAsync(content);
+        HttpContext.Response.ContentLength = fileRequestResult.FileSize;
+        await HttpContext.Response.Body.WriteAsync(fileRequestResult.Content);
         return new EmptyResult();
     }
 
@@ -205,7 +172,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllAASXPackageIds([FromQuery] string? aasId, [FromQuery] int? limit, [FromQuery] string? cursor)
+    public virtual async Task<IActionResult> GetAllAASXPackageIds([FromQuery] string? aasId, [FromQuery] int? limit, [FromQuery] string? cursor)
     {
         _logger.LogInformation($"Received request to get all the AASX packages.");
         string decodedAasId = null;
@@ -214,20 +181,12 @@ public class AASXFileServerAPIApiController : ControllerBase
             decodedAasId = _decoderService.Decode("aasId", aasId); 
         }
 
-        var packages = _fileService.GetAllAASXPackageIds(decodedAasId);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var authResult = _authorizationService.AuthorizeAsync(User, packages, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReasons = authResult.Failure.FailureReasons;
-            var authorizationFailureReasons = failedReasons.ToList();
-            if (authorizationFailureReasons.Count != 0)
-            {
-                throw new NotAllowed(authorizationFailureReasons.First().Message); // TODO (jtikekar, 2023-09-04): write AuthResultMiddlewareHandler
-            }
-        }
+        var packages = await _dbRequestHandlerService.ReadPagedAASXPackageIds(securityConfig, paginationParameters, decodedAasId);
 
-        var paginatedPackages = _paginationService.GetPaginatedPackageDescriptionList(packages, new PaginationParameters(cursor, limit));
+        var paginatedPackages = _paginationService.GetPaginatedPackageDescriptionList(packages, paginationParameters);
         return new ObjectResult(paginatedPackages);
     }
 
@@ -240,8 +199,15 @@ public class AASXFileServerAPIApiController : ControllerBase
     [HttpPost]
     [Route("/packages")]
     [ValidateModelState]
+    [SwaggerResponse(statusCode: 201, type: typeof(PackageDescription), description: "AASX package stored successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     [SwaggerOperation("PostAASXPackage")]
-    public virtual IActionResult PostAASXPackage([FromQuery] string? aasIds, IFormFile? file)
+    public virtual async Task<IActionResult> PostAASXPackage([FromQuery] string? aasIds, IFormFile? file)
     {
         _logger.LogInformation($"Received request to create a new AASX Package.");
 
@@ -250,28 +216,14 @@ public class AASXFileServerAPIApiController : ControllerBase
             return Ok("No file was provided.");
         }
 
-        var authResult = _authorizationService.AuthorizeAsync(User, "", "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReasons               = authResult.Failure.FailureReasons;
-            var authorizationFailureReasons = failedReasons.ToList();
-            if (authorizationFailureReasons.Count != 0)
-            {
-                throw new NotAllowed(authorizationFailureReasons.First().Message); // TODO (jtikekar, 2023-09-04): write AuthResultMiddlewareHandler
-            }
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            if (HttpContext.Response.StatusCode == 307)
-            {
-                var url = HttpContext.Response.Headers["redirectInfo"].First();
-                return new RedirectResult(url ?? string.Empty);
-            }
-        }
-
-        // TODO (jtikekar, 2023-09-04): aasIds
         var stream = new MemoryStream();
         file.CopyTo(stream);
-        var packageId = _fileService.PostAASXPackage(stream.ToArray(), file.FileName);
-        return CreatedAtAction(nameof(PostAASXPackage), packageId);
+
+
+        var packageDescription = await _dbRequestHandlerService.CreateAASXPackage(securityConfig, stream, file.FileName);
+        return CreatedAtAction(nameof(PostAASXPackage), packageDescription);
     }
 
     /// <summary>
@@ -285,7 +237,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     [Route("/packages/{packageId}")]
     [ValidateModelState]
     [SwaggerOperation("PutAASXPackageById")]
-    public virtual IActionResult PutAASXPackageById([FromRoute] [Required] string packageId, IFormFile? file, [FromQuery] string? aasIds)
+    public virtual async Task<IActionResult> PutAASXPackageById([FromRoute] [Required] string packageId, IFormFile? file, [FromQuery] string? aasIds)
     {
         if (file == null)
         {
@@ -302,28 +254,12 @@ public class AASXFileServerAPIApiController : ControllerBase
 
         _logger.LogInformation($"Received request to update the AASX Package with package id {decodedPackageId}.");
 
-        var aas        = _fileService.GetAssetAdministrationShellByPackageId(decodedPackageId);
-        var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReasons               = authResult.Failure.FailureReasons;
-            var authorizationFailureReasons = failedReasons.ToList();
-            if (authorizationFailureReasons.Count != 0)
-            {
-                throw new NotAllowed(authorizationFailureReasons.First().Message); // TODO (jtikekar, 2023-09-04): write AuthResultMiddlewareHandler
-            }
-
-            if (HttpContext.Response.StatusCode == 307)
-            {
-                var url = HttpContext.Response.Headers["redirectInfo"].First();
-                return new RedirectResult(url ?? string.Empty);
-            }
-        }
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var stream = new MemoryStream();
         file.CopyTo(stream);
         var fileName = file.FileName;
-        _fileService.UpdateAASXPackageById(decodedPackageId, stream.ToArray(), fileName);
+        await _dbRequestHandlerService.UpdateAASXPackageById(securityConfig, decodedPackageId, stream, fileName);
 
         return NoContent();
     }

@@ -1,0 +1,5 @@
+certName: client-credential.rsa
+certPW: changeit
+Issuer: https://credential.aas-voyager.com
+Audience: https://credential.aas-voyager.com/resources
+LocalURL: http://localhost:5019
