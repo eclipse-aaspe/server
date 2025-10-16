@@ -452,6 +452,44 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     }
 
     /// <summary>
+    /// Deletes a Submodel jws file
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <response code="204">Submodel deleted successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpDelete]
+    [Route("submodels/{submodelIdentifier}/$sign")]
+    [ValidateModelState]
+    [SwaggerOperation("DeleteSubmodelByIdSigned")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> DeleteSubmodelByIdSigned([FromRoute][Required] string submodelIdentifier)
+    {
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
+        _logger.LogInformation($"Received a request to delete submodel sign file with id {decodedSubmodelIdentifier}");
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        await _dbRequestHandlerService.DeleteSubmodelByIdSigned(securityConfig, null, decodedSubmodelIdentifier);
+
+        return NoContent();
+    }
+
+    /// <summary>
     /// Deletes a submodel element at a specified path within the submodel elements hierarchy
     /// </summary>
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
@@ -2559,9 +2597,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
-        IClass body = ProcessJWS(jws);
+        var body = ProcessJWS(jws);
 
-        if (body is ISubmodel)
+        if (body != null)
         {
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.ReplaceSubmodelByIdSigned(securityConfig, null, decodedSubmodelIdentifier, body as ISubmodel, jws);
@@ -2570,12 +2608,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         return NoContent();
     }
 
-    private IClass ProcessJWS(string? jws)
+    private ISubmodel ProcessJWS(string? jws)
     {
         string certFile = "Andreas_Orzelski_Chain.pfx";
         string certPW = "i40";
 
-        IClass body = null;
+        ISubmodel body = null;
         if (System.IO.File.Exists(certFile))
         {
             X509Certificate2Collection xc = new X509Certificate2Collection();

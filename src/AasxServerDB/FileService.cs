@@ -535,5 +535,23 @@ public class FileService
             return null;
         }
     }
+
+
+    internal static bool DeleteJWSFile(string identifier)
+    {
+        try
+        {
+            if (System.IO.File.Exists(GetCertFilePath(identifier)))
+            {
+                System.IO.File.Delete(GetCertFilePath(identifier));
+            }
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
 }
 

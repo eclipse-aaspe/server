@@ -83,7 +83,7 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
-        /// Deletes a Concept Description
+        /// Deletes the sign file of a Concept Description 
         /// </summary>
         /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="204">Concept Description deleted successfully</response>
@@ -93,15 +93,15 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("concept-descriptions/{cdIdentifier}")]
+        [Route("concept-descriptions/{cdIdentifier}/$sign")]
         [ValidateModelState]
-        [SwaggerOperation("DeleteConceptDescriptionById")]
+        [SwaggerOperation("DeleteConceptDescriptionByIdSigned")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public async virtual Task<IActionResult> DeleteConceptDescriptionById([FromRoute][Required] string cdIdentifier)
+        public async virtual Task<IActionResult> DeleteConceptDescriptionByIdSigned([FromRoute][Required] string cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
             if (decodedCdIdentifier == null)
@@ -112,7 +112,7 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            await _dbRequestHandlerService.DeleteConceptDescriptionById(securityConfig, decodedCdIdentifier);
+            await _dbRequestHandlerService.DeleteConceptDescriptionByIdSigned(securityConfig, decodedCdIdentifier);
 
             return NoContent();
         }
@@ -374,12 +374,12 @@ namespace IO.Swagger.Controllers
             return NoContent();
         }
 
-        private IClass ProcessJWS(string? jws)
+        private IConceptDescription ProcessJWS(string? jws)
         {
             string certFile = "Andreas_Orzelski_Chain.pfx";
             string certPW = "i40";
 
-            IClass body = null;
+            IConceptDescription body = null;
             if (System.IO.File.Exists(certFile))
             {
                 X509Certificate2Collection xc = new X509Certificate2Collection();
@@ -449,7 +449,7 @@ namespace IO.Swagger.Controllers
                     if (isValid)
                     {
                         var node = System.Text.Json.JsonSerializer.Deserialize<JsonNode>(payload);
-                        body = Jsonization.Deserialize.SubmodelFrom(node);
+                        body = Jsonization.Deserialize.ConceptDescriptionFrom(node);
                     }
                 }
             }

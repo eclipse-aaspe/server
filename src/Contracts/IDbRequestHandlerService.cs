@@ -38,6 +38,7 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> ReplaceAssetAdministrationShellById(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body);
     Task<DbRequestResult> ReplaceAssetAdministrationShellByIdSigned(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body, string jws);
     Task<DbRequestResult> DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier);
+    Task<DbRequestResult> DeleteAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier);
 
     Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier);
     Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
@@ -50,6 +51,7 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body);
     Task<DbRequestResult> ReplaceSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body, string jws);
     Task<DbRequestResult> DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
+    Task<DbRequestResult> DeleteSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
 
     Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
     Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
@@ -79,6 +81,7 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> ReplaceConceptDescriptionById(ISecurityConfig securityConfig, IConceptDescription body, string cdIdentifier);
     Task<DbRequestResult> ReplaceConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier, IConceptDescription body, string jws);
     Task<DbRequestResult> DeleteConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier);
+    Task<DbRequestResult> DeleteConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier);
 
     Task<DbRequestResult> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool includeCD = false, bool createAASXPackage = false);
 

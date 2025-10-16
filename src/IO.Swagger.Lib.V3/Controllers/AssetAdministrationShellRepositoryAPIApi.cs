@@ -146,6 +146,37 @@ namespace IO.Swagger.Controllers
         }
 
         /// <summary>
+        /// Deletes sign file of an Asset Administration Shell
+        /// </summary>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Asset Administration Shell deleted successfully</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpDelete]
+        [Route("shells/{aasIdentifier}/$sign")]
+        [ValidateModelState]
+        [SwaggerOperation("DeleteAssetAdministrationShellByIdSigned")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> DeleteAssetAdministrationShellByIdSigned([FromRoute][Required] string aasIdentifier)
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+
+            _logger.LogInformation($"Received request to delete AAS with id {decodedAasIdentifier}");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.DeleteAssetAdministrationShellByIdSigned(securityConfig, decodedAasIdentifier);
+
+            return NoContent();
+        }
+
+        /// <summary>
         /// Deletes file content of an existing submodel element at a specified path within submodel elements hierarchy
         /// </summary>
         /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
@@ -234,6 +265,51 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.DeleteSubmodelById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Deletes the sign file of the submodel
+        /// </summary>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Submodel deleted successfully</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpDelete]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$sign")]
+        [ValidateModelState]
+        [SwaggerOperation("DeleteSubmodelByIdAasRepositorySigned")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> DeleteSubmodelByIdAasRepositorySigned([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier)
+        {
+            _logger.LogInformation($"Received request to delete a submodel from AAS");
+
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            if (decodedSmIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedSmIdentifier)} is null");
+            }
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.DeleteSubmodelByIdSigned(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
 
             return NoContent();
         }
@@ -2584,9 +2660,9 @@ namespace IO.Swagger.Controllers
                 throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
             }
 
-            var body = ProcessJWS(jws);
+            var body = ProcessJWS(jws, false);
 
-            if (body is AssetAdministrationShell)
+            if (body != null && body is AssetAdministrationShell)
             {
                 _logger.LogInformation($"Received request to replace the AAS with id {decodedAasIdentifier}");
 
@@ -2597,7 +2673,7 @@ namespace IO.Swagger.Controllers
             return NoContent();
         }
 
-        private IClass ProcessJWS(string? jws)
+        private IClass ProcessJWS(string? jws, bool isSubmodel)
         {
             string certFile = "Andreas_Orzelski_Chain.pfx";
             string certPW = "i40";
@@ -2672,7 +2748,15 @@ namespace IO.Swagger.Controllers
                     if (isValid)
                     {
                         var node = System.Text.Json.JsonSerializer.Deserialize<JsonNode>(payload);
-                        body = Jsonization.Deserialize.SubmodelFrom(node);
+
+                        if (isSubmodel)
+                        {
+                            body = Jsonization.Deserialize.SubmodelFrom(node);
+                        }
+                        else
+                        {
+                            body = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
+                        }
                     }
                 }
             }
@@ -2812,9 +2896,9 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to replace a a submodel {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
 
-            IClass body = ProcessJWS(jws);
+            var body = ProcessJWS(jws, true);
 
-            if (body is ISubmodel)
+            if (body != null && body is ISubmodel)
             {
                 var securityConfig = new SecurityConfig(Program.noSecurity, this);
                 await _dbRequestHandlerService.ReplaceSubmodelByIdSigned(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body as ISubmodel, jws);

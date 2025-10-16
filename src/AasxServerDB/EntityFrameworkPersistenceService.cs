@@ -333,7 +333,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         {
                             scopedLogger.LogDebug($"Found aas with id {aasIdentifier}");
 
-                            CrudOperator.DeleteAAS(db, aasIdentifier);
+                            if (!dbRequest.Context.Params.IsSigned)
+                            {
+                                CrudOperator.DeleteAAS(db, aasIdentifier);
+                            }
+
+                            FileService.DeleteJWSFile(aasIdentifier);
                         }
                         else
                         {
@@ -468,12 +473,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, true, out _, out ISubmodel deletedSubmodel))
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-                            var isDeleted = CrudOperator.DeleteSubmodel(db, submodelIdentifier);
 
-                            if (isDeleted)
+                            if (!dbRequest.Context.Params.IsSigned)
                             {
-                                _eventService.NotifyDeleted(deletedSubmodel);
+                                var isDeleted = CrudOperator.DeleteSubmodel(db, submodelIdentifier);
+                                if (isDeleted)
+                                {
+
+                                    _eventService.NotifyDeleted(deletedSubmodel);
+                                }
                             }
+                            FileService.DeleteJWSFile(submodelIdentifier);
+
                         }
                         else
                         {
@@ -890,7 +901,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         {
                             scopedLogger.LogDebug($"Found concept description with id {conceptDescriptionIdentifier}");
 
-                            CrudOperator.DeleteConceptDescription(db, conceptDescriptionIdentifier);
+                            if (!dbRequest.Context.Params.IsSigned)
+                            {
+                                CrudOperator.DeleteConceptDescription(db, conceptDescriptionIdentifier);
+                            }
+                            FileService.DeleteJWSFile(conceptDescriptionIdentifier);
                         }
                         else
                         {

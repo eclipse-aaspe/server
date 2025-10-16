@@ -313,6 +313,29 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
+    public async Task<DbRequestResult> DeleteAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            IsSigned = true
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteAssetAdministrationShellById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
     public async Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier)
     {
         var parameters = new DbRequestParams()
@@ -530,6 +553,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteSubmodelById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+    
+    public async Task<DbRequestResult> DeleteSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IsSigned = true
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -1074,6 +1121,29 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var parameters = new DbRequestParams()
         {
             ConceptDescriptionIdentifier = cdIdentifier
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteConceptDescriptionById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ConceptDescriptionIdentifier = cdIdentifier,
+            IsSigned = true
         };
 
         var dbRequestContext = new DbRequestContext()
