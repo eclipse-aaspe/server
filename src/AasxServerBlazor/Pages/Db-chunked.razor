@@ -26,11 +26,31 @@
 
 <style>
 	.cell-content {
-	height: 80px;
-	max-height: 80px;
+	height: 90px;
+	max-height: 90px;
 	overflow: hidden;
 	word-break:break-all;
+	font-size:small;
 	}
+	
+    @@media (max-width: 1920px) {
+        .cell-content {
+            height: 140px;
+			max-height: 140px;
+			overflow: hidden;
+			word-break:break-all;
+			font-size:small;
+        }
+    }
+
+	.vcell-content {
+	height: 45px;
+	max-height: 45px;
+	overflow: hidden;
+	word-break:break-all;
+	font-size:small;
+	}
+	
 
 	.cell-details {
 	word-break: break-all;
@@ -338,7 +358,7 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"Env#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+						&nbsp&nbsp@($"Env#: {totalCount} size={size} offset={offset} /* search={search} */")
 					</span>
 					<br />
 					<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
@@ -391,68 +411,125 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"CD#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+						&nbsp&nbsp@($"CD#: {totalCount} size={size} offset={offset} search={search} details={details}")
 					</span>
 					<br />
-					<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
+						<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
 						<thead>
-							<tr>
-								<th style="word-break:keep-all">CD#</th>
-								<th style="word-break:keep-all">Id Short</th>
-								<th style="word-break:keep-all">Display Name</th>
-								<th style="word-break:keep-all">Category</th>
-								<th style="word-break:keep-all">Description</th>
-								<th style="word-break:keep-all">Extensions</th>
-								<th style="word-break:keep-all">Identifier</th>
-								<th style="word-break:keep-all">Is Case Of</th>
-								<th style="word-break:keep-all">Embedded Data Specifications</th>
-								<th style="word-break:keep-all">Version</th>
-								<th style="word-break:keep-all">Revision</th>
-								<th style="word-break:keep-all">Creator</th>
-								<th style="word-break:keep-all">Template Id</th>
-								<th style="word-break:keep-all">A Embedded Data Specifications</th>
-								<th style="word-break:keep-all">Time Stamp</th>
-								<th style="word-break:keep-all">Links</th>
-								<th style="word-break:keep-all">API</th>
+							<tr style="border-color:blue;">
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">CD#</th>
+								<th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Id Short</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Display Name</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Category</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Description</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Extensions</th>
+								<th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Identifier</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Is Case Of</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Embedded Data Specifications</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Version</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Revision</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Creator</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Template Id</th>
+								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">A Embedded Data Specifications</th>
+								<th style="width:8%;word-break:break-all;font-size:x-small;border-color:blue;">Time Stamp</th>
+								<th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Links</th>
+								<th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">API</th>
 							</tr>
 						</thead>
 						<tbody>
+							@{
+								var cell = "cell-content";
+								var withDetails = details == "true";
+								if (withDetails)
+								{
+									cell = "cell-details";
+								}
+							}
 							<Virtualize Context="CDSet" @ref="CDSetContainer" ItemsProvider="LoadCDSetItems">
 								@{
 									var cd64 = Base64UrlEncoder.Encode(CDSet.Identifier);
 									var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
 								}
-								<tr>
-									<td style="word-break:keep-all">
+								<tr style="height:auto;border-color:blue;">
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
 										<b>@CDSet.Id</b>
 									</td>
-									<td style="word-break:keep-all;max-width:200px">@CDSet.IdShort</td>
-									<td style="font-size:small">@CDSet.DisplayName</td>
-									<td style="word-break:keep-all">@CDSet.Category</td>
-									<td style="font-size:small">@CDSet.Description</td>
-									<td style="font-size:small">@CDSet.Extensions</td>
-									<td>@CDSet.Identifier</td>
-									<td style="font-size:small">@CDSet.IsCaseOf</td>
-									<td style="font-size:small">@CDSet.EmbeddedDataSpecifications</td>
-									<td>@CDSet.Version</td>
-									<td>@CDSet.Revision</td>
-									<td style="font-size:small">@CDSet.Creator</td>
-									<td>@CDSet.TemplateId</td>
-									<td style="font-size:small">@CDSet.AEmbeddedDataSpecifications</td>
-									<td style="width:175px;color:lightgray;font-size:x-small">
+									<td style="width:10%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.IdShort</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.DisplayName</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Category</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Description</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Extensions</td>
+									<td style="width:10%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Identifier</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+										<div class="@cell">
+											@if (withDetails)
+											{
+												<span>@CDSet.IsCaseOf</span>
+											}
+											else
+											{
+												var text = CDSet.IsCaseOf;
+												if (text?.Length > 40)
+												{
+													text = text.Substring(0, 40) + " ..";
+												}
+												<span>@text</span>
+											}
+										</div>
+									</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+										<div class="@cell">
+											@if (withDetails)
+											{
+												<span>@CDSet.EmbeddedDataSpecifications</span>
+											}
+											else
+											{
+												var text = CDSet.EmbeddedDataSpecifications;
+												if (text?.Length > 40)
+												{
+													text = text.Substring(0, 40) + " ..";
+												}
+												<span>@text</span>
+											}
+										</div>
+									</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Version</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Revision</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Creator</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.TemplateId</td>
+									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+										<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@CDSet.AEmbeddedDataSpecifications</span>
+												}
+												else
+												{
+													var text = CDSet.AEmbeddedDataSpecifications;
+													if (text?.Length > 40)
+													{
+														text = text.Substring(0, 40) + " ..";
+													}
+													<span>@text</span>
+												}
+										</div>
+									</td>
+									<td style="width:8%;word-break:break-all;color:lightgray;font-size:x-small;border-color:blue;">
 										@($"CREATE {TimeStamp.DateTimeToString(CDSet.TimeStampCreate)}")<br />
 										@($"UPDATE {TimeStamp.DateTimeToString(CDSet.TimeStamp)}")<br />
 										@($"TREE {TimeStamp.DateTimeToString(CDSet.TimeStampTree)}")<br />
 										@($"DELETE {TimeStamp.DateTimeToString(CDSet.TimeStampDelete)}")
 									</td>
-									<td style="word-break:keep-all">
+									<td style="idth:4%;font-size:small;word-break: keep-all;border-color:blue;">
 										<a href="@($"{shorturl}/env?cdid={CDSet.Id}")" target="_blank">env </a>
 										@if (envid != 0)
 										{
 											<a href="@($"{shorturl}/env?cdid={CDSet.Id}&envid={envid}")" target="_blank">givenEnv</a>
 										}
 									</td>
-									<td style="word-break:keep-all">
+									<td style="idth:4%;font-size:small;word-break: keep-all;border-color:blue;">
 										@if (!CDSet.Identifier.IsNullOrEmpty())
 										{
 											<a href="@link" target="_blank">api</a>
@@ -460,8 +537,9 @@
 									</td>
 								</tr>
 							</Virtualize>
-						</tbody>
-					</table>
+							</tbody>
+						</table>
+					</div>
 				}
 
 				if (url.EndsWith("/aas"))
@@ -483,7 +561,7 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"AAS#: {totalCount} size={size} offset={offset} search={search}")
+						&nbsp&nbsp@($"AAS#: {totalCount} size={size} offset={offset} search={search} aasid={aasid} details={details})")
 					</span>
 					<br/>
 
@@ -493,51 +571,93 @@
 						<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
 							<thead>
 								<tr style="border-color:blue;">
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Env#</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">AAS#</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;width:10%">IdShort</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">DisplayName</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Category</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Description</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Extensions</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Identifier</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">EmbeddedDataSpecifications</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">DerivedFrom</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Version</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Revision</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Creator</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">TemplateId</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">EmbeddedDataSpecifications</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">AssetKind</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">GlobalAssetId</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">AssetType</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">SpecificAssetIds</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">ThumbnailPath</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">ThumbnailType</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">TimeStamps</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">Links</th>
-									<th style="word-break:break-all;font-size:x-small;border-color:blue;">API</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Env#</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">AAS#</th>
+									<th style="width:10%;word-break:break-all;font-size:x-small;border-color:blue;">IdShort</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">DisplayName</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Category</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Description</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Extensions</th>
+									<th style="width:10%;word-break:break-all;font-size:x-small;border-color:blue;">Identifier</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">EmbeddedDataSpecifications</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">DerivedFrom</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Version</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Revision</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Creator</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">TemplateId</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">A EmbeddedDataSpecifications</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">AssetKind</th>
+									<th style="width:10%;word-break:break-all;font-size:x-small;border-color:blue;">GlobalAssetId</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">AssetType</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">SpecificAssetIds</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">ThumbnailPath</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">ThumbnailType</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">TimeStamps</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Links</th>
+									<th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">API</th>
 								</tr>
 							</thead>
 							<tbody>
+								@{
+									
+									var cell = "cell-content";
+									var withDetails = details == "true";
+
+									if (withDetails)
+									{
+										cell = "cell-details";
+									}
+								}
 								<Virtualize Context="AASSet" @ref="AASSetContainer" ItemsProvider="LoadAASSetItems" >
 									@{
 										var aas64 = Base64UrlEncoder.Encode(AASSet?.Identifier);
 										var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
 									}
 									<tr style="height:auto;border-color:blue;">
-										<td style="word-break:keep-all;border-color:blue;">@AASSet?.EnvId</td>
-										<td style="word-break:keep-all;border-color:blue;">
+										<td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">@AASSet?.EnvId</td>
+										<td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">
 											<b>@AASSet?.Id</b>
 										</td>
-										<td style="word-break:keep-all;max-width:200px;border-color:blue;">
+										<td style="width:10%;word-break: break-all;border-color:blue;">
 											<div class="cell-content">
 												@AASSet?.IdShort
 											</div>
 										</td>
-										<td style="font-size:small;border-color:blue;">@AASSet?.DisplayName</td>
+										<td style="font-size:small;border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@AASSet?.DisplayName</span>
+												}
+												else
+												{
+													var text = AASSet?.DisplayName;
+													if (text?.Length > 40)
+													{
+														text = text.Substring(0, 40) + " ..";
+													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
 										<td style="word-break:keep-all;border-color:blue;">@AASSet?.Category</td>
-										<td style="font-size:small;border-color:blue;">@AASSet?.Description</td>
+										<td style="border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@AASSet?.Description</span>
+												}
+												else
+												{
+													var text = AASSet?.Description;
+													if (text?.Length > 40)
+													{
+														text = text.Substring(0, 40) + " ..";
+													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
 										<td style="font-size:small;border-color:blue;">@AASSet?.Extensions</td>
 										<td style=";border-color:blue;">@AASSet?.Identifier</td>
 										<td style="font-size:small;border-color:blue;">@AASSet?.EmbeddedDataSpecifications</td>
@@ -551,9 +671,25 @@
 										<td style=";border-color:blue;">@AASSet?.GlobalAssetId</td>
 										<td style=";border-color:blue;">@AASSet?.AssetType</td>
 										<td style="font-size:small;border-color:blue;">@AASSet?.SpecificAssetIds</td>
-										<td style=";border-color:blue;">@AASSet?.DefaultThumbnailPath</td>
+										<td style=";border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@AASSet?.DefaultThumbnailPath</span>
+												}
+												else
+												{
+													var text = AASSet?.DefaultThumbnailPath;
+													if (text?.Length > 40)
+													{
+														text = text.Substring(0, 40) + " ..";
+													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
 										<td style=";border-color:blue;">@AASSet?.DefaultThumbnailContentType</td>
-										<td style="width:175px;color:lightgray;font-size:x-small;border-color:blue;">
+										<td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
 											@($"CREATE {TimeStamp.DateTimeToString(AASSet.TimeStampCreate)}")<br />
 											@($"UPDATE {TimeStamp.DateTimeToString(AASSet.TimeStamp)}")<br />
 											@($"TREE {TimeStamp.DateTimeToString(AASSet.TimeStampTree)}")<br />
@@ -597,7 +733,7 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"SMREF#: {totalCount} size={size} offset={offset} search={search} details={details}")
+						&nbsp&nbsp@($"SMREF#: {totalCount} size={size} offset={offset} search={search} aasid={aasid} details={details}")
 					</span>
 					<br />
 
@@ -667,7 +803,7 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"SM#: {totalCount} size={size} offset={offset} search={search} details={details}")
+						&nbsp&nbsp@($"SM#: {totalCount} size={size} offset={offset} search={search} smid={smid} details={details}")
 					</span>
 					<br />
 					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
@@ -714,9 +850,9 @@
 										// var smeCount = db.SMESets.Where(sme => sme.SMId == SMSet.Id).Select(x => x.Id).Count();
 									}
 									<tr style="height:auto;border-color:blue;">
-										<td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.EnvId</td>
-										<td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.AASId</td>
-										<td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.EnvId</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.AASId</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
 											<b>@SMVirtualize?.smSet?.Id</b>
 										</td>
 										<td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.IdShort</td>
@@ -731,9 +867,9 @@
 												else
 												{
 													var text = SMVirtualize?.smSet?.Description;
-													if (text?.Length > 27)
+													if (text?.Length > 40)
 													{
-														text = text.Substring(0, 27) + " ..";
+														text = text.Substring(0, 40) + " ..";
 													}
 													<span>@text</span>
 												}
@@ -747,22 +883,17 @@
                                         <td style="width:3%;font-size:small;border-color:blue;">
                                             <div class="@cell">
                                                 @if (withDetails)
-
                                                 {
                                                     <span>@SMVirtualize?.smSet?.Qualifiers</span>
                                                 }
-
                                                 else
-
                                                 {
-
                                                     var text = SMVirtualize?.smSet?.Qualifiers;
 
-                                                    if (text?.Length > 27)
-
+                                                    if (text?.Length > 40)
                                                     {
 
-                                                        text = text.Substring(0, 27) + " ..";
+                                                        text = text.Substring(0, 40) + " ..";
 
                                                     }
                                                     <span>@text</span>
@@ -913,7 +1044,15 @@
 												}
 												else
 												{
-													<span>@SMEVirtualize?.smeSet.Description?.Substring(0, 30)</span>
+													var text = @SMEVirtualize?.smeSet.Description;
+
+                                                    if (text?.Length > 40)
+                                                    {
+
+                                                        text = text.Substring(0, 40) + " ..";
+
+                                                    }
+                                                    <span>@text</span>
 												}
 											</div>
 										</td>
@@ -924,7 +1063,22 @@
 										</td>
 										<td style="width:10%;word-break: break-all;font-size:small;border-color:blue;">
 											<div class="@cell">
-												@SMEVirtualize?.smeSet.SemanticId
+												@if (withDetails)
+												{
+													<span>@SMEVirtualize?.smeSet.SemanticId?</span>
+												}
+												else
+												{
+													var text = @SMEVirtualize?.smeSet.SemanticId;
+
+                                                    if (text?.Length > 40)
+                                                    {
+
+                                                        text = text.Substring(0, 40) + " ..";
+
+                                                    }
+                                                    <span>@text</span>
+												}
 											</div>
 										</td>
 										<td style="width:4%;font-size:small;border-color:blue;">
@@ -939,7 +1093,22 @@
 										</td>
 										<td style="width:4%;font-size:small;border-color:blue;">
 											<div class="@cell">
-												@SMEVirtualize?.smeSet.EmbeddedDataSpecifications
+												@if (withDetails)
+												{
+													<span>@SMEVirtualize?.smeSet.EmbeddedDataSpecifications?</span>
+												}
+												else
+												{
+													var text = @SMEVirtualize?.smeSet.EmbeddedDataSpecifications;
+
+                                                    if (text?.Length > 40)
+                                                    {
+
+                                                        text = text.Substring(0, 40) + " ..";
+
+                                                    }
+                                                    <span>@text</span>
+												}
 											</div>
 										</td>
 										<td style="width:8%;font-size:small;border-color:blue;">
@@ -972,17 +1141,17 @@
 														@code {
                                                             private void OnPropertyValueChanged(SMEVirtualize sme)
                                                             {
-											if (!string.IsNullOrEmpty(sme.propertyValue))
-											{
-												if (sme.propertyValue == " ")
-													sme.propertyValue = string.Empty;
+																if (!string.IsNullOrEmpty(sme.propertyValue))
+																{
+																	if (sme.propertyValue == " ")
+																		sme.propertyValue = string.Empty;
 
-												CrudOperator.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
-												reload();
-												SMESetContainer.RefreshDataAsync();
-												StateHasChanged();
-												sme.propertyValue = string.Empty;
-											}
+																		CrudOperator.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
+																		reload();
+																		SMESetContainer.RefreshDataAsync();
+																		StateHasChanged();
+																		sme.propertyValue = string.Empty;
+																}
                                                             }
                                                         }
 
@@ -1007,10 +1176,10 @@
 											@code {
                                                 private async Task SetTimeStamp(int smSetId, int smeSetId)
                                                 {
-									CrudOperator.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
-									reload();
-									await SMESetContainer.RefreshDataAsync();
-									StateHasChanged();
+													CrudOperator.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
+													reload();
+													await SMESetContainer.RefreshDataAsync();
+													StateHasChanged();
                                                 }
                                             }
                                         </td>
@@ -1070,31 +1239,76 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"SValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+						&nbsp&nbsp@($"SValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid} details={details}")
 					</span>
 					<br />
-					<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-						<thead>
+					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
+						<table class="table table-bordered table-sm" style="min-width:100%;max-width:100%">
+							<thead>
 							<tr>
-								<th style="word-break:keep-all">Par#</th>
-								<th style="word-break:keep-all">Value</th>
-								<th style="word-break:keep-all">Annotation</th>
-								<th style="word-break:keep-all">Links</th>
-							</tr>
-						</thead>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Par#</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Value</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Annotation</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Links</th>
+							</tr>						</thead>
 						<tbody>
+							@{
+									var cell = "vcell-content";
+									var withDetails = details == "true";
+									if (withDetails)
+									{
+										cell = "cell-details";
+									}
+							}
 							<Virtualize Context="SValueSet" @ref="SValueSetContainer" ItemsProvider="LoadSValueSetItems" >
 								<tr>
-									<td style="word-break:keep-all">@SValueSet.SMEId</td>
-									<td style="word-break:keep-all">@SValueSet.Value</td>
-									<td style="word-break:keep-all">@SValueSet.Annotation</td>
-									<td style="word-break:keep-all">
+									<td style="word-break:keep-all; break-all;border-color:blue;">@SValueSet.SMEId</td>
+									<td style="word-break:keep-all; break-all;border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@SValueSet?.Value</span>
+												}
+												else
+												{
+													var text = @SValueSet?.Value;
+
+                                                    if (text?.Length > 400)
+                                                    {
+                                                        text = text.Substring(0, 400) + " ..";
+
+                                                    }
+                                                    <span>@text</span>
+												}
+											</div>
+									</td>
+									<td style="word-break:keep-all; break-all;border-color:blue; ">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@SValueSet?.Annotation</span>
+												}
+												else
+												{
+													var text = @SValueSet?.Annotation;
+
+                                                    if (text?.Length > 400)
+                                                    {
+                                                        text = text.Substring(0, 400) + " ..";
+
+                                                    }
+                                                    <span>@text</span>
+												}
+											</div>
+									</td>
+									<td style="word-break:keep-all; break-all;border-color:blue; ">
 										<a href="@($"{shorturl}/sme?smeid={SValueSet.SMEId}")" target="_blank">par</a>
 									</td>
 								</tr>
 							</Virtualize>
 						</tbody>
-					</table>
+					   </table>
+					</div>
 				}
 
 				if (url.EndsWith("/ivalue"))
@@ -1116,25 +1330,33 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"IValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+						&nbsp&nbsp@($"IValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid} details={details}")
 					</span>
 					<br />
 					<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
 						<thead>
 							<tr>
-								<th style="word-break:keep-all">Par#</th>
-								<th style="word-break:keep-all">Value</th>
-								<th style="word-break:keep-all">Annotation</th>
-								<th style="word-break:keep-all">Links</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Par#</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Value</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Annotation</th>
+								<th style="font-size:small;word-break: break-all;border-color:blue;">Links</th>
 							</tr>
 						</thead>
 						<tbody>
 							<Virtualize Context="IValueSet" @ref="IValueSetContainer" ItemsProvider="LoadIValueSetItems">
+								@{
+									var cell = "vcell-content";
+									var withDetails = details == "true";
+									if (withDetails)
+									{
+										cell = "cell-details";
+									}
+								}
 								<tr>
-									<td style="word-break:keep-all">@IValueSet.SMEId</td>
-									<td style="word-break:keep-all">@IValueSet.Value</td>
-									<td style="word-break:keep-all">@IValueSet.Annotation</td>
-									<td style="word-break:keep-all">
+									<td style="word-break: break-all;border-color:blue">@IValueSet.SMEId</td>
+									<td style="word-break: break-all;border-color:blue">@IValueSet.Value</td>
+									<td style="word-break: break-all;border-color:blue">@IValueSet.Annotation</td>
+									<td style="word-break: break-all;border-color:blue">
 										<a href="@($"{shorturl}/sme?smeid={IValueSet.SMEId}")" target="_blank">par</a>
 									</td>
 								</tr>
@@ -1162,25 +1384,33 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"DValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+						&nbsp&nbsp@($"DValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid} details={details}")
 					</span>
 					<br />
 					<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
 						<thead>
 							<tr>
-								<th style="word-break:keep-all">Par#</th>
-								<th style="word-break:keep-all">Value</th>
-								<th style="word-break:keep-all">Annotation</th>
-								<th style="word-break:keep-all">Links</th>
+								<th style="word-break: break-all;border-color:blue">Par#</th>
+								<th style="word-break: break-all;border-color:blue">Value</th>
+								<th style="word-break: break-all;border-color:blue">Annotation</th>
+								<th style="word-break: break-all;border-color:blue">Links</th>
 							</tr>
 						</thead>
 						<tbody>
 							<Virtualize Context="DValueSet" @ref="DValueSetContainer" ItemsProvider="LoadDValueSetItems">
+								@{
+									var cell = "vcell-content";
+									var withDetails = details == "true";
+									if (withDetails)
+									{
+										cell = "cell-details";
+									}
+								}
 								<tr>
-									<td style="word-break:keep-all">@DValueSet.SMEId</td>
-									<td style="word-break:keep-all">@DValueSet.Value</td>
-									<td style="word-break:keep-all">@DValueSet.Annotation</td>
-									<td style="word-break:keep-all">
+									<td style="word-break: break-all;border-color:blue">@DValueSet.SMEId</td>
+									<td style="word-break: break-all;border-color:blue">@DValueSet.Value</td>
+									<td style="word-break: break-all;border-color:blue">@DValueSet.Annotation</td>
+									<td style="word-break: break-all;border-color:blue">
 										<a href="@($"{shorturl}/sme?smeid={DValueSet.SMEId}")" target="_blank">par</a>
 									</td>
 								</tr>
@@ -1208,25 +1438,49 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"OValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+						&nbsp&nbsp@($"OValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid} details={details}")
 					</span>
 					<br />
 					<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
 						<thead>
 							<tr>
-								<th style="word-break:keep-all">Par#</th>
-								<th style="word-break:keep-all">Value</th>
-								<th style="word-break:keep-all">Attribute</th>
-								<th style="word-break:keep-all">Links</th>
+								<th style="word-break: break-all;border-color:blue">Par#</th>
+								<th style="word-break: break-all;border-color:blue">Value</th>
+								<th style="word-break: break-all;border-color:blue">Attribute</th>
+								<th style="word-break: break-all;border-color:blue">Links</th>
 							</tr>
 						</thead>
 						<tbody>
 							<Virtualize Context="OValueSet" @ref="OValueSetContainer" ItemsProvider="LoadOValueSetItems">
+								@{
+									var cell = "vcell-content";
+									var withDetails = details == "true";
+									if (withDetails)
+									{
+										cell = "cell-details";
+									}
+								}
 								<tr>
-									<td style="word-break:keep-all">@OValueSet.SMEId</td>
-									<td style="word-break:keep-all">@OValueSet.Value</td>
-									<td style="word-break:keep-all">@OValueSet.Attribute</td>
-									<td style="word-break:keep-all">
+									<td style="word-break: break-all;border-color:blue">@OValueSet.SMEId</td>
+									<td style="word-break:keep-all; break-all;border-color:blue;">
+										<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@OValueSet.Value</span>
+												}
+												else
+												{
+													var text = @OValueSet.Value;
+													if (text?.Length > 400)
+													{
+														text = text.Substring(0, 400) + " ..";
+													}
+													<span>@text</span>
+												}
+										</div>
+									</td>
+									<td style="word-break: break-all;border-color:blue">@OValueSet.Attribute</td>
+									<td style="word-break: break-all;border-color:blue">
 										<a href="@($"{shorturl}/sme?smeid={OValueSet.SMEId}")" target="_blank">par</a>
 									</td>
 								</tr>
@@ -1329,6 +1583,7 @@
 
 		List<CDSet> result = [];
 
+		//ToDo: DbRequestHandler should be used
 		using (AasContext db = new AasContext())
 		{
 			IQueryable<CDSet> qCD = db.CDSets;
