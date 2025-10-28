@@ -50,6 +50,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Nodes;
 using System.Text.Json;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IO.Swagger.Controllers
 {
@@ -258,21 +259,16 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get concept description with id {decodedCdIdentifier}");
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
-            var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
+            var cdSigned = await _dbRequestHandlerService.ReadConceptDescriptionByIdSigned(securityConfig, decodedCdIdentifier);
 
-            PatchCD(output);
-
-            var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
+            if (!cdSigned.IsNullOrEmpty())
             {
-                var failedReason = authResult.Failure.FailureReasons.First();
-                if (failedReason != null)
-                {
-                    throw new NotAllowed(failedReason.Message);
-                }
+                return new ObjectResult(cdSigned);
             }
-
-            return new ObjectResult(output);
+            else
+            {
+                throw new NotAllowed($"");
+            }
         }
 
         /// <summary>
