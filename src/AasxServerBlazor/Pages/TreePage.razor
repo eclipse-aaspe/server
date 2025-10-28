@@ -1111,23 +1111,26 @@
 							var aasId = aasID;
 							if (aasID.IsNullOrEmpty())
 								aasId = aas.Id;
-								
-							//To be deleted: For in-memory items
-							try
+
+							if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
 							{
-								if (Program.env[item.envIndex] != null)
+								//To be deleted: For in-memory items
+								try
 								{
-									using var ts = Program.env[item.envIndex].GetLocalThumbnailStream(aasID);
-									if (ts != null)
+									if (Program.env[item.envIndex] != null)
 									{
-										using var m = new System.IO.MemoryStream();
-										ts.CopyTo(m);
-										detailImageData.Data = Convert.ToBase64String(m.ToArray());
+										using var ts = Program.env[item.envIndex].GetLocalThumbnailStream(aasID);
+										if (ts != null)
+										{
+											using var m = new System.IO.MemoryStream();
+											ts.CopyTo(m);
+											detailImageData.Data = Convert.ToBase64String(m.ToArray());
+										}
 									}
 								}
-							}
-							catch
-							{
+								catch
+								{
+								}
 							}
 
 							try
@@ -1163,20 +1166,24 @@
 								case "svg":
 									detailImageData.IsSvg = split.Last().ToLower().Equals("svg");
 
-									//To be deleted: For in-memory items
-									try
-									{
-										using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
-										if (s != null)
-										{
-											using var m = new System.IO.MemoryStream();
 
-											s.CopyTo(m);
-											detailImageData.Data = Convert.ToBase64String(m.ToArray());
-										}
-									}
-									catch
+									//To be deleted: For in-memory items
+									if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
 									{
+										try
+										{
+											using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+											if (s != null)
+											{
+												using var m = new System.IO.MemoryStream();
+
+												s.CopyTo(m);
+												detailImageData.Data = Convert.ToBase64String(m.ToArray());
+											}
+										}
+										catch
+										{
+										}
 									}
 
 									try
