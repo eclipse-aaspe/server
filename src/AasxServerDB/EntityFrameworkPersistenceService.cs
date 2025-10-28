@@ -177,6 +177,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             //ToDo: Ignore security when from Page
             case DbRequestOp.ReadPackageEnv:
             case DbRequestOp.ReadThumbnail:
+            case DbRequestOp.ReadFileByPath:
             case DbRequestOp.ReadPagedAASXPackageIds:
                 isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, ignoreNullConfig: true);
 

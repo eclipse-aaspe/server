@@ -589,41 +589,47 @@
 			}
 
 			@{
-				var detailsImage = CreateDetailsImage(SelectedNode, out var url, out var svg);
-				if (!string.IsNullOrEmpty(detailsImage))
+				if (SelectedNode != null)
 				{
-					if (!svg)
+					if (SelectedNode.DetailsImage == null)
 					{
-						if (!url)
-						{
-							<br/>
-							<div>
-								<img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-							</div>
-						}
-						else
-						{
-							<br/>
-							<div>
-								<img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
-							</div>
-						}
+						SelectedNode.DetailsImage = CreateDetailsImage(SelectedNode);
 					}
-					else
+					if (!string.IsNullOrEmpty(SelectedNode.DetailsImage.Data))
 					{
-						if (!url)
+						if (!SelectedNode.DetailsImage.IsSvg)
 						{
-							<br/>
-							<div>
-								<img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-							</div>
+							if (!SelectedNode.DetailsImage.IsUrl)
+							{
+								<br/>
+								<div>
+									<img src=data:image;base64,@SelectedNode.DetailsImage.Data style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
+							else
+							{
+								<br/>
+								<div>
+									<img src="@SelectedNode.DetailsImage.Data" style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
 						}
 						else
 						{
-							<br/>
-							<div>
-								<img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
-							</div>
+							if (!SelectedNode.DetailsImage.IsUrl)
+							{
+								<br/>
+								<div>
+									<img src=data:image/svg+xml;base64,@SelectedNode.DetailsImage.Data style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
+							else
+							{
+								<br/>
+								<div>
+									<img src="@SelectedNode.DetailsImage.Data" style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
 						}
 					}
 				}
@@ -782,6 +788,13 @@
 		);
 	}
 
+	public class DetailsImageData
+	{
+		public string Data { get; set; }
+		public bool IsSvg { get; set; }
+		public bool IsUrl { get; set; }
+	}
+
 	public class Item
 	{
 		public string Text { get; set; }
@@ -791,6 +804,9 @@
 		public string Type { get; set; }
 		public object Tag { get; set; }
 		public int envIndex { get; set; }
+
+		public DetailsImageData DetailsImage { get; set; }
+
 	}
 
 	List<Item> Items = null;
@@ -1069,29 +1085,17 @@
 		}
 	}
 
-	public string CreateDetailsImage(Item item, out bool url, out bool svg)
+	public DetailsImageData CreateDetailsImage(Item item)
 	{
-		AdminShellNS.AdminShellPackageEnv[] env = null;
-		if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
-		{
-			env = Program.env;
-		}
-		else
-		{
-			env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
-			/*
-			svg = false;
-			url = false;
-			return string.Empty;
-			*/
-		}
+		var detailImageData = new DetailsImageData();
 
-		svg = false;
-		url = false;
+		detailImageData.IsSvg = false;
+		detailImageData.IsUrl = false;
+		detailImageData.Data = string.Empty;
 
 		if (item == null)
 		{
-			return string.Empty;
+			return detailImageData;
 		}
 
 		var itemTag = item.Tag;
@@ -1104,19 +1108,21 @@
 					lock (Program.changeAasxFile)
 					{
 						{
+							var aasId = aasID;
 							if (aasID.IsNullOrEmpty())
-								return string.Empty;
-
+								aasId = aas.Id;
+								
+							//To be deleted: For in-memory items
 							try
 							{
-								if (env[item.envIndex] != null)
+								if (Program.env[item.envIndex] != null)
 								{
-									using var ts = env[item.envIndex].GetLocalThumbnailStream(aasID);
+									using var ts = Program.env[item.envIndex].GetLocalThumbnailStream(aasID);
 									if (ts != null)
 									{
 										using var m = new System.IO.MemoryStream();
 										ts.CopyTo(m);
-										return Convert.ToBase64String(m.ToArray());
+										detailImageData.Data = Convert.ToBase64String(m.ToArray());
 									}
 								}
 							}
@@ -1126,11 +1132,10 @@
 
 							try
 							{
-
 								var s = DbReqService.ReadThumbnail(null, aasID).Result;
 								if (s != null)
 								{
-									return Convert.ToBase64String(s.Content);
+									detailImageData.Data = Convert.ToBase64String(s.Content);
 								}
 							}
 							catch
@@ -1156,19 +1161,67 @@
 								case "bmp":
 								case "png":
 								case "svg":
+									detailImageData.IsSvg = split.Last().ToLower().Equals("svg");
+
+									//To be deleted: For in-memory items
 									try
 									{
-										using var s = env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+										using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
 										if (s != null)
 										{
 											using var m = new System.IO.MemoryStream();
-											if (split.Last().ToLower().Equals("svg"))
-											{
-												svg = true;
-											}
 
 											s.CopyTo(m);
-											return Convert.ToBase64String(m.ToArray());
+											detailImageData.Data = Convert.ToBase64String(m.ToArray());
+										}
+									}
+									catch
+									{
+									}
+
+									try
+									{
+										var smId = smID;
+										if (smID.IsNullOrEmpty())
+										{
+											var sm = f.Parent as ISubmodel;
+											smId = sm.Id;
+										}
+
+										var sme = item.Tag as ISubmodelElement;
+										var path = sme.IdShort;
+										var parent = sme.Parent as IReferable;
+										while (parent is not Submodel)
+										{
+											if (parent is ISubmodelElementList parentList)
+											{
+												if (path.Equals(sme.IdShort))
+												{
+													var index = parentList.Value?.IndexOf(sme);
+													path = $"[{index}]";
+												}
+
+												path = parentList.IdShort + path;
+											}
+											else if (parent.Parent is ISubmodelElementList prevParentList)
+											{
+												var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+												path = $"[{index}].{path}";
+											}
+											else
+											{
+												path = $"{parent.IdShort}.{path}";
+											}
+
+											parent = (IReferable)parent.Parent;
+										}
+
+										var s = DbReqService.ReadFileByPath(null, null, smId, path).Result;
+
+										if (s != null)
+										{
+											detailImageData.Data = Convert.ToBase64String(s.Content);
+											return detailImageData;
 										}
 									}
 									catch
@@ -1180,8 +1233,9 @@
 						}
 						else
 						{
-							url = true;
-							return f.Value;
+							detailImageData.IsUrl = true;
+							detailImageData.Data = f.Value;
+							return detailImageData;
 						}
 					}
 
@@ -1189,7 +1243,7 @@
 				}
 		}
 
-		return string.Empty;
+		return detailImageData;
 	}
 
 	string GetQRCodeLink(Item item)

@@ -803,7 +803,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         _queryOperations.Add(dbRequest);
 
-        var tcs = await taskCompletionSource.Task;
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
         return tcs.FileRequestResult;
     }
 
