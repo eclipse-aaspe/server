@@ -12,16 +12,16 @@ contributions matter greatly and are deeply appreciated:
 
 | Company                                                                                                 | Logo                                                                                                                                                        |
 |---------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [ABB Asea Brown Boveri Ltd](https://new.abb.com/)                                                       | <img src="https://global.abb/content/dam/abb-etc/commons/abb-logo.svg" alt="ABB Logo" style="max-width:250px;">                                             |
-| [Festo Vertrieb GmbH & Co. KG](https://www.festo.com)                                                   | <img src="https://www.festo.com/media/fox/frontend/img/svg/logo_blue.svg" alt="Festo Logo" style="max-width:250px;">                                        |
-| [Fraunhofer-Institut für Angewandte und Integrierte Sicherheit AISEC](https://www.aisec.fraunhofer.de/) | <img src="https://www.aisec.fraunhofer.de/content/dam/aisec/aisec_190x52.gif" alt="Fraunhofer AISEC Logo" style="max-width:250px;">                         |
-| [Das Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/)                                          | <img src="https://www.iosb-ina.fraunhofer.de/content/dam/iosb/iosb-ina/images/Logo%20IOSB-INA.png" alt="Fraunhofer IOSB-INA Logo" style="max-width:250px;"> |
-| [Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/)                              | <img src="https://industrialdigitaltwin.org/wp-content/themes/idta/vendor/images/idta-logo.png" alt="IDTWIN Logo" style="max-width:250px;">                 |
-| [Institut für industrielle Informationstechnik - inIT](https://www.init-owl.de)                         | <img src="https://www.init-owl.de/typo3conf/ext/initowl_layout/Resources/Public/Img/inIT_2020.svg" alt="INIT OWL Logo" style="max-width:250px;">            |
-| [Otto Von Guericke University](https://www.ovgu.de)                                                     | <img src="https://www.ovgu.de/pub/theme/ovgu_min_theme/skin/img/logo_std.png" alt="OVGU Logo" style="max-width:250px;">                                     |
-| [Phoenix Contact GmbH & Co. KG](https://www.phoenixcontact.com/)                                        | <img src="https://static.phoenixcontact.com/common/assets/images/signal-chain.svg" alt="Phoenix Contact Logo" style="max-width:250px;">                     |
-| [TUD Dresden University of Technology](https://tu-dresden.de/)                                          | <img src="https://tu-dresden.de/++theme++tud.theme.webcms2/img/tud-logo.svg" alt="TU Dresden Logo" style="max-width:250px;">                                |
-| [ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/ZHAW_Logo.svg/514px-ZHAW_Logo.svg.png" alt="ZHAW Logo" style="max-width:250px;">        |
+| [ABB Asea Brown Boveri Ltd](https://new.abb.com/)                                                       | <img src="https://global.abb/content/dam/abb-etc/commons/abb-logo.svg" alt="ABB Logo" height="40">                                             |
+| [Festo Vertrieb GmbH & Co. KG](https://www.festo.com)                                                   |                                         |
+| [Fraunhofer-Institut für Angewandte und Integrierte Sicherheit AISEC](https://www.aisec.fraunhofer.de/) | <img src="https://www.aisec.fraunhofer.de/content/dam/aisec/aisec_190x52.gif" alt="Fraunhofer AISEC Logo" height="40">                         |
+| [Das Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/)                                          | <img src="https://www.iosb-ina.fraunhofer.de/content/dam/iosb/iosb-ina/images/Logo%20IOSB-INA.png" alt="Fraunhofer IOSB-INA Logo" height="40"> |
+| [Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/)                              | <img src="https://industrialdigitaltwin.org/wp-content/themes/idta/vendor/images/idta-logo.png" alt="IDTWIN Logo" height="40">                 |
+| [Institut für industrielle Informationstechnik - inIT](https://www.init-owl.de)                         | <img src="https://www.init-owl.de/_assets/b98240e3631bd1ea783947ec89785f58/Img/inIT_2020.svg" alt="INIT OWL Logo" height="40">            |
+| [Otto Von Guericke University](https://www.ovgu.de)                                                     | <img src="https://www.ovgu.de/pub/theme/ovgu_min_theme/skin/img/logo_std.png" alt="OVGU Logo" height="40">                                     |
+| [Phoenix Contact GmbH & Co. KG](https://www.phoenixcontact.com/)                                        | <img src="https://static.phoenixcontact.com/common/assets/images/signal-chain.svg" alt="Phoenix Contact Logo" height="40">                     |
+| [TUD Dresden University of Technology](https://tu-dresden.de/)                                          | <img src="https://tu-dresden.de/tu-dresden/profil/ressourcen/bilder/markenwerte/TUD_Vorschaubilder_Marke_640x430_Logo_2.jpg" alt="TU Dresden Logo" height="40">                                |
+| [ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/ZHAW_Logo.svg/514px-ZHAW_Logo.svg.png" alt="ZHAW Logo" height="60">        |
 
 > **NOTE:** All logos provided here are direct links from the respective company or organization's website and are not stored or used directly on our site. Each logo is licensed under its respective organization. The rights to use these logos within this project are held by the IDTA e.V.; however, the original rights remain with the respective organizations. For any questions or requests regarding additional use, please contact the IDTA at info@idtwin.org.
 
@@ -38,8 +38,9 @@ and success of this project:
 * [dschubertpxc](https://github.com/dschubertpxc) ([Phoenix Contact](https://www.phoenixcontact.com/))
 * [Gerd Brost](mailto:gerd.brost@aisec.fraunhofer.de) ([Fraunhofer AISEC](https://www.aisec.fraunhofer.de/))
 * [Harish Itian](https://github.com/harishpakala) ([Otto Von Guericke University](https://www.ovgu.de))
-* [jjtikekar](https://github.com/jjtikekar) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
+* [Juilee Tikekar](https://github.com/jjtikekar) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Juilee Tikekar](https://github.com/juileetikekar) ([Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/))
+* Lea Blidh ([Phoenix Contact](https://www.phoenixcontact.com/))
 * [Magnus Redeker](https://github.com/magnus-redeker) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Marko Ristin](https://github.com/mristin) ([ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/))
 * [Marta Fullen](https://github.com/martafullen) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
@@ -48,6 +49,13 @@ and success of this project:
 * [Oliver Fries](https://github.com/Freezor) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [SAidta](https://github.com/SAidta) ([Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/))
 * [Sten Gruener](https://github.com/StenGruener) ([ABB Asea Brown Boveri Ltd](https://new.abb.com/))
+* [Wadim Hamm](https://github.com/whamm86) ([Phoenix Contact](https://www.phoenixcontact.com/))
+* Emil Alipiev <10422347+EmilAlipiev@users.noreply.github.com>
+
+
+
+
+
 
 ## You would like to join this list? How can you help the project?
 

@@ -1,6 +1,7 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @inject NavigationManager           NavMan
 @inject Data.AASService             SubmodelService
+@inject AasxTaskService             AasxTaskService
 @using AasCore.Aas3_0;
 @using AasxServer
 @inject IRegistryInitializerService AasRegistryService
@@ -36,7 +37,7 @@
                 _input = "anonymous";
                 AasxCredentials.initAnonymous(cs.credentials);
                 AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
-                AasxTask.resetTimeStamp();
+                AasxTaskService.resetTimeStamp();
             }
 
             var isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
@@ -210,7 +211,7 @@
                                                             watch.Stop();
                                                             Console.WriteLine(watch.ElapsedMilliseconds + " ms");
                                                             _watchText = $"in {((watch.ElapsedMilliseconds + 500) / 1000)}s";
-                                                            AasxTask.resetTimeStamp();
+                                                            AasxTaskService.resetTimeStamp();
                                                             _loading = false;
                                                         }
                                                     }
@@ -313,7 +314,7 @@
                 {
                     string registryURL = registry[ 0 ];
 
-                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                    if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                     {
                         if (replace != "")
                             registryURL = replace;
@@ -326,7 +327,7 @@
                 userPW        = "";
                 urlEdcWrapper = "";
                 replace       = "";
-                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                if (AasxCredentials.get(AasxTaskService, cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                 {
                     if (replace != "")
                         link = replace;

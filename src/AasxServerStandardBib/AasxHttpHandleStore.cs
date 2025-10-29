@@ -1,16 +1,18 @@
-﻿using System;
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
+using System;
 using System.Collections.Generic;
-
-/* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
-
-This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
-
-This source code may use other Open Source software components (see LICENSE.txt).
-*/
-
-
-/* Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the
-specification Details of the Administration Shell. The hereby stated approach is solely the opinion of its author(s). */
 
 namespace AasxRestServerLibrary
 {

@@ -86,7 +86,7 @@ namespace AasSecurity
                                     if (accessPermissionRules != null && accessPermissionRules.Value != null)
                                     {
                                         output.LocalAccessControl = new AccessControl();
-                                        output.LocalAccessControl.AccessPermissionRules = new List<AccessPermissionRule>();
+                                        output.LocalAccessControl.AccessPermissionRules = new List<AasSecurity.Models.AccessPermissionRule>();
                                         foreach (var rule in accessPermissionRules.Value)
                                         {
                                             output.LocalAccessControl.AccessPermissionRules.Add(ParseAccessPermissionRule(env, rule));
@@ -120,12 +120,12 @@ namespace AasSecurity
             return output;
         }
 
-        private static AccessPermissionRule? ParseAccessPermissionRule(AdminShellPackageEnv? env, ISubmodelElement ruleElement)
+        private static Models.AccessPermissionRule? ParseAccessPermissionRule(AdminShellPackageEnv? env, ISubmodelElement ruleElement)
         {
-            AccessPermissionRule? output = null;
+            Models.AccessPermissionRule? output = null;
             if (ruleElement is SubmodelElementCollection rule && rule.Value != null)
             {
-                output = new AccessPermissionRule();
+                output = new Models.AccessPermissionRule();
                 foreach (var submodelElement in rule.Value)
                 {
                     switch (submodelElement.IdShort!.ToLower())
@@ -172,7 +172,7 @@ namespace AasSecurity
             return output;
         }
 
-        private static void CreateSecurityRule(AdminShellPackageEnv? env, AccessPermissionRule? accPermRule)
+        private static void CreateSecurityRule(AdminShellPackageEnv? env, Models.AccessPermissionRule? accPermRule)
         {
             if (accPermRule.TargetSubjectAttributes != null && accPermRule.PermissionsPerObject != null)
             {

@@ -2,6 +2,7 @@
 @inject AASService SubmodelService
 @inject ISecurityService SecService
 @inject IDbRequestHandlerService DbReqService
+@inject AasxTaskService AasxTaskService
 @using Contracts
 @using MW.Blazor
 @using AasCore.Aas3_0
@@ -165,7 +166,10 @@
 							text = text.Replace("%BLAZOR%", Program.externalBlazor);
 							if (text.Contains("%ACCESSRULES%"))
 							{
-								var accessRules = SecService.GetSecurityRules();
+								List<Dictionary<string, string>> condition = [];
+								var accessRules = SecService.GetSecurityRules(out condition);
+								<span><b>AAS API</b></span>
+								<br />
 								<table class="table table-bordered table-sm">
 									<thead>
 										<tr>
@@ -204,6 +208,22 @@
 										}
 									</tbody>
 								</table>
+								<br />
+								<span><b>AAS Data</b></span>
+								<br />
+								@foreach (var dict in condition)
+								{
+									<table class="table table-bordered table-sm">
+										@foreach (var kvp in dict)
+										{
+											<tr>
+												<td>@kvp.Key</td>
+												<td>@kvp.Value</td>
+											</tr>
+										}
+									</table>
+									<br />
+								}
 							}
 							else
 							{
@@ -252,10 +272,11 @@
 						{
 							Program.env[SelectedNode.envIndex].setWrite(true);
 						}
-						else
+
+						if (parentSubmodelId != null && idShortPath != null)
 						{
 							// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-							AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
+							AasxTaskService.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
 						}
 					}
                     }
@@ -341,7 +362,7 @@
 							else
 							{
 								// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-								AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
+								AasxTaskService.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
 							}
 							Program.signalNewData(0);
 						}
@@ -382,14 +403,14 @@
 					}
 				}
 
-                if (SelectedNode is { Tag: AssetAdministrationShell aas })
-                {
-                    var idEncoded = Base64UrlEncoder.Encode(aas.Id);
-                    var pathaas = Program.externalBlazor + "/shells/" + idEncoded;
-                    <span style="color:white;background-color:blue;">URL:</span>
-                    <a href="@pathaas" target="_blank">@pathaas</a>
-                    <br>
-                }
+				if (SelectedNode is { Tag: AssetAdministrationShell aas })
+				{
+					var idEncoded = Base64UrlEncoder.Encode(aas.Id);
+					var pathaas = Program.externalBlazor + "/shells/" + idEncoded;
+					<span style="color:white;background-color:blue;">URL:</span>
+					<a href="@pathaas" target="_blank">@pathaas</a>
+					<br>
+				}
 
 				if (SelectedNode is {Tag: Submodel sm})
 				{
@@ -568,41 +589,47 @@
 			}
 
 			@{
-				var detailsImage = CreateDetailsImage(SelectedNode, out var url, out var svg);
-				if (!string.IsNullOrEmpty(detailsImage))
+				if (SelectedNode != null)
 				{
-					if (!svg)
+					if (SelectedNode.DetailsImage == null)
 					{
-						if (!url)
-						{
-							<br/>
-							<div>
-								<img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-							</div>
-						}
-						else
-						{
-							<br/>
-							<div>
-								<img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
-							</div>
-						}
+						SelectedNode.DetailsImage = CreateDetailsImage(SelectedNode);
 					}
-					else
+					if (!string.IsNullOrEmpty(SelectedNode.DetailsImage.Data))
 					{
-						if (!url)
+						if (!SelectedNode.DetailsImage.IsSvg)
 						{
-							<br/>
-							<div>
-								<img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-							</div>
+							if (!SelectedNode.DetailsImage.IsUrl)
+							{
+								<br/>
+								<div>
+									<img src=data:image;base64,@SelectedNode.DetailsImage.Data style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
+							else
+							{
+								<br/>
+								<div>
+									<img src="@SelectedNode.DetailsImage.Data" style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
 						}
 						else
 						{
-							<br/>
-							<div>
-								<img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
-							</div>
+							if (!SelectedNode.DetailsImage.IsUrl)
+							{
+								<br/>
+								<div>
+									<img src=data:image/svg+xml;base64,@SelectedNode.DetailsImage.Data style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
+							else
+							{
+								<br/>
+								<div>
+									<img src="@SelectedNode.DetailsImage.Data" style="max-width: 50%" alt="Details Image" />
+								</div>
+							}
 						}
 					}
 				}
@@ -761,6 +788,13 @@
 		);
 	}
 
+	public class DetailsImageData
+	{
+		public string Data { get; set; }
+		public bool IsSvg { get; set; }
+		public bool IsUrl { get; set; }
+	}
+
 	public class Item
 	{
 		public string Text { get; set; }
@@ -770,6 +804,9 @@
 		public string Type { get; set; }
 		public object Tag { get; set; }
 		public int envIndex { get; set; }
+
+		public DetailsImageData DetailsImage { get; set; }
+
 	}
 
 	List<Item> Items = null;
@@ -779,7 +816,7 @@
 	private Item SelectedNode { get; set; }
 
 	private string aasID = "";
-    private string smID = "";
+	private string smID = "";
 
 	static ulong dataVersion = 0;
 
@@ -805,10 +842,10 @@
 
 	protected override void OnInitialized()
 	{
-	// OnInitialized() always called twice
+		// OnInitialized() always called twice
 		if (HttpContext == null)
 		{
-		// Pre-rendering logic
+			// Pre-rendering logic
 			SubmodelService.NewDataAvailable += NewData;
 
 			var uri = NavMan.Uri;
@@ -821,19 +858,19 @@
 				{
 					aasID = list;
 				}
-                list = query.Get("sm");
-                if (!list.IsNullOrEmpty())
-                {
-                    smID = list;
-                }
-            }
+				list = query.Get("sm");
+				if (!list.IsNullOrEmpty())
+				{
+					smID = list;
+				}
+			}
 
 			newDataMode = 1;
 			// Program.signalNewData(1);
 		}
 		else
 		{
-		// Actual rendering logic
+			// Actual rendering logic
 		}
 	}
 
@@ -851,9 +888,9 @@
 
 		if (newDataMode == 0 && args is Program.NewDataAvailableArgs)
 		{
-            newDataMode = (args as Program.NewDataAvailableArgs).signalNewDataMode;
-            InvokeAsync(StateHasChanged);
-        }
+			newDataMode = (args as Program.NewDataAvailableArgs).signalNewDataMode;
+			InvokeAsync(StateHasChanged);
+		}
 	}
 
 	bool update = true;
@@ -889,367 +926,439 @@
 				Items = buildTree;
 
 				ExpandedNodes.Clear();
-                selectedNode = null;
-                if (isSelected)
-                {
-                    selectedNode = FindPath(selectedNodePath);
-                }
+				selectedNode = null;
+				if (isSelected)
+				{
+					selectedNode = FindPath(selectedNodePath);
+				}
 
-                if (isExpanded)
-                {
-                    foreach (var path in expandedNodesPath)
-                    {
-                        var p = FindPath(path);
-                        if (p != null)
-                            ExpandedNodes.Add(p);
-                    }
-                }
+				if (isExpanded)
+				{
+					foreach (var path in expandedNodesPath)
+					{
+						var p = FindPath(path);
+						if (p != null)
+							ExpandedNodes.Add(p);
+					}
+				}
 
-                newDataMode = 0;
-                break;
-            // 3 == build new tree, all nodes closed
-            case 3:
+				newDataMode = 0;
+				break;
+			// 3 == build new tree, all nodes closed
+			case 3:
 				var buildTree2 = SubmodelService.BuildTree(aasID, smID);
 				Items = buildTree2;
 
-                ExpandedNodes.Clear();
-                selectedNode = null;
-                newDataMode = 0;
-                break;
-        }
+				ExpandedNodes.Clear();
+				selectedNode = null;
+				newDataMode = 0;
+				break;
+		}
 
-        SelectedNode = selectedNode;
-    }
+		SelectedNode = selectedNode;
+	}
 
-    List<string> GetPath(Item i)
-    {
-        if (i == null)
-            return null;
+	List<string> GetPath(Item i)
+	{
+		if (i == null)
+			return null;
 
-        var upPath = new List<string> {i.Text};
-        while (i.parent != null)
-        {
-            i = (Item) i.parent;
-            upPath.Add(i.Text);
-        }
+		var upPath = new List<string> {i.Text};
+		while (i.parent != null)
+		{
+			i = (Item) i.parent;
+			upPath.Add(i.Text);
+		}
 
-        var downPath = new List<string>();
-        var j = upPath.Count - 1;
-        while (j >= 0)
-        {
-            downPath.Add(upPath[j--]);
-        }
+		var downPath = new List<string>();
+		var j = upPath.Count - 1;
+		while (j >= 0)
+		{
+			downPath.Add(upPath[j--]);
+		}
 
-        return downPath;
-    }
+		return downPath;
+	}
 
-    Item FindPath(List<string> path)
-    {
-        switch (path)
-        {
-            case {Count: > 0}:
-                {
-                    var k = 0;
-                    while (k < Items.Count)
-                    {
-                        var i = Items[k];
-                        if (i.Text != path[0])
-                        {
-                            k++;
-                            continue;
-                        }
+	Item FindPath(List<string> path)
+	{
+		switch (path)
+		{
+			case {Count: > 0}:
+				{
+					var k = 0;
+					while (k < Items.Count)
+					{
+						var i = Items[k];
+						if (i.Text != path[0])
+						{
+							k++;
+							continue;
+						}
 
-                        var j = 0;
-                        var found = i;
-                        while (++j < path.Count)
-                        {
-                            if (i.Children != null)
-                            {
-                                found = i.Children.FirstOrDefault(c => c.Text == path[j]);
-                            }
+						var j = 0;
+						var found = i;
+						while (++j < path.Count)
+						{
+							if (i.Children != null)
+							{
+								found = i.Children.FirstOrDefault(c => c.Text == path[j]);
+							}
 
-                            if (found == null)
-                            {
-                                return null;
-                            }
+							if (found == null)
+							{
+								return null;
+							}
 
-                            i = found;
-                        }
+							i = found;
+						}
 
-                        return found;
-                    }
+						return found;
+					}
 
-                    break;
-                }
-        }
+					break;
+				}
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    void UpdateNode(Item i)
-    {
-        var clist = i.Children as List<Item>;
-        var listIdshort = new List<string>();
-        var done = false;
-        if (i.Tag is Submodel sm)
-        {
-            listIdshort.AddRange(sm.SubmodelElements.Select(smew1 => smew1.IdShort));
+	void UpdateNode(Item i)
+	{
+		var clist = i.Children as List<Item>;
+		var listIdshort = new List<string>();
+		var done = false;
+		if (i.Tag is Submodel sm)
+		{
+			listIdshort.AddRange(sm.SubmodelElements.Select(smew1 => smew1.IdShort));
 
-            done = true;
-        }
+			done = true;
+		}
 
-        if (!done && i.Tag is SubmodelElementCollection smec)
-        {
-            listIdshort.AddRange(smec.Value.Select(smew2 => smew2.IdShort));
+		if (!done && i.Tag is SubmodelElementCollection smec)
+		{
+			listIdshort.AddRange(smec.Value.Select(smew2 => smew2.IdShort));
 
-            done = true;
-        }
+			done = true;
+		}
 
-        if (!done && i.Tag is ISubmodelElement sme)
-        {
-            listIdshort.Add(sme.IdShort);
-            done = true;
-        }
+		if (!done && i.Tag is ISubmodelElement sme)
+		{
+			listIdshort.Add(sme.IdShort);
+			done = true;
+		}
 
-        // check if child name exists in data children idshorts, if not delete
-        if (done)
-        {
-            var toDelete = new List<Item>();
-            if (clist != null)
-            {
-                toDelete.AddRange(clist.Where(c => !listIdshort.Contains(c.Text)));
-            }
-            else
-            {
-                if (!listIdshort.Contains(i.Text))
-                {
-                    toDelete.Add(i);
-                }
-            }
+		// check if child name exists in data children idshorts, if not delete
+		if (done)
+		{
+			var toDelete = new List<Item>();
+			if (clist != null)
+			{
+				toDelete.AddRange(clist.Where(c => !listIdshort.Contains(c.Text)));
+			}
+			else
+			{
+				if (!listIdshort.Contains(i.Text))
+				{
+					toDelete.Add(i);
+				}
+			}
 
-            foreach (var c in toDelete)
-            {
-                if (c.parent is Item parent)
-                {
-                    (parent.Children as List<Item>)?.Remove(c);
-                }
-            }
-        }
+			foreach (var c in toDelete)
+			{
+				if (c.parent is Item parent)
+				{
+					(parent.Children as List<Item>)?.Remove(c);
+				}
+			}
+		}
 
-        // check if data children idshorts exist in child names, if not insert
-        if (clist == null)
-        {
-            return;
-        }
+		// check if data children idshorts exist in child names, if not insert
+		if (clist == null)
+		{
+			return;
+		}
 
-        foreach (var c in clist)
-        {
-            UpdateNode(c);
-        }
-    }
+		foreach (var c in clist)
+		{
+			UpdateNode(c);
+		}
+	}
 
-    public string CreateDetailsImage(Item item, out bool url, out bool svg)
-    {
-        AdminShellNS.AdminShellPackageEnv[] env = null;
-        if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
-        {
-            env = Program.env;
-        }
-        else
-        {
-            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
-            /*
-            svg = false;
-            url = false;
-            return string.Empty;
-            */
-        }
+	public DetailsImageData CreateDetailsImage(Item item)
+	{
+		var detailImageData = new DetailsImageData();
 
-        svg = false;
-        url = false;
+		detailImageData.IsSvg = false;
+		detailImageData.IsUrl = false;
+		detailImageData.Data = string.Empty;
 
-        if (item == null)
-        {
-            return string.Empty;
-        }
+		if (item == null)
+		{
+			return detailImageData;
+		}
 
-        var itemTag = item.Tag;
+		var itemTag = item.Tag;
 
-        switch (itemTag)
-        {
-            case AssetAdministrationShell tag:
-                {
-                    var aas = tag;
-                    lock (Program.changeAasxFile)
-                    {
-                        try
-                        {
-                            {
-                                if (env[item.envIndex] == null)
-                                    return string.Empty;
+		switch (itemTag)
+		{
+			case AssetAdministrationShell tag:
+				{
+					var aas = tag;
+					lock (Program.changeAasxFile)
+					{
+						{
+							var aasId = aasID;
+							if (aasID.IsNullOrEmpty())
+								aasId = aas.Id;
 
-                                using var s = env[item.envIndex].GetLocalThumbnailStream();
-                                if (s != null)
-                                {
-                                    using var m = new System.IO.MemoryStream();
-                                    s.CopyTo(m);
-                                    return Convert.ToBase64String(m.ToArray());
-                                }
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
+							if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
+							{
+								//To be deleted: For in-memory items
+								try
+								{
+									if (Program.env[item.envIndex] != null)
+									{
+										using var ts = Program.env[item.envIndex].GetLocalThumbnailStream(aasID);
+										if (ts != null)
+										{
+											using var m = new System.IO.MemoryStream();
+											ts.CopyTo(m);
+											detailImageData.Data = Convert.ToBase64String(m.ToArray());
+										}
+									}
+								}
+								catch
+								{
+								}
+							}
 
-                    break;
-                }
-            case AasCore.Aas3_0.File f:
-                {
-                    // Test for /aasx/
-                    if (!string.IsNullOrEmpty(f.Value))
-                    {
-                        var split = f.Value.Split(new[] {'/'});
-                        if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
-                        {
-                            split = f.Value.Split(new[] {'.'});
-                            switch (split.Last().ToLower())
-                            {
-                                case "jpg":
-                                case "bmp":
-                                case "png":
-                                case "svg":
-                                    try
-                                    {
-                                        using var s = env[item.envIndex].GetLocalStreamFromPackage(f.Value);
-                                        if (s != null)
-                                        {
-                                            using var m = new System.IO.MemoryStream();
-                                            if (split.Last().ToLower().Equals("svg"))
-                                            {
-                                                svg = true;
-                                            }
+							try
+							{
+								var s = DbReqService.ReadThumbnail(null, aasID).Result;
+								if (s != null)
+								{
+									detailImageData.Data = Convert.ToBase64String(s.Content);
+								}
+							}
+							catch
+							{
+							}
+						}
+					}
 
-                                            s.CopyTo(m);
-                                            return Convert.ToBase64String(m.ToArray());
-                                        }
-                                    }
-                                    catch
-                                    {
-                                    }
-
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            url = true;
-                            return f.Value;
-                        }
-                    }
-
-                    break;
-                }
-        }
-
-        return string.Empty;
-    }
-
-    string GetQRCodeLink(Item item)
-    {
-        if (item == null)
-        {
-            return string.Empty;
-        }
-
-        var prefix = "http://";
+					break;
+				}
+			case AasCore.Aas3_0.File f:
+				{
+					// Test for /aasx/
+					if (!string.IsNullOrEmpty(f.Value))
+					{
+						var split = f.Value.Split(new[] {'/'});
+						if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+						{
+							split = f.Value.Split(new[] {'.'});
+							switch (split.Last().ToLower())
+							{
+								case "jpg":
+								case "bmp":
+								case "png":
+								case "svg":
+									detailImageData.IsSvg = split.Last().ToLower().Equals("svg");
 
 
-        var itemTag = item.Tag;
+									//To be deleted: For in-memory items
+									if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
+									{
+										try
+										{
+											using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+											if (s != null)
+											{
+												using var m = new System.IO.MemoryStream();
 
-        if (itemTag is not AssetAdministrationShell aas)
-        {
-            return string.Empty;
-        }
+												s.CopyTo(m);
+												detailImageData.Data = Convert.ToBase64String(m.ToArray());
+											}
+										}
+										catch
+										{
+										}
+									}
 
-        var asset = aas.AssetInformation;
-        var url = asset.GlobalAssetId;
+									try
+									{
+										var smId = smID;
+										if (smID.IsNullOrEmpty())
+										{
+											var sm = f.Parent as ISubmodel;
+											smId = sm.Id;
+										}
 
-        return url;
-    }
+										var sme = item.Tag as ISubmodelElement;
+										var path = sme.IdShort;
+										var parent = sme.Parent as IReferable;
+										while (parent is not Submodel)
+										{
+											if (parent is ISubmodelElementList parentList)
+											{
+												if (path.Equals(sme.IdShort))
+												{
+													var index = parentList.Value?.IndexOf(sme);
+													path = $"[{index}]";
+												}
 
-    string GetQRCodeImage(Item item)
-    {
-        var itemTag = item.Tag;
+												path = parentList.IdShort + path;
+											}
+											else if (parent.Parent is ISubmodelElementList prevParentList)
+											{
+												var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+												path = $"[{index}].{path}";
+											}
+											else
+											{
+												path = $"{parent.IdShort}.{path}";
+											}
 
-        if (itemTag is not AssetAdministrationShell)
-        {
-            return string.Empty;
-        }
+											parent = (IReferable)parent.Parent;
+										}
 
-        var image = Program.generatedQrCodes[item.Tag];
+										var s = DbReqService.ReadFileByPath(null, null, smId, path).Result;
 
-        return image ?? string.Empty;
-    }
+										if (s != null)
+										{
+											detailImageData.Data = Convert.ToBase64String(s.Content);
+											return detailImageData;
+										}
+									}
+									catch
+									{
+									}
 
-    void CreateQRCodeImage(Item item)
-    {
-        if (item == null)
-        {
-            return;
-        }
+									break;
+							}
+						}
+						else
+						{
+							detailImageData.IsUrl = true;
+							detailImageData.Data = f.Value;
+							return detailImageData;
+						}
+					}
 
-        var prefix = "http://";
+					break;
+				}
+		}
 
-        var itemTag = item.Tag;
+		return detailImageData;
+	}
 
-        if (itemTag is not AssetAdministrationShell aas)
-        {
-            return;
-        }
+	string GetQRCodeLink(Item item)
+	{
+		if (item == null)
+		{
+			return string.Empty;
+		}
 
-        if (Program.generatedQrCodes.ContainsKey(item.Tag))
-        {
-            Program.generatedQrCodes.Remove(item.Tag);
-            return;
-        }
+		var prefix = "http://";
 
-        var asset = aas.AssetInformation;
-        var url = asset.GlobalAssetId;
 
-        var qrGenerator = new QRCodeGenerator();
-        var qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-        var qrCode = new QRCode(qrCodeData);
-        var qrCodeImage = qrCode.GetGraphic(20);
-        using var memory = new System.IO.MemoryStream();
-        qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-        var base64 = Convert.ToBase64String(memory.ToArray());
+		var itemTag = item.Tag;
 
-        Program.generatedQrCodes.Add(item.Tag, base64);
-    }
+		if (itemTag is not AssetAdministrationShell aas)
+		{
+			return string.Empty;
+		}
 
-    bool HasDownloadFile(Item item)
-    {
-        return false;
-    }
+		var asset = aas.AssetInformation;
+		var url = asset.GlobalAssetId;
 
-    string GetLink(Item item, out bool external)
-    {
-        external = false;
+		return url;
+	}
 
-        if (item == null)
-        {
-            return string.Empty;
-        }
+	string GetQRCodeImage(Item item)
+	{
+		var itemTag = item.Tag;
 
-        var itemTag = item.Tag;
+		if (itemTag is not AssetAdministrationShell)
+		{
+			return string.Empty;
+		}
 
-        switch (itemTag)
-        {
-            // case null when Program.envSymbols[item.envIndex] == "L":
-            //    return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
-            case AssetAdministrationShell:
-                return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex))}";
+		var image = Program.generatedQrCodes[item.Tag];
+
+		return image ?? string.Empty;
+	}
+
+	void CreateQRCodeImage(Item item)
+	{
+		if (item == null)
+		{
+			return;
+		}
+
+		var prefix = "http://";
+
+		var itemTag = item.Tag;
+
+		if (itemTag is not AssetAdministrationShell aas)
+		{
+			return;
+		}
+
+		if (Program.generatedQrCodes.ContainsKey(item.Tag))
+		{
+			Program.generatedQrCodes.Remove(item.Tag);
+			return;
+		}
+
+		var asset = aas.AssetInformation;
+		var url = asset.GlobalAssetId;
+
+		var qrGenerator = new QRCodeGenerator();
+		var qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+		var qrCode = new QRCode(qrCodeData);
+		var qrCodeImage = qrCode.GetGraphic(20);
+		using var memory = new System.IO.MemoryStream();
+		qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+		var base64 = Convert.ToBase64String(memory.ToArray());
+
+		Program.generatedQrCodes.Add(item.Tag, base64);
+	}
+
+	bool HasDownloadFile(Item item)
+	{
+		return false;
+	}
+
+	string GetLink(Item item, out bool external)
+	{
+		external = false;
+
+		if (item == null)
+		{
+			return string.Empty;
+		}
+
+		var itemTag = item.Tag;
+
+		switch (itemTag)
+		{
+			// case null when Program.envSymbols[item.envIndex] == "L":
+			//    return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
+			case AssetAdministrationShell:
+				var packageId = Convert.ToString(SelectedNode.envIndex);
+
+				if (packageId == "0" && !aasID.IsNullOrEmpty())
+				{
+					var packageIdsList = DbReqService.ReadPagedAASXPackageIds(null, null, aasID).Result;
+					if (packageIdsList.Any())
+					{
+						packageId = packageIdsList.First().PackageId;
+					}							
+				}
+					
+				return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(packageId)}";
             case File:
             case Property:
                 {

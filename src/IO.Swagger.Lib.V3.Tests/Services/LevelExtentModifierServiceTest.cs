@@ -16,6 +16,7 @@ using IO.Swagger.Lib.V3.Services;
 namespace AasxServerBlazorTests.Services;
 
 using AasCore.Aas3_0;
+using Contracts.LevelExtent;
 using IO.Swagger.Models;
 using JetBrains.Annotations;
 
