@@ -579,6 +579,14 @@ public partial class Query
         expression = expression.Replace("$BOTTOMUP", string.Empty);
         expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
+        var consolidate = false;
+        if (expression.Contains("$CONSOLIDATE"))
+        {
+            messages.Add("$CONSOLIDATE");
+            consolidate = true;
+            expression = expression.Replace("$CONSOLIDATE", string.Empty);
+        }
+
         var lastID = -1;
         var orderBy = false;
         if (expression.Contains("$LASTID="))
@@ -1043,11 +1051,19 @@ public partial class Query
                 iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
                 dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
 
-                // combine tables to a raw sql 
-                rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
-                // table name needed for EXISTS in path search
-                rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
-                comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
+                if (consolidate)
+                {
+                    comTable = CombineTables(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                    var x1 = comTable.Take(10).ToList();
+                }
+                else
+                {
+                    // combine tables to a raw sql 
+                    rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                    // table name needed for EXISTS in path search
+                    rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
+                    comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
+                }
 
                 if (withPathSme && pathAllCondition != null && param != null)
                 {
@@ -1080,10 +1096,13 @@ public partial class Query
             return null;
         }
 
-        // modifiy raw sql
-        var comTableQueryString = comTable.ToQueryString();
-        comTableQueryString = ModifiyRawSQL(comTableQueryString);
-        comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(comTableQueryString);
+        if (!consolidate)
+        {
+            // modifiy raw sql
+            var comTableQueryString = comTable.ToQueryString();
+            comTableQueryString = ModifiyRawSQL(comTableQueryString);
+            comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(comTableQueryString);
+        }
 
         if (resultType == "SubmodelElement")
         {
@@ -1097,53 +1116,70 @@ public partial class Query
         }
 
         var smRawSQL = comTable.ToQueryString();
-        // check for WITH at the beginning
-        if (withExpression)
+        IQueryable<CombinedSMResult> resultSM = null;
+
+        if (!consolidate)
         {
-            var index = smRawSQL.IndexOf("WITH");
-            if (index == 0)
+
+            // check for WITH at the beginning
+            if (withExpression)
             {
-                smRawSQL = smRawSQL.Replace("SELECT *",
-                    $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList"
-                    );
+                var index = smRawSQL.IndexOf("WITH");
+                if (index == 0)
+                {
+                    smRawSQL = smRawSQL.Replace("SELECT *",
+                        $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList"
+                        );
+                }
+                else
+                {
+                    // change the first select
+                    index = smRawSQL.IndexOf("FROM");
+                    if (index == -1)
+                        return null;
+                    var prefix = "";
+                    var split = smRawSQL.Substring(0, index).Split(" ");
+                    smRawSQL = smRawSQL.Substring(index);
+                    if (split[1].Contains("."))
+                    {
+                        split = split[1].Split(".");
+                        prefix = split.First().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
+                    }
+                    /*
+                    var split = smRawSQL.Split(" ");
+                    var count = split.Length;
+                    if (split[count - 2] == "AS")
+                    {
+                        prefix = split.Last().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
+                    }
+                    */
+                    smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, {prefix}SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList \n {smRawSQL}";
+                }
             }
             else
             {
-                // change the first select
-                index = smRawSQL.IndexOf("FROM");
+                var index = smRawSQL.IndexOf("FROM");
                 if (index == -1)
                     return null;
-                var prefix = "";
-                var split = smRawSQL.Substring(0, index).Split(" ");
                 smRawSQL = smRawSQL.Substring(index);
-                if (split[1].Contains("."))
-                {
-                    split = split[1].Split(".");
-                    prefix = split.First().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
-                }
-                /*
-                var split = smRawSQL.Split(" ");
-                var count = split.Length;
-                if (split[count - 2] == "AS")
-                {
-                    prefix = split.Last().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
-                }
-                */
-                smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, {prefix}SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree, null AS MatchPathList \n {smRawSQL}";
+                smRawSQL = $"SELECT DISTINCT s.Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree, null AS MatchPathList \n {smRawSQL}";
             }
+
+            var qp = GetQueryPlan(db, smRawSQL);
+
+            resultSM = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
         }
         else
         {
-            var index = smRawSQL.IndexOf("FROM");
-            if (index == -1)
-                return null;
-            smRawSQL = smRawSQL.Substring(index);
-            smRawSQL = $"SELECT DISTINCT s.Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree, null AS MatchPathList \n {smRawSQL}";
+            resultSM = comTable.Select(c => new CombinedSMResult
+            {
+                SM_Id = c.SM_Id,
+                Identifier = c.SM_Identifier,
+                TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(c.SM_TimeStampTree),
+                MatchPathList = null
+            }).Distinct();
+            var x2 = resultSM.Take(10).ToList();
         }
-
-        var qp = GetQueryPlan(db, smRawSQL);
-
-        var resultSM = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
 
         // select for count
         if (withCount)
@@ -2279,6 +2315,312 @@ public partial class Query
         }
 
         return rawSQL;
+    }
+
+    public class UnifiedValue
+    {
+        public int V_SMEId { get; set; }
+        public string? V_Value { get; set; }
+        public double? V_D_Value { get; set; }
+    }
+
+    private static IQueryable<CombinedSMSMEV> CombineTables(
+        int direction,
+        IQueryable<SMSet> smTable,
+        IQueryable<SMESet> smeTable,
+        IQueryable<SValueSet>? sValueTable,
+        IQueryable<IValueSet>? iValueTable,
+        IQueryable<DValueSet>? dValueTable,
+        bool withParaWithoutValue)
+    {
+        var filteredSM = smTable.Select(sm => new
+        {
+            SM_Id = sm.Id,
+            SM_SemanticId = sm.SemanticId,
+            SM_IdShort = sm.IdShort,
+            SM_DisplayName = sm.DisplayName,
+            SM_Description = sm.Description,
+            SM_Identifier = sm.Identifier,
+            SM_TimeStampTree = sm.TimeStampTree
+        });
+        var x1 = filteredSM.Take(10).ToList();
+
+        var filteredSME = smeTable.Select(sme => new
+        {
+            SME_SMId = sme.SMId,
+            SME_Id = sme.Id,
+            SME_SemanticId = sme.SemanticId,
+            SME_IdShort = sme.IdShort,
+            SME_IdShortPath = sme.IdShortPath,
+            SME_DisplayName = sme.DisplayName,
+            SME_Description = sme.Description,
+            SME_TimeStamp = sme.TimeStamp,
+            SME_TValue = sme.TValue
+        });
+        var x2 = filteredSME.Take(10).ToList();
+
+        IQueryable<UnifiedValue> allValues = null;
+        // }) ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
+        var sValues = sValueTable?.Select(v => new UnifiedValue
+        {
+            V_SMEId = v.SMEId,
+            V_Value = v.Value,
+            V_D_Value = null
+        });
+        if (sValues != null)
+        {
+            allValues = sValues;
+            var x3 = sValues.Take(10).ToList();
+        }
+
+        var iValues = iValueTable?.Select(v => new UnifiedValue
+        {
+            V_SMEId = v.SMEId,
+            V_Value = null,
+            V_D_Value = v.Value
+        });
+        if (iValues != null)
+        {
+            if (allValues == null)
+            {
+                allValues = iValues;
+            }
+            else
+            {
+                allValues = allValues.Concat(iValues);
+            }
+            var x4 = iValues.Take(10).ToList();
+        }
+
+        var dValues = dValueTable?.Select(v => new UnifiedValue
+        {
+            V_SMEId = v.SMEId,
+            V_Value = null,
+            V_D_Value = v.Value
+        });
+        if (dValues != null)
+        {
+            if (allValues == null)
+            {
+                allValues = dValues;
+            }
+            else
+            {
+                allValues = allValues.Concat(dValues);
+            }
+            var x5 = dValues.Take(10).ToList();
+        }
+
+        if (allValues != null)
+        {
+            var x6 = allValues.Take(10).ToList();
+        }
+
+        IQueryable<CombinedSMSMEV> result;
+
+        if (direction == 0) // top-down
+        {
+            var smAndSme = filteredSM.Join(filteredSME,
+                sm => sm.SM_Id,
+                sme => sme.SME_SMId,
+                (sm, sme) => new { sm, sme });
+            var x7 = smAndSme.Take(10).ToList();
+
+            var joined = smAndSme.Join(allValues,
+                sm_sme => sm_sme.sme.SME_Id,
+                v => v.V_SMEId,
+                (sm_sme, v) => new CombinedSMSMEV
+                {
+                    SM_Id = sm_sme.sm.SM_Id,
+                    SM_SemanticId = sm_sme.sm.SM_SemanticId,
+                    SM_IdShort = sm_sme.sm.SM_IdShort,
+                    SM_DisplayName = sm_sme.sm.SM_DisplayName,
+                    SM_Description = sm_sme.sm.SM_Description,
+                    SM_Identifier = sm_sme.sm.SM_Identifier,
+                    SM_TimeStampTree = sm_sme.sm.SM_TimeStampTree,
+
+                    SME_SemanticId = sm_sme.sme.SME_SemanticId,
+                    SME_IdShort = sm_sme.sme.SME_IdShort,
+                    SME_IdShortPath = sm_sme.sme.SME_IdShortPath,
+                    SME_DisplayName = sm_sme.sme.SME_DisplayName,
+                    SME_Description = sm_sme.sme.SME_Description,
+                    SME_Id = sm_sme.sme.SME_Id,
+                    SME_TimeStamp = sm_sme.sme.SME_TimeStamp,
+
+                    V_Value = v.V_Value,
+                    V_D_Value = v.V_D_Value
+                });
+
+            if (withParaWithoutValue)
+            {
+                var withoutValue = smAndSme
+                    .Where(x => string.IsNullOrEmpty(x.sme.SME_TValue))
+                    .Select(x => new CombinedSMSMEV
+                    {
+                        SM_Id = x.sm.SM_Id,
+                        SM_SemanticId = x.sm.SM_SemanticId,
+                        SM_IdShort = x.sm.SM_IdShort,
+                        SM_DisplayName = x.sm.SM_DisplayName,
+                        SM_Description = x.sm.SM_Description,
+                        SM_Identifier = x.sm.SM_Identifier,
+                        SM_TimeStampTree = x.sm.SM_TimeStampTree,
+
+                        SME_SemanticId = x.sme.SME_SemanticId,
+                        SME_IdShort = x.sme.SME_IdShort,
+                        SME_IdShortPath = x.sme.SME_IdShortPath,
+                        SME_DisplayName = x.sme.SME_DisplayName,
+                        SME_Description = x.sme.SME_Description,
+                        SME_Id = x.sme.SME_Id,
+                        SME_TimeStamp = x.sme.SME_TimeStamp,
+
+                        V_Value = null,
+                        V_D_Value = null
+                    });
+
+                result = joined.Concat(withoutValue);
+            }
+            else
+            {
+                result = joined;
+            }
+            var x8 = result.Take(10).ToList();
+        }
+        else if (direction == 1) // middle-out
+        {
+            var smeAndSm = filteredSME.Join(filteredSM,
+                sme => sme.SME_SMId,
+                sm => sm.SM_Id,
+                (sme, sm) => new { sm, sme });
+
+            var safeAllValues = allValues ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
+            var joined = smeAndSm.Join(safeAllValues,
+                sm_sme => sm_sme.sme.SME_Id,
+                v => v.V_SMEId,
+                (sm_sme, v) => new CombinedSMSMEV
+                {
+                    SM_Id = sm_sme.sm.SM_Id,
+                    SM_SemanticId = sm_sme.sm.SM_SemanticId,
+                    SM_IdShort = sm_sme.sm.SM_IdShort,
+                    SM_DisplayName = sm_sme.sm.SM_DisplayName,
+                    SM_Description = sm_sme.sm.SM_Description,
+                    SM_Identifier = sm_sme.sm.SM_Identifier,
+                    SM_TimeStampTree = sm_sme.sm.SM_TimeStampTree,
+
+                    SME_SemanticId = sm_sme.sme.SME_SemanticId,
+                    SME_IdShort = sm_sme.sme.SME_IdShort,
+                    SME_IdShortPath = sm_sme.sme.SME_IdShortPath,
+                    SME_DisplayName = sm_sme.sme.SME_DisplayName,
+                    SME_Description = sm_sme.sme.SME_Description,
+                    SME_Id = sm_sme.sme.SME_Id,
+                    SME_TimeStamp = sm_sme.sme.SME_TimeStamp,
+
+                    V_Value = v.V_Value,
+                    V_D_Value = v.V_D_Value
+                });
+
+            if (withParaWithoutValue)
+            {
+                var withoutValue = smeAndSm
+                    .Where(x => string.IsNullOrEmpty(x.sme.SME_TValue))
+                    .Select(x => new CombinedSMSMEV
+                    {
+                        SM_Id = x.sm.SM_Id,
+                        SM_SemanticId = x.sm.SM_SemanticId,
+                        SM_IdShort = x.sm.SM_IdShort,
+                        SM_DisplayName = x.sm.SM_DisplayName,
+                        SM_Description = x.sm.SM_Description,
+                        SM_Identifier = x.sm.SM_Identifier,
+                        SM_TimeStampTree = x.sm.SM_TimeStampTree,
+
+                        SME_SemanticId = x.sme.SME_SemanticId,
+                        SME_IdShort = x.sme.SME_IdShort,
+                        SME_IdShortPath = x.sme.SME_IdShortPath,
+                        SME_DisplayName = x.sme.SME_DisplayName,
+                        SME_Description = x.sme.SME_Description,
+                        SME_Id = x.sme.SME_Id,
+                        SME_TimeStamp = x.sme.SME_TimeStamp,
+
+                        V_Value = null,
+                        V_D_Value = null
+                    });
+
+                result = joined.Concat(withoutValue);
+            }
+            else
+            {
+                result = joined;
+            }
+        }
+        else // direction == 2, bottom-up
+        {
+            var smeAndValue = allValues.Join(filteredSME,
+                v => v.V_SMEId,
+                sme => sme.SME_Id,
+                (v, sme) => new { v, sme });
+
+            var joined = smeAndValue.Join(filteredSM,
+                sme_v => sme_v.sme.SME_SMId,
+                sm => sm.SM_Id,
+                (sme_v, sm) => new CombinedSMSMEV
+                {
+                    SM_Id = sm.SM_Id,
+                    SM_SemanticId = sm.SM_SemanticId,
+                    SM_IdShort = sm.SM_IdShort,
+                    SM_DisplayName = sm.SM_DisplayName,
+                    SM_Description = sm.SM_Description,
+                    SM_Identifier = sm.SM_Identifier,
+                    SM_TimeStampTree = sm.SM_TimeStampTree,
+
+                    SME_SemanticId = sme_v.sme.SME_SemanticId,
+                    SME_IdShort = sme_v.sme.SME_IdShort,
+                    SME_IdShortPath = sme_v.sme.SME_IdShortPath,
+                    SME_DisplayName = sme_v.sme.SME_DisplayName,
+                    SME_Description = sme_v.sme.SME_Description,
+                    SME_Id = sme_v.sme.SME_Id,
+                    SME_TimeStamp = sme_v.sme.SME_TimeStamp,
+
+                    V_Value = sme_v.v.V_Value,
+                    V_D_Value = sme_v.v.V_D_Value
+                });
+
+            if (withParaWithoutValue)
+            {
+                var withoutValue = filteredSME
+                    .Where(sme => string.IsNullOrEmpty(sme.SME_TValue))
+                    .Join(filteredSM,
+                        sme => sme.SME_SMId,
+                        sm => sm.SM_Id,
+                        (sme, sm) => new CombinedSMSMEV
+                        {
+                            SM_Id = sm.SM_Id,
+                            SM_SemanticId = sm.SM_SemanticId,
+                            SM_IdShort = sm.SM_IdShort,
+                            SM_DisplayName = sm.SM_DisplayName,
+                            SM_Description = sm.SM_Description,
+                            SM_Identifier = sm.SM_Identifier,
+                            SM_TimeStampTree = sm.SM_TimeStampTree,
+
+                            SME_SemanticId = sme.SME_SemanticId,
+                            SME_IdShort = sme.SME_IdShort,
+                            SME_IdShortPath = sme.SME_IdShortPath,
+                            SME_DisplayName = sme.SME_DisplayName,
+                            SME_Description = sme.SME_Description,
+                            SME_Id = sme.SME_Id,
+                            SME_TimeStamp = sme.SME_TimeStamp,
+
+                            V_Value = null,
+                            V_D_Value = null
+                        });
+
+                result = joined.Concat(withoutValue);
+            }
+            else
+            {
+                result = joined;
+            }
+        }
+
+        return result;
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
