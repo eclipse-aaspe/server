@@ -13,23 +13,13 @@
 
 using System.Text.Json.Serialization;
 
-namespace IO.Swagger.Models
+namespace Contracts.LevelExtent
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum LevelEnum
     {
         Deep,
         Core
-    }
-
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum ContentEnum
-    {
-        Normal,
-        Value,
-        Metadata,
-        Reference,
-        Path
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]

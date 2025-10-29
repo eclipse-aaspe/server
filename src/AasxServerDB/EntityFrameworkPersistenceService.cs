@@ -42,20 +42,23 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Jose;
+using Contracts.LevelExtent;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
     private readonly IContractSecurityRules _contractSecurityRules;
     private readonly IEventService _eventService;
     private readonly QueryGrammarJSON _grammar;
+    private readonly ILevelExtentModifierService _levelExtentModifierService;
     private readonly IServiceProvider _serviceProvider;
 
-    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules, IEventService eventService, QueryGrammarJSON grammar)
+    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules, IEventService eventService, QueryGrammarJSON grammar, ILevelExtentModifierService levelExtentModifierService)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _contractSecurityRules = contractSecurityRules ?? throw new ArgumentNullException(nameof(contractSecurityRules));
         _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
         _grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
+        _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
     }
 
     public void InitDB(bool reloadDB, string dataPath)
@@ -260,7 +263,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 dbRequest.Context.Params.PaginationParameters,
                                 dbRequest.Context.Params.AssetIds,
                                 dbRequest.Context.Params.IdShort);
-                        result.AssetAdministrationShells = assetAdministrationShells;
+                        result.ResultData = assetAdministrationShells.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadAssetAdministrationShellById:
                         var found = IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas);
@@ -286,10 +289,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         else
                         {
-                            result.AssetAdministrationShells = new List<IAssetAdministrationShell>
-                            {
-                                aas
-                            };
+                            result.Aas = aas;
                         }
                         break;
                     case DbRequestOp.CreateAssetAdministrationShell:
@@ -304,10 +304,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var addedInDb = CrudOperator.CreateAas(db, body);
                         FileService.CreateThumbnailZipFile(body);
 
-                        result.AssetAdministrationShells = new List<IAssetAdministrationShell>
-                        {
-                            addedInDb
-                        };
+                        result.Aas = addedInDb;
+
                         break;
                     case DbRequestOp.ReplaceAssetAdministrationShellById:
                         found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasDb, out IAssetAdministrationShell _);
@@ -361,10 +359,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
                         }
 
-                        result.References = new List<IReference>
-                    {
-                        createdSubmodelReference
-                    };
+                        result.ResultData = new List<IClass>
+                        {
+                            createdSubmodelReference
+                        };
                         break;
                     case DbRequestOp.DeleteSubmodelReferenceById:
                         found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out _, out _);
@@ -394,7 +392,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 scopedLogger.LogInformation($"No Submodels with requested semanticId found.");
                             }
                         }
-                        result.Submodels = output;
+
+                        result.ResultData = output.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadSubmodelById:
                         found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel);
@@ -420,7 +419,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         else
                         {
-                            result.Submodels = new List<ISubmodel>
+                            result.ResultData = new List<IClass>
                             {
                                 submodel
                             };
@@ -438,7 +437,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         var createdSubmodel = CrudOperator.CreateSubmodel(db, newSubmodel, aasIdentifier);
 
-                        result.Submodels = new List<ISubmodel>
+                        result.ResultData = new List<IClass>
                         {
                             createdSubmodel
                         };
@@ -501,7 +500,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
                         }
 
-                        result.SubmodelElements = submodelElements;
+                        result.ResultData = submodelElements.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadSubmodelElementByPath:
                         var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShort, out SMESet smE);
@@ -510,7 +509,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
                         }
 
-                        result.SubmodelElements = new List<ISubmodelElement>
+                        result.ResultData = new List<IClass>
                         {
                             submodelElement
                         };
@@ -545,7 +544,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
                         }
 
-                        result.SubmodelElements = new List<ISubmodelElement>
+                        result.ResultData = new List<IClass>
                         {
                             createdSubmodelElement
                         };
@@ -731,11 +730,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (queryResult.Shells != null && queryResult.Shells.Count != 0)
                         {
-                            result.AssetAdministrationShells = queryResult.Shells;
+                            result.ResultData = queryResult.Shells.ConvertAll(r => r as IClass);
                         }
                         else if (queryResult.Submodels != null && queryResult.Submodels.Count != 0)
                         {
-                            result.Submodels = queryResult.Submodels;
+                            result.ResultData = queryResult.Submodels.ConvertAll(r => r as IClass);
                         }
                         else
                         {
@@ -745,7 +744,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             }
                             else
                             {
-                                result.SubmodelElements = queryResult.SubmodelElements;
+                                result.ResultData = queryResult.SubmodelElements.ConvertAll(r => r as IClass);
                             }
                         }
                         break;
@@ -817,7 +816,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         //        }
                         //    }
                         //}
-                        result.ConceptDescriptions = conceptDescriptions;
+
+                        foreach (var item in conceptDescriptions)
+                        {
+                            PatchCD(item);
+                        }
+                        result.ResultData = conceptDescriptions.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadConceptDescriptionById:
                         found = IsConceptDescriptionPresent(
@@ -834,6 +838,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Concept Description with id {conceptDescriptionIdentifier} not found.");
                         }
 
+                        PatchCD(conceptDescription);
+
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
@@ -848,7 +854,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         else
                         {
-                            result.ConceptDescriptions = new List<IConceptDescription>
+                            result.ResultData = new List<IClass>
                             {
                                 conceptDescription
                             };
@@ -865,8 +871,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         conceptDescription = CrudOperator.CreateConceptDescription(db, conceptDescriptionBody);
+                        PatchCD(conceptDescription);
 
-                        result.ConceptDescriptions = new List<IConceptDescription>
+                        result.ResultData = new List<IClass>
                         {
                             conceptDescription
                         };
@@ -1011,6 +1018,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
             }
         }
+
+        if (dbRequest.Context.Params.Level != null && result.ResultData != null && result.ResultData.Count > 0)
+        {
+            _levelExtentModifierService.ApplyLevelExtent(result.ResultData, dbRequest.Context.Params.Level.HasValue ? dbRequest.Context.Params.Level.Value : LevelEnum.Deep,
+                dbRequest.Context.Params.Extent.HasValue ? dbRequest.Context.Params.Extent.Value: ExtentEnum.WithoutBlobValue);
+        }
+
         return result;
     }
 
@@ -2266,5 +2280,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
         return String.Empty;
+    }
+
+    private void PatchCD(IConceptDescription cd)
+    {
+        if (cd != null && cd.EmbeddedDataSpecifications != null && cd.EmbeddedDataSpecifications.Count != 0)
+        {
+            for (var i = 0; i < cd.EmbeddedDataSpecifications.Count; i++)
+            {
+                var eds = cd.EmbeddedDataSpecifications[i];
+                if (eds != null && eds.DataSpecification == null)
+                {
+                    eds.DataSpecification = new Reference(ReferenceTypes.ExternalReference, new List<IKey>()
+                            { new Key(KeyTypes.GlobalReference, "https://admin-shell.io/DataSpecificationTemplates/DataSpecificationIec61360/3/0") });
+                }
+            }
+        }
     }
 }

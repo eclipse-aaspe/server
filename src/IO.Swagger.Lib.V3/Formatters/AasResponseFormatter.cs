@@ -43,6 +43,7 @@ using AdminShellNS.Models;
 using Extensions;
 using Contracts.DbRequests;
 using System.Xml;
+using Contracts.LevelExtent;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {

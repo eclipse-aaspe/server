@@ -100,7 +100,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
             //ToDo: Clarify, is this really needed. If yes, what is about security?
             var securityConfig = new SecurityConfig(true,null); 
-            var element           = _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelId, idShortPath).Result;
+            var element           = _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelId, idShortPath, null, null).Result;
             if (element != null)
             {
                 if (element is MultiLanguageProperty)
@@ -177,7 +177,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
                 //ToDo: Clarify, is this really needed. If yes, what is about security?
                 var securityConfig = new SecurityConfig(true, null);
-                var submodelElement = _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath).Result;
+                var submodelElement = _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, null, null).Result;
 
                 if (submodelElement != null)
                 {

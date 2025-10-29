@@ -34,6 +34,7 @@ namespace IO.Swagger.Lib.V3.Formatters
     using System.Text.Json;
     using System.Text.Json.Serialization;
     using AdminShellNS;
+    using Contracts.LevelExtent;
     using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
     public class AasRequestFormatter : InputFormatter

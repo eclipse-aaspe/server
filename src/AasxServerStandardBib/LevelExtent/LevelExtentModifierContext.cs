@@ -11,10 +11,11 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using IO.Swagger.Models;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 {
+    using Contracts.LevelExtent;
+
     public class LevelExtentModifierContext
     {
         public LevelEnum Level { get; set; }

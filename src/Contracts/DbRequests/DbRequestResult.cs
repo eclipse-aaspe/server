@@ -26,16 +26,16 @@ public class DbRequestResult
 {
     public DbRequestPackageEnvResult PackageEnv { get; set; }
 
-    public List<IAssetAdministrationShell> AssetAdministrationShells { get; set; }
-    public List<IReference> References { get; set; }
-    public List<ISubmodel> Submodels { get; set; }
     public List<PackageDescription> PackageDescriptions { get; set; }
+
     public List<string> Ids { get; set; }
 
     public string SignedIdentifier { get; set; }
 
-    public List<ISubmodelElement> SubmodelElements { get; set; }
-    public List<IConceptDescription> ConceptDescriptions { get; set; }
+    public IAssetAdministrationShell Aas { get; set; }
+
+    public List<IClass> ResultData { get; set; }
+
     public AasCore.Aas3_0.Environment Environment { get; set; }
 
     public DbFileRequestResult FileRequestResult { get; set; }
@@ -46,6 +46,7 @@ public class DbRequestResult
 
     // Queries
     public QResult QueryResult { get; set; }
+
     public int Count { get; set; }
 }
 

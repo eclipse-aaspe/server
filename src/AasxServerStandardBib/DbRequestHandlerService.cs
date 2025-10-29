@@ -24,6 +24,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS.Models;
 using Contracts;
 using Contracts.DbRequests;
+using Contracts.LevelExtent;
 using Contracts.Pagination;
 using Contracts.QueryResult;
 using Contracts.Security;
@@ -142,7 +143,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.PackageEnv;
     }
 
-    public async Task<List<IAssetAdministrationShell>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
+    public async Task<List<IClass>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
     {
         var parameters = new DbRequestParams()
         {
@@ -164,7 +165,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
 
-        var aasList = tcs.AssetAdministrationShells;
+        var aasList = tcs.ResultData;
 
         if (aasList.Count == 0)
         {
@@ -197,7 +198,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.AssetAdministrationShells[0];
+        return tcs.Aas;
     }
 
     public async Task<string> ReadAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier)
@@ -242,7 +243,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.AssetAdministrationShells[0];
+        return tcs.Aas;
     }
 
     public async Task<DbRequestResult> ReplaceAssetAdministrationShellById(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body)
@@ -336,7 +337,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier)
+    public async Task<IClass> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier)
     {
         var parameters = new DbRequestParams()
         {
@@ -355,7 +356,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.References[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
@@ -381,13 +382,15 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<List<ISubmodel>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort)
+    public async Task<List<IClass>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort, LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             PaginationParameters = paginationParameters,
             Reference = reqSemanticId,
-            IdShort = idShort
+            IdShort = idShort,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -402,15 +405,17 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels;
+        return tcs.ResultData;
     }
 
-    public async Task<ISubmodel> ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    public async Task<IClass> ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -425,18 +430,21 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels[0];
+        return tcs.ResultData[0];
     }
 
-    public async Task<string> ReadSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, bool isSkipPayload)
+    public async Task<string> ReadSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent, bool isSkipPayload)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
             IsSigned = true,
-            IsSkipPayload = isSkipPayload
+            IsSkipPayload = isSkipPayload,
+            Level = level,
+            Extent = extent
         };
+
 
         var dbRequestContext = new DbRequestContext()
         {
@@ -453,7 +461,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.SignedIdentifier;
     }
 
-    public async Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
+    public async Task<IClass> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
     {
         var parameters = new DbRequestParams()
         {
@@ -473,7 +481,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body)
@@ -594,13 +602,16 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    public async Task<List<IClass>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier
+        ,LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             PaginationParameters = paginationParameters,
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -615,16 +626,18 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.SubmodelElements;
+        return tcs.ResultData;
     }
 
-    public async Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public async Task<IClass> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShort = idShortPath
+            IdShort = idShortPath,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -639,9 +652,9 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.SubmodelElements[0];
+        return tcs.ResultData[0];
     }
-    public async Task<ISubmodelElement> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first)
+    public async Task<IClass> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first)
     {
         var parameters = new DbRequestParams()
         {
@@ -664,7 +677,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.SubmodelElements[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> UpdateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
@@ -976,7 +989,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<List<IConceptDescription>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null)
+    public async Task<List<IClass>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null)
     {
         var parameters = new DbRequestParams()
         {
@@ -998,10 +1011,10 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.ConceptDescriptions;
+        return tcs.ResultData;
     }
 
-    public async Task<IConceptDescription> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier)
+    public async Task<IClass> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier)
     {
         var parameters = new DbRequestParams()
         {
@@ -1020,7 +1033,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.ConceptDescriptions[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<string> ReadConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier)
@@ -1046,7 +1059,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.SignedIdentifier;
     }
 
-    public async Task<IConceptDescription> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body)
+    public async Task<IClass> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body)
     {
         var parameters = new DbRequestParams()
         {
@@ -1065,7 +1078,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.ConceptDescriptions[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> ReplaceConceptDescriptionById(ISecurityConfig securityConfig, IConceptDescription body, string cdIdentifier)
@@ -1352,17 +1365,9 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             return tcs.Ids.ConvertAll(r => r as object);
         }
-        else if (tcs.SubmodelElements != null)
+        else if (tcs.ResultData != null)
         {
-            return tcs.SubmodelElements.ConvertAll(r => r as object);
-        }
-        else if (tcs.Submodels != null)
-        {
-            return tcs.Submodels.ConvertAll(r => r as object);
-        }
-        else if (tcs.AssetAdministrationShells != null)
-        {
-            return tcs.AssetAdministrationShells.ConvertAll(r => r as object);
+            return tcs.ResultData.ConvertAll(r => r as object);
         }
 
         return [];

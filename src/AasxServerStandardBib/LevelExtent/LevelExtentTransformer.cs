@@ -11,9 +11,8 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using IO.Swagger.Lib.V3.Exceptions;
-using IO.Swagger.Models;
 using System.Collections.Generic;
+using Contracts.LevelExtent;
 using static AasCore.Aas3_0.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent

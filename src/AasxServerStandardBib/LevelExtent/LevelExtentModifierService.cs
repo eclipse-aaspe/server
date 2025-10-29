@@ -11,24 +11,21 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasxServerStandardBib.Logging;
-using Contracts;
-using IO.Swagger.Lib.V3.Interfaces;
-using IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent;
-using IO.Swagger.Models;
-using System;
-using System.Collections.Generic;
-
 namespace IO.Swagger.Lib.V3.Services
 {
+    using AasxServerStandardBib.Logging;
+    using Contracts;
+    using Contracts.LevelExtent;
+    using IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent;
+    using System;
+    using System.Collections.Generic;
+
     public class LevelExtentModifierService : ILevelExtentModifierService
     {
-        private readonly IAppLogger<LevelExtentModifierService> _logger;
         LevelExtentTransformer _transformer;
 
-        public LevelExtentModifierService(IAppLogger<LevelExtentModifierService> logger)
+        public LevelExtentModifierService()
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _transformer = new LevelExtentTransformer();
         }
 

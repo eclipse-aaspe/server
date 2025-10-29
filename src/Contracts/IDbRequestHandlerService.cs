@@ -23,6 +23,7 @@ using AasCore.Aas3_0;
 using AdminShellNS;
 using AdminShellNS.Models;
 using Contracts.DbRequests;
+using Contracts.LevelExtent;
 using Contracts.Pagination;
 using Contracts.QueryResult;
 using Contracts.Security;
@@ -31,7 +32,7 @@ public interface IDbRequestHandlerService
 {
     Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier, string submodelIdentifier);
 
-    Task<List<IAssetAdministrationShell>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort);
+    Task<List<IClass>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort);
     Task<IAssetAdministrationShell> ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier);
     Task<string> ReadAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier);
     Task<IAssetAdministrationShell> CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body);
@@ -40,22 +41,22 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier);
     Task<DbRequestResult> DeleteAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier);
 
-    Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier);
+    Task<IClass> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier);
     Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
 
-    Task<List<ISubmodel>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort);
-    Task<ISubmodel> ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
-    Task<string> ReadSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, bool isSkipPayload);
-    Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier);
+    Task<List<IClass>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort, LevelEnum? level, ExtentEnum? extent);
+    Task<IClass> ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent);
+    Task<string> ReadSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent, bool isSkipPayload);
+    Task<IClass> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier);
     Task<DbRequestResult> UpdateSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body);
     Task<DbRequestResult> ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body);
     Task<DbRequestResult> ReplaceSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body, string jws);
     Task<DbRequestResult> DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
     Task<DbRequestResult> DeleteSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
 
-    Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
-    Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
-    Task<ISubmodelElement> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first = true);
+    Task<List<IClass>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent);
+    Task<IClass> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, LevelEnum? level, ExtentEnum? extent);
+    Task<IClass> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first = true);
     Task<DbRequestResult> UpdateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
     Task<DbRequestResult> ReplaceSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
     Task<DbRequestResult> DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
@@ -74,10 +75,10 @@ public interface IDbRequestHandlerService
     Task<List<Events.EventPayload>> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
     Task<DbRequestResult> UpdateEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
 
-    Task<List<IConceptDescription>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null);
-    Task<IConceptDescription> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier);
+    Task<List<IClass>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null);
+    Task<IClass> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier);
     Task<string> ReadConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier);
-    Task<IConceptDescription> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body);
+    Task<IClass> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body);
     Task<DbRequestResult> ReplaceConceptDescriptionById(ISecurityConfig securityConfig, IConceptDescription body, string cdIdentifier);
     Task<DbRequestResult> ReplaceConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier, IConceptDescription body, string jws);
     Task<DbRequestResult> DeleteConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier);

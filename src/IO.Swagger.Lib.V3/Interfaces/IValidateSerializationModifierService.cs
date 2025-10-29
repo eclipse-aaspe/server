@@ -13,6 +13,7 @@
 
 namespace IO.Swagger.Lib.V3.Interfaces;
 
+using Contracts.LevelExtent;
 using IO.Swagger.Models;
 
 public interface IValidateSerializationModifierService

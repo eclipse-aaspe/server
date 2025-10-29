@@ -80,7 +80,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IJsonQueryDeserializer _jsonQueryDeserializer;
     private readonly IMappingService _mappingService;
     private readonly IPathModifierService _pathModifierService;
-    private readonly ILevelExtentModifierService _levelExtentModifierService;
     private readonly IPaginationService _paginationService;
     private readonly IValidateSerializationModifierService _validateModifierService;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
@@ -89,8 +88,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
-                                              IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
-                                              IPaginationService paginationService, IAuthorizationService authorizationService,
+                                              IPathModifierService pathModifierService,
+                                              IPaginationService paginationService,
                                               IValidateSerializationModifierService validateModifierService, IDbRequestHandlerService dbRequestHandlerService,
                                               IMetamodelVerificationService verificationService, IContractSecurityRules contractSecurityRules)
     {
@@ -100,7 +99,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
         _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
         _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
-        _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
         _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(validateModifierService));
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
@@ -575,7 +573,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
+        var result = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier, levelEnum, extentEnum);
+        var submodelElements = result.ConvertAll(x => x as ISubmodelElement);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -599,8 +598,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var smePaginatedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
-        var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, levelEnum, extentEnum);
-        var output = new PagedResult { result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata };
+        var output = new PagedResult { result = smePaginatedList.result, paging_metadata = smePaginatedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -717,7 +715,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
+        var result = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier, null, null);
+        var submodelElements = result.ConvertAll(x => x as ISubmodelElement);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -725,7 +724,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             try
             {
                 var _diff = TimeStamp.StringToDateTime(diff);
-                filtered = filterSubmodelElements(smeList, _diff);
+                filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch
             {
@@ -733,7 +732,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         else
-            filtered = smeList;
+            filtered = submodelElements;
 
         var smePagedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
         var smeMetadataList = _mappingService.Map(smePagedList.result, "metadata");
@@ -780,7 +779,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var submodelElementList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
+        var result = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier, levelEnum, null);
+        var submodelElements = result.ConvertAll(x => x as ISubmodelElement);
 
         var filtered = new List<ISubmodelElement?>();
         if (!diff.IsNullOrEmpty())
@@ -788,7 +788,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             try
             {
                 var _diff = TimeStamp.StringToDateTime(diff);
-                filtered = filterSubmodelElements(submodelElementList, _diff);
+                filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch
             {
@@ -796,11 +796,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         else
-            filtered = submodelElementList;
+            filtered = submodelElements;
 
         var smePaginated = _paginationService.GetPaginatedResult(filtered, paginationParameters);
-        var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum);
-        var smePathList = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
+        var smePathList = _pathModifierService.ToIdShortPath(smePaginated.result.ConvertAll(sme => (ISubmodelElement)sme));
         var output = new PathPagedResult { result = smePathList, paging_metadata = smePaginated.paging_metadata };
         return new ObjectResult(output);
     }
@@ -847,11 +846,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
+        var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier, levelEnum, null);
 
         var smePagedList = _paginationService.GetPaginatedResult(smeList, paginationParameters);
-        var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum);
-        var smeReferences = _referenceModifierService.GetReferenceResult(smeLevelList.ConvertAll(sme => (IReferable)sme));
+        var smeReferences = _referenceModifierService.GetReferenceResult(smePagedList.result.ConvertAll(sme => (IReferable)sme));
         var output = new ReferencePagedResult(smeReferences, smePagedList.paging_metadata);
         return new ObjectResult(output);
     }
@@ -902,7 +900,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
+        var result = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier, levelEnum, extentEnum);
+        var submodelElements = result.ConvertAll(x => x as ISubmodelElement);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -921,8 +920,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             filtered = submodelElements;
 
         var smePagedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
-        var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum, extentEnum);
-        var smeValues = _mappingService.Map(smeLevelExtent, "value");
+        var smeValues = _mappingService.Map(smePagedList.result, "value");
         var output = new ValueOnlyPagedResult() { result = smeValues.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePagedList.paging_metadata };
         return new ObjectResult(output);
     }
@@ -964,11 +962,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
+        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort, levelEnum, extentEnum);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var smLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
-        var output = new PagedResult { result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata };
+        var output = new PagedResult { result = submodelsPagedList.result, paging_metadata = submodelsPagedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -1004,7 +1001,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
+        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort, null, null);
 
         var submodelPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
         var smMetadataList = _mappingService.Map(submodelPagedList.result, "metadata");
@@ -1046,11 +1043,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
+        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort, levelEnum, null);
 
         var submodelPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, levelEnum);
-        var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
+        var submodelsPath = _pathModifierService.ToIdShortPath(submodelPagedList.result.ConvertAll(sm => (ISubmodel)sm));
         var output = new PathPagedResult() { result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata };
         return new ObjectResult(output);
     }
@@ -1089,11 +1085,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var paginationParameters = new PaginationParameters(cursor, limit);
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
-        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
+        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort, levelEnum, null);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum);
-        var smReferences = _referenceModifierService.GetReferenceResult(submodelLevelList.ConvertAll(sm => (IReferable)sm));
+        var smReferences = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
         var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
         return new ObjectResult(output);
     }
@@ -1136,11 +1131,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
+        var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort, levelEnum, extentEnum);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
-        var submodelsValue = _mappingService.Map(submodelLevelList, "value");
+        var submodelsValue = _mappingService.Map(submodelsPagedList.result, "value");
         var output = new ValueOnlyPagedResult { result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata };
         return new ObjectResult(output);
     }
@@ -1327,7 +1321,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier, null, null);
 
         // JUIJUI
         // with HEAD the needed policy shall be returned
@@ -1378,13 +1372,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier, levelEnum, extentEnum);
 
-        var output = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
 
         //TODO:jtikekar @Andreas, in earlier API policy set as getPolicy
         //Response.Headers.Add("policy", policy);
-        return new ObjectResult(output);
+        return new ObjectResult(submodel);
     }
 
     ///// <summary>
@@ -1520,12 +1513,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetSubmodelByIdSigned([FromRoute][Required] string submodelIdentifier
-        /* [FromQuery] string? level, [FromQuery] string? extent*/, [FromQuery] string? skipPayload)
+    public async virtual Task<IActionResult> GetSubmodelByIdSigned([FromRoute][Required] string submodelIdentifier,
+        [FromQuery] string? level, [FromQuery] string? extent, [FromQuery] string? skipPayload)
     {
         //Validate level and extent
-        //var levelEnum = _validateModifierService.ValidateLevel(level);
-        //var extentEnum = _validateModifierService.ValidateExtent(extent);
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+        var extentEnum = _validateModifierService.ValidateExtent(extent);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1544,7 +1537,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             isSkipPayload = true;
         }
 
-        var submodelStringSigned = await _dbRequestHandlerService.ReadSubmodelByIdSigned(securityConfig, null, decodedSubmodelIdentifier, isSkipPayload);
+        var submodelStringSigned = await _dbRequestHandlerService.ReadSubmodelByIdSigned(securityConfig, null, decodedSubmodelIdentifier, levelEnum, extentEnum, isSkipPayload);
 
         if (!submodelStringSigned.IsNullOrEmpty())
         {
@@ -1589,7 +1582,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier, null, null);
 
         var output = _mappingService.Map(submodel, "metadata");
         return new ObjectResult(output);
@@ -1632,10 +1625,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier, levelEnum, null);
 
-        var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum);
-        var output = _pathModifierService.ToIdShortPath(submodelLevel);
+        var output = _pathModifierService.ToIdShortPath(submodel);
         return new ObjectResult(output);
     }
 
@@ -1673,9 +1665,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier, null, null);
 
-        var output = _referenceModifierService.GetReferenceResult(submodel);
+        var output = _referenceModifierService.GetReferenceResult(submodel as IReferable);
         return new ObjectResult(output);
     }
 
@@ -1718,10 +1710,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier, levelEnum, extentEnum);
 
-        var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
-        var output = _mappingService.Map(submodelLevel, "value");
+        var output = _mappingService.Map(submodel, "value");
         return new ObjectResult(output);
     }
 
@@ -1759,7 +1750,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, null, null);
         var output = _mappingService.Map(submodelElement, "metadata");
 
         return new ObjectResult(output);
@@ -1804,10 +1795,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
         //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, levelEnum, null);
 
-        var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum);
-        var output = _pathModifierService.ToIdShortPath(submodelElementLevel);
+        var output = _pathModifierService.ToIdShortPath(submodelElement);
         return new ObjectResult(output);
     }
 
@@ -1848,9 +1838,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, null, null);
 
-        var output = _referenceModifierService.GetReferenceResult(submodelElement);
+        var output = _referenceModifierService.GetReferenceResult(submodelElement as IReferable);
         return new ObjectResult(output);
     }
 
@@ -1912,10 +1902,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         //}
         //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, levelEnum, extentEnum);
 
-        var output = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
-        return new ObjectResult(output);
+        return new ObjectResult(submodelElement);
     }
 
     /// <summary>
@@ -1959,10 +1948,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, levelEnum, extentEnum);
 
-        var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
-        var output = _mappingService.Map(submodelElementLevel, "value");
+        var output = _mappingService.Map(submodelElement, "value");
         return new ObjectResult(output);
     }
 

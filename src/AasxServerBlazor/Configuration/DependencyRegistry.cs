@@ -33,6 +33,7 @@ using AasxServerDB;
 using AasxServerStandardBib;
 using Contracts;
 using Contracts.DbRequests;
+using Contracts.LevelExtent;
 using IO.Swagger.Models;
 
 public static class DependencyRegistry
@@ -53,7 +54,6 @@ public static class DependencyRegistry
         services.AddTransient<IAasDescriptorWritingService, AasDescriptorWritingService>();
         services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
-        services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
         services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
         services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();

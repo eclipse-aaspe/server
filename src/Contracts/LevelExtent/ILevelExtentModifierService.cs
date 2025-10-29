@@ -11,12 +11,12 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using IO.Swagger.Models;
 using System.Collections.Generic;
 
-namespace IO.Swagger.Lib.V3.Interfaces;
+namespace Contracts.LevelExtent;
 
 using System;
+using AasCore.Aas3_0;
 
 /// <summary>
 /// Service to apply level and extent modifications to instances of IClass.

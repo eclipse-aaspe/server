@@ -83,6 +83,43 @@ namespace IO.Swagger.Controllers
             _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         }
 
+
+        /// <summary>
+        /// Deletes a Concept Description 
+        /// </summary>
+        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Concept Description deleted successfully</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpDelete]
+        [Route("concept-descriptions/{cdIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("DeleteConceptDescriptionById")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public async virtual Task<IActionResult> DeleteConceptDescriptionById([FromRoute][Required] string cdIdentifier)
+        {
+            var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
+            if (decodedCdIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedCdIdentifier)} is null");
+            }
+            _logger.LogInformation($"Received request to delete concept description with id {decodedCdIdentifier}");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            await _dbRequestHandlerService.DeleteConceptDescriptionById(securityConfig, decodedCdIdentifier);
+
+            return NoContent();
+        }
+
+
         /// <summary>
         /// Deletes the sign file of a Concept Description 
         /// </summary>
@@ -118,22 +155,6 @@ namespace IO.Swagger.Controllers
             return NoContent();
         }
 
-        private static void PatchCD(IConceptDescription cd)
-        {
-            if (cd != null && cd.EmbeddedDataSpecifications != null && cd.EmbeddedDataSpecifications.Count != 0)
-            {
-                for (var i = 0; i < cd.EmbeddedDataSpecifications.Count; i++)
-                {
-                    var eds = cd.EmbeddedDataSpecifications[i];
-                    if (eds != null && eds.DataSpecification == null)
-                    {
-                        eds.DataSpecification = new Reference(ReferenceTypes.ExternalReference, new List<IKey>()
-                            { new Key(KeyTypes.GlobalReference, "https://admin-shell.io/DataSpecificationTemplates/DataSpecificationIec61360/3/0") });
-                    }
-                }
-            }
-        }
-
         /// <summary>
         /// Returns all Concept Descriptions
         /// </summary>
@@ -162,27 +183,10 @@ namespace IO.Swagger.Controllers
             var reqIsCaseOf = _jsonQueryDeserializer.DeserializeReference("isCaseOf", isCaseOf);
             var reqDataSpecificationRef = _jsonQueryDeserializer.DeserializeReference("dataSpecificationRef", dataSpecificationRef);
 
-            var cdList = new List<IConceptDescription>();
-
             var paginationParameters = new PaginationParameters(cursor, limit);
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            cdList = await _dbRequestHandlerService.ReadPagedConceptDescriptions(paginationParameters, securityConfig, idShort, reqIsCaseOf, reqDataSpecificationRef);
-
-            foreach (var cd in cdList)
-            {
-                PatchCD(cd);
-            }
-
-            var authResult = _authorizationService.AuthorizeAsync(User, cdList, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                var failedReason = authResult.Failure.FailureReasons.First();
-                if (failedReason != null)
-                {
-                    throw new NotAllowed(failedReason.Message);
-                }
-            }
+            var cdList = await _dbRequestHandlerService.ReadPagedConceptDescriptions(paginationParameters, securityConfig, idShort, reqIsCaseOf, reqDataSpecificationRef);
 
             var output = _paginationService.GetPaginatedResult(cdList, new PaginationParameters(cursor, limit));
             return new ObjectResult(output);
@@ -216,18 +220,6 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
-
-            PatchCD(output);
-
-            var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                var failedReason = authResult.Failure.FailureReasons.First();
-                if (failedReason != null)
-                {
-                    throw new NotAllowed(failedReason.Message);
-                }
-            }
 
             return new ObjectResult(output);
         }

@@ -131,9 +131,7 @@ public class FileService
 
             if (!Directory.Exists(certFilesTypeFolderPath))
                 Directory.CreateDirectory(certFilesTypeFolderPath);
-
         }
-
 
         var path = Path.Combine(filesPath, "_unpacked" + ".zip");
 

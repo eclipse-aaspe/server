@@ -15,10 +15,12 @@ namespace Contracts.DbRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using Contracts.Pagination;
+using Contracts.LevelExtent;
 
 public class DbRequestParams
 {
@@ -45,6 +47,9 @@ public class DbRequestParams
 
     //Metadata
     public IPaginationParameters PaginationParameters { get; set; }
+    public LevelEnum? Level { get; set; } = null;
+    public ExtentEnum? Extent { get; set; } = null;
+
     public bool First { get; set; }
     public bool IncludeCD { get; set; }
     public bool CreateAASXPackage { get; set; }

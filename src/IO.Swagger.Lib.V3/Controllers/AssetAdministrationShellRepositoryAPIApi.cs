@@ -70,7 +70,6 @@ namespace IO.Swagger.Controllers
         private readonly IReferenceModifierService _referenceModifierService;
         private readonly IMappingService _mappingService;
         private readonly IPathModifierService _pathModifierService;
-        private readonly ILevelExtentModifierService _levelExtentModifierService;
         private readonly IPaginationService _paginationService;
         private readonly IValidateSerializationModifierService _validateModifierService;
         private readonly IIdShortPathParserService _idShortPathParserService;
@@ -85,7 +84,6 @@ namespace IO.Swagger.Controllers
         /// <param name="referenceModifierService"></param>
         /// <param name="mappingService"></param>
         /// <param name="pathModifierService"></param>
-        /// <param name="levelExtentModifierService"></param>
         /// <param name="paginationService"></param>
         /// <param name="validateModifierService"></param>
         /// <param name="idShortPathParserService"></param>
@@ -94,8 +92,7 @@ namespace IO.Swagger.Controllers
         /// <exception cref="ArgumentNullException"></exception>
         public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService,
                                                                   IReferenceModifierService referenceModifierService,
-                                                                  IMappingService mappingService, IPathModifierService pathModifierService,
-                                                                  ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
+                                                                  IMappingService mappingService, IPathModifierService pathModifierService, IPaginationService paginationService,
                                                                   IValidateSerializationModifierService validateModifierService,
                                                                   IIdShortPathParserService idShortPathParserService, IDbRequestHandlerService dbRequestHandlerService,
                                                                   IMetamodelVerificationService verificationService)
@@ -105,9 +102,8 @@ namespace IO.Swagger.Controllers
             _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
             _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
             _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
-            _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
             _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
-            _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(_validateModifierService));
+            _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(validateModifierService));
             _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
             _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
             _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
@@ -573,7 +569,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public async virtual Task<IActionResult> GetAllSubmodelElementsAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery]string? extent)
+        public async virtual Task<IActionResult> GetAllSubmodelElementsAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, [FromQuery]int? limit,
+            [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery]string? extent)
         {
             //Validate level and extent
             var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -597,7 +594,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get all the submodel elements from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSmIdentifier);
+            var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSmIdentifier, levelEnum, extentEnum);
 
             /*
             if (!Program.noSecurity && submodelElements.Count > 0)
@@ -611,8 +608,7 @@ namespace IO.Swagger.Controllers
             */
 
             var smePaginated = _paginationService.GetPaginatedResult(submodelElements, paginationParameters);
-            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum, extentEnum);
-            var output = new PagedResult() { result = smeLevelList.ConvertAll(sme => sme), paging_metadata = smePaginated.paging_metadata };
+            var output = new PagedResult() { result = smePaginated.result, paging_metadata = smePaginated.paging_metadata };
             return new ObjectResult(output);
         }
 
@@ -659,7 +655,7 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
+            var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, null, null);
 
             _logger.LogInformation($"Received request to get metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
 
@@ -719,13 +715,12 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var submodelElementsList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodelElementsList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, levelEnum, extentEnum);
 
             _logger.LogInformation($"Received a request to get path for all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
 
             var smePaginated = _paginationService.GetPaginatedResult(submodelElementsList, new PaginationParameters(cursor, limit));
-            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum, extentEnum);
-            var smePathList = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
+            var smePathList = _pathModifierService.ToIdShortPath(smePaginated.result.ConvertAll(sme => (ISubmodelElement)sme));
             var output = new PathPagedResult { result = smePathList, paging_metadata = smePaginated.paging_metadata };
             return new ObjectResult(output);
         }
@@ -777,14 +772,13 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
+            var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, levelEnum, null);
 
             _logger.LogInformation($"Received request to get references of all the submodel elements from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
             // TODO (jtikekar, 2023-09-04): check performace imapct due to ConvertAll
             var smePaginated = _paginationService.GetPaginatedResult(smeList, paginationParameters);
-            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum);
-            var smeReferenceList = _referenceModifierService.GetReferenceResult(smeLevelList.ConvertAll(sme => (IReferable)sme));
+            var smeReferenceList = _referenceModifierService.GetReferenceResult(smePaginated.result.ConvertAll(sme => (IReferable)sme));
             var output = new ReferencePagedResult(smeReferenceList, smePaginated.paging_metadata);
             return new ObjectResult(output);
         }
@@ -815,7 +809,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public async virtual Task<IActionResult> GetAllSubmodelElementsValueOnlyAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, 
+        public async virtual Task<IActionResult> GetAllSubmodelElementsValueOnlyAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier,
 		[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
         {
             //Validate level 
@@ -836,14 +830,13 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, levelEnum, null);
 
             _logger.LogInformation($"Received request to get the value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
 
             var smePaginated = _paginationService.GetPaginatedResult(submodelElements, paginationParameters);
 
-            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, levelEnum);
-            var smeValueList = _mappingService.Map(smeLevelList, "value");
+            var smeValueList = _mappingService.Map(smePaginated.result, "value");
             var output = new ValueOnlyPagedResult { result = smeValueList.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePaginated.paging_metadata };
             return new ObjectResult(output);
         }
@@ -907,7 +900,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var paginationParameters = new PaginationParameters(cursor, limit);
 
-            var aas = await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
+            var aas = await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier) as IAssetAdministrationShell;
             var smReferences = new List<IReference>();
             if (aas != null)
             {
@@ -962,17 +955,6 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var aas = await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
 
-            /* Turn off AAS security to have existing demos run
-            var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                var failedReasons = authResult.Failure.FailureReasons;
-                if (failedReasons != null && failedReasons.Any())
-                {
-                    throw new NotAllowed(failedReasons.First().Message);
-                }
-            }
-            */
             return new ObjectResult(aas);
         }
 
@@ -1315,20 +1297,8 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
-            //var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            //if (!authResult.Succeeded)
-            //{
-            //    var failedReasons = authResult.Failure.FailureReasons;
-            //    var authorizationFailureReasons = failedReasons.ToList();
-            //    if (authorizationFailureReasons.Count != 0)
-            //    {
-            //        throw new NotAllowed(authorizationFailureReasons.First().Message);
-            //    }
-            //}
-
-            var output = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
-            return new ObjectResult(output);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, levelEnum, extentEnum);
+            return new ObjectResult(submodel);
         }
 
         /// <summary>
@@ -1356,12 +1326,12 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public async virtual Task<IActionResult> GetSubmodelByIdSigned([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier
-       /*, [FromQuery] string? level, [FromQuery] string? extent*/, [FromQuery] string? skipPayload)
+        public async virtual Task<IActionResult> GetSubmodelByIdSigned([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] string? level, [FromQuery] string? extent, [FromQuery] string? skipPayload)
         {
-            ////Validate level and extent
-            //var levelEnum = _validateModifierService.ValidateLevel(level);
-            //var extentEnum = _validateModifierService.ValidateExtent(extent);
+            //Validate level and extent
+            var levelEnum = _validateModifierService.ValidateLevel(level);
+            var extentEnum = _validateModifierService.ValidateExtent(extent);
 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1386,7 +1356,7 @@ namespace IO.Swagger.Controllers
                 isSkipPayload = true;
             }
 
-            var submodelStringSigned = await _dbRequestHandlerService.ReadSubmodelByIdSigned(securityConfig, aasIdentifier, decodedSubmodelIdentifier, isSkipPayload);
+            var submodelStringSigned = await _dbRequestHandlerService.ReadSubmodelByIdSigned(securityConfig, aasIdentifier, decodedSubmodelIdentifier, levelEnum, extentEnum, isSkipPayload);
 
             if (!submodelStringSigned.IsNullOrEmpty())
             {
@@ -1440,16 +1410,7 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
-            //var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            //if (!authResult.Succeeded)
-            //{
-            //    var failedReason = authResult.Failure.FailureReasons.First();
-            //    if (failedReason != null)
-            //    {
-            //        throw new NotAllowed(failedReason.Message);
-            //    }
-            //}
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, null, null);
 
             var output = _mappingService.Map(submodel, "metadata");
             return new ObjectResult(output);
@@ -1501,7 +1462,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get path of a submodel with is {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, levelEnum, null);
             //var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             //if (!authResult.Succeeded)
             //{
@@ -1512,8 +1473,7 @@ namespace IO.Swagger.Controllers
             //    }
             //}
 
-            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum);
-            var output = _pathModifierService.ToIdShortPath(submodelLevel);
+            var output = _pathModifierService.ToIdShortPath(submodel);
             return new ObjectResult(output);
         }
 
@@ -1558,18 +1518,9 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
-            //var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            //if (!authResult.Succeeded)
-            //{
-            //    var failedReason = authResult.Failure.FailureReasons.First();
-            //    if (failedReason != null)
-            //    {
-            //        throw new NotAllowed(failedReason.Message);
-            //    }
-            //}
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, null, null);
 
-            var output = _referenceModifierService.GetReferenceResult(submodel);
+            var output = _referenceModifierService.GetReferenceResult(submodel as IReferable);
             return new ObjectResult(output);
         }
 
@@ -1621,19 +1572,9 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the value of submodel with id {decodedSubmodelIdentifier} from the aas with id {decodedAasIdentifier}");
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
-            //var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            //if (!authResult.Succeeded)
-            //{
-            //    var failedReason = authResult.Failure.FailureReasons.First();
-            //    if (failedReason != null)
-            //    {
-            //        throw new NotAllowed(failedReason.Message);
-            //    }
-            //}
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, levelEnum, extentEnum);
 
-            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
-            var output = _mappingService.Map(submodelLevel, "value");
+            var output = _mappingService.Map(submodel, "value");
             return new ObjectResult(output);
         }
 
@@ -1664,7 +1605,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public async virtual Task<IActionResult> GetSubmodelElementByPathAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, 
-		[FromRoute][Required]string idShortPath, [FromQuery]string? level, [FromQuery]string? extent)
+		    [FromRoute][Required]string idShortPath, [FromQuery]string? level, [FromQuery]string? extent)
         {
             //Validate level and extent
             var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1689,10 +1630,9 @@ namespace IO.Swagger.Controllers
 
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, levelEnum, extentEnum);
 
-            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
-            return new ObjectResult(smeLevel);
+            return new ObjectResult(submodelElement);
         }
 
         /// <summary>
@@ -1741,7 +1681,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, null, null);
 
             var output = _mappingService.Map(submodelElement, "metadata");
             return new ObjectResult(output);
@@ -1795,7 +1735,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, levelEnum, null);
 
             var output = _pathModifierService.ToIdShortPath(submodelElement);
             return new ObjectResult(output);
@@ -1828,7 +1768,9 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual async Task<IActionResult> GetSubmodelElementByPathReferenceAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, 
 		[FromRoute][Required]string idShortPath, [FromQuery]string? level)
-        { 
+        {
+            var levelEnum = _validateModifierService.ValidateLevel(level);
+
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1837,11 +1779,11 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, levelEnum, null);
 
             //Level should not be applicable
 
-            var output = _referenceModifierService.GetReferenceResult(submodelElement);
+            var output = _referenceModifierService.GetReferenceResult(submodelElement as IReferable);
             return new ObjectResult(output);
         }
 
@@ -1897,10 +1839,9 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, levelEnum, extentEnum);
 
-            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
-            var output = _mappingService.Map(smeLevel, "value");
+            var output = _mappingService.Map(submodelElement, "value");
             return new ObjectResult(output);
         }
 
