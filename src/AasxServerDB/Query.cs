@@ -665,6 +665,7 @@ public partial class Query
         }
 
         // restrictions in which tables 
+        var restrictAAS = false;
         var restrictSM = false;
         var restrictSME = false;
         var restrictSValue = false;
@@ -673,6 +674,7 @@ public partial class Query
 
         // restrict all tables seperate
         IQueryable<CombinedSMSMEV> comTable = null;
+        IQueryable<AASSet>? aasTable;
         IQueryable<SMSet> smTable;
         IQueryable<SMESet> smeTable;
         IQueryable<SValueSet>? sValueTable;
@@ -685,7 +687,8 @@ public partial class Query
         {
             string ? rawSQLEx;
             // check restrictions
-            restrictSM = conditionsExpression.TryGetValue("sm", out var value) && value != "" && value != "true";
+            restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value != "true";
+            restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value != "true";
             restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value != "true";
             restrictSValue = conditionsExpression.TryGetValue("svalue", out value) && value != "" && value != "true";
             restrictNValue = conditionsExpression.TryGetValue("nvalue", out value) && value != "" && value != "true";
@@ -1039,13 +1042,10 @@ public partial class Query
             if (!skip)
             {
                 // restrict all tables seperate
+                aasTable = db.AASSets;
+                aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : null;
                 smTable = db.SMSets;
                 smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
-                if (smRefId != null)
-                {
-                    var smRefIdList = smRefId.ToList();
-                    smTable = smTable.Where(s => smRefIdList.Contains(s.Id));
-                }
                 smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
                 sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
                 iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
@@ -1053,11 +1053,17 @@ public partial class Query
 
                 if (consolidate)
                 {
-                    comTable = CombineTables(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
-                    var x1 = comTable.Take(10).ToList();
+                    comTable = CombineTables(db, direction, aasTable, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                    // var x1 = comTable.Take(10).ToList();
                 }
                 else
                 {
+                    if (smRefId != null)
+                    {
+                        var smRefIdList = smRefId.ToList();
+                        smTable = smTable.Where(s => smRefIdList.Contains(s.Id));
+                    }
+
                     // combine tables to a raw sql 
                     rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
                     // table name needed for EXISTS in path search
@@ -1178,7 +1184,7 @@ public partial class Query
                 TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(c.SM_TimeStampTree),
                 MatchPathList = null
             }).Distinct();
-            var x2 = resultSM.Take(10).ToList();
+            // var x2 = resultSM.Take(10).ToList();
         }
 
         // select for count
@@ -2325,7 +2331,9 @@ public partial class Query
     }
 
     private static IQueryable<CombinedSMSMEV> CombineTables(
+        AasContext db,
         int direction,
+        IQueryable<AASSet>? aasTable,
         IQueryable<SMSet> smTable,
         IQueryable<SMESet> smeTable,
         IQueryable<SValueSet>? sValueTable,
@@ -2333,6 +2341,15 @@ public partial class Query
         IQueryable<DValueSet>? dValueTable,
         bool withParaWithoutValue)
     {
+        if (aasTable != null)
+        {
+            smTable = smTable
+                .Where(sm =>
+                    db.SMRefSets.Any(r =>
+                        r.Identifier == sm.Identifier &&
+                        aasTable.Any(a => a.Id == r.AASId)));
+        }
+
         var filteredSM = smTable.Select(sm => new
         {
             SM_Id = sm.Id,
@@ -2343,7 +2360,7 @@ public partial class Query
             SM_Identifier = sm.Identifier,
             SM_TimeStampTree = sm.TimeStampTree
         });
-        var x1 = filteredSM.Take(10).ToList();
+        // var x1 = filteredSM.Take(10).ToList();
 
         var filteredSME = smeTable.Select(sme => new
         {
@@ -2357,7 +2374,7 @@ public partial class Query
             SME_TimeStamp = sme.TimeStamp,
             SME_TValue = sme.TValue
         });
-        var x2 = filteredSME.Take(10).ToList();
+        // var x2 = filteredSME.Take(10).ToList();
 
         IQueryable<UnifiedValue> allValues = null;
         // }) ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
@@ -2370,7 +2387,7 @@ public partial class Query
         if (sValues != null)
         {
             allValues = sValues;
-            var x3 = sValues.Take(10).ToList();
+            // var x3 = sValues.Take(10).ToList();
         }
 
         var iValues = iValueTable?.Select(v => new UnifiedValue
@@ -2389,7 +2406,7 @@ public partial class Query
             {
                 allValues = allValues.Concat(iValues);
             }
-            var x4 = iValues.Take(10).ToList();
+            // var x4 = iValues.Take(10).ToList();
         }
 
         var dValues = dValueTable?.Select(v => new UnifiedValue
@@ -2408,12 +2425,13 @@ public partial class Query
             {
                 allValues = allValues.Concat(dValues);
             }
-            var x5 = dValues.Take(10).ToList();
+            // var x5 = dValues.Take(10).ToList();
         }
 
+        var safeAllValues = allValues ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
         if (allValues != null)
         {
-            var x6 = allValues.Take(10).ToList();
+            // var x6 = allValues.Take(10).ToList();
         }
 
         IQueryable<CombinedSMSMEV> result;
@@ -2424,9 +2442,9 @@ public partial class Query
                 sm => sm.SM_Id,
                 sme => sme.SME_SMId,
                 (sm, sme) => new { sm, sme });
-            var x7 = smAndSme.Take(10).ToList();
+            // var x7 = smAndSme.Take(10).ToList();
 
-            var joined = smAndSme.Join(allValues,
+            var joined = smAndSme.Join(safeAllValues,
                 sm_sme => sm_sme.sme.SME_Id,
                 v => v.V_SMEId,
                 (sm_sme, v) => new CombinedSMSMEV
@@ -2483,7 +2501,7 @@ public partial class Query
             {
                 result = joined;
             }
-            var x8 = result.Take(10).ToList();
+            // var x8 = result.Take(10).ToList();
         }
         else if (direction == 1) // middle-out
         {
@@ -2492,7 +2510,6 @@ public partial class Query
                 sm => sm.SM_Id,
                 (sme, sm) => new { sm, sme });
 
-            var safeAllValues = allValues ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
             var joined = smeAndSm.Join(safeAllValues,
                 sm_sme => sm_sme.sme.SME_Id,
                 v => v.V_SMEId,
@@ -2553,7 +2570,7 @@ public partial class Query
         }
         else // direction == 2, bottom-up
         {
-            var smeAndValue = allValues.Join(filteredSME,
+            var smeAndValue = safeAllValues.Join(filteredSME,
                 v => v.V_SMEId,
                 sme => sme.SME_Id,
                 (v, sme) => new { v, sme });
