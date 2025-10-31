@@ -138,7 +138,7 @@ public partial class Query
             {
                 text += "totalCount";
             }
-            text += "/" + db.SMSets.Count() + ": " + qResult.Count + " queried";
+            text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
             Console.WriteLine(text);
             qResult.Messages.Add(text);
 
@@ -388,7 +388,7 @@ public partial class Query
                 text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
                 text = "SMs found ";
-                text += "/" + db.SMSets.Count() + ": " + qResult.Count + " queried";
+                text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
                 Console.WriteLine(text);
 
                 if (resultType == "AssetAdministrationShell")
@@ -1053,7 +1053,12 @@ public partial class Query
                     iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : null;
                     dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : null;
 
-                    comTable = CombineTables(db, direction, aasTable, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                    var conditionAll = "true";
+                    if (conditionsExpression.TryGetValue("all-aas", out _))
+                    {
+                        conditionAll = conditionsExpression["all-aas"];
+                    }
+                    comTable = CombineTables(db, aasTable, smTable, smeTable, sValueTable, iValueTable, dValueTable, conditionAll);
                     // var x1 = comTable.Take(10).ToList();
                 }
                 else
@@ -2370,14 +2375,13 @@ public partial class Query
 
     private static IQueryable<CombinedSMSMEV> CombineTables(
         AasContext db,
-        int direction,
         IQueryable<AASSet>? aasTable,
         IQueryable<SMSet> smTable,
         IQueryable<SMESet> smeTable,
         IQueryable<SValueSet>? sValueTable,
         IQueryable<IValueSet>? iValueTable,
         IQueryable<DValueSet>? dValueTable,
-        bool withParaWithoutValue)
+        string conditionAll = "true")
     {
         IQueryable<joinAll>? result = null;
 
@@ -2504,6 +2508,8 @@ public partial class Query
         // var x1 = result.Take(10).ToList();
         // var smRawSQL = result.ToQueryString();
         // var qp = GetQueryPlan(db, smRawSQL);
+
+        result = result.Where(conditionAll);
 
         var combined = result.Select(r => new CombinedSMSMEV
         {
@@ -2684,6 +2690,8 @@ public partial class Query
                                         {
                                             QueryGrammarJSON.createExpression("all", le);
                                             conditions[i].Add("all", le._expression);
+                                            QueryGrammarJSON.createExpression("all-aas", le);
+                                            conditions[i].Add("all-aas", le._expression);
                                             QueryGrammarJSON.createExpression("aas.", le);
                                             conditions[i].Add("aas.", le._expression);
                                             QueryGrammarJSON.createExpression("sm.", le);
@@ -2739,6 +2747,7 @@ public partial class Query
 
                 var value = "";
                 condition["all"] = query._query_conditions["all"];
+                condition["all-aas"] = query._query_conditions["all-aas"];
                 if (query._filter_conditions != null && query._filter_conditions.Count != 0)
                 {
                     condition["filter-all"] = query._filter_conditions["all"];
