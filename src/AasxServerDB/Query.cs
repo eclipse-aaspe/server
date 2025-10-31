@@ -44,7 +44,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 public class CombinedValue
 {
     public int SMEId { get; set; }
-    public string? SValue { get; set; }
+    public String? SValue { get; set; }
     public Double? MValue { get; set; }
 }
 
@@ -1041,23 +1041,33 @@ public partial class Query
             // else
             if (!skip)
             {
-                // restrict all tables seperate
-                aasTable = db.AASSets;
-                aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : null;
-                smTable = db.SMSets;
-                smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
-                smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
-                sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
-                iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
-                dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
-
                 if (consolidate)
                 {
+                    // restrict all tables seperate
+                    aasTable = db.AASSets;
+                    aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : null;
+                    smTable = db.SMSets;
+                    smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
+                    smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
+                    sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : null;
+                    iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : null;
+                    dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : null;
+
                     comTable = CombineTables(db, direction, aasTable, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
                     // var x1 = comTable.Take(10).ToList();
                 }
                 else
                 {
+                    // restrict all tables seperate
+                    aasTable = db.AASSets;
+                    aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : aasTable;
+                    smTable = db.SMSets;
+                    smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
+                    smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
+                    sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
+                    iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
+                    dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
+
                     if (smRefId != null)
                     {
                         var smRefIdList = smRefId.ToList();
@@ -2323,11 +2333,39 @@ public partial class Query
         return rawSQL;
     }
 
+    public sealed class DbIndexInfo
+    {
+        public string Name { get; set; } = default!;
+        public string Table { get; set; } = default!;
+        public string? Sql { get; set; }
+    }
+
     public class UnifiedValue
     {
         public int V_SMEId { get; set; }
         public string? V_Value { get; set; }
         public double? V_D_Value { get; set; }
+    }
+
+    private class aasAndSm1
+    {
+        // public AASSet? aas;
+        public int? aas;
+        public SMSet sm;
+    }
+    private class aasAndSm
+    {
+        public AASSet? aas;
+        // public int? aas;
+        public SMSet sm;
+    }
+    private class joinAll
+    {
+        public AASSet? aas;
+        public SMSet? sm;
+        public SMESet? sme;
+        public string? svalue;
+        public double? nvalue;
     }
 
     private static IQueryable<CombinedSMSMEV> CombineTables(
@@ -2341,303 +2379,155 @@ public partial class Query
         IQueryable<DValueSet>? dValueTable,
         bool withParaWithoutValue)
     {
+        IQueryable<joinAll>? result = null;
+
         if (aasTable != null)
         {
-            smTable = smTable
-                .Where(sm =>
-                    db.SMRefSets.Any(r =>
-                        r.Identifier == sm.Identifier &&
-                        aasTable.Any(a => a.Id == r.AASId)));
-        }
-
-        var filteredSM = smTable.Select(sm => new
-        {
-            SM_Id = sm.Id,
-            SM_SemanticId = sm.SemanticId,
-            SM_IdShort = sm.IdShort,
-            SM_DisplayName = sm.DisplayName,
-            SM_Description = sm.Description,
-            SM_Identifier = sm.Identifier,
-            SM_TimeStampTree = sm.TimeStampTree
-        });
-        // var x1 = filteredSM.Take(10).ToList();
-
-        var filteredSME = smeTable.Select(sme => new
-        {
-            SME_SMId = sme.SMId,
-            SME_Id = sme.Id,
-            SME_SemanticId = sme.SemanticId,
-            SME_IdShort = sme.IdShort,
-            SME_IdShortPath = sme.IdShortPath,
-            SME_DisplayName = sme.DisplayName,
-            SME_Description = sme.Description,
-            SME_TimeStamp = sme.TimeStamp,
-            SME_TValue = sme.TValue
-        });
-        // var x2 = filteredSME.Take(10).ToList();
-
-        IQueryable<UnifiedValue> allValues = null;
-        // }) ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
-        var sValues = sValueTable?.Select(v => new UnifiedValue
-        {
-            V_SMEId = v.SMEId,
-            V_Value = v.Value,
-            V_D_Value = null
-        });
-        if (sValues != null)
-        {
-            allValues = sValues;
-            // var x3 = sValues.Take(10).ToList();
-        }
-
-        var iValues = iValueTable?.Select(v => new UnifiedValue
-        {
-            V_SMEId = v.SMEId,
-            V_Value = null,
-            V_D_Value = v.Value
-        });
-        if (iValues != null)
-        {
-            if (allValues == null)
-            {
-                allValues = iValues;
-            }
-            else
-            {
-                allValues = allValues.Concat(iValues);
-            }
-            // var x4 = iValues.Take(10).ToList();
-        }
-
-        var dValues = dValueTable?.Select(v => new UnifiedValue
-        {
-            V_SMEId = v.SMEId,
-            V_Value = null,
-            V_D_Value = v.Value
-        });
-        if (dValues != null)
-        {
-            if (allValues == null)
-            {
-                allValues = dValues;
-            }
-            else
-            {
-                allValues = allValues.Concat(dValues);
-            }
-            // var x5 = dValues.Take(10).ToList();
-        }
-
-        var safeAllValues = allValues ?? Enumerable.Empty<UnifiedValue>().AsQueryable();
-        if (allValues != null)
-        {
-            // var x6 = allValues.Take(10).ToList();
-        }
-
-        IQueryable<CombinedSMSMEV> result;
-
-        if (direction == 0) // top-down
-        {
-            var smAndSme = filteredSM.Join(filteredSME,
-                sm => sm.SM_Id,
-                sme => sme.SME_SMId,
-                (sm, sme) => new { sm, sme });
-            // var x7 = smAndSme.Take(10).ToList();
-
-            var joined = smAndSme.Join(safeAllValues,
-                sm_sme => sm_sme.sme.SME_Id,
-                v => v.V_SMEId,
-                (sm_sme, v) => new CombinedSMSMEV
+            result = aasTable
+                .Join(db.SMRefSets,
+                      aas => aas.Id,
+                      r => r.AASId,
+                      (aas, r) => new { aas, r })
+                .Join(smTable,
+                      x => x.r.Identifier,
+                      sm => sm.Identifier,
+                      (x, sm) => new { x.aas, sm })
+                .Select(x => new joinAll
                 {
-                    SM_Id = sm_sme.sm.SM_Id,
-                    SM_SemanticId = sm_sme.sm.SM_SemanticId,
-                    SM_IdShort = sm_sme.sm.SM_IdShort,
-                    SM_DisplayName = sm_sme.sm.SM_DisplayName,
-                    SM_Description = sm_sme.sm.SM_Description,
-                    SM_Identifier = sm_sme.sm.SM_Identifier,
-                    SM_TimeStampTree = sm_sme.sm.SM_TimeStampTree,
-
-                    SME_SemanticId = sm_sme.sme.SME_SemanticId,
-                    SME_IdShort = sm_sme.sme.SME_IdShort,
-                    SME_IdShortPath = sm_sme.sme.SME_IdShortPath,
-                    SME_DisplayName = sm_sme.sme.SME_DisplayName,
-                    SME_Description = sm_sme.sme.SME_Description,
-                    SME_Id = sm_sme.sme.SME_Id,
-                    SME_TimeStamp = sm_sme.sme.SME_TimeStamp,
-
-                    V_Value = v.V_Value,
-                    V_D_Value = v.V_D_Value
+                    aas = x.aas,
+                    sm = x.sm
                 });
-
-            if (withParaWithoutValue)
+        }
+        else
+        {
+            result = smTable.Select(sm => new joinAll
             {
-                var withoutValue = smAndSme
-                    .Where(x => string.IsNullOrEmpty(x.sme.SME_TValue))
-                    .Select(x => new CombinedSMSMEV
+                sm = sm
+            });
+        }
+
+        result = result.Join(smeTable,
+            r => r.sm.Id,
+            sme => sme.SMId,
+            (r, sme) => new joinAll
+            {
+                aas = r.aas,
+                sm = r.sm,
+                sme = sme
+            });
+
+        IQueryable<CombinedValue> combineValue = null;
+
+        if (sValueTable != null)
+        {
+            combineValue = sValueTable.Select(v => new CombinedValue
+            {
+                SMEId = v.SMEId,
+                SValue = v.Value,
+                MValue = null
+            }
+            );
+        }
+
+        if (iValueTable != null)
+        {
+            var combineIValue = iValueTable.Select(v => new CombinedValue
+            {
+                SMEId = v.SMEId,
+                SValue = null,
+                MValue = v.Value
+            }
+            );
+            combineValue = (combineValue == null) ? combineIValue : combineValue.Concat(combineIValue);
+        }
+
+        if (dValueTable != null)
+        {
+            var combineDValue = dValueTable.Select(v => new CombinedValue
+            {
+                SMEId = v.SMEId,
+                SValue = null,
+                MValue = v.Value
+            }
+            );
+            combineValue = (combineValue == null) ? combineDValue : combineValue.Concat(combineDValue);
+        }
+
+        if (combineValue != null)
+        {
+            /*
+            var noValue = result
+                .Where(r => r.sme != null && string.IsNullOrEmpty(r.sme.TValue))
+                .Select(r => new CombinedValue
+                {
+                    SMEId = r.sme.SMId,
+                    SValue = null,
+                    MValue = null
+                });
+            combineValue = combineValue.Concat(noValue);
+            */
+
+            result = result.Join(combineValue,
+            r => r.sme.Id,
+            v => v.SMEId,
+            (r, v) => new joinAll
+            {
+                aas = r.aas,
+                sm = r.sm,
+                sme = r.sme,
+                svalue = v.SValue,
+                nvalue = v.MValue
+            });
+
+            /*
+            result = result
+                .GroupJoin(
+                    combineValue,
+                    r => r.sme.Id,
+                    v => v.SMEId,
+                    (r, vs) => new { r, vs }
+                )
+                .SelectMany(
+                    x => x.vs.DefaultIfEmpty(),
+                    (x, v) => new joinAll
                     {
-                        SM_Id = x.sm.SM_Id,
-                        SM_SemanticId = x.sm.SM_SemanticId,
-                        SM_IdShort = x.sm.SM_IdShort,
-                        SM_DisplayName = x.sm.SM_DisplayName,
-                        SM_Description = x.sm.SM_Description,
-                        SM_Identifier = x.sm.SM_Identifier,
-                        SM_TimeStampTree = x.sm.SM_TimeStampTree,
-
-                        SME_SemanticId = x.sme.SME_SemanticId,
-                        SME_IdShort = x.sme.SME_IdShort,
-                        SME_IdShortPath = x.sme.SME_IdShortPath,
-                        SME_DisplayName = x.sme.SME_DisplayName,
-                        SME_Description = x.sme.SME_Description,
-                        SME_Id = x.sme.SME_Id,
-                        SME_TimeStamp = x.sme.SME_TimeStamp,
-
-                        V_Value = null,
-                        V_D_Value = null
-                    });
-
-                result = joined.Concat(withoutValue);
-            }
-            else
-            {
-                result = joined;
-            }
-            // var x8 = result.Take(10).ToList();
+                        aas = x.r.aas,
+                        sm = x.r.sm,
+                        sme = x.r.sme,
+                        svalue = v.SValue,
+                        nvalue = v.MValue
+                    }
+                );
+            */
         }
-        else if (direction == 1) // middle-out
+
+        // var x1 = result.Take(10).ToList();
+        // var smRawSQL = result.ToQueryString();
+        // var qp = GetQueryPlan(db, smRawSQL);
+
+        var combined = result.Select(r => new CombinedSMSMEV
         {
-            var smeAndSm = filteredSME.Join(filteredSM,
-                sme => sme.SME_SMId,
-                sm => sm.SM_Id,
-                (sme, sm) => new { sm, sme });
+            SM_Id = r.sm.Id,
+            SM_SemanticId = r.sm.SemanticId,
+            SM_IdShort = r.sm.IdShort,
+            SM_DisplayName = r.sm.DisplayName,
+            SM_Description = r.sm.Description,
+            SM_Identifier = r.sm.Identifier,
+            SM_TimeStampTree = r.sm.TimeStampTree,
 
-            var joined = smeAndSm.Join(safeAllValues,
-                sm_sme => sm_sme.sme.SME_Id,
-                v => v.V_SMEId,
-                (sm_sme, v) => new CombinedSMSMEV
-                {
-                    SM_Id = sm_sme.sm.SM_Id,
-                    SM_SemanticId = sm_sme.sm.SM_SemanticId,
-                    SM_IdShort = sm_sme.sm.SM_IdShort,
-                    SM_DisplayName = sm_sme.sm.SM_DisplayName,
-                    SM_Description = sm_sme.sm.SM_Description,
-                    SM_Identifier = sm_sme.sm.SM_Identifier,
-                    SM_TimeStampTree = sm_sme.sm.SM_TimeStampTree,
+            SME_SemanticId = r.sme.SemanticId,
+            SME_IdShort = r.sme.IdShort,
+            SME_IdShortPath = r.sme.IdShortPath,
+            SME_DisplayName = r.sme.DisplayName,
+            SME_Description = r.sme.Description,
+            SME_Id = r.sme.Id,
+            SME_TimeStamp = r.sme.TimeStamp,
 
-                    SME_SemanticId = sm_sme.sme.SME_SemanticId,
-                    SME_IdShort = sm_sme.sme.SME_IdShort,
-                    SME_IdShortPath = sm_sme.sme.SME_IdShortPath,
-                    SME_DisplayName = sm_sme.sme.SME_DisplayName,
-                    SME_Description = sm_sme.sme.SME_Description,
-                    SME_Id = sm_sme.sme.SME_Id,
-                    SME_TimeStamp = sm_sme.sme.SME_TimeStamp,
+            V_Value = r.svalue,
+            V_D_Value = r.nvalue
+        });
 
-                    V_Value = v.V_Value,
-                    V_D_Value = v.V_D_Value
-                });
-
-            if (withParaWithoutValue)
-            {
-                var withoutValue = smeAndSm
-                    .Where(x => string.IsNullOrEmpty(x.sme.SME_TValue))
-                    .Select(x => new CombinedSMSMEV
-                    {
-                        SM_Id = x.sm.SM_Id,
-                        SM_SemanticId = x.sm.SM_SemanticId,
-                        SM_IdShort = x.sm.SM_IdShort,
-                        SM_DisplayName = x.sm.SM_DisplayName,
-                        SM_Description = x.sm.SM_Description,
-                        SM_Identifier = x.sm.SM_Identifier,
-                        SM_TimeStampTree = x.sm.SM_TimeStampTree,
-
-                        SME_SemanticId = x.sme.SME_SemanticId,
-                        SME_IdShort = x.sme.SME_IdShort,
-                        SME_IdShortPath = x.sme.SME_IdShortPath,
-                        SME_DisplayName = x.sme.SME_DisplayName,
-                        SME_Description = x.sme.SME_Description,
-                        SME_Id = x.sme.SME_Id,
-                        SME_TimeStamp = x.sme.SME_TimeStamp,
-
-                        V_Value = null,
-                        V_D_Value = null
-                    });
-
-                result = joined.Concat(withoutValue);
-            }
-            else
-            {
-                result = joined;
-            }
-        }
-        else // direction == 2, bottom-up
-        {
-            var smeAndValue = safeAllValues.Join(filteredSME,
-                v => v.V_SMEId,
-                sme => sme.SME_Id,
-                (v, sme) => new { v, sme });
-
-            var joined = smeAndValue.Join(filteredSM,
-                sme_v => sme_v.sme.SME_SMId,
-                sm => sm.SM_Id,
-                (sme_v, sm) => new CombinedSMSMEV
-                {
-                    SM_Id = sm.SM_Id,
-                    SM_SemanticId = sm.SM_SemanticId,
-                    SM_IdShort = sm.SM_IdShort,
-                    SM_DisplayName = sm.SM_DisplayName,
-                    SM_Description = sm.SM_Description,
-                    SM_Identifier = sm.SM_Identifier,
-                    SM_TimeStampTree = sm.SM_TimeStampTree,
-
-                    SME_SemanticId = sme_v.sme.SME_SemanticId,
-                    SME_IdShort = sme_v.sme.SME_IdShort,
-                    SME_IdShortPath = sme_v.sme.SME_IdShortPath,
-                    SME_DisplayName = sme_v.sme.SME_DisplayName,
-                    SME_Description = sme_v.sme.SME_Description,
-                    SME_Id = sme_v.sme.SME_Id,
-                    SME_TimeStamp = sme_v.sme.SME_TimeStamp,
-
-                    V_Value = sme_v.v.V_Value,
-                    V_D_Value = sme_v.v.V_D_Value
-                });
-
-            if (withParaWithoutValue)
-            {
-                var withoutValue = filteredSME
-                    .Where(sme => string.IsNullOrEmpty(sme.SME_TValue))
-                    .Join(filteredSM,
-                        sme => sme.SME_SMId,
-                        sm => sm.SM_Id,
-                        (sme, sm) => new CombinedSMSMEV
-                        {
-                            SM_Id = sm.SM_Id,
-                            SM_SemanticId = sm.SM_SemanticId,
-                            SM_IdShort = sm.SM_IdShort,
-                            SM_DisplayName = sm.SM_DisplayName,
-                            SM_Description = sm.SM_Description,
-                            SM_Identifier = sm.SM_Identifier,
-                            SM_TimeStampTree = sm.SM_TimeStampTree,
-
-                            SME_SemanticId = sme.SME_SemanticId,
-                            SME_IdShort = sme.SME_IdShort,
-                            SME_IdShortPath = sme.SME_IdShortPath,
-                            SME_DisplayName = sme.SME_DisplayName,
-                            SME_Description = sme.SME_Description,
-                            SME_Id = sme.SME_Id,
-                            SME_TimeStamp = sme.SME_TimeStamp,
-
-                            V_Value = null,
-                            V_D_Value = null
-                        });
-
-                result = joined.Concat(withoutValue);
-            }
-            else
-            {
-                result = joined;
-            }
-        }
-
-        return result;
+        return combined;
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
