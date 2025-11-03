@@ -657,11 +657,16 @@ public class EventService : IEventService
     //    return count;
     //}
 
-    public string GetSha1Base64(string input)
+    private string CreateIdString(EventPayload entry)
     {
-        using var sha1 = SHA1.Create();
-        var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
-        return Convert.ToBase64String(hashBytes);
+        return $"{GetSha1Base64URL(entry.source)}~~{entry.time}~~{entry.cursor}";
+    }
+
+    private string GetSha1Base64URL(string input)
+    {
+        var hashBytes = SHA1.HashData(Encoding.UTF8.GetBytes(input));
+
+        return Base64UrlEncoder.Encode(hashBytes);
     }
 
     public List<EventPayload> CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
@@ -985,8 +990,6 @@ public class EventService : IEventService
                                     }
                                 }
 
-                                entry.id = $"{entry.source}-{entry.time}";
-                                entry.id = GetSha1Base64(entry.id);
 
                                 eventPayloadList.Add(entry);
 
@@ -1039,9 +1042,6 @@ public class EventService : IEventService
                         }
                     }
 
-                    entry.id = $"{entry.source}-{entry.time}";
-                    entry.id = GetSha1Base64(entry.id);
-
                     diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
                     Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataschema} idShortPath: {entry.GetIdShortPath()}");
 
@@ -1064,6 +1064,9 @@ public class EventService : IEventService
                 eventPayloadList.Add(eventPayload);
             }
 
+            eventPayloadList[0].cursor = "0";
+            eventPayloadList[0].id = CreateIdString(eventPayloadList[0]);
+
             if (basicEventElementSourceString.IsNullOrEmpty())
             {
                 //eventPayload.countSM = countSM;
@@ -1071,12 +1074,17 @@ public class EventService : IEventService
                 if (countSM == limitSm)
                 {
                     eventPayload.cursor = $"offsetSM={offsetSm + limitSm}";
-
-                    foreach (var ep in eventPayloadList)
-                    {
-                        ep.cursor = eventPayload.cursor;
-                    }
                 }
+                else
+                {
+                    eventPayload.cursor = "0";
+                }
+            }
+
+            foreach (var ep in eventPayloadList)
+            {
+                ep.cursor = eventPayload.cursor;
+                ep.id = CreateIdString(ep);
             }
         }
 
@@ -1089,7 +1097,9 @@ public class EventService : IEventService
         {
             eventPayload.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
             eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
-            eventPayload.id = GetSha1Base64(eventPayload.id);
+            eventPayload.source = basicEventElementSourceString;
+            eventPayload.cursor = "1";
+            eventPayload.id = CreateIdString(eventPayload);
 
             eventPayload.SetType(EventPayloadType.Updated);
             eventPayload.source = basicEventElementSourceString;

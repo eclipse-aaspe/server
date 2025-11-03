@@ -29,7 +29,6 @@ public interface IEventService
 
     public void PublishMqttMessage(EventDto eventDto, string submodelId, string idShortPath);
 
-    public string GetSha1Base64(string input);
     public void NotifyDeleted(ISubmodel submodel, string idShortPath = "", string smeModelType = "", string smeSemanticId = "");
 
     public List<Events.EventPayload> CollectPayload(Dictionary<string, string> securityCondition, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,

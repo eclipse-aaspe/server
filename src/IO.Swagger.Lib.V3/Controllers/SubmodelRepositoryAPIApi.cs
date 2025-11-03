@@ -28,9 +28,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
-using System.Runtime.ConstrainedExecution;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
@@ -65,7 +63,6 @@ using Namotion.Reflection;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using TimeStamp;
-using static QRCoder.PayloadGenerator;
 
 /// <summary>
 /// 
@@ -188,7 +185,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public async virtual Task<IActionResult> GetEventSubmodels([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? include, [FromQuery] int? limitSm, [FromQuery] int? offsetSm, [FromQuery] string? time = "")
+        [FromQuery] bool? include, [FromQuery] int? limitSm, [FromQuery] int? offsetSm, [FromQuery] string? time = "", [FromQuery] string? lastEventId = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -251,6 +248,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             //    int s = Convert.ToInt32(diff);
             //    diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             //}
+
+            if (!lastEventId.IsNullOrEmpty())
+            {
+                var delimited = lastEventId.Split("~~");
+
+                time = delimited[1];
+            }
 
             var eventRequest = new DbEventRequest()
             {
