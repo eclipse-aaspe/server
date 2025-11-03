@@ -1098,7 +1098,7 @@ public class EventService : IEventService
             eventPayload.dataschema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
             eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
             eventPayload.source = basicEventElementSourceString;
-            eventPayload.cursor = "1";
+            eventPayload.cursor = "0";
             eventPayload.id = CreateIdString(eventPayload);
 
             eventPayload.SetType(EventPayloadType.Updated);

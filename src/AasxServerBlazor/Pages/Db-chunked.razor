@@ -32,16 +32,16 @@
 	word-break:break-all;
 	font-size:small;
 	}
-	
-    @@media (max-width: 1920px) {
-        .cell-content {
-            height: 140px;
-			max-height: 140px;
+
+	@@media (max-width: 1920px) {
+		.cell-content {
+			height: 142px;
+			max-height: 142px;
 			overflow: hidden;
 			word-break:break-all;
 			font-size:small;
-        }
-    }
+		}
+	}
 
 	.vcell-content {
 	height: 45px;
@@ -50,7 +50,7 @@
 	word-break:break-all;
 	font-size:small;
 	}
-	
+
 
 	.cell-details {
 	word-break: break-all;
@@ -80,7 +80,7 @@
 		}
 		else
 		{
-		// get parameters
+			// get parameters
 			var url      = NavMan.Uri;
 			var    splitUrl = url.Split("?");
 			url = splitUrl[ 0 ].ToLower();
@@ -416,91 +416,91 @@
 					<br />
 					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
 						<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
-						<thead>
-							<tr style="border-color:blue;">
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">CD#</th>
-								<th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Id Short</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Display Name</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Category</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Description</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Extensions</th>
-								<th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Identifier</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Is Case Of</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Embedded Data Specifications</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Version</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Revision</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Creator</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Template Id</th>
-								<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">A Embedded Data Specifications</th>
-								<th style="width:8%;word-break:break-all;font-size:x-small;border-color:blue;">Time Stamp</th>
-								<th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Links</th>
-								<th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">API</th>
-							</tr>
-						</thead>
-						<tbody>
-							@{
-								var cell = "cell-content";
-								var withDetails = details == "true";
-								if (withDetails)
-								{
-									cell = "cell-details";
-								}
-							}
-							<Virtualize Context="CDSet" @ref="CDSetContainer" ItemsProvider="LoadCDSetItems">
+							<thead>
+								<tr style="border-color:blue;">
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">CD#</th>
+									<th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Id Short</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Display Name</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Category</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Description</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Extensions</th>
+									<th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Identifier</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Is Case Of</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Embedded Data Specifications</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Version</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Revision</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Creator</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Template Id</th>
+									<th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">A Embedded Data Specifications</th>
+									<th style="width:8%;word-break:break-all;font-size:x-small;border-color:blue;">Time Stamp</th>
+									<th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Links</th>
+									<th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">API</th>
+								</tr>
+							</thead>
+							<tbody>
 								@{
-									var cd64 = Base64UrlEncoder.Encode(CDSet.Identifier);
-									var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+									var cell = "cell-content";
+									var withDetails = details == "true";
+									if (withDetails)
+									{
+										cell = "cell-details";
+									}
 								}
-								<tr style="height:auto;border-color:blue;">
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
-										<b>@CDSet.Id</b>
-									</td>
-									<td style="width:10%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.IdShort</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.DisplayName</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Category</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Description</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Extensions</td>
-									<td style="width:10%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Identifier</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
-										<div class="@cell">
-											@if (withDetails)
-											{
-												<span>@CDSet.IsCaseOf</span>
-											}
-											else
-											{
-												var text = CDSet.IsCaseOf;
-												if (text?.Length > 40)
+								<Virtualize Context="CDSet" @ref="CDSetContainer" ItemsProvider="LoadCDSetItems">
+									@{
+										var cd64 = Base64UrlEncoder.Encode(CDSet.Identifier);
+										var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+									}
+									<tr style="height:auto;border-color:blue;">
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+											<b>@CDSet.Id</b>
+										</td>
+										<td style="width:10%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.IdShort</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.DisplayName</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Category</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Description</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Extensions</td>
+										<td style="width:10%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Identifier</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
 												{
-													text = text.Substring(0, 40) + " ..";
+													<span>@CDSet.IsCaseOf</span>
 												}
-												<span>@text</span>
-											}
-										</div>
-									</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
-										<div class="@cell">
-											@if (withDetails)
-											{
-												<span>@CDSet.EmbeddedDataSpecifications</span>
-											}
-											else
-											{
-												var text = CDSet.EmbeddedDataSpecifications;
-												if (text?.Length > 40)
+												else
 												{
-													text = text.Substring(0, 40) + " ..";
+													var text = CDSet.IsCaseOf;
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
+													}
+													<span>@text</span>
 												}
-												<span>@text</span>
-											}
-										</div>
-									</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Version</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Revision</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Creator</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.TemplateId</td>
-									<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
-										<div class="@cell">
+											</div>
+										</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@CDSet.EmbeddedDataSpecifications</span>
+												}
+												else
+												{
+													var text = CDSet.EmbeddedDataSpecifications;
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
+													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Version</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Revision</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.Creator</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@CDSet.TemplateId</td>
+										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
+											<div class="@cell">
 												@if (withDetails)
 												{
 													<span>@CDSet.AEmbeddedDataSpecifications</span>
@@ -508,35 +508,35 @@
 												else
 												{
 													var text = CDSet.AEmbeddedDataSpecifications;
-													if (text?.Length > 40)
+													if (text?.Length > MAX_LENGTH_TEXT)
 													{
-														text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 													}
 													<span>@text</span>
 												}
-										</div>
-									</td>
-									<td style="width:8%;word-break:break-all;color:lightgray;font-size:x-small;border-color:blue;">
-										@($"CREATE {TimeStamp.DateTimeToString(CDSet.TimeStampCreate)}")<br />
-										@($"UPDATE {TimeStamp.DateTimeToString(CDSet.TimeStamp)}")<br />
-										@($"TREE {TimeStamp.DateTimeToString(CDSet.TimeStampTree)}")<br />
-										@($"DELETE {TimeStamp.DateTimeToString(CDSet.TimeStampDelete)}")
-									</td>
-									<td style="idth:4%;font-size:small;word-break: keep-all;border-color:blue;">
-										<a href="@($"{shorturl}/env?cdid={CDSet.Id}")" target="_blank">env </a>
-										@if (envid != 0)
-										{
-											<a href="@($"{shorturl}/env?cdid={CDSet.Id}&envid={envid}")" target="_blank">givenEnv</a>
-										}
-									</td>
-									<td style="idth:4%;font-size:small;word-break: keep-all;border-color:blue;">
-										@if (!CDSet.Identifier.IsNullOrEmpty())
-										{
-											<a href="@link" target="_blank">api</a>
-										}
-									</td>
-								</tr>
-							</Virtualize>
+											</div>
+										</td>
+										<td style="width:8%;word-break:break-all;color:lightgray;font-size:x-small;border-color:blue;">
+											@($"CREATE {TimeStamp.DateTimeToString(CDSet.TimeStampCreate)}")<br />
+											@($"UPDATE {TimeStamp.DateTimeToString(CDSet.TimeStamp)}")<br />
+											@($"TREE {TimeStamp.DateTimeToString(CDSet.TimeStampTree)}")<br />
+											@($"DELETE {TimeStamp.DateTimeToString(CDSet.TimeStampDelete)}")
+										</td>
+										<td style="idth:4%;font-size:small;word-break: keep-all;border-color:blue;">
+											<a href="@($"{shorturl}/env?cdid={CDSet.Id}")" target="_blank">env </a>
+											@if (envid != 0)
+											{
+												<a href="@($"{shorturl}/env?cdid={CDSet.Id}&envid={envid}")" target="_blank">givenEnv</a>
+											}
+										</td>
+										<td style="idth:4%;font-size:small;word-break: keep-all;border-color:blue;">
+											@if (!CDSet.Identifier.IsNullOrEmpty())
+											{
+												<a href="@link" target="_blank">api</a>
+											}
+										</td>
+									</tr>
+								</Virtualize>
 							</tbody>
 						</table>
 					</div>
@@ -599,7 +599,7 @@
 							</thead>
 							<tbody>
 								@{
-									
+
 									var cell = "cell-content";
 									var withDetails = details == "true";
 
@@ -632,9 +632,9 @@
 												else
 												{
 													var text = AASSet?.DisplayName;
-													if (text?.Length > 40)
+													if (text?.Length > MAX_LENGTH_TEXT)
 													{
-														text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 													}
 													<span>@text</span>
 												}
@@ -650,9 +650,9 @@
 												else
 												{
 													var text = AASSet?.Description;
-													if (text?.Length > 40)
+													if (text?.Length > MAX_LENGTH_TEXT)
 													{
-														text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 													}
 													<span>@text</span>
 												}
@@ -680,9 +680,9 @@
 												else
 												{
 													var text = AASSet?.DefaultThumbnailPath;
-													if (text?.Length > 40)
+													if (text?.Length > MAX_LENGTH_TEXT)
 													{
-														text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 													}
 													<span>@text</span>
 												}
@@ -867,9 +867,9 @@
 												else
 												{
 													var text = SMVirtualize?.smSet?.Description;
-													if (text?.Length > 40)
+													if (text?.Length > MAX_LENGTH_TEXT)
 													{
-														text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 													}
 													<span>@text</span>
 												}
@@ -880,27 +880,27 @@
 										<td style="width:3%;font-size:small;word-break:keep-all;border-color:blue;">@SMVirtualize?.smSet?.Kind</td>
 										<td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.SemanticId</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.SupplementalSemanticIds</td>
-                                        <td style="width:3%;font-size:small;border-color:blue;">
-                                            <div class="@cell">
-                                                @if (withDetails)
-                                                {
-                                                    <span>@SMVirtualize?.smSet?.Qualifiers</span>
-                                                }
-                                                else
-                                                {
-                                                    var text = SMVirtualize?.smSet?.Qualifiers;
+										<td style="width:3%;font-size:small;border-color:blue;">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@SMVirtualize?.smSet?.Qualifiers</span>
+												}
+												else
+												{
+													var text = SMVirtualize?.smSet?.Qualifiers;
 
-                                                    if (text?.Length > 40)
-                                                    {
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
 
-                                                        text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 
-                                                    }
-                                                    <span>@text</span>
-                                                }
-                                            </div>
-                                        </td>
-                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.EmbeddedDataSpecifications</td>
+													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
+										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.EmbeddedDataSpecifications</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Version</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Revision</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Creator</td>
@@ -1046,13 +1046,13 @@
 												{
 													var text = @SMEVirtualize?.smeSet.Description;
 
-                                                    if (text?.Length > 40)
-                                                    {
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
 
-                                                        text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 
-                                                    }
-                                                    <span>@text</span>
+													}
+													<span>@text</span>
 												}
 											</div>
 										</td>
@@ -1071,13 +1071,13 @@
 												{
 													var text = @SMEVirtualize?.smeSet.SemanticId;
 
-                                                    if (text?.Length > 40)
-                                                    {
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
 
-                                                        text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 
-                                                    }
-                                                    <span>@text</span>
+													}
+													<span>@text</span>
 												}
 											</div>
 										</td>
@@ -1101,13 +1101,13 @@
 												{
 													var text = @SMEVirtualize?.smeSet.EmbeddedDataSpecifications;
 
-                                                    if (text?.Length > 40)
-                                                    {
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
 
-                                                        text = text.Substring(0, 40) + " ..";
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 
-                                                    }
-                                                    <span>@text</span>
+													}
+													<span>@text</span>
 												}
 											</div>
 										</td>
@@ -1124,9 +1124,9 @@
 														var text = value[0][0];
 														if (text != "")
 														{
-															if (text.Length > 50 && !withDetails)
+															if (text.Length > MAX_LENGTH_TEXT && !withDetails)
 															{
-																text = text.Substring(0, 50) + " ..";
+																text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
 															}
 														}
 														<span>@text</span>
@@ -1141,17 +1141,17 @@
 														@code {
                                                             private void OnPropertyValueChanged(SMEVirtualize sme)
                                                             {
-																if (!string.IsNullOrEmpty(sme.propertyValue))
-																{
-																	if (sme.propertyValue == " ")
-																		sme.propertyValue = string.Empty;
+											if (!string.IsNullOrEmpty(sme.propertyValue))
+											{
+												if (sme.propertyValue == " ")
+													sme.propertyValue = string.Empty;
 
-																		CrudOperator.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
-																		reload();
-																		SMESetContainer.RefreshDataAsync();
-																		StateHasChanged();
-																		sme.propertyValue = string.Empty;
-																}
+												CrudOperator.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
+												reload();
+												SMESetContainer.RefreshDataAsync();
+												StateHasChanged();
+												sme.propertyValue = string.Empty;
+											}
                                                             }
                                                         }
 
@@ -1176,10 +1176,10 @@
 											@code {
                                                 private async Task SetTimeStamp(int smSetId, int smeSetId)
                                                 {
-													CrudOperator.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
-													reload();
-													await SMESetContainer.RefreshDataAsync();
-													StateHasChanged();
+									CrudOperator.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
+									reload();
+									await SMESetContainer.RefreshDataAsync();
+									StateHasChanged();
                                                 }
                                             }
                                         </td>
@@ -1245,25 +1245,25 @@
 					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
 						<table class="table table-bordered table-sm" style="min-width:100%;max-width:100%">
 							<thead>
-							<tr>
-								<th style="font-size:small;word-break: break-all;border-color:blue;">Par#</th>
-								<th style="font-size:small;word-break: break-all;border-color:blue;">Value</th>
-								<th style="font-size:small;word-break: break-all;border-color:blue;">Annotation</th>
-								<th style="font-size:small;word-break: break-all;border-color:blue;">Links</th>
-							</tr>						</thead>
-						<tbody>
-							@{
+								<tr>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">Par#</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">Value</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">Annotation</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">Links</th>
+								</tr>						</thead>
+							<tbody>
+								@{
 									var cell = "vcell-content";
 									var withDetails = details == "true";
 									if (withDetails)
 									{
 										cell = "cell-details";
 									}
-							}
-							<Virtualize Context="SValueSet" @ref="SValueSetContainer" ItemsProvider="LoadSValueSetItems" >
-								<tr>
-									<td style="word-break:keep-all; break-all;border-color:blue;">@SValueSet.SMEId</td>
-									<td style="word-break:keep-all; break-all;border-color:blue;">
+								}
+								<Virtualize Context="SValueSet" @ref="SValueSetContainer" ItemsProvider="LoadSValueSetItems" >
+									<tr>
+										<td style="word-break:keep-all; break-all;border-color:blue;">@SValueSet.SMEId</td>
+										<td style="word-break:keep-all; break-all;border-color:blue;">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1273,16 +1273,16 @@
 												{
 													var text = @SValueSet?.Value;
 
-                                                    if (text?.Length > 400)
-                                                    {
-                                                        text = text.Substring(0, 400) + " ..";
+													if (text?.Length > MAX_LENGTH_VCELL_TEXT)
+													{
+														text = text.Substring(0, MAX_LENGTH_VCELL_TEXT) + " ..";
 
-                                                    }
-                                                    <span>@text</span>
+													}
+													<span>@text</span>
 												}
 											</div>
-									</td>
-									<td style="word-break:keep-all; break-all;border-color:blue; ">
+										</td>
+										<td style="word-break:keep-all; break-all;border-color:blue; ">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1292,22 +1292,22 @@
 												{
 													var text = @SValueSet?.Annotation;
 
-                                                    if (text?.Length > 400)
-                                                    {
-                                                        text = text.Substring(0, 400) + " ..";
+													if (text?.Length > MAX_LENGTH_VCELL_TEXT)
+													{
+														text = text.Substring(0, MAX_LENGTH_VCELL_TEXT) + " ..";
 
-                                                    }
-                                                    <span>@text</span>
+													}
+													<span>@text</span>
 												}
 											</div>
-									</td>
-									<td style="word-break:keep-all; break-all;border-color:blue; ">
-										<a href="@($"{shorturl}/sme?smeid={SValueSet.SMEId}")" target="_blank">par</a>
-									</td>
-								</tr>
-							</Virtualize>
-						</tbody>
-					   </table>
+										</td>
+										<td style="word-break:keep-all; break-all;border-color:blue; ">
+											<a href="@($"{shorturl}/sme?smeid={SValueSet.SMEId}")" target="_blank">par</a>
+										</td>
+									</tr>
+								</Virtualize>
+							</tbody>
+						</table>
 					</div>
 				}
 
@@ -1464,19 +1464,19 @@
 									<td style="word-break: break-all;border-color:blue">@OValueSet.SMEId</td>
 									<td style="word-break:keep-all; break-all;border-color:blue;">
 										<div class="@cell">
-												@if (withDetails)
+											@if (withDetails)
+											{
+												<span>@OValueSet.Value</span>
+											}
+											else
+											{
+												var text = @OValueSet.Value;
+												if (text?.Length > MAX_LENGTH_VCELL_TEXT)
 												{
-													<span>@OValueSet.Value</span>
+													text = text.Substring(0, MAX_LENGTH_VCELL_TEXT) + " ..";
 												}
-												else
-												{
-													var text = @OValueSet.Value;
-													if (text?.Length > 400)
-													{
-														text = text.Substring(0, 400) + " ..";
-													}
-													<span>@text</span>
-												}
+												<span>@text</span>
+											}
 										</div>
 									</td>
 									<td style="word-break: break-all;border-color:blue">@OValueSet.Attribute</td>
@@ -1515,6 +1515,9 @@
 	string details = string.Empty;
 	private long elapsedTime = 0;
 	object loadedItems = null;
+
+	const int MAX_LENGTH_TEXT = 32;
+	const int MAX_LENGTH_VCELL_TEXT = 360;
 
 	private void CheckTotalCountAndUpdate()
 	{
