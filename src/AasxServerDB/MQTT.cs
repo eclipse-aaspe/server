@@ -73,7 +73,7 @@ public class MqttClientService
         var options = new MqttClientOptionsBuilder()
                             .WithClientId(clientId)
                             .WithTcpServer(serverHost, serverPort)
-                            .WithCredentials(userName, password)
+                            .WithCredentials(credUserName, credPassword)
                             .WithTlsOptions(new MqttClientTlsOptions
                             {
                                 UseTls = withTLS,
