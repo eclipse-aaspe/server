@@ -278,7 +278,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
-                            var signedAas = FileService.GetJWSFileIfExists(aas.Id, CertFileType.aas);
+                            var signedAas = FileService.GetJWSFileIfExists(aas.Id, JwsFileType.aas);
 
                             if (signedAas.IsNullOrEmpty())
                             {
@@ -316,7 +316,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                             if (dbRequest.Context.Params.IsSigned)
                             {
-                                if (!FileService.SaveJWSFile(aasIdentifier, dbRequest.Context.Params.JWS, CertFileType.aas))
+                                if (!FileService.SaveJWSFile(aasIdentifier, dbRequest.Context.Params.JWS, JwsFileType.aas))
                                 {
                                     scopedLogger.LogError($"Save jws file for {aasIdentifier} failed.");
                                 }
@@ -337,7 +337,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 CrudOperator.DeleteAAS(db, aasIdentifier);
                             }
 
-                            FileService.DeleteJWSFile(aasIdentifier, CertFileType.aas);
+                            FileService.DeleteJWSFile(aasIdentifier, JwsFileType.aas);
                         }
                         else
                         {
@@ -409,7 +409,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
-                            var signedSubmodel = FileService.GetJWSFileIfExists(submodel.Id, CertFileType.sm);
+                            var signedSubmodel = FileService.GetJWSFileIfExists(submodel.Id, JwsFileType.sm);
 
                             if (signedSubmodel.IsNullOrEmpty())
                             {
@@ -453,7 +453,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                             if(dbRequest.Context.Params.IsSigned)
                             {
-                                if (!FileService.SaveJWSFile(submodelIdentifier, dbRequest.Context.Params.JWS, CertFileType.sm))
+                                if (!FileService.SaveJWSFile(submodelIdentifier, dbRequest.Context.Params.JWS, JwsFileType.sm))
                                 {
                                     scopedLogger.LogError($"Save jws file for {submodelIdentifier} failed.");
                                 }
@@ -483,7 +483,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                     _eventService.NotifyDeleted(deletedSubmodel);
                                 }
                             }
-                            FileService.DeleteJWSFile(submodelIdentifier, CertFileType.sm);
+                            FileService.DeleteJWSFile(submodelIdentifier, JwsFileType.sm);
 
                         }
                         else
@@ -843,7 +843,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (dbRequest.Context.Params.IsSigned)
                         {
-                            var signedConceptDescription = FileService.GetJWSFileIfExists(conceptDescription.Id, CertFileType.cd);
+                            var signedConceptDescription = FileService.GetJWSFileIfExists(conceptDescription.Id, JwsFileType.cd);
 
                             if (signedConceptDescription.IsNullOrEmpty())
                             {
@@ -892,7 +892,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                             if (dbRequest.Context.Params.IsSigned)
                             {
-                                if (!FileService.SaveJWSFile(conceptDescriptionIdentifier, dbRequest.Context.Params.JWS, CertFileType.cd))
+                                if (!FileService.SaveJWSFile(conceptDescriptionIdentifier, dbRequest.Context.Params.JWS, JwsFileType.cd))
                                 {
                                     scopedLogger.LogError($"Save jws file for {conceptDescriptionIdentifier} failed.");
                                 }
@@ -913,7 +913,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             {
                                 CrudOperator.DeleteConceptDescription(db, conceptDescriptionIdentifier);
                             }
-                            FileService.DeleteJWSFile(conceptDescriptionIdentifier, CertFileType.cd);
+                            FileService.DeleteJWSFile(conceptDescriptionIdentifier, JwsFileType.cd);
                         }
                         else
                         {

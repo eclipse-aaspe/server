@@ -23,7 +23,7 @@ using Contracts.Exceptions;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 
-public enum CertFileType
+public enum JwsFileType
 {
     aas,
     sm,
@@ -33,7 +33,7 @@ public enum CertFileType
 public class FileService
 {
     public const string ThumnbnailsFolderName = "thumbnails";
-    public const string CertificatesFolderName = "jws_certs";
+    public const string JwsFolderName = "jws";
 
     public const string FilesFolderName = "files";
     public const string XmlFolderName = "xml";
@@ -61,9 +61,9 @@ public class FileService
         return Path.Combine(AasContext.DataPath, FilesFolderName, ThumnbnailsFolderName, FormatToFileName(aasId) + ".zip");
     }
 
-    internal static string GetCertFilePath(string identifier, string type)
+    internal static string GetJWSFilePath(string identifier, string type)
     {
-        return Path.Combine(AasContext.DataPath, FilesFolderName, CertificatesFolderName, type, $"{FormatToFileName(identifier)}.txt");
+        return Path.Combine(AasContext.DataPath, FilesFolderName, JwsFolderName, type, $"{FormatToFileName(identifier)}.txt");
     }
 
 
@@ -121,11 +121,11 @@ public class FileService
         if (!Directory.Exists(thumbnailFolderPath))
             Directory.CreateDirectory(thumbnailFolderPath);
 
-        var certFilesFolderPath = Path.Combine(filesPath, CertificatesFolderName);
+        var certFilesFolderPath = Path.Combine(filesPath, JwsFolderName);
         if (!Directory.Exists(certFilesFolderPath))
             Directory.CreateDirectory(certFilesFolderPath);
 
-        foreach (CertFileType certFileType in Enum.GetValues(typeof(CertFileType)))
+        foreach (JwsFileType certFileType in Enum.GetValues(typeof(JwsFileType)))
         {
             var certFilesTypeFolderPath = Path.Combine(certFilesFolderPath, certFileType.ToString());
 
@@ -523,12 +523,12 @@ public class FileService
         return isFileOperationSuceeded;
     }
 
-    internal static bool SaveJWSFile(string identifier, string jws, CertFileType type)
+    internal static bool SaveJWSFile(string identifier, string jws, JwsFileType type)
     {
         try
         {
             // Write the JWS to the file
-            System.IO.File.WriteAllText(GetCertFilePath(identifier, type.ToString()), jws);
+            System.IO.File.WriteAllText(GetJWSFilePath(identifier, type.ToString()), jws);
         }
         catch (Exception)
         {
@@ -538,12 +538,12 @@ public class FileService
         return true;
     }
 
-    internal static string GetJWSFileIfExists(string identifier, CertFileType type)
+    internal static string GetJWSFileIfExists(string identifier, JwsFileType type)
     {
         try
         {
             // Write the JWS to the file
-            return System.IO.File.ReadAllText(GetCertFilePath(identifier, type.ToString()));
+            return System.IO.File.ReadAllText(GetJWSFilePath(identifier, type.ToString()));
         }
         catch (Exception)
         {
@@ -552,13 +552,13 @@ public class FileService
     }
 
 
-    internal static bool DeleteJWSFile(string identifier, CertFileType type)
+    internal static bool DeleteJWSFile(string identifier, JwsFileType type)
     {
         try
         {
-            if (System.IO.File.Exists(GetCertFilePath(identifier, type.ToString())))
+            if (System.IO.File.Exists(GetJWSFilePath(identifier, type.ToString())))
             {
-                System.IO.File.Delete(GetCertFilePath(identifier, type.ToString()));
+                System.IO.File.Delete(GetJWSFilePath(identifier, type.ToString()));
             }
 
             return true;
