@@ -33,16 +33,6 @@
 	font-size:small;
 	}
 
-	@@media (max-width: 1920px) {
-		.cell-content {
-			height: 142px;
-			max-height: 142px;
-			overflow: hidden;
-			word-break:break-all;
-			font-size:small;
-		}
-	}
-
 	.vcell-content {
 	height: 45px;
 	max-height: 45px;
@@ -516,7 +506,7 @@
 												}
 											</div>
 										</td>
-										<td style="width:8%;word-break:break-all;color:lightgray;font-size:x-small;border-color:blue;">
+										<td style="width:8%;min-width:168px;word-break:break-all;color:lightgray;font-size:x-small;border-color:blue;">
 											@($"CREATE {TimeStamp.DateTimeToString(CDSet.TimeStampCreate)}")<br />
 											@($"UPDATE {TimeStamp.DateTimeToString(CDSet.TimeStamp)}")<br />
 											@($"TREE {TimeStamp.DateTimeToString(CDSet.TimeStampTree)}")<br />
@@ -623,7 +613,7 @@
 												@AASSet?.IdShort
 											</div>
 										</td>
-										<td style="font-size:small;border-color:blue;">
+										<td style="font-size:small;border-color:blue;" title="@AASSet?.DisplayName">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -641,7 +631,7 @@
 											</div>
 										</td>
 										<td style="word-break:keep-all;border-color:blue;">@AASSet?.Category</td>
-										<td style="border-color:blue;">
+										<td style="border-color:blue;" title="@AASSet?.Description">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -671,7 +661,7 @@
 										<td style=";border-color:blue;">@AASSet?.GlobalAssetId</td>
 										<td style=";border-color:blue;">@AASSet?.AssetType</td>
 										<td style="font-size:small;border-color:blue;">@AASSet?.SpecificAssetIds</td>
-										<td style=";border-color:blue;">
+										<td style=";border-color:blue;" title="@AASSet?.DefaultThumbnailPath">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -689,7 +679,7 @@
 											</div>
 										</td>
 										<td style=";border-color:blue;">@AASSet?.DefaultThumbnailContentType</td>
-										<td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
+										<td style="width:8%;min-width:168px;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
 											@($"CREATE {TimeStamp.DateTimeToString(AASSet.TimeStampCreate)}")<br />
 											@($"UPDATE {TimeStamp.DateTimeToString(AASSet.TimeStamp)}")<br />
 											@($"TREE {TimeStamp.DateTimeToString(AASSet.TimeStampTree)}")<br />
@@ -858,7 +848,7 @@
 										<td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.IdShort</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.DisplayName</td>
 										<td style="width:3%;font-size:small;word-break:keep-all;border-color:blue;">@SMVirtualize?.smSet?.Category</td>
-										<td style="width:3%;font-size:small;border-color:blue;">
+										<td style="width:3%;font-size:small;border-color:blue;" title="@SMVirtualize?.smSet?.Description">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -880,7 +870,7 @@
 										<td style="width:3%;font-size:small;word-break:keep-all;border-color:blue;">@SMVirtualize?.smSet?.Kind</td>
 										<td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.SemanticId</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.SupplementalSemanticIds</td>
-										<td style="width:3%;font-size:small;border-color:blue;">
+										<td style="width:3%;font-size:small;border-color:blue;" title="@SMVirtualize?.smSet?.Qualifiers">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -892,9 +882,7 @@
 
 													if (text?.Length > MAX_LENGTH_TEXT)
 													{
-
 														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
-
 													}
 													<span>@text</span>
 												}
@@ -906,7 +894,7 @@
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Creator</td>
 										<td style="width:3%;border-color:blue;">@SMVirtualize?.smSet?.TemplateId</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.AEmbeddedDataSpecifications</td>
-										<td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
+										<td style="width:8%;min-width:168px;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
 											@($"CREATE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStampCreate)}")<br />
 											@($"UPDATE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStamp)}")<br />
 											@($"TREE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStampTree)}")<br />
@@ -1036,7 +1024,7 @@
 												@SMEVirtualize?.smeSet.Category
 											</div>
 										</td>
-										<td style="width:4%;font-size:small;border-color:blue;">
+										<td style="width:4%;font-size:small;border-color:blue;" title="@SMEVirtualize?.smeSet.Description">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1061,7 +1049,7 @@
 												@SMEVirtualize?.smeSet.Extensions
 											</div>
 										</td>
-										<td style="width:10%;word-break: break-all;font-size:small;border-color:blue;">
+										<td style="width:10%;word-break: break-all;font-size:small;border-color:blue;" title="@SMEVirtualize?.smeSet.SemanticId">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1091,7 +1079,7 @@
 												@SMEVirtualize?.smeSet.Qualifiers
 											</div>
 										</td>
-										<td style="width:4%;font-size:small;border-color:blue;">
+										<td style="width:4%;font-size:small;border-color:blue;" title="@SMEVirtualize?.smeSet.EmbeddedDataSpecifications">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1124,9 +1112,9 @@
 														var text = value[0][0];
 														if (text != "")
 														{
-															if (text.Length > MAX_LENGTH_TEXT && !withDetails)
+															if (text.Length > 50 && !withDetails)
 															{
-																text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
+																text = text.Substring(0, 50) + " ..";
 															}
 														}
 														<span>@text</span>
@@ -1161,7 +1149,7 @@
 										</td>
 										<td style="width:4%;font-size:small;border-color:blue;">
 										</td>
-										<td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
+										<td style="width:8%;min-width:168px;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
 											@($"CREATE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStampCreate)}")<br />
 											@($"UPDATE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStamp)}")<br />
 											@($"TREE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStampTree)}")<br />
@@ -1263,7 +1251,7 @@
 								<Virtualize Context="SValueSet" @ref="SValueSetContainer" ItemsProvider="LoadSValueSetItems" >
 									<tr>
 										<td style="word-break:keep-all; break-all;border-color:blue;">@SValueSet.SMEId</td>
-										<td style="word-break:keep-all; break-all;border-color:blue;">
+										<td style="word-break:keep-all; break-all;border-color:blue;" title="@SValueSet?.Value">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1282,7 +1270,7 @@
 												}
 											</div>
 										</td>
-										<td style="word-break:keep-all; break-all;border-color:blue; ">
+										<td style="word-break:keep-all; break-all;border-color:blue; " title="@SValueSet?.Annotation">
 											<div class="@cell">
 												@if (withDetails)
 												{
@@ -1462,7 +1450,7 @@
 								}
 								<tr>
 									<td style="word-break: break-all;border-color:blue">@OValueSet.SMEId</td>
-									<td style="word-break:keep-all; break-all;border-color:blue;">
+									<td style="word-break:keep-all; break-all;border-color:blue;" title="@OValueSet.Value">
 										<div class="@cell">
 											@if (withDetails)
 											{
@@ -1516,7 +1504,7 @@
 	private long elapsedTime = 0;
 	object loadedItems = null;
 
-	const int MAX_LENGTH_TEXT = 32;
+	const int MAX_LENGTH_TEXT = 40;
 	const int MAX_LENGTH_VCELL_TEXT = 360;
 
 	private void CheckTotalCountAndUpdate()
