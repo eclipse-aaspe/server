@@ -49,11 +49,7 @@ public class DbEventRequest
 
     public int LimitSm { get; set; }
 
-    public int LimitSme { get; set; }
-
     public int OffsetSm { get; set; }
-
-    public int OffsetSme { get; set; }
 
     public string Time { get; set; } = string.Empty;
 

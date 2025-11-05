@@ -1623,8 +1623,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var wp = dbEventRequest.IsInclude;
         var limSm = dbEventRequest.LimitSm;
         var offSm = dbEventRequest.OffsetSm;
-        var limSme = dbEventRequest.LimitSme;
-        var offSme = dbEventRequest.OffsetSme;
         var requestType = dbEventRequest.DbEventRequestType;
 
         List<String> diffEntry = new List<String>();
@@ -1676,7 +1674,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
 
         var eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
-            diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, limSme, offSm, offSme, showTransmitted);
+            diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, offSm, showTransmitted);
 
         if (requestType == DbEventRequestType.Status
             && eventPayload.Any())

@@ -237,8 +237,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             {
                 offSm = (int)offsetSm;
             }
-            int limSme = 1000;
-            int offSme = 0;
 
             //ToDo: Find out whether we need refresh
             //if (diff.StartsWith("refresh="))
@@ -254,6 +252,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 var delimited = lastEventId.Split("~~");
 
                 time = delimited[1];
+                Int32.TryParse(delimited[2], out offSm);
             }
 
             var eventRequest = new DbEventRequest()
@@ -266,9 +265,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 Time = time,
                 IsInclude = wp,
                 LimitSm = limSm,
-                LimitSme = limSme,
                 OffsetSm = offSm,
-                OffsetSme = offSme,
                 ExternalBlazor = Program.externalBlazor
             };
 

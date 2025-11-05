@@ -387,7 +387,7 @@ public class EventService : IEventService
         }
 
         var e = CollectPayload(null, false, sourceString, semanticId, domain, eventData.ConditionSM, eventData.ConditionSME,
-            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0, showTransmitted);
+            d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 0, showTransmitted);
 
         var options = new JsonSerializerOptions
         {
@@ -672,7 +672,7 @@ public class EventService : IEventService
     public List<EventPayload> CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
         string basicEventElementSemanticId, string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
-        bool withPayload, bool smOnly, int limitSm, int limitSme, int offsetSm, int offsetSme, bool showTransmitted, SubmodelElementCollection statusData = null)
+        bool withPayload, bool smOnly, int limitSm, int offsetSm, bool showTransmitted, SubmodelElementCollection statusData = null)
     {
         var eventPayloadList = new List<EventPayload>();
 
@@ -867,7 +867,7 @@ public class EventService : IEventService
                                 || (sme.TimeStampCreate <= diffTime && sme.TimeStampDelete <= diffTime
                                     && sme.TimeStampTree != sme.TimeStampCreate && sme.TimeStampTree > diffTime)
                             )
-                            .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
+                            .ToList();
                         if (smeSearchTimeStamp.Count != 0)
                         {
                             // smeSearchTimeStamp = smeSearchSM.Where(sme => sme.ParentSMEId == null).ToList();

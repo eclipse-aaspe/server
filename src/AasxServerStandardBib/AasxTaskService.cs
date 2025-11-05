@@ -2171,7 +2171,7 @@ namespace AasxServer
 
                     var e = _eventService.CollectPayload(null, false, sourceString, semanticId, domain,
                         eventData.ConditionSM, eventData.ConditionSME,
-                        d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 1000, 0, 0, showTransmitted);
+                        d, diffEntry, transmitted, minInterval, maxInterval, wp, smOnly, 1000, 0, showTransmitted);
                     foreach (var diff in diffEntry)
                     {
                         Console.WriteLine(diff);
