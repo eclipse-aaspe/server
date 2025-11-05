@@ -13,33 +13,34 @@
 
 namespace AasxServerDB;
 
-using System.Diagnostics;
-using Extensions;
-using Microsoft.IdentityModel.Tokens;
-using System.Linq.Dynamic.Core;
-using System.Linq;
-using Irony.Parsing;
 using System;
 using System.Collections.Generic;
-using Contracts.QueryResult;
-using AasxServerDB.Entities;
-using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using System.Linq.Dynamic.Core;
+using System.Numerics;
+using System.Runtime.Intrinsics.X86;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using AasCore.Aas3_0;
+using AasxServerDB.Entities;
+using Contracts.QueryResult;
 using Contracts.Security;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+using Extensions;
 // using Newtonsoft.Json.Schema;
 using HotChocolate.Types.Relay;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using System.Text.Json;
-using System.Numerics;
-using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Runtime.Intrinsics.X86;
-using System.Drawing;
-using static AasxServerDB.CrudOperator;
+using Irony.Parsing;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using static AasxServerDB.CrudOperator;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 public class CombinedValue
 {
@@ -925,11 +926,28 @@ public partial class Query
                     iValueTable = db.IValueSets;
                     dValueTable = db.DValueSets;
 
+                    var t1 = smTable.ToQueryString();
+                    var t2 = smeTable.ToQueryString();
+                    var t3 = sValueTable.ToQueryString();
+                    var t4 = iValueTable.ToQueryString();
+                    var t5 = dValueTable.ToQueryString();
+
                     // combine tables to a raw sql 
                     rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
                     // table name needed for EXISTS in path search
                     rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
                     comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
+                    var qp = GetQueryPlan(db, rawSQLEx);
+
+                    /*
+                    var comTable2 = CombineTables(db, null, smTable, smeTable, sValueTable, iValueTable, dValueTable);
+                    var rawSQLEx2 = comTable2.ToQueryString();
+                    var qp2 = GetQueryPlan(db, rawSQLEx2);
+
+                    var comTable4 = CombineTablesWithCTE(db, smTable, smeTable, sValueTable, iValueTable, dValueTable);
+                    var rawSQLEx4 = comTable4.ToQueryString();
+                    var qp4 = GetQueryPlan(db, rawSQLEx4);
+                    */
 
                     var withMerge = true;
                     if (withMerge)
@@ -2459,18 +2477,6 @@ public partial class Query
 
         if (combineValue != null)
         {
-            /*
-            var noValue = result
-                .Where(r => r.sme != null && string.IsNullOrEmpty(r.sme.TValue))
-                .Select(r => new CombinedValue
-                {
-                    SMEId = r.sme.SMId,
-                    SValue = null,
-                    MValue = null
-                });
-            combineValue = combineValue.Concat(noValue);
-            */
-
             result = result.Join(combineValue,
             r => r.sme.Id,
             v => v.SMEId,
@@ -2482,34 +2488,16 @@ public partial class Query
                 svalue = v.SValue,
                 nvalue = v.MValue
             });
-
-            /*
-            result = result
-                .GroupJoin(
-                    combineValue,
-                    r => r.sme.Id,
-                    v => v.SMEId,
-                    (r, vs) => new { r, vs }
-                )
-                .SelectMany(
-                    x => x.vs.DefaultIfEmpty(),
-                    (x, v) => new joinAll
-                    {
-                        aas = x.r.aas,
-                        sm = x.r.sm,
-                        sme = x.r.sme,
-                        svalue = v.SValue,
-                        nvalue = v.MValue
-                    }
-                );
-            */
         }
 
         // var x1 = result.Take(10).ToList();
         // var smRawSQL = result.ToQueryString();
         // var qp = GetQueryPlan(db, smRawSQL);
 
-        result = result.Where(conditionAll);
+        if (conditionAll != "true")
+        {
+            result = result.Where(conditionAll);
+        }
 
         var combined = result.Select(r => new CombinedSMSMEV
         {
@@ -2534,6 +2522,98 @@ public partial class Query
         });
 
         return combined;
+    }
+
+    private static IQueryable<CombinedSMSMEV> CombineTablesWithCTE(
+        AasContext db,
+        IQueryable<SMSet> smTable,
+        IQueryable<SMESet> smeTable,
+        IQueryable<SValueSet>? sValueTable,
+        IQueryable<IValueSet>? iValueTable,
+        IQueryable<DValueSet>? dValueTable,
+        bool includeEmptyValues = false)
+    {
+        // Hole EF-SQL
+        var smRaw = smTable.ToQueryString();
+        var smeRaw = smeTable.ToQueryString();
+        var sValueRaw = sValueTable?.ToQueryString();
+        var iValueRaw = iValueTable?.ToQueryString();
+        var dValueRaw = dValueTable?.ToQueryString();
+
+        // Extrahiere FROM + WHERE aus EF-SQL
+        string ExtractFromWhere(string raw)
+        {
+            var fromIndex = raw.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
+            return fromIndex > 0 ? raw.Substring(fromIndex) : raw;
+        }
+
+        var smFromWhere = ExtractFromWhere(smRaw);
+        var smeFromWhere = ExtractFromWhere(smeRaw);
+        var sValueFromWhere = sValueRaw != null ? ExtractFromWhere(sValueRaw) : null;
+        var iValueFromWhere = iValueRaw != null ? ExtractFromWhere(iValueRaw) : null;
+        var dValueFromWhere = dValueRaw != null ? ExtractFromWhere(dValueRaw) : null;
+
+        // Baue CTEs mit eigener SELECT-Liste
+        var sb = new StringBuilder("WITH\n");
+        sb.AppendLine($"FilteredSM AS (\nSELECT \"s\".\"Id\" AS SM_Id, \"s\".\"SemanticId\" AS SM_SemanticId, \"s\".\"IdShort\" AS SM_IdShort, \"s\".\"DisplayName\" AS SM_DisplayName, \"s\".\"Description\" AS SM_Description, \"s\".\"Identifier\" AS SM_Identifier, \"s\".\"TimeStampTree\" AS SM_TimeStampTree\n{smFromWhere}\n),");
+        sb.AppendLine($"FilteredSME AS (\nSELECT \"s\".\"Id\" AS SME_Id, \"s\".\"SMId\" AS SME_SMId, \"s\".\"SemanticId\" AS SME_SemanticId, \"s\".\"IdShort\" AS SME_IdShort, \"s\".\"IdShortPath\" AS SME_IdShortPath, \"s\".\"DisplayName\" AS SME_DisplayName, \"s\".\"Description\" AS SME_Description, \"s\".\"TimeStamp\" AS SME_TimeStamp, \"s\".\"TValue\" AS SME_TValue\n{smeFromWhere}\n),");
+
+        if (sValueFromWhere != null)
+            sb.AppendLine($"FilteredSValue AS (\nSELECT \"s\".\"SMEId\" AS V_SMEId, \"s\".\"Value\" AS V_Value\n{sValueFromWhere}\n),");
+        if (iValueFromWhere != null)
+            sb.AppendLine($"FilteredIValue AS (\nSELECT \"i\".\"SMEId\" AS V_SMEId, \"i\".\"Value\" AS V_Value\n{iValueFromWhere}\n),");
+        if (dValueFromWhere != null)
+            sb.AppendLine($"FilteredDValue AS (\nSELECT \"d\".\"SMEId\" AS V_SMEId, \"d\".\"Value\" AS V_Value\n{dValueFromWhere}\n),");
+
+        // Join SM und SME
+        sb.AppendLine(@"
+FilteredSMAndSME AS (
+    SELECT sm.SM_Id, sm.SM_SemanticId, sm.SM_IdShort, sm.SM_DisplayName, sm.SM_Description,
+           sm.SM_Identifier, sm.SM_TimeStampTree, sme.SME_SemanticId, sme.SME_IdShort,
+           sme.SME_IdShortPath, sme.SME_DisplayName, sme.SME_Description, sme.SME_Id,
+           sme.SME_TimeStamp, sme.SME_TValue
+    FROM FilteredSM AS sm
+    INNER JOIN FilteredSME AS sme ON sm.SM_Id = sme.SME_SMId
+)
+");
+
+        // Haupt-SELECT mit UNION ALL
+        sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
+        sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
+        sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, NULL AS V_D_Value");
+        sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredSValue AS v ON sm_sme.SME_Id = v.V_SMEId");
+
+        if (iValueFromWhere != null)
+        {
+            sb.AppendLine("UNION ALL");
+            sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
+            sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
+            sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
+            sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredIValue AS v ON sm_sme.SME_Id = v.V_SMEId");
+        }
+
+        if (dValueFromWhere != null)
+        {
+            sb.AppendLine("UNION ALL");
+            sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
+            sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
+            sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
+            sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredDValue AS v ON sm_sme.SME_Id = v.V_SMEId");
+        }
+
+        if (includeEmptyValues)
+        {
+            sb.AppendLine("UNION ALL");
+            sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
+            sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
+            sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, NULL, NULL");
+            sb.AppendLine("FROM FilteredSMAndSME AS sm_sme WHERE sm_sme.SME_TValue IS NULL OR sm_sme.SME_TValue = ''");
+        }
+
+        var finalSql = sb.ToString();
+
+        // Ausführen und typisierte Ergebnisse zurückgeben
+        return db.Database.SqlQueryRaw<CombinedSMSMEV>(finalSql).AsQueryable();
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
