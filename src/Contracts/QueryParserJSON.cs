@@ -607,6 +607,7 @@ public class QueryGrammarJSON : Grammar
         switch (mode)
         {
             case "all":
+            case "all-aas":
                 if (smeValue == "svalue")
                 {
                     if (value == "sme.value")
@@ -621,7 +622,7 @@ public class QueryGrammarJSON : Grammar
                         value = "mvalue";
                     }
                 }
-                if (value.StartsWith("aas."))
+                if (mode == "all" && value.StartsWith("aas."))
                 {
                     value = "$SKIP";
                 }
