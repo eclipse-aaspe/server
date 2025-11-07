@@ -13,8 +13,7 @@
 
 using AasxServer;
 using Extensions;
-using Opc.Ua;
-using Org.Webpki.JsonCanonicalizer;
+// using Org.Webpki.JsonCanonicalizer;
 using SampleClient;
 using System;
 using System.Collections.Generic;
@@ -686,8 +685,9 @@ namespace AasxTimeSeries
                     json.Value = s;
 
                     Console.WriteLine("Canonicalize");
-                    JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
-                    string            result            = jsonCanonicalizer.GetEncodedString();
+                    // JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
+                    // string            result            = jsonCanonicalizer.GetEncodedString();
+                    string result = s;
                     canonical.Value = result;
                     subject.Value   = certificate.Subject;
 
@@ -890,15 +890,16 @@ namespace AasxTimeSeries
 
                         if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
                         {
-                            GetHistory(tsb);
+                            // GetHistory(tsb);
                             valueCount = 0;
-                            if (table != null)
-                                valueCount = table.Count;
+                            // if (table != null)
+                                // valueCount = table.Count;
                         }
 
                         if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
                         {
-                            valueCount = GetDAData(tsb);
+                            // valueCount = GetDAData(tsb);
+                            valueCount = 0;
                         }
 
                         if (tsb.sourceType == "modbus" && tsb.sourceAddress != "")
@@ -1549,8 +1550,8 @@ namespace AasxTimeSeries
 
         static List<List<object>> table = null;
         static string ErrorMessage { get; set; }
-        static UASampleClient opc = null;
-        static Opc.Ua.Client.Session session = null;
+        // static UASampleClient opc = null;
+        // static Opc.Ua.Client.Session session = null;
         static DateTime startTime;
         static DateTime endTime;
         static List<string> opcDAValues = null;
@@ -1639,6 +1640,7 @@ namespace AasxTimeSeries
             return 1;
         }
 
+        /*
         public static int GetDAData(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Read OPC DA Data:");
@@ -1663,11 +1665,9 @@ namespace AasxTimeSeries
                 ErrorMessage = ex.Message;
                 return 0;
             }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
+            // session?.Close();
+            // session?.Dispose();
+            // session = null;
 
             return 1;
         }
@@ -1695,13 +1695,10 @@ namespace AasxTimeSeries
                 session = null;
                 opc     = null;
             }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
+            // session?.Close();
+            // session?.Dispose();
+            // session = null;
         }
-
         public static void Connect(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Connect OPC UA");
@@ -1824,5 +1821,6 @@ namespace AasxTimeSeries
                 }
             }
         }
+        */
     }
 }

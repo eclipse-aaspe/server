@@ -36,9 +36,12 @@ namespace AasxServerBlazor.Configuration;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AasxServerStandardBib.GraphQL;
 using AdminShellNS;
 using Contracts;
+#if GRAPHQL
+using HotChocolate.AspNetCore;
+#endif
+using IO.Swagger.Lib.V3.GraphQL;
 
 public static class ServerConfiguration
 {
@@ -67,6 +70,7 @@ public static class ServerConfiguration
         services.AddControllers();
         services.AddLazyResolution();
 
+#if GRAPHQL
         services.AddGraphQLServer()
             .AddQueryType<GraphQLAPI>()
             .UseField<ParameterNamesMiddleware>()
@@ -75,13 +79,14 @@ public static class ServerConfiguration
                     ExecutionTimeout = TimeSpan.FromMinutes(10),
                     IncludeExceptionDetails = true
                 });
+#endif
     }
 
-    /// <summary>
-    /// Adds framework-specific services required by the application.
-    /// </summary>
-    /// <param name="services">The collection of services to configure.</param>
-    public static void AddFrameworkServices(IServiceCollection services)
+        /// <summary>
+        /// Adds framework-specific services required by the application.
+        /// </summary>
+        /// <param name="services">The collection of services to configure.</param>
+        public static void AddFrameworkServices(IServiceCollection services)
     {
         services.AddLogging(loggingBuilder => { loggingBuilder.AddConsole(); });
 
@@ -139,7 +144,7 @@ public static class ServerConfiguration
         app.UseRouting();
         app.UseAuthorization();
         app.UseCors(CorsPolicyName);
-        
+
         app.UseEndpoints(ConfigureEndpoints);
     }
 
@@ -148,22 +153,27 @@ public static class ServerConfiguration
     private static void ConfigureEndpoints(IEndpointRouteBuilder endpoints)
     {
         endpoints.MapBlazorHub(options =>
-                               {
-                                   // Do NOT use Websockets
-                                   options.Transports =
-                                       HttpTransportType.ServerSentEvents |
-                                       HttpTransportType.LongPolling;
-                               });
+        {
+            // Do NOT use Websockets
+            options.Transports =
+                HttpTransportType.ServerSentEvents |
+                HttpTransportType.LongPolling;
+        });
         endpoints.MapFallbackToPage(FallbackHostPattern);
         endpoints.MapControllers();
-        endpoints.MapGraphQL();
+#if GRAPHQL
+        endpoints.MapGraphQL().WithOptions(new GraphQLServerOptions
+        {
+            Tool = { Enable = true }
+        });
+#endif
     }
 
-    #endregion
+#endregion
 
-    #region Server Configuration
+        #region Server Configuration
 
-    private static void ConfigureCors(IServiceCollection services) =>
+        private static void ConfigureCors(IServiceCollection services) =>
         services.AddCors(options =>
                          {
                              options.AddPolicy(CorsPolicyName, builder =>

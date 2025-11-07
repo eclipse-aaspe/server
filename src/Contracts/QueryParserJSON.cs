@@ -1,7 +1,32 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 using AasSecurity.Models;
 using Irony.Parsing;
 using Contracts;
 using System.Linq.Expressions;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using static System.Net.Mime.MediaTypeNames;
+// using Newtonsoft.Json.Schema;
+// using NJsonSchema;
+// using NJsonSchema.Validation;
+// using Json.Schema;
+using System.Data;
+using System.Xml.Linq;
+using System.Text.Json;
+using NJsonSchema.Validation;
+using System.Text.Json.Nodes;
 
 public class QueryGrammarJSON : Grammar
 {
@@ -10,7 +35,6 @@ public class QueryGrammarJSON : Grammar
         mySecurityRules = contractSecurityRules;
 
         // Whitespace
-        // var ws = new RegexBasedTerminal("ws", @"\s*");
         var whitespaceTerminal = new RegexBasedTerminal("whitespace", @"[ \n\t\r\f]+");
         NonGrammarTerminals.Add(whitespaceTerminal);
 
@@ -29,6 +53,8 @@ public class QueryGrammarJSON : Grammar
         // Define non-terminals
         var json = new NonTerminal("json");
         var query = new NonTerminal("query");
+        var selectLiteralId = ToTerm("\"id\"");
+        var selectLiteralMatch = ToTerm("\"match\"");
         var logicalExpression = new NonTerminal("logical_expression");
         var matchExpression = new NonTerminal("match_expression");
         var comparisonItems = new NonTerminal("comparison_items");
@@ -63,9 +89,13 @@ public class QueryGrammarJSON : Grammar
 
         // Define rules
         json.Rule = (query | allAccessPermissionRules);
-        // json.Rule = (allAccessPermissionRules);
-        // query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + (ToTerm(",") + "\"$select\":" + "id").Q() + ToTerm("}") + ToTerm("}");
-        query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + ToTerm("}") + ToTerm("}");
+
+        query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") +
+            (ToTerm("\"$select\":") + (selectLiteralId | selectLiteralMatch) + ToTerm(",")).Q() +
+            "\"$condition\":" + logicalExpression +
+            (ToTerm(",") + "\"$filter\":" + logicalExpression).Q() +
+            ToTerm("}") + ToTerm("}");
+
         logicalExpression.Rule = ToTerm("{") + (("\"$and\":" + logicalExpressionArray) |
                                             ("\"$or\":" + logicalExpressionArray) |
                                             ("\"$not\":" + logicalExpression) |
@@ -77,12 +107,12 @@ public class QueryGrammarJSON : Grammar
                                             ("\"$lt\":" + comparisonItems) |
                                             ("\"$le\":" + comparisonItems) |
                                             ("\"$contains\":" + stringItems) |
-                                            ("\"$starts_with\":" + stringItems) |
-                                            ("\"$ends_with\":" + stringItems) |
+                                            ("\"$starts-with\":" + stringItems) |
+                                            ("\"$ends-with\":" + stringItems) |
                                             ("\"$regex\":" + stringItems) |
                                             ("\"$boolean\":" + booleanLiteral))
                                             + ToTerm("}");
-        matchExpression.Rule = ToTerm("{") + (("\"$match\":" + matchExpressionArray) |
+        matchExpression.Rule = ToTerm("{") + ( /* ("\"$match\":" + matchExpressionArray) | nested match currently not implemented */
                                            ("\"$eq\":" + comparisonItems) |
                                            ("\"$ne\":" + comparisonItems) |
                                            ("\"$gt\":" + comparisonItems) |
@@ -90,19 +120,27 @@ public class QueryGrammarJSON : Grammar
                                            ("\"$lt\":" + comparisonItems) |
                                            ("\"$le\":" + comparisonItems) |
                                            ("\"$contains\":" + stringItems) |
-                                           ("\"$starts_with\":" + stringItems) |
-                                           ("\"$ends_with\":" + stringItems) |
+                                           ("\"$starts-with\":" + stringItems) |
+                                           ("\"$ends-with\":" + stringItems) |
                                            ("\"$regex\":" + stringItems) |
                                            ("\"$boolean\":" + booleanLiteral))
                                            + ToTerm("}");
-        comparisonItems.Rule = "[" + value + ToTerm(",") + value + "]";
-        stringItems.Rule = "[" + stringValue + ToTerm(",") + stringValue + "]";
-        var logicalExpressionArrayStar = new NonTerminal("__logicalExpressionArrayStar");
-        logicalExpressionArrayStar.Rule = MakeStarRule(logicalExpressionArrayStar, ToTerm(",") + logicalExpression);
-        logicalExpressionArray.Rule = "[" + logicalExpression + logicalExpressionArrayStar + "]";
-        var matchExpressionArrayStar = new NonTerminal("__matchExpressionArrayStar");
-        matchExpressionArrayStar.Rule = MakeStarRule(matchExpressionArrayStar, ToTerm(",") + matchExpression);
-        matchExpressionArray.Rule = "[" + matchExpression + matchExpressionArrayStar + "]";
+        var comparisonPair = new NonTerminal("comparison_pair");
+        comparisonPair.Rule = value + ToTerm(",") + value;
+        comparisonItems.Rule = "[" + comparisonPair + "]";
+
+        var stringPair = new NonTerminal("string_pair");
+        stringPair.Rule = stringValue + ToTerm(",") + stringValue;
+        stringItems.Rule = "[" + stringPair + "]";
+
+        var logicalExpressionList = new NonTerminal("logical_expression_list");
+        logicalExpressionList.Rule = MakePlusRule(logicalExpressionList, ToTerm(","), logicalExpression);
+        logicalExpressionArray.Rule = "[" + logicalExpressionList + "]";
+
+        var matchExpressionList = new NonTerminal("match_expression_list");
+        matchExpressionList.Rule = MakePlusRule(matchExpressionList, ToTerm(","), matchExpression);
+        matchExpressionArray.Rule = "[" + matchExpressionList + "]";
+
         value.Rule = ToTerm("{") + (("\"$field\":" + stringLiteral) |
                                  ("\"$strVal\":" + stringLiteral) |
                                  ("\"$attribute\":" + attribute) |
@@ -134,57 +172,80 @@ public class QueryGrammarJSON : Grammar
                                  ("\"$strCast\":" + value) |
                                  ("\"$attribute\":" + attribute))
                                  + ToTerm("}");
-        var defattributesArrayStar = new NonTerminal("__defattributesArrayStar");
-        defattributesArrayStar.Rule = MakeStarRule(defattributesArrayStar, "\"DEFATTRIBUTES\":" + defattributesArray + ToTerm(","));
-        var defaclsArrayStar = new NonTerminal("__defaclsArrayStar");
-        defaclsArrayStar.Rule = MakeStarRule(defaclsArrayStar, "\"DEFACLS\":" + defaclsArray + ToTerm(","));
-        var defobjectsArrayStar = new NonTerminal("__defobjectsArrayStar");
-        defobjectsArrayStar.Rule = MakeStarRule(defobjectsArrayStar, "\"DEFOBJECTS\":" + defobjectsArray + ToTerm(","));
-        var defformulasArrayStar = new NonTerminal("__defformulasArrayStar");
-        defformulasArrayStar.Rule = MakeStarRule(defformulasArrayStar, "\"DEFFORMULAS\":" + defformulasArray + ToTerm(","));
+
+        var defattributesList = new NonTerminal("defattributes_list");
+        defattributesList.Rule = MakeStarRule(defattributesList, ToTerm(","), defattributes);
+        defattributesArray.Rule = "[" + defattributesList + "]";
+
+        var defaclsList = new NonTerminal("defacls_list");
+        defaclsList.Rule = MakeStarRule(defaclsList, ToTerm(","), defacls);
+        defaclsArray.Rule = "[" + defaclsList + "]";
+
+        var defobjectsList = new NonTerminal("defobjects_list");
+        defobjectsList.Rule = MakeStarRule(defobjectsList, ToTerm(","), defobjects);
+        defobjectsArray.Rule = "[" + defobjectsList + "]";
+
+        var defformulasList = new NonTerminal("defformulas_list");
+        defformulasList.Rule = MakeStarRule(defformulasList, ToTerm(","), defformulas);
+        defformulasArray.Rule = "[" + defformulasList + "]";
+
         allAccessPermissionRules.Rule = ToTerm("{") + "\"AllAccessPermissionRules\":" + ToTerm("{") +
-                                        defattributesArrayStar +
-                                        defaclsArrayStar +
-                                        defobjectsArrayStar +
-                                        defformulasArrayStar +
+                                        defattributesArray.Q() +
+                                        defaclsArray.Q() +
+                                        defobjectsArray.Q() +
+                                        defformulasArray.Q() +
                                         "\"rules\":" + accessPermissionRuleArray + ToTerm("}") + ToTerm("}");
-        defattributesArray.Rule = "[" + defattributes + (ToTerm(",") + defattributes).Q() + "]";
         defattributes.Rule = ToTerm("{") + "\"name\":" + stringLiteral + ToTerm(",") + "\"attributes\":" + attributeArray + ToTerm("}");
-        defaclsArray.Rule = "[" + defacls + (ToTerm(",") + defacls).Q() + "]";
         defacls.Rule = ToTerm("{") + "\"name\":" + stringLiteral + ToTerm(",") + "\"acl\":" + acl + ToTerm("}");
-        defobjectsArray.Rule = "[" + defobjects + (ToTerm(",") + defobjects).Q() + "]";
         defobjects.Rule = ToTerm("{") + "\"name\":" + stringLiteral + ToTerm(",") + (("\"objects\":" + objectArray) |
                                                                                          ("\"USEOBJECTS\":" + useobjectsArray)) + ToTerm("}");
-        defformulasArray.Rule = "[" + defformulas + (ToTerm(",") + defformulas).Q() + "]";
         defformulas.Rule = ToTerm("{") + "\"name\":" + stringLiteral + ToTerm(",") + "\"formula\":" + logicalExpression + ToTerm("}");
-        accessPermissionRuleArray.Rule = ToTerm("[") + accessPermissionRule + (ToTerm(",") + accessPermissionRule).Q() + "]";
+        var accessPermissionRuleList = new NonTerminal("access_permission_rule_list");
+        accessPermissionRuleList.Rule = MakeStarRule(accessPermissionRuleList, ToTerm(","), accessPermissionRule);
+        accessPermissionRuleArray.Rule = "[" + accessPermissionRuleList + "]";
+
+        var filterObject = new NonTerminal("filterObject");
+        filterObject.Rule = ToTerm("{") +
+                             "\"FRAGMENT\":" + stringLiteral + ToTerm(",") +
+                             "\"CONDITION\":" + logicalExpression +
+                             ToTerm("}");
+
         accessPermissionRule.Rule = ToTerm("{") + (("\"ACL\":" + acl) |
                                                 ("\"USEACL\":" + stringLiteral)) +
                                     ((ToTerm(",") + "\"OBJECTS\":" + objectArray) |
                                     (ToTerm(",") + "\"USEOBJECTS\":" + stringArray)) +
                                     ((ToTerm(",") + "\"FORMULA\":" + logicalExpression) |
                                      (ToTerm(",") + "\"USEFORMULA\":" + stringLiteral)) +
-                                    ((ToTerm(",") + "\"FRAGMENT\":" + stringLiteral).Q()) +
-                                    (((ToTerm(",") + "\"FILTER\":" + logicalExpression) |
+                                    (((ToTerm(",") + "\"FILTER\":" + filterObject) |
                                      (ToTerm(",") + "\"USEFILTER\":" + stringLiteral)).Q())
                                      + ToTerm("}");
         acl.Rule = ToTerm("{") + (("\"ATTRIBUTES\":" + attributeArray) |
                                ("\"USEATTRIBUTES\":" + stringArray)) +
                            ToTerm(",") + "\"RIGHTS\":" + rightsArray +
                            ToTerm(",") + "\"ACCESS\":" + accessEnum + ToTerm("}");
-        attributeArray.Rule = "[" + attribute + (ToTerm(",") + attribute).Q() + "]";
+        var attributeList = new NonTerminal("attribute_list");
+        attributeList.Rule = MakeStarRule(attributeList, ToTerm(","), attribute);
+        attributeArray.Rule = "[" + attributeList + "]";
         attribute.Rule = ToTerm("{") + (("\"CLAIM\":" + stringLiteral) |
                                      ("\"GLOBAL\":" + globalEnum) |
                                      ("\"REFERENCE\":" + stringLiteral)) + ToTerm("}");
-        stringArray.Rule = "[" + stringLiteral + (ToTerm(",") + stringLiteral).Q() + "]";
-        rightsArray.Rule = "[" + rightsEnum + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + "]";
-        objectArray.Rule = "[" + object_ + (ToTerm(",") + object_).Q() + "]";
+        var stringList = new NonTerminal("string_list");
+        stringList.Rule = MakeStarRule(stringList, ToTerm(","), stringLiteral);
+        stringArray.Rule = "[" + stringList + "]";
+        var rightsList = new NonTerminal("rights_list");
+        rightsList.Rule = MakeStarRule(rightsList, ToTerm(","), rightsEnum);
+        rightsArray.Rule = "[" + rightsList + "]";
+        var objectList = new NonTerminal("object_list");
+        objectList.Rule = MakeStarRule(objectList, ToTerm(","), object_);
+        objectArray.Rule = "[" + objectList + "]";
         object_.Rule = ToTerm("{") + (("\"ROUTE\":" + stringLiteral) |
                                   ("\"IDENTIFIABLE\":" + stringLiteral) |
                                   ("\"REFERABLE\":" + stringLiteral) |
                                   ("\"FRAGMENT\":" + stringLiteral) |
                                   ("\"DESCRIPTOR\":" + stringLiteral)) + ToTerm("}");
-        useobjectsArray.Rule = "[" + stringLiteral + (ToTerm(",") + stringLiteral).Q() + "]";
+        var useobjectsList = new NonTerminal("useobjects_list");
+        useobjectsList.Rule = MakeStarRule(useobjectsList, ToTerm(","), stringLiteral);
+        useobjectsArray.Rule = "[" + useobjectsList + "]";
         rightsEnum.Rule = ToTerm("\"CREATE\"") | "\"READ\"" | "\"UPDATE\"" | "\"DELETE\"" | "\"EXECUTE\"" | "\"VIEW\"" | "\"ALL\"" | "\"TREE\"";
         accessEnum.Rule = ToTerm("\"ALLOW\"") | "\"DISABLED\"";
         globalEnum.Rule = ToTerm("\"LOCALNOW\"") | "\"UTCNOW\"" | "\"CLIENTNOW\"" | "\"ANONYMOUS\"";
@@ -194,8 +255,10 @@ public class QueryGrammarJSON : Grammar
 
         // Define punctuation and transient terms
         MarkPunctuation(ToTerm("{"), ToTerm("}"), ToTerm(","), ToTerm("["), ToTerm("]"), ToTerm("?"), ToTerm("\""));
-        // MarkTransient(json, query, logicalExpression, matchExpression, comparisonItems, stringItems, logicalExpressionArray, matchExpressionArray, value, attribute, allAccessPermissionRules, defattributesArray, defattributes, defaclsArray, defacls, defobjectsArray, defobjects, defformulasArray, defformulas, accessPermissionRuleArray, accessPermissionRule, acl, attributeArray, stringArray, rightsArray, objectArray, useobjectsArray);
-        MarkTransient(logicalExpressionArrayStar, matchExpressionArrayStar);
+        // MarkTransient(logicalExpressionList, matchExpressionList, comparisonPair, stringPair, attributeList, stringList, rightsList, objectList, useobjectsList);
+        MarkTransient(logicalExpressionArray, matchExpressionArray, defattributesArray, defaclsArray, defobjectsArray, defformulasArray,
+            accessPermissionRuleArray, attributeArray, stringArray, rightsArray, objectArray, useobjectsArray,
+            comparisonItems);
 
         // Register operators
         RegisterOperators(1, "AND", "OR");
@@ -206,989 +269,644 @@ public class QueryGrammarJSON : Grammar
 
     public string idShortPath = "";
 
-    static void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
+    public static string createExpression(string mode, object? obj, string type = "", string smeValue = "")
     {
-        if (node == null)
-            return;
+        if (obj == null)
+            return "";
 
-        if (skip.Contains(node.Term.Name))
-            return;
-
-        string text = "";
-        bool starts = false;
-        foreach (var s in startsWith)
+        if (type == "")
         {
-            starts |= node.Term.Name.StartsWith(s);
-        }
-
-        if (starts)
-        {
-            foreach (var c in node.ChildNodes)
+            switch (obj)
             {
-                PrintParseTree(c, indent, sw);
+                case Root r:
+                    createExpression(mode, r.Query);
+                    createExpression(mode, r.AllAccessPermissionRules);
+                    break;
+                case AllAccessPermissionRules all:
+                    foreach (var rule in all.Rules)
+                    {
+                        createExpression(mode, rule.Formula);
+                    }
+                    break;
+                case Query q:
+                    createExpression(mode, q.Condition);
+                    break;
+                case LogicalExpression le:
+                    le._expression = createExpression(mode, le.ExpressionValue, le.ExpressionType, smeValue);
+                    return le._expression;
+                default:
+                    break;
             }
         }
         else
         {
-            if (!starts)
+            var op = "";
+            switch (type)
             {
-                text = new string(' ', indent * 2) + node.Term.Name;
-            }
-            else
-            {
-                text = new string(' ', indent * 2) + "(" + node.Term.Name + ")";
-            }
-            if (node.Token != null && node.Token.Value != null)
-            {
-                if (node.Term.Name != node.Token.Value.ToString())
-                {
-                    text += " " + node.Token.Value.ToString();
-                }
-            }
-            sw.WriteLine(text);
-            foreach (var child in node.ChildNodes)
-            {
-                PrintParseTree(child, indent + 1, sw);
-            }
-        }
-    }
-
-    public class treeNode
-    {
-        public string Name = "";
-        public string Value = "";
-        public string Type = "";
-        public List<treeNode> Children = null;
-        public treeNode Parent = null;
-        public string idShortPath = "";
-    }
-
-    static List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
-    static List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
-    static List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":", "\"$not\":" };
-
-    private void setParent(treeNode parent, List<treeNode> Children)
-    {
-        foreach (var c in Children)
-        {
-            c.Parent = parent;
-        }
-    }
-    private bool starts(string name)
-    {
-        var starts = false;
-        foreach (var s in startsWith)
-        {
-            if (name.StartsWith(s))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-    public treeNode simplifyTree(ParseTreeNode node)
-    {
-        var tn = new treeNode();
-        tn.Name = node.Term.Name;
-        tn.Children = new List<treeNode>();
-        if (node.Token != null && node.Token.Value != null)
-        {
-            tn.Value = node.Token.Value.ToString();
-        }
-
-        foreach (var c in node.ChildNodes)
-        {
-            if (skip.Contains(c.Term.Name))
-                continue;
-
-            var tc = simplifyTree(c);
-            if (tc != null)
-            {
-                tc.Parent = tn;
-                tn.Children.Add(tc);
-            }
-        }
-
-        if (tn.Children.Count == 2 && starts(tn.Name))
-        {
-            // Unnamed expression
-            if (tn.Children[1].Name == "logical_expression_array")
-            {
-                tn.Name = tn.Children[0].Name;
-                tn.Type = tn.Children[1].Type;
-                tn.Children = tn.Children[1].Children;
-                setParent(tn, tn.Children);
-            }
-            if (tn.Name.StartsWith("Unnamed") && tn.Children[1].Name.StartsWith("\"$"))
-            {
-                // nested expression with 2 operators
-                tn.Name = tn.Children[0].Name;
-                tn.Type = tn.Children[1].Type;
-                tn.Children.RemoveAt(0);
-            }
-        }
-
-        if (tn.Children.Count == 1 && !keep1.Contains(tn.Name))
-        {
-            if (!starts(tn.Children[0].Name))
-            {
-                tn.Name = tn.Children[0].Name;
-                tn.Value = tn.Children[0].Value;
-            }
-
-            tn.Type = tn.Children[0].Type;
-            tn.Children = tn.Children[0].Children;
-            setParent(tn, tn.Children);
-        }
-
-        switch (tn.Name)
-        {
-            case "logical_expression_array":
-                // Add Children of logical_expression_array_star
-                if (tn.Children[1].Name == "__logicalExpressionArrayStar")
-                {
-                    var cc = tn.Children[1].Children;
-                    tn.Children.RemoveAt(1);
-                    setParent(tn, cc);
-                    tn.Children.AddRange(cc);
-                }
-                break;
-            case "logical_expression":
-                // Operator
-                tn.Name = tn.Children[0].Name;
-                if (tn.Name == "\"$not\":")
-                {
-                    tn.Type = tn.Children[1].Type;
-                    tn.idShortPath = tn.Children[1].idShortPath;
-                    tn.Children.RemoveAt(0);
-                }
-                else if (tn.Name == "\"$boolean\":")
-                {
-                    tn.Type = tn.Children[1].Type;
-                    tn.Value = tn.Children[1].Value;
-                    tn.Children.Clear();
-                }
-                else
-                {
-                    // Add Children of logical_expression_array
-                    tn.Type = tn.Children[1].Type;
-                    tn.Children = tn.Children[1].Children;
-                    foreach (var c in tn.Children)
-                    {
-                        if (c.idShortPath != "")
-                        {
-                            if (tn.idShortPath != "" && tn.idShortPath != c.idShortPath)
-                            {
-                                tn.idShortPath = "$ERROR";
-                            }
-                            tn.idShortPath = c.idShortPath;
-                        }
-                    }
-                    setParent(tn, tn.Children);
-                }
-                // Add path expression
-                if (tn.idShortPath != "")
-                {
-                    var tn_path = new treeNode();
-                    tn_path.Children = new List<treeNode>();
-                    tn_path.Name = "\"$path\":";
-                    tn_path.Type = "str";
-                    tn_path.Value = tn.idShortPath;
-                    tn_path.Children.Add(tn);
-                    tn = tn_path;
-
-                    /*
-                    var tn_and = new treeNode();
-                    tn_and.Children = new List<treeNode>();
-                    tn_and.Name = "\"$and\":";
-                    tn_and.Children.Add(tn_path);
-                    tn_and.Children.Add(tn);
-                    setParent(tn_and, tn.Children);
-                    tn = tn_and;
+                case "$or":
+                    op = "||";
                     break;
-                    */
-                }
-                /*
-                if (tn.Name == "\"$eq\":" && tn.Children.Count == 2 && tn.Children[0].Type == "field")
-                {
-                    if (tn.Children[0].Value == "$sme#path")
-                    {
-                        idShortPath = tn.Children[1].Value;
-                        return null; // skip expression
-                    }
-                }
-                */
-                break;
-            case "value":
-            case "string_value":
-                tn.Name = tn.Children[0].Name;
-                tn.Type = tn.Children[0].Type;
-                tn.Value = tn.Children[1].Value;
-                tn.Children.Clear();
-                if (tn.Name == "\"$field\":")
-                {
-                    var str1 = tn.Value.Split("#");
-                    if (str1[0].Contains('.'))
-                    {
-                        var str2 = str1[0].Split(".");
-                        tn.idShortPath = str2[1];
-                        for (int i = 2; i < str2.Count(); i++)
-                        {
-                            tn.idShortPath += "." + str2[i];
-                        }
-                        tn.Value = str2[0] + "." + str1[1];
-                    }
-                }
-                break;
-            case "\"$strVal\":":
-            case "StringLiteral":
-                tn.Type = "str";
-                break;
-            case "\"$numVal\":":
-            case "NumericalLiteral":
-                tn.Type = "num";
-                break;
-            case "BooleanLiteral":
-                tn.Type = "bool";
-                break;
-            case "\"$field\":":
-                tn.Type = "field";
-                break;
-            default:
-                break;
-        }
-
-        // Detect type of subtree
-        if (tn.Type == "" && tn.Children.Count != 0)
-        {
-            foreach (var c in tn.Children)
-            {
-                if (tn.Type == "")
-                {
-                    tn.Type = c.Type;
-                }
-                else if (tn.Type == "field" && c.Type != "field")
-                {
-                    tn.Type = c.Type;
-                }
-            }
-        }
-
-        return tn;
-    }
-    public string ParseTreeToExpressionWithAccessRules(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
-    {
-        var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
-
-        if (accessRuleNode == null && accessRuleExpression.TryGetValue("all", out _))
-        {
-            switch (typePrefix)
-            {
-                case "":
-                    result = $"({accessRuleExpression})&&({result})";
+                case "$and":
+                    op = "&&";
                     break;
-                case "sm.":
-                    result = result.Replace("$SKIP", "true");
-                    var accessSubmodel = accessRuleExpression["all"].Replace("sm.", "");
-                    result = $"({accessSubmodel})&&({result})";
+                case "$match":
+                    op = "$match";
+                    break;
+                case "$not":
+                    op = "!";
+                    break;
+                case "$eq":
+                    op = "==";
+                    break;
+                case "$ne":
+                    op = "!=";
+                    break;
+                case "$gt":
+                    op = ">";
+                    break;
+                case "$ge":
+                    op = ">=";
+                    break;
+                case "$lt":
+                    op = "<";
+                    break;
+                case "$le":
+                    op = "<=";
+                    break;
+                case "$starts-with":
+                    op = "StartsWith";
+                    break;
+                case "$ends-with":
+                    op = "EndsWith";
+                    break;
+                case "$contains":
+                    op = "Contains";
                     break;
             }
-        }
-        return result;
-    }
-    public string ParseTreeToExpression(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
-    {
-        // simplify parse tree
-        var combinedTree = simplifyTree(node);
 
-        // combine with access rules
-        if (accessRuleNode != null)
-        {
-            var tn = new treeNode();
-            tn.Children = new List<treeNode>();
-            tn.Name = "\"$and\":";
-            tn.Children.Add(accessRuleNode);
-            tn.Children.Add(combinedTree);
-            setParent(tn, tn.Children);
-            combinedTree = tn;
-        }
+            List<LogicalExpression>? eList = null;
+            if (obj is List<LogicalExpression>)
+            {
+                eList = (List<LogicalExpression>)obj;
+            }
 
-        var expression = ParseTreeToExpression(combinedTree, typePrefix, ref upperCountTypePrefix, parentType);
-
-        return expression;
-    }
-
-    public string ParseTreeToExpression(treeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
-    {
-        var expression = ParseTreeToExpressionRaw(node, typePrefix, ref upperCountTypePrefix, parentType);
-
-        expression = expression.Replace("$TRUE", "true");
-        expression = expression.Replace("$FALSE", "false");
-        while (expression.Contains("true&&true") || expression.Contains("true||true") || expression.Contains("(true)")
-            || expression.Contains("false&&false") || expression.Contains("false||false") || expression.Contains("(false)")
-            || expression.Contains("true&&false") || expression.Contains("true||false")
-            || expression.Contains("false&&true") || expression.Contains("false||true")
-            || expression.Contains("!true") || expression.Contains("!false")
-            )
-        {
-            expression = expression.Replace("true&&true", "true");
-            expression = expression.Replace("true||true", "true");
-            expression = expression.Replace("(true)", "true");
-            expression = expression.Replace("false&&false", "false");
-            expression = expression.Replace("false||false", "false");
-            expression = expression.Replace("(false)", "false");
-            expression = expression.Replace("true&&false", "false");
-            expression = expression.Replace("true||false", "true");
-            expression = expression.Replace("false&&true", "true");
-            expression = expression.Replace("false||true", "false");
-            expression = expression.Replace("!true", "false");
-            expression = expression.Replace("!false", "true");
-        }
-        return expression;
-    }
-    public string ParseTreeToExpressionRaw(treeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
-    {
-        upperCountTypePrefix = 0;
-        var countTypePrefix1 = 0;
-        var countTypePrefix2 = 0;
-        var op = "";
-        var arg1 = "";
-        var arg2 = "";
-        var pattern = "";
-
-        var name = node.Name;
-        var value = node.Value;
-        var type = node.Type;
-        var children = node.Children;
-
-        switch (name)
-        {
-            case "\"$and\":":
-                op = "&&";
-                pattern = "andor";
-                break;
-            case "\"$or\":":
-                op = "||";
-                pattern = "andor";
-                break;
-            case "\"$not\":":
-                op = "!";
-                pattern = "not";
-                break;
-            case "\"$boolean\":":
-                op = "!";
-                pattern = "bool";
-                break;
-            case "\"$eq\":":
-                op = "==";
-                pattern = "compare";
-                break;
-            case "\"$ne\":":
-                op = "!=";
-                pattern = "compare";
-                break;
-            case "\"$gt\":":
-                op = ">";
-                pattern = "compare";
-                break;
-            case "\"$ge\":":
-                op = ">=";
-                pattern = "compare";
-                break;
-            case "\"$lt\":":
-                op = "<";
-                pattern = "compare";
-                break;
-            case "\"$le\":":
-                op = "<=";
-                pattern = "compare";
-                break;
-            case "\"$contains\":":
-                op = "Contains";
-                pattern = "string";
-                break;
-            case "\"$starts-with\":":
-            case "\"$starts_with\":":
-                op = "StartsWith";
-                pattern = "string";
-                break;
-            case "\"ends-with\":":
-            case "\"ends_with\":":
-                op = "EndsWith";
-                pattern = "string";
-                break;
-            case "\"$strVal\":":
-                pattern = "strval";
-                break;
-            case "\"$numVal\":":
-                pattern = "numval";
-                break;
-            case "\"$field\":":
-                pattern = "field";
-                break;
-            case "\"$path\":":
-                pattern = "path";
-                break;
-        }
-
-        switch (pattern)
-        {
-            case "bool":
-                return node.Value;
-            case "not":
-                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1);
-                upperCountTypePrefix += countTypePrefix1;
-                if (arg1 == "$SKIP")
-                {
-                    return "$SKIP";
-                }
-                if (arg1 == "$TRUE")
-                {
-                    return "$TRUE";
-                }
-                return "!" + arg1;
-            case "andor":
-                List<string> args = new List<string>();
-                List<int> count = new List<int>();
-                args.Add(ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1, node.Type));
-                count.Add(countTypePrefix1);
-                for (int i = 1; i < node.Children.Count; i++)
-                {
-                    countTypePrefix2 = 0;
-                    args.Add(ParseTreeToExpression(node.Children[i], typePrefix, ref countTypePrefix2, node.Type));
-                    count.Add(countTypePrefix2);
-                    countTypePrefix1 += countTypePrefix2;
-                }
-                upperCountTypePrefix += countTypePrefix1;
-
-                int skipCount = 0;
-                int trueCount = 0;
-                int falseCount = 0;
-
-                foreach (var a in args)
-                {
-                    switch (a)
+            switch (type)
+            {
+                case "$not":
+                    if (eList?.Count == 1)
                     {
-                        case "$SKIP":
-                            skipCount++;
-                            break;
-                        case "$TRUE":
-                            trueCount++;
-                            break;
-                        case "$FALSE":
-                            falseCount++;
-                            break;
-                    }
-                }
-
-                if (skipCount == args.Count)
-                {
-                    if (countTypePrefix1 != 0)
-                    {
-                        return "$TRUE";
-                    }
-                    return "$SKIP";
-                }
-                if (skipCount != 0)
-                {
-                    int argsCount = args.Count;
-                    for (int i = 0; i < argsCount; i++)
-                    {
-                        if (args[i] == "$SKIP")
+                        string value = createExpression(mode, eList[0]);
+                        if (value != "$SKIP")
                         {
-                            if (count[i] != 0)
-                            {
-                                return "$TRUE";
-                            }
-                            args.RemoveAt(i);
-                            count.RemoveAt(i);
-                            argsCount--;
-                            i--;
+                            return "!" + value;
                         }
                         else
                         {
-                            // constant
-                            if ((op == "&&" && args[i] == "true") || (op == "||" && args[i] == "false"))
+                            return "$SKIP";
+                        }
+                    }
+                    break;
+                case "$match":
+                case "$and":
+                case "$or":
+                    if (eList?.Count > 0)
+                    {
+                        var par = new string[eList.Count];
+                        par[0] = createExpression(mode, eList[0]);
+                        if (eList.Count == 1)
+                        {
+                            if (op != "$match")
                             {
-                                args.RemoveAt(i);
-                                count.RemoveAt(i);
-                                argsCount--;
-                                i--;
+                                return par[0];
+                            }
+                            else
+                            {
+                                if (par[0] != null && par[0] != "$SKIP")
+                                {
+                                    return "$$match$$" + par[0] + "$$match$$";
+                                }
+                                return par[0];
+                            }
+                        }
+                        else
+                        {
+                            int skipCount = 0;
+                            if (par[0] == "$SKIP")
+                            {
+                                skipCount++;
+                            }
+                            for (int i = 1; i < eList.Count; i++)
+                            {
+                                par[i] = createExpression(mode, eList[i]);
+                                if (par[i] == "$SKIP")
+                                {
+                                    skipCount++;
+                                }
+                            }
+                            if (skipCount == eList.Count)
+                            {
+                                return "$SKIP";
+                            }
+                            if (skipCount != 0)
+                            {
+                                if (type == "$or")
+                                {
+                                    return "true";
+                                }
+                            }
+                            if (op != "$match")
+                            {
+                                var result = "";
+                                int count = 0;
+                                for (int i = 0; i < eList.Count; i++)
+                                {
+                                    if (par[i] != null && par[i] != "$SKIP")
+                                    {
+                                        count++;
+                                        if (result == "")
+                                        {
+                                            result = par[i];
+                                        }
+                                        else
+                                        {
+                                            result += " " + op + " " + par[i];
+                                        }
+                                    }
+                                }
+                                return "(" + result + ")"; // + "[" + skipCount + "/" + eList.Count + "]";
+                            }
+                            else
+                            {
+                                var result = "$$match$$";
+                                int count = 0;
+                                for (int i = 0; i < eList.Count; i++)
+                                {
+                                    if (par[i] != null && par[i] != "$SKIP")
+                                    {
+                                        count++;
+                                        if (result == "")
+                                        {
+                                            result += par[i];
+                                        }
+                                        else
+                                        {
+                                            result += "$$" + par[i];
+                                        }
+                                    }
+                                }
+                                return result + "$$match$$";
                             }
                         }
                     }
-                }
-
-                if (args.Count == 0)
-                {
-                    return "$SKIP";
-                }
-                // and
-                if (op == "&&")
-                {
-                    if (trueCount == args.Count)
+                    break;
+                case "$eq":
+                case "$ne":
+                case "$gt":
+                case "$ge":
+                case "$lt":
+                case "$le":
+                    if (eList != null)
                     {
-                        return "$TRUE";
-                    }
-                    if (falseCount != 0)
-                    {
-                        return "$FALSE";
-                    }
-                }
-                // or
-                if (op == "||")
-                {
-                    op = "||";
-                    if (trueCount != 0)
-                    {
-                        return "$TRUE";
-                    }
-                    if (falseCount == args.Count)
-                    {
-                        return "$FALSE";
-                    }
-                }
-
-                var expression = args[0];
-                for (int i = 1; i < args.Count; i++)
-                {
-                    expression += op + args[i];
-                }
-                expression = "(" + expression + ")";
-                return expression;
-            case "compare":
-            case "string":
-                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1, node.Type);
-                arg2 = ParseTreeToExpression(node.Children[1], typePrefix, ref countTypePrefix2, node.Type);
-                upperCountTypePrefix += countTypePrefix1 + countTypePrefix2;
-                if (arg1 == "$SKIP" || arg2 == "$SKIP")
-                {
-                    if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
-                    {
-                        // return "true";
-                    }
-                    return "$SKIP";
-                }
-
-                var argumentType1 = node.Children[0].Type;
-                var argumentType2 = node.Children[1].Type;
-                if (typePrefix == "num()" && (argumentType1 == "str" || argumentType2 == "str"))
-                {
-                    return "$SKIP";
-                }
-                if (typePrefix == "str()" && (argumentType1 == "num" || argumentType2 == "num"))
-                {
-                    return "$SKIP";
-                }
-                if (typePrefix == "" && (arg1 == "sme.value" || arg2 == "sme.value"))
-                {
-                    string change = "";
-
-                    if (argumentType1 == "num" || argumentType2 == "num")
-                    {
-                        change = "mvalue";
-                    }
-                    else
-                    {
-                        if (pattern == "string" || argumentType1 == "str" || argumentType2 == "str")
+                        if (eList[0].ExpressionType == "$numVal" || eList[1].ExpressionType == "$numVal")
                         {
-                            change = "svalue";
+                            smeValue = "mvalue";
+                        }
+                        else if (eList[0].ExpressionType == "$strVal" || eList[1].ExpressionType == "$strVal")
+                        {
+                            smeValue = "svalue";
+                        }
+                        string left = createExpression(mode, eList[0], smeValue: smeValue);
+                        string right = createExpression(mode, eList[1], smeValue: smeValue);
+                        if (left != "$SKIP" && right != "$SKIP")
+                        {
+                            if (right.StartsWith("$$tag$$"))
+                            {
+                                return "$ERROR";
+                            }
+                            if (left.StartsWith("$$tag$$"))
+                            {
+                                return $"{left} {op} {right}$$";
+                            }
+
+                            return "(" + left + " " + op + " " + right + ")";
+                        }
+                        else
+                        {
+                            return "$SKIP";
                         }
                     }
-                    if (change != "")
+                    break;
+                case "$starts-with":
+                case "$ends-with":
+                case "$contains":
+                    if (eList != null)
                     {
-                        if (arg1 == "sme.value")
+                        var left = createExpression(mode, eList[0], smeValue: "svalue");
+                        var right = createExpression(mode, eList[1], smeValue: "svalue");
+                        if (left != "$SKIP" && right != "$SKIP")
                         {
-                            arg1 = change;
-                        }
-                        if (arg2 == "sme.value")
-                        {
-                            arg2 = change;
-                        }
-                    }
-                }
-                if (pattern == "string")
-                {
-                    return arg1 + "." + op + "(" + arg2 + ")";
-                }
-                return "(" + arg1 + op + arg2 + ")";
-            case "strval":
-                if (typePrefix == "num()")
-                {
-                    return "$SKIP";
-                }
-                return "\"" + value + "\"";
-            case "numval":
-                if (typePrefix == "str()")
-                {
-                    return "$SKIP";
-                }
-                return value;
-            case "field":
-                value = value.Replace("$", "");
-                value = value.Replace("#", ".");
-                if (value == "sm.id") // patch grammar vs database
-                {
-                    value = "sm.identifier";
-                }
-                // complete expression for joined tables
-                if (typePrefix == "" && value == "sme.value")
-                {
-                    switch (parentType)
-                    {
-                        case "str":
-                            return "svalue";
-                        case "num":
-                            return "mvalue";
-                        default:
-                            return "$ERROR";
-                    }
-                }
-                // submodel table
-                if (typePrefix == "sm." && value.StartsWith("sm."))
-                {
-                    upperCountTypePrefix++;
-                    return value.Replace("sm.", "");
-                }
+                            if (right.StartsWith("$$tag$$"))
+                            {
+                                return "$ERROR";
+                            }
+                            if (left.StartsWith("$$tag$$"))
+                            {
+                                return $"{left}.{op}({right})$$";
+                            }
 
-                // sme table
-                if (typePrefix == "sme." && value.StartsWith("sme."))
+                            return left + "." + op + "(" + right + ")";
+                        }
+                        else
+                        {
+                            return "$SKIP";
+                        }
+                    }
+                    break;
+                case "$boolean":
+                    if (obj is bool b)
+                    {
+                        return b.ToString();
+                    }
+                    break;
+                case "$attribute":
+                    if (obj is LogicalExpression le)
+                    {
+                        return le.ExpressionType + "(" + le.ExpressionValue + ")";
+                    }
+                    break;
+                case "$field":
+                    if (obj is string)
+                    {
+                        var value = "" + (obj as string);
+
+                        if (value.Contains("$sme."))
+                        {
+                            var tag = "path";
+                            /*
+                            if (value.Contains("[]"))
+                            {
+                                tag = "match";
+                            }
+                            */
+                            // $sme with idShortPath
+                            value = value.Replace("$sme.", "");
+                            var split = value.Split("#");
+                            value = ReplaceField(mode, $"$sme#{split[1]}", smeValue);
+                            if (value == "$SKIP" || value == "$ERROR")
+                            {
+                                return value;
+                            }
+
+                            return $"$$tag$${tag}$${split[0]}$${value}$$";
+                        }
+
+                        return ReplaceField(mode, value, smeValue);
+                    }
+                    return "$ERROR";
+                case "$strVal":
+                    if (mode == "mvalue")
+                    {
+                        return "$SKIP";
+                    }
+                    if (obj is string)
+                    {
+                        var v = obj as string;
+                        if (v == "$null")
+                        {
+                            return "null";
+                        }
+                        else
+                        {
+                            return "\"" + v + "\"";
+                        }
+                    }
+                    break;
+                case "$numVal":
+                    if (mode == "svalue")
+                    {
+                        return "$SKIP";
+                    }
+                    if (obj is int or long or double)
+                    {
+                        return obj.ToString();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return "$ERROR";
+    }
+
+    public static string ReplaceField(string mode, string value, string smeValue)
+    {
+        value = value.Replace("$aas#", "aas.");
+        value = value.Replace("$sm#", "sm.");
+        value = value.Replace("$sme#", "sme.");
+        value = value.Replace("sm.Id", "sm.Identifier");
+        switch (mode)
+        {
+            case "all":
+            case "all-aas":
+                if (smeValue == "svalue")
                 {
-                    upperCountTypePrefix++;
                     if (value == "sme.value")
                     {
-                        return "$SKIP";
+                        value = "svalue";
                     }
-                    var result = value.Replace("sme.", "");
-                    return result;
                 }
-                // string value table and num value table
-                if (typePrefix == "str()" || typePrefix == "num()")
+                if (smeValue == "mvalue")
                 {
-                    if (value != "sme.value")
+                    if (value == "sme.value")
                     {
-                        return "$SKIP";
+                        value = "mvalue";
                     }
-                    upperCountTypePrefix++;
-                    return "value";
                 }
-
-                if (typePrefix != "" && !value.StartsWith(typePrefix))
+                if (mode == "all" && value.StartsWith("aas."))
                 {
-                    return "$SKIP";
+                    value = "$SKIP";
                 }
-                if (value.StartsWith(typePrefix))
+                break;
+            case "sm.":
+                if (!value.StartsWith("sm."))
                 {
-                    upperCountTypePrefix++;
+                    value = "$SKIP";
                 }
-                return value;
-            case "path":
-                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1);
-                upperCountTypePrefix += countTypePrefix1;
-
-                if (typePrefix != "")
+                break;
+            case "aas.":
+                if (!value.StartsWith("aas."))
                 {
-                    return arg1;
+                    value = "$SKIP";
                 }
-
-                if (arg1 == "$SKIP")
+                break;
+            case "sme.":
+                if (value != "sme.value" && value.StartsWith("sme."))
                 {
-                    return "$SKIP";
-                }
-                if (arg1 == "$TRUE")
-                {
-                    return "$TRUE";
-                }
-                if (arg1 == "true")
-                {
-                    return "true";
-                }
-                return "$$path$$" + value + "$$" + arg1 + "$$";
-            case "StringLiteral":
-                if (parentType == "num")
-                {
-                    return value;
-                }
-                return "\"" + value + "\"";
-            case "NumericalLiteral":
-                if (parentType == "str")
-                {
-                    return "\"" + value + "\"";
-                }
-                return value;
-            case "logicalAndExpression":
-            case "logicalOrExpression":
-                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1);
-                arg2 = ParseTreeToExpression(node.Children[1], typePrefix, ref countTypePrefix2);
-                upperCountTypePrefix += countTypePrefix1 + countTypePrefix2;
-                if (arg1 == "$SKIP" && arg2 == "$SKIP")
-                {
-                    if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
-                    {
-                        return "true";
-                    }
-                    return "$SKIP";
-                }
-                if (arg1 == "$SKIP" || arg2 == "$SKIP")
-                {
-                    if (arg1 == "$SKIP" && countTypePrefix1 != 0)
-                    {
-                        return "true";
-                    }
-                    if (arg2 == "$SKIP" && countTypePrefix2 != 0)
-                    {
-                        return "true";
-                    }
-                    if (arg2 != "$SKIP")
-                    {
-                        arg1 = arg2;
-                    }
-                    return arg1;
-                }
-                if (name == "logicalAndExpression")
-                {
-                    if (arg1 == "true" && arg2 == "true")
-                    {
-                        return "true";
-                    }
-                    if (arg1 == "false" || arg2 == "false")
-                    {
-                        return "false";
-                    }
-                    op = "&&";
+                    value = value;
                 }
                 else
                 {
-                    if (arg1 == "true" || arg2 == "true")
-                    {
-                        return "true";
-                    }
-                    if (arg1 == "false" && arg2 == "false")
-                    {
-                        return "false";
-                    }
-                    op = "||";
+                    value = "$SKIP";
                 }
-                return "(" + arg1 + " " + op + " " + arg2 + ")";
-            case "logicalNotExpression":
-                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1);
-                upperCountTypePrefix += countTypePrefix1;
-                if (arg1 == "$SKIP")
+                break;
+            case "svalue":
+                if (value == "sme.value")
                 {
-                    return "$SKIP";
+                    value = "svalue";
                 }
-                return "!" + arg1;
-            case "stringOperation":
-                if (typePrefix == "num()")
+                else
                 {
-                    return "$SKIP";
+                    value = "$SKIP";
                 }
-                op = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1, name);
-                arg1 = ParseTreeToExpression(node.Children[1], typePrefix, ref countTypePrefix1, name);
-                arg2 = ParseTreeToExpression(node.Children[2], typePrefix, ref countTypePrefix2, name);
-                upperCountTypePrefix += countTypePrefix1 + countTypePrefix2;
-                if (arg1 == "$SKIP" || arg2 == "$SKIP")
+                break;
+            case "mvalue":
+                if (value == "sme.value")
                 {
-                    if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
-                    {
-                        return "true";
-                    }
-                    return "$SKIP";
+                    value = "mvalue";
                 }
-                return arg1 + "." + op + "(" + arg2 + ")";
-            case "stringComparison":
-            case "numericalComparison":
-                /*
-                case "hexComparison":
-                case "boolComparison":
-                case "dateTimeComparison":
-                case "timeComparison":
-                */
-                op = ParseTreeToExpression(node.Children[1], typePrefix, ref countTypePrefix1, name);
-                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1, name);
-                arg2 += ParseTreeToExpression(node.Children[2], typePrefix, ref countTypePrefix2, name);
-                upperCountTypePrefix += countTypePrefix1 + countTypePrefix2;
-                if (arg1 == "$SKIP" || arg2 == "$SKIP")
+                else
                 {
-                    if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
-                    {
-                        return "true";
-                    }
-                    return "$SKIP";
+                    value = "$SKIP";
                 }
-                if (typePrefix == "num()")
-                {
-                    if (name == "stringComparison")
-                    {
-                        if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
-                        {
-                            return "true";
-                        }
-                        return "$SKIP";
-                    }
-                }
-                if (typePrefix == "str()")
-                {
-                    if (name == "numericalComparison")
-                    {
-                        if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
-                        {
-                            return "true";
-                        }
-                        return "$SKIP";
-                    }
-                }
-                return "(" + arg1 + op + arg2 + ")";
-            case "$eq":
-                return " == ";
-            case "$ne":
-                return " != ";
-            case "$gt":
-                return " > ";
-            case "$ge":
-                return " >= ";
-            case "$lt":
-                return " < ";
-            case "$le":
-                return " <= ";
-            case "$contains":
-                return "Contains";
-            case "$starts-with":
-                return "StartsWith";
-            case "$ends-with":
-                return "EndsWith";
-            case "$regex":
-                return "Regex";
+                break;
+            default:
+                value = "$ERROR";
+                break;
         }
-        return " $NOT_IMPLEMENTED ";
+        return value;
     }
 
+    public static AllAccessPermissionRules _accessRules = null;
     public static new List<Dictionary<string, string>> allAccessRuleExpressions = [];
     public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
-    public static treeNode accessRuleNode = null;
-    public void ParseAccessRules(ParseTreeNode node)
+    public void ParseAccessRules(string expression)
     {
         // mySecurityRules.ClearSecurityRules();
         allAccessRuleExpressions = new List<Dictionary<string, string>>();
         accessRuleExpression = new Dictionary<string, string>();
+        Root deserializedData = null;
 
-        ParseAccessRule(node);
-        if (accessRuleExpression.Count != 0)
+        var jsonSchema = "";
+        if (System.IO.File.Exists("jsonschema-access.txt"))
         {
+            jsonSchema = System.IO.File.ReadAllText("jsonschema-access.txt");
+            string jsonData = expression;
+
+            /*
+            // Working, but AGPL 3.0
+            // If needed for testing, include again
+            // Newtonsoft
+            // Schema parsen
+            JSchema schema = JSchema.Parse(jsonSchema);
+
+            // JSON-Daten parsen
+            JObject jsonObject = JObject.Parse(jsonData);
+
+            // Validierung durchfÃ¼hren
+            IList<string> validationErrors = new List<string>();
+            bool isValid = jsonObject.IsValid(schema, out validationErrors);
+            */
+            /*
+            // Not working
+            // NJsonSchema;
+            // Schema parsen
+            JsonSchema schema = JsonSchema.FromJsonAsync(jsonSchema).Result;
+
+            // JSON-Daten parsen
+            JObject jsonObject = JObject.Parse(jsonData);
+
+            // Validierung durchfÃ¼hren
+            ICollection<ValidationError> validationErrors = schema.Validate(jsonObject);
+            bool isValid = validationErrors.Count == 0;
+            */
+
+            /*
+            // Does not work
+            // Json.Schema;
+            var schema = JsonSchema.FromText(jsonSchema);
+            var result = schema.Evaluate(JsonNode.Parse(jsonData));
+            bool isValid = result.IsValid;
+            var validationErrors = result.Errors;
+            if (!isValid)
+            {
+                foreach (var error in validationResults.Errors)
+                {
+                    validationErrors.Add(error.ToString());
+                }
+            }
+            */
+
+            // no schema checking currently, only checking by json grammar
+            var isValid = true;
+
+            if (isValid)
+            {
+                Console.WriteLine("JSON is valid.");
+                try
+                {
+                    deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
+                    if (deserializedData != null)
+                    {
+                        Console.WriteLine("Successfully deserialized.");
+                    }
+                    else
+                    {
+                        isValid = false;
+                    }
+                }
+                catch
+                {
+                    isValid = false;
+                }
+            }
+            if (!isValid)
+            {
+                Console.WriteLine("âŒ JSON not valid:");
+                /*
+                foreach (var error in validationErrors)
+                {
+                    // Console.WriteLine($"- {error}");
+                    Console.WriteLine(error.Key + ": " + error.Value);
+                }
+                */
+                return;
+            }
+        }
+        else
+        {
+            Console.WriteLine("âŒ jsonschema-access.txt not found.");
+            return;
+        }
+
+        var allRules = deserializedData?.AllAccessPermissionRules;
+        if (deserializedData == null || allRules == null)
+        {
+            return;
+        }
+
+        _accessRules = allRules;
+        foreach (var rule in allRules.Rules)
+        {
+            // mode: all, sm., sme., svalue, mvalue
+            List<LogicalExpression?> logicalExpressions = [];
+            List<Dictionary<string, string>> conditions = [];
+            logicalExpressions.Add(rule.Formula);
+            conditions.Add(rule._formula_conditions);
+            if (rule.Filter != null)
+            {
+                logicalExpressions.Add(rule.Filter.Condition);
+                conditions.Add(rule._filter_conditions);
+            }
+            if (logicalExpressions.Count != 0)
+            {
+                for (var i = 0; i < logicalExpressions.Count; i++)
+                {
+                    var le = logicalExpressions[i];
+                    if (le != null)
+                    {
+                        createExpression("all", le);
+                        conditions[i].Add("all", le._expression);
+                        createExpression("sm.", le);
+                        if (le._expression == "$SKIP")
+                        {
+                            le._expression = "";
+                        }
+                        else
+                        {
+                            le._expression = le._expression.Replace("sm.", "");
+                        }
+                        conditions[i].Add("sm.", le._expression);
+                        createExpression("sme.", le);
+                        if (le._expression == "$SKIP")
+                        {
+                            le._expression = "";
+                        }
+                        else
+                        {
+                            le._expression = le._expression.Replace("sme.", "");
+                        }
+                        conditions[i].Add("sme.", le._expression);
+                        createExpression("svalue", le);
+                        if (le._expression == "$SKIP")
+                        {
+                            le._expression = "";
+                        }
+                        le._expression = le._expression.Replace("svalue", "Value");
+                        conditions[i].Add("svalue", le._expression);
+                        createExpression("mvalue", le);
+                        if (le._expression == "$SKIP")
+                        {
+                            le._expression = "";
+                        }
+                        le._expression = le._expression.Replace("mvalue", "Value");
+                        conditions[i].Add("mvalue", le._expression);
+                    }
+                }
+            }
+
+            var accessRuleExpression = new Dictionary<string, string>();
+            ParseAccessRule(rule, accessRuleExpression);
             allAccessRuleExpressions.Add(accessRuleExpression);
         }
     }
 
-    static List<string> Names = new List<string>();
-    static string access = "";
-    static string rights = "";
-    static string global = "";
-    static bool isClaim = false;
-    static string claim = "";
-    static bool filter = false;
-    static bool route = false;
-    void ParseAccessRule(ParseTreeNode node)
+    List<string> Names = new List<string>();
+    string access = "";
+    string rights = "";
+    string global = "";
+    bool isClaim = false;
+    string claim = "";
+    bool filter = false;
+    bool route = false;
+    void ParseAccessRule(AccessPermissionRule rule, Dictionary<string, string> accessRuleExpression)
     {
-        switch (node.Term.Name)
+        foreach (var c in rule._formula_conditions)
         {
-            case "access_permission_rule":
-                if (accessRuleExpression.Count != 0)
-                {
-                    allAccessRuleExpressions.Add(accessRuleExpression);
-                }
-                accessRuleExpression = new Dictionary<string, string>();
-                access = "";
-                rights = "";
-                global = "";
-                isClaim = false;
-                claim = "";
-                filter = false;
-                route = false;
-
-                foreach (var c in node.ChildNodes)
-                {
-                    ParseAccessRule(c);
-                }
-                break;
-            case "logical_expression":
-                var tn = simplifyTree(node);
-                accessRuleNode = tn;
-                var count = 0;
-                if (!filter)
-                {
-                    var expression = "";
-                    accessRuleExpression["all"] = ParseTreeToExpression(tn, "", ref count);
-                    expression = ParseTreeToExpression(tn, "sm.", ref count);
-                    if (expression == "$SKIP")
-                    {
-                        expression = "";
-                    }
-                    accessRuleExpression["sm."] = expression;
-                    expression = ParseTreeToExpression(tn, "sme.", ref count);
-                    if (expression == "$SKIP")
-                    {
-                        expression = "";
-                    }
-                    accessRuleExpression["sme."] = expression;
-                    accessRuleExpression["claim"] = claim;
-                    accessRuleExpression["right"] = rights;
-                }
-                else
-                {
-                    accessRuleExpression["filter"] = ParseTreeToExpression(tn, "", ref count);
-                }
-                break;
-            case "\"FOMRULA\":":
-                filter = false;
-                break;
-            case "\"FILTER\":":
-                filter = true;
-                break;
-            case "\"ROUTE\":":
-                route = true;
-                break;
-            case "\"CLAIM\":":
-                isClaim = true;
-                break;
-            case "StringLiteral":
-                if (isClaim)
-                {
-                    claim = (string)node.Token.Value;
-                    isClaim = false;
-                }
-                else
-                {
-                    if (route)
-                    {
-                        route = false;
-                        var split = rights.Split(' ');
-                        foreach (var s in split)
-                        {
-                            if (s != "")
-                            {
-                                mySecurityRules.AddSecurityRule(claim, "ALLOW", s, "api", "", (string)node.Token.Value);
-                            }
-                        }
-                    }
-                }
-                break;
-            case "global_enum":
-                global = node.ChildNodes[0].Term.Name;
-                break;
-            case "rights_enum":
-                var r = node.ChildNodes[0].Term.Name;
-                r = r.Replace("\"", "");
-                rights += r + " ";
-                break;
-            default:
-                foreach (var c in node.ChildNodes)
-                {
-                    ParseAccessRule(c);
-                }
-                break;
+            accessRuleExpression.Add(c.Key, c.Value);
         }
+        if (rule._filter_conditions != null && rule._filter_conditions.Count != 0)
+        {
+            accessRuleExpression["filter"] = rule._filter_conditions["all"];
+        }
+        var attributes = rule.Acl?.Attributes;
+        if (attributes != null && attributes.Count != 0)
+        {
+            foreach (var a in attributes)
+            {
+                if (a.ItemType == "CLAIM")
+                {
+                    claim = a.Value;
+                    accessRuleExpression["claim"] = claim;
+                }
+            }
+        }
+        var routes = rule.Objects?.Where(o => o.ItemType == "ROUTE").ToList();
+        var rightList = rule.Acl?.Rights?.ToList();
+        rights = "";
+        if (rightList != null && rightList.Count != 0)
+        {
+            for (var i = 0; i < rightList.Count; i++)
+            {
+                if (i == 0)
+                {
+                    rights = rightList[i];
+                }
+                else
+                {
+                    rights += " " + rightList[i];
+                }
+                if (routes != null && routes.Count != 0)
+                {
+                    foreach (var r in routes)
+                    {
+                        mySecurityRules.AddSecurityRule(claim, "ALLOW", rightList[i], "api", "", r.Value);
+                    }
+                }
+            }
+        }
+        accessRuleExpression["right"] = rights;
     }
 }
+

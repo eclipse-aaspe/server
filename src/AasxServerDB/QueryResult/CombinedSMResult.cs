@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -24,6 +24,15 @@ namespace AasxServerDB
             public int? SM_Id { get; set; }
             public string? Identifier { get; set; }
             public string? TimeStampTree { get; set; }
+            public List<string>? MatchPathList { get; set; }
+        }
+        private class CombinedSMResultWithAas
+        {
+            public int? AAS_Id { get; set; }
+            public int? SM_Id { get; set; }
+            public string? Identifier { get; set; }
+            public string? TimeStampTree { get; set; }
+            public List<string>? MatchPathList { get; set; }
         }
     }
 }

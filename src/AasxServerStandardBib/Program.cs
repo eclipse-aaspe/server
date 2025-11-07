@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2018 - 2025} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -11,10 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-/*
-Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
-Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
-*/
 
 namespace AasxServer
 {
@@ -23,8 +19,6 @@ namespace AasxServer
     using AdminShellNS;
     using Extensions;
     using Microsoft.Extensions.Configuration;
-    using Opc.Ua;
-    using Opc.Ua.Configuration;
     using System;
     using System.Collections.Generic;
     using System.CommandLine;
@@ -211,55 +205,55 @@ namespace AasxServer
 
                 // load
                 // ... from file
-                if (!withDbFiles)
-                {
-                    Console.WriteLine("LOAD: " + envFileName[i]);
-                    env[i] = new AdminShellPackageEnv(envFileName[i]);
-                    if (env[i].AasEnv == null)
-                    {
-                        return output;
-                    }
+                //if (!withDbFiles)
+                //{
+                //    Console.WriteLine("LOAD: " + envFileName[i]);
+                //    env[i] = new AdminShellPackageEnv(envFileName[i]);
+                //    if (env[i].AasEnv == null)
+                //    {
+                //        return output;
+                //    }
 
-                    // set all timestamps and find the searched element
-                    var timeStamp = DateTime.Now;
-                    if (env[i].AasEnv?.ConceptDescriptions != null)
-                    {
-                        foreach (var cd in env[i].AasEnv.ConceptDescriptions)
-                        {
-                            cd.TimeStampCreate = timeStamp;
-                            cd.SetTimeStamp(timeStamp);
-                            if (!cdIdentifier.IsNullOrEmpty() && cd.Id != null && cd.Id.Equals(cdIdentifier))
-                            {
-                                output = (T)cd;
-                            }
-                        }
-                    }
-                    if (env[i].AasEnv?.AssetAdministrationShells != null)
-                    {
-                        foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
-                        {
-                            aas.TimeStampCreate = timeStamp;
-                            aas.SetTimeStamp(timeStamp);
-                            if (!aasIdentifier.IsNullOrEmpty() && aas.Id != null && aas.Id.Equals(aasIdentifier))
-                            {
-                                output = (T)aas;
-                            }
-                        }
-                    }
-                    if (env[i].AasEnv?.Submodels != null)
-                    {
-                        foreach (var sm in env[i].AasEnv.Submodels)
-                        {
-                            sm.TimeStampCreate = timeStamp;
-                            sm.SetTimeStamp(timeStamp);
-                            sm.SetAllParents(timeStamp);
-                            if (!smIdentifier.IsNullOrEmpty() && sm.Id != null && sm.Id.Equals(smIdentifier))
-                            {
-                                output = (T)sm;
-                            }
-                        }
-                    }
-                }
+                //    // set all timestamps and find the searched element
+                //    var timeStamp = DateTime.Now;
+                //    if (env[i].AasEnv?.ConceptDescriptions != null)
+                //    {
+                //        foreach (var cd in env[i].AasEnv.ConceptDescriptions)
+                //        {
+                //            cd.TimeStampCreate = timeStamp;
+                //            cd.SetTimeStamp(timeStamp);
+                //            if (!cdIdentifier.IsNullOrEmpty() && cd.Id != null && cd.Id.Equals(cdIdentifier))
+                //            {
+                //                output = (T)cd;
+                //            }
+                //        }
+                //    }
+                //    if (env[i].AasEnv?.AssetAdministrationShells != null)
+                //    {
+                //        foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
+                //        {
+                //            aas.TimeStampCreate = timeStamp;
+                //            aas.SetTimeStamp(timeStamp);
+                //            if (!aasIdentifier.IsNullOrEmpty() && aas.Id != null && aas.Id.Equals(aasIdentifier))
+                //            {
+                //                output = (T)aas;
+                //            }
+                //        }
+                //    }
+                //    if (env[i].AasEnv?.Submodels != null)
+                //    {
+                //        foreach (var sm in env[i].AasEnv.Submodels)
+                //        {
+                //            sm.TimeStampCreate = timeStamp;
+                //            sm.SetTimeStamp(timeStamp);
+                //            sm.SetAllParents(timeStamp);
+                //            if (!smIdentifier.IsNullOrEmpty() && sm.Id != null && sm.Id.Equals(smIdentifier))
+                //            {
+                //                output = (T)sm;
+                //            }
+                //        }
+                //    }
+                //}
 
                 // ... from db
                 else
@@ -292,7 +286,7 @@ namespace AasxServer
                         }
 
                         // create package env
-                        env[i] = CrudOperator.GetPackageEnv(db, envId);
+                        env[i] = CrudOperator.GetPackageEnv(db, null, envId);
                         if (env[i] == null || env[i].AasEnv == null)
                         {
                             return output;
@@ -345,7 +339,7 @@ namespace AasxServer
         public static void  changeDataVersion() { dataVersion++; }
         public static ulong getDataVersion()    { return (dataVersion); }
 
-        static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
+        // static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
 
         // static MqttServer AASMqttServer = new MqttServer();
@@ -398,7 +392,6 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = false;
-        public static bool withDbFiles = false;
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
@@ -444,6 +437,7 @@ namespace AasxServer
             var dbRequestService = serviceProvider.GetService<IDbRequestHandlerService>();
 
             // Wait for Debugger
+            /*
             if (a.DebugWait)
             {
                 Console.WriteLine("Please attach debugger now to {0}!", a.Host);
@@ -451,6 +445,7 @@ namespace AasxServer
                     System.Threading.Thread.Sleep(100);
                 Console.WriteLine("Debugger attached");
             }
+            */
 
             // Read environment variables
             string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT", "AASREPOSITORY"};
@@ -586,9 +581,7 @@ namespace AasxServer
             saveTemp            = a.SaveTemp;
             Program.htmlId      = a.HtmlId;
             Program.withDb      = a.WithDb;
-            Program.withDbFiles = a.WithDb;
-            if (a.NoDbFiles)
-                Program.withDbFiles = false;
+
             if (a.StartIndex > 0)
                 startIndex = a.StartIndex;
             if (a.AasxInMemory > 0)
@@ -703,7 +696,7 @@ namespace AasxServer
             */
 
             // Pass global options to subprojects
-            AdminShellNS.AdminShellPackageEnv.setGlobalOptions(withDb, withDbFiles, a.DataPath);
+            AdminShellNS.AdminShellPackageEnv.setGlobalOptions(withDb, a.DataPath);
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -784,18 +777,12 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                var filesPath = AasxHttpContextHelper.DataPath + "/files";
+                var filesPath = Path.Combine(AasxHttpContextHelper.DataPath, "files");
 
                 if (startIndex == 0)
                 {
-                    Directory.Delete(filesPath, true);
+                    persistenceService.InitDBFiles(startIndex == 0, AasxHttpContextHelper.DataPath);
                 }
-
-                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
-                    Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
-
-                if (!Directory.Exists(filesPath))
-                    Directory.CreateDirectory(filesPath);
 
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
@@ -868,7 +855,7 @@ namespace AasxServer
                             }
                             else
                             {
-                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly, withDbFiles);
+                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly);
                                 envFileName[envi] = null;
                                 env[envi]         = null;
                             }
@@ -1000,7 +987,8 @@ namespace AasxServer
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
             */
 
-            AasxTask.taskInit(serviceProvider.GetService<IEventService>());
+            var aasxTaskService = serviceProvider.GetService<AasxTaskService>();
+            aasxTaskService.TaskInit();
 
             // RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
@@ -1009,6 +997,7 @@ namespace AasxServer
             //// ProductChange.pcn.pcnInit();
 
             isLoading = false;
+            Running.SetRunning();
 
             /*
             if (a.Mqtt)
@@ -1613,6 +1602,9 @@ namespace AasxServer
             /// TODO: Possilby add a qualifier to specifiy which values to get? Or NodeIds per alue?
             /// </summary>
         {
+            return false;
+
+            /*
             if (env == null)
                 return false;
 
@@ -1775,6 +1767,7 @@ namespace AasxServer
             }
 
             return true;
+            */
         }
 
         /*
@@ -2093,6 +2086,7 @@ namespace AasxServer
             return ok;
         }
 
+        /*
         private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
         {
             if (sme is Property)
@@ -2163,8 +2157,10 @@ namespace AasxServer
                     Console.WriteLine("OPC write not successful.");
             }
         }
+        */
     }
 
+    /*
     public class ApplicationMessageDlg : IApplicationMessageDlg
     {
         private string message = string.Empty;
@@ -2205,6 +2201,7 @@ namespace AasxServer
             return await Task.FromResult(true);
         }
     }
+    */
 
     public enum ExitCode : int
     {

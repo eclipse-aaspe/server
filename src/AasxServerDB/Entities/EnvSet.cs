@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -23,7 +23,7 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // path
+        //Path to .aasx file. Name is only used for import and export. The data in that file is not maintained!
         public string? Path { get; set; }
 
         // cd, aas, sm

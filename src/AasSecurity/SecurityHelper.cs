@@ -75,14 +75,16 @@ namespace AasSecurity
             }
         }
 
-        internal static X509Certificate2? FindServerCertificate(string serverName)
+        internal static X509Certificate2? FindServerCertificate(string serverName, out string domain)
         {
+            domain = "";
             if (GlobalSecurityVariables.ServerCertFileNames != null)
             {
                 for (int i = 0; i < GlobalSecurityVariables.ServerCertFileNames.Count; i++)
                 {
                     if (Path.GetFileName(GlobalSecurityVariables.ServerCertFileNames[i]) == serverName + ".cer")
                     {
+                        domain = GlobalSecurityVariables.ServerDomain[i];
                         return GlobalSecurityVariables.ServerCertificates[i];
                     }
                 }

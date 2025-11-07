@@ -7,13 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Irony" Version="1.5.3" />
+    <PackageReference Include="IdentityModel" Version="7.0.0" />
+    <PackageReference Include="Irony" Version="1.5.2" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AasCore.Aas3_0\AasCore.Aas3_0.csproj" />
     <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="jsonschema.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

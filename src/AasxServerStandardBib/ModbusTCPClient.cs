@@ -1,4 +1,7 @@
-﻿/*
+/*
+Original was copied from:
+https://github.com/digitaltwinconsortium/UA-EdgeHEMS/blob/master/ModbusTCPClient.cs
+
 MIT License
 
 Copyright (c) 2020 Erich Barnstedt
@@ -358,3 +361,4 @@ namespace Modbus
         }
     }
 }
+

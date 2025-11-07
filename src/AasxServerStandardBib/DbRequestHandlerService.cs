@@ -1,3 +1,16 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 namespace AasxServerStandardBib;
 using System;
 using System.Collections.Concurrent;
@@ -6,11 +19,16 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
+using AasxServer;
 using AasxServerStandardBib.Logging;
+using AdminShellNS.Models;
 using Contracts;
 using Contracts.DbRequests;
+using Contracts.LevelExtent;
 using Contracts.Pagination;
 using Contracts.QueryResult;
+using Contracts.Security;
+using Jose;
 using Microsoft.Extensions.DependencyInjection;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
@@ -77,6 +95,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                     if (operation.CrudType != DbRequestCrudType.Read)
                     {
                         _lock.Release();
+                        Program.signalNewData(2);
                     }
                     else
                     {
@@ -124,7 +143,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.PackageEnv;
     }
 
-    public async Task<List<IAssetAdministrationShell>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
+    public async Task<List<IClass>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
     {
         var parameters = new DbRequestParams()
         {
@@ -146,7 +165,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
 
-        var aasList = tcs.AssetAdministrationShells;
+        var aasList = tcs.ResultData;
 
         if (aasList.Count == 0)
         {
@@ -179,7 +198,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.AssetAdministrationShells[0];
+        return tcs.Aas;
+    }
+
+    public async Task<string> ReadAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            IsSigned = true,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadAssetAdministrationShellById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SignedIdentifier;
     }
 
     public async Task<IAssetAdministrationShell> CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body)
@@ -201,7 +243,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.AssetAdministrationShells[0];
+        return tcs.Aas;
     }
 
     public async Task<DbRequestResult> ReplaceAssetAdministrationShellById(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body)
@@ -210,6 +252,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             AasBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = security,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetAdministrationShellById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceAssetAdministrationShellByIdSigned(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body, string jws)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            AasBody = body,
+            IsSigned = true,
+            JWS = jws
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -248,7 +314,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier)
+    public async Task<DbRequestResult> DeleteAssetAdministrationShellByIdSigned(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            IsSigned = true
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteAssetAdministrationShellById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<IClass> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier)
     {
         var parameters = new DbRequestParams()
         {
@@ -267,7 +356,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.References[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
@@ -293,13 +382,15 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<List<ISubmodel>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort)
+    public async Task<List<IClass>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort, LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             PaginationParameters = paginationParameters,
             Reference = reqSemanticId,
-            IdShort = idShort
+            IdShort = idShort,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -314,15 +405,17 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels;
+        return tcs.ResultData;
     }
 
-    public async Task<ISubmodel> ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    public async Task<IClass> ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -337,10 +430,38 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels[0];
+        return tcs.ResultData[0];
     }
 
-    public async Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
+    public async Task<string> ReadSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, LevelEnum? level, ExtentEnum? extent, bool isSkipPayload)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IsSigned = true,
+            IsSkipPayload = isSkipPayload,
+            Level = level,
+            Extent = extent
+        };
+
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SignedIdentifier;
+    }
+
+    public async Task<IClass> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
     {
         var parameters = new DbRequestParams()
         {
@@ -360,7 +481,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body)
@@ -370,6 +491,31 @@ public class DbRequestHandlerService : IDbRequestHandlerService
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
             SubmodelBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceSubmodelById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body, string jws)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            SubmodelBody = body,
+            IsSigned = true,
+            JWS = jws
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -431,14 +577,41 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var tcs = await taskCompletionSource.Task;
         return tcs;
     }
+    
+    public async Task<DbRequestResult> DeleteSubmodelByIdSigned(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IsSigned = true
+        };
 
-    public async Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteSubmodelById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<List<IClass>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier
+        ,LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             PaginationParameters = paginationParameters,
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -453,16 +626,18 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.SubmodelElements;
+        return tcs.ResultData;
     }
 
-    public async Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public async Task<IClass> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, LevelEnum? level, ExtentEnum? extent)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShort = idShortPath
+            IdShort = idShortPath,
+            Level = level,
+            Extent = extent
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -477,9 +652,9 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.SubmodelElements[0];
+        return tcs.ResultData[0];
     }
-    public async Task<ISubmodelElement> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first)
+    public async Task<IClass> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first)
     {
         var parameters = new DbRequestParams()
         {
@@ -502,7 +677,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.SubmodelElements[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> UpdateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
@@ -641,7 +816,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         _queryOperations.Add(dbRequest);
 
-        var tcs = await taskCompletionSource.Task;
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
         return tcs.FileRequestResult;
     }
 
@@ -717,7 +892,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         _queryOperations.Add(dbRequest);
 
-        var tcs = await taskCompletionSource.Task;
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
         return tcs.FileRequestResult;
     }
 
@@ -771,7 +946,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<Contracts.Events.EventPayload> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
+    public async Task<List<Contracts.Events.EventPayload>> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
     {
         var parameters = new DbRequestParams()
         {
@@ -814,7 +989,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<List<IConceptDescription>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null)
+    public async Task<List<IClass>> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort = null, IReference isCaseOf = null, IReference dataSpecificationRef = null)
     {
         var parameters = new DbRequestParams()
         {
@@ -831,15 +1006,15 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.ReadPagedSubmodelElements, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReadPagedConceptDescriptions, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.ConceptDescriptions;
+        return tcs.ResultData;
     }
 
-    public async Task<IConceptDescription> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier)
+    public async Task<IClass> ReadConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier)
     {
         var parameters = new DbRequestParams()
         {
@@ -858,10 +1033,33 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.ConceptDescriptions[0];
+        return tcs.ResultData[0];
     }
 
-    public async Task<IConceptDescription> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body)
+    public async Task<string> ReadConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ConceptDescriptionIdentifier = cdIdentifier,
+            IsSigned = true
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadConceptDescriptionById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SignedIdentifier;
+    }
+
+    public async Task<IClass> CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription body)
     {
         var parameters = new DbRequestParams()
         {
@@ -880,7 +1078,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.ConceptDescriptions[0];
+        return tcs.ResultData[0];
     }
 
     public async Task<DbRequestResult> ReplaceConceptDescriptionById(ISecurityConfig securityConfig, IConceptDescription body, string cdIdentifier)
@@ -889,6 +1087,31 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             ConceptDescriptionBody = body,
             ConceptDescriptionIdentifier = cdIdentifier
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceConceptDescriptionById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier, IConceptDescription body, string jws)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ConceptDescriptionBody = body,
+            ConceptDescriptionIdentifier = cdIdentifier,
+            IsSigned = true,
+            JWS = jws
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -928,13 +1151,37 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<AasCore.Aas3_0.Environment> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool? includeCD = false)
+    public async Task<DbRequestResult> DeleteConceptDescriptionByIdSigned(ISecurityConfig securityConfig, string cdIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ConceptDescriptionIdentifier = cdIdentifier,
+            IsSigned = true
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteConceptDescriptionById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool includeCD = false, bool createAASXPackage = false)
     {
         var parameters = new DbRequestParams()
         {
             AasIds = aasIds,
             SubmodelIds = submodelIds,
-            IncludeCD = includeCD
+            IncludeCD = includeCD,
+            CreateAASXPackage = createAASXPackage
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -949,10 +1196,10 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Environment;
+        return tcs;
     }
 
-    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
+    public async Task<QResult> QuerySearchSMs(ISecurityConfig securityConfig, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -971,7 +1218,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -984,7 +1231,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMs(string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
+    public async Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1001,7 +1248,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -1014,7 +1261,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression)
+    public async Task<QResult> QuerySearchSMEs(ISecurityConfig securityConfig, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1039,7 +1286,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -1052,7 +1299,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
+    public async Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
         string equal, string lower, string upper,  IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
@@ -1075,7 +1322,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -1088,7 +1335,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<List<ISubmodel>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression)
+    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string resultType, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1096,6 +1343,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
             {
                 PageFrom = paginationParameters.Cursor,
                 PageSize = paginationParameters.Limit,
+                ResultType = resultType,
                 Expression = expression
             }
         };
@@ -1112,8 +1360,154 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels;
+
+        if (tcs.Ids != null)
+        {
+            return tcs.Ids.ConvertAll(r => r as object);
+        }
+        else if (tcs.ResultData != null)
+        {
+            return tcs.ResultData.ConvertAll(r => r as object);
+        }
+
+        return [];
     }
+
+    public async Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId)
+    {
+        var parameters = new DbRequestParams()
+        {
+            PackageIdentifier = packageId
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteAASXByPackageId, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbFileRequestResult> ReadAASXByPackageId(ISecurityConfig securityConfig, string packageId)
+    {
+        var parameters = new DbRequestParams()
+        {
+            PackageIdentifier = packageId
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadAASXByPackageId, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.FileRequestResult;
+    }
+
+    public async Task<List<PackageDescription>> ReadPagedAASXPackageIds(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string aasId)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasId,
+            PaginationParameters = paginationParameters
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadPagedAASXPackageIds, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
+
+        var packageDescriptions = tcs.PackageDescriptions;
+
+        if (packageDescriptions.Count == 0)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<DbRequestHandlerService>>();
+                scopedLogger.LogInformation($"No packages with requested asset id found.");
+            }
+        }
+
+        return packageDescriptions;
+    }
+
+    public async Task<PackageDescription> CreateAASXPackage(ISecurityConfig securityConfig, MemoryStream stream, string fileName)
+    {
+        var parameters = new DbRequestParams()
+        {
+            FileRequest = new DbFileRequestResult()
+            {
+                Stream = stream,
+                File = fileName
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.CreateAASXPackage, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+
+        var packageDescriptions = tcs.PackageDescriptions;
+
+        return packageDescriptions[0];
+    }
+
+    public async Task<DbRequestResult> UpdateAASXPackageById(ISecurityConfig securityConfig, string packageId, MemoryStream stream, string fileName)
+    {
+        var parameters = new DbRequestParams()
+        {
+            FileRequest = new DbFileRequestResult()
+            {
+                Stream = stream,
+                File = fileName,
+            },
+            PackageIdentifier = packageId
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAASXPackageById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
 
 
     private void IncrementCounter()
@@ -1127,3 +1521,4 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     }
 
 }
+

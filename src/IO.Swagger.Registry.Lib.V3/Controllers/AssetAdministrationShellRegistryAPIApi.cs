@@ -41,6 +41,8 @@ using AasSecurity.Exceptions;
 using Contracts;
 using Contracts.Exceptions;
 using Contracts.Pagination;
+using IO.Swagger.Lib.V3.Models;
+using IO.Swagger.Models;
 
 /// <summary>
 /// 
@@ -148,6 +150,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
     /// <param name="assetKind">The Asset&#x27;s kind (Instance or Type)</param>
     /// <param name="assetType">The Asset&#x27;s type (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
     /// <response code="200">Requested Asset Administration Shell Descriptors</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="403">Forbidden</response>
@@ -165,9 +168,83 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     public virtual IActionResult GetAllAssetAdministrationShellDescriptors([FromQuery] int? limit,
                                                                            [FromQuery] string? cursor,
                                                                            [FromQuery] string? assetKind,
-                                                                           [FromQuery] string? assetType)
+                                                                           [FromQuery] string? assetType,
+                                                                           [FromQuery] string? assetId)
     {
         // TODO (jtikekar, 2023-09-04): AssetType resembles GlobalAssetId from old Implementation
+        var assetList = new List<string?>();
+        if (!string.IsNullOrEmpty(assetType))
+        {
+            var decodedAssetType = _decoderService.Decode("assetType", assetType);
+            assetList = [decodedAssetType];
+        }
+        // single assetId
+        if (!string.IsNullOrEmpty(assetId))
+        {
+            var decodedAssetId = _decoderService.Decode("assetId", assetId);
+            assetList.Add(decodedAssetId);
+        }
+
+        List<AssetAdministrationShellDescriptor> aasDescriptors;
+        if (!Program.withDb)
+        {
+            // from AAS memory
+            aasDescriptors = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetKind, assetList);
+            var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
+
+            return new ObjectResult(output);
+        }
+        else
+        {
+            //From DB
+            aasDescriptors = [];
+            using var db = new AasContext();
+            var iCursor = string.IsNullOrEmpty(cursor) || !int.TryParse(cursor, out var parsedCursor) ? 0 : parsedCursor;
+            var iLimit = (limit != null) ? (int)limit : 500;
+            var aasSets = db.AASSets.Skip(iCursor).Take(iLimit);
+            aasDescriptors.AddRange(from aasDB in aasSets
+                                    where assetList.Count == 0 || assetList.Contains(aasDB.GlobalAssetId)
+                                    select _aasRegistryService.CreateAasDescriptorFromDB(aasDB));
+
+            var paginationResult = new AasDescriptorPagedResult()
+            {
+                result = aasDescriptors,
+                paging_metadata = new PagedResultPagingMetadata()
+                {
+                    cursor = Convert.ToString(iCursor + iLimit)
+                }
+            };
+
+            return new ObjectResult(paginationResult);
+        }
+    }
+
+    /// <summary>
+    /// Returns all Submodel Descriptors
+    /// </summary>
+    /// <param name="limit">The maximum number of elements in the response array</param>
+    /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
+    /// <param name="assetKind">The Asset&#x27;s kind (Instance or Type)</param>
+    /// <param name="assetType">The Asset&#x27;s type (UTF8-BASE64-URL-encoded)</param>
+    /// <response code="200">Requested Asset Administration Shell Descriptors</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("/submodel-descriptors")]
+    [ValidateModelState]
+    [SwaggerOperation("GetAllSubmodelDescriptors")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Requested Asset Administration Shell Descriptors")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual IActionResult GetAllSubmodelDescriptors([FromQuery] int? limit,
+                                                            [FromQuery] string? cursor,
+                                                            [FromQuery] string? assetKind,
+                                                            [FromQuery] string? assetType)
+    {
         var assetList = new List<string?>();
         if (!string.IsNullOrEmpty(assetType))
         {
@@ -187,12 +264,84 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
             aasDescriptors = [];
             using var db = new AasContext();
             aasDescriptors.AddRange(from aasDB in db.AASSets
-                                    where assetList.Count == 0 || assetList.Contains(aasDB.GlobalAssetId)
+                                    where true
                                     select _aasRegistryService.CreateAasDescriptorFromDB(aasDB));
         }
 
-        var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
+        List<SubmodelDescriptor> submodelDescriptors = [];
+        foreach (var ad in aasDescriptors)
+        {
+            if (ad != null && ad.SubmodelDescriptors != null)
+            {
+                foreach (var sd in ad.SubmodelDescriptors)
+                {
+                    submodelDescriptors.Add(sd);
+                }
+            }
+        }
+
+        var output = _paginationService.GetPaginatedList(submodelDescriptors, new PaginationParameters(cursor, limit));
         return new ObjectResult(output);
+    }
+
+    /// <summary>
+    /// Returns all Submodel Descriptors
+    /// </summary>
+    /// <param name="limit">The maximum number of elements in the response array</param>
+    /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
+    /// <param name="assetKind">The Asset&#x27;s kind (Instance or Type)</param>
+    /// <param name="assetType">The Asset&#x27;s type (UTF8-BASE64-URL-encoded)</param>
+    /// <response code="200">Requested Asset Administration Shell Descriptors</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("/submodel-descriptors/{submodelIdentifier}")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelDescriptorById")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Requested Asset Administration Shell Descriptors")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual IActionResult GetSubmodelDescriptorById([FromRoute][Required] string submodelIdentifier)
+    {
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        List<AssetAdministrationShellDescriptor> aasDescriptors;
+        if (!Program.withDb)
+        {
+            // from AAS memory
+            aasDescriptors = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(null, null);
+        }
+        else
+        {
+            //From DB
+            aasDescriptors = [];
+            using var db = new AasContext();
+            aasDescriptors.AddRange(from aasDB in db.AASSets
+                                    where true
+                                    select _aasRegistryService.CreateAasDescriptorFromDB(aasDB));
+        }
+
+        SubmodelDescriptor result = null;
+        foreach (var ad in aasDescriptors)
+        {
+            foreach (var sd in ad.SubmodelDescriptors)
+            {
+                if (sd.Id == decodedSubmodelIdentifier)
+                {
+                    result = sd;
+                }
+            }
+        }
+
+        if (result != null)
+        {
+            return new ObjectResult(result);
+        }
+
+        return NoContent();
     }
 
     /// <summary>
@@ -264,7 +413,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAssetAdministrationShellDescriptorById([FromRoute] [Required] string aasIdentifier)
+    public virtual IActionResult GetAssetAdministrationShellDescriptorById([FromRoute][Required] string aasIdentifier)
     {
         var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
         _logger.LogInformation($"Received request to get the AAS Descriptor by Id");

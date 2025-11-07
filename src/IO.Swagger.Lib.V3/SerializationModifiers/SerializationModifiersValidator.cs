@@ -12,6 +12,7 @@
 ********************************************************************************/
 
 
+using Contracts.LevelExtent;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Exceptions;

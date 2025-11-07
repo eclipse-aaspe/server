@@ -1,11 +1,26 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 namespace Contracts.DbRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using Contracts.Pagination;
+using Contracts.LevelExtent;
 
 public class DbRequestParams
 {
@@ -13,6 +28,7 @@ public class DbRequestParams
     public string AssetAdministrationShellIdentifier { get; set; }
     public string SubmodelIdentifier { get; set; }
     public string ConceptDescriptionIdentifier { get; set; }
+    public string PackageIdentifier { get; set; }
 
     public string IdShort { get; set; }
     public List<ISpecificAssetId> AssetIds { get; set; }
@@ -27,11 +43,18 @@ public class DbRequestParams
     public IConceptDescription ConceptDescriptionBody { get; set; }
     public IReference Reference { get; set; }
     public IAssetInformation AssetInformation { get; set; }
+    public string JWS { get; set; }
 
     //Metadata
     public IPaginationParameters PaginationParameters { get; set; }
+    public LevelEnum? Level { get; set; } = null;
+    public ExtentEnum? Extent { get; set; } = null;
+
     public bool First { get; set; }
-    public bool? IncludeCD { get; set; }
+    public bool IncludeCD { get; set; }
+    public bool CreateAASXPackage { get; set; }
+    public bool IsSigned { get; set; } = false;
+    public bool IsSkipPayload { get; set; }
 
 
     public IReference IsCaseOf { get; set; }
@@ -44,3 +67,4 @@ public class DbRequestParams
 
     public DbQueryRequest QueryRequest { get; set; }
 }
+

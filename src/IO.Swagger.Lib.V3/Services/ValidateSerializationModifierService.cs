@@ -16,6 +16,7 @@ namespace IO.Swagger.Lib.V3.Services;
 using System;
 using System.Reflection.Emit;
 using System.Xml.Linq;
+using Contracts.LevelExtent;
 using IO.Swagger.Lib.V3.Exceptions;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Models;

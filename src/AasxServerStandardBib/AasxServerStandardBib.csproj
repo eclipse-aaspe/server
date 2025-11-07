@@ -53,9 +53,9 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.1" />
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.74.1" />
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
-        <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.5.374.158" />
         <PackageReference Include="QRCoder" Version="1.4.1" />
         <PackageReference Include="ScottPlot" Version="4.1.74" />
         <PackageReference Include="SpookilySharp" Version="1.2.0" />
@@ -67,14 +67,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\LICENSE.txt">
-          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-          <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-        </None>
         <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
         <ProjectReference Include="..\AasxServerDB\AasxServerDB.csproj" />
         <ProjectReference Include="..\Contracts\Contracts.csproj" />
-        <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
         <None Update="Andreas_Orzelski_Chain.pfx">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

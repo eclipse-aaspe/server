@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.OpenApi.Models;
+using Contracts.LevelExtent;
 
 internal class Startup
 {
@@ -91,7 +92,6 @@ internal class Startup
         services.AddTransient<IAasDescriptorWritingService, AasDescriptorWritingService>();
         services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
-        services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
         services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
         services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
@@ -108,9 +108,11 @@ internal class Startup
         services.AddTransient<IPersistenceService, EntityFrameworkPersistenceService>();
 
         // Add GraphQL services
+#if GRAPHQL
         services
             .AddGraphQLServer()
             .AddQueryType<Query>();
+#endif
 
         // Add framework services.
         services

@@ -1,0 +1,14 @@
+@page "/Trustlist"
+
+<h1>Access Rules</h1>
+
+<pre>
+    @{
+        var lines = System.IO.File.ReadAllLines("trustlist.txt");
+
+        foreach (var line in lines)
+        {
+            @line<br />
+        }
+    }
+</pre>

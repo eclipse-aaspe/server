@@ -34,6 +34,15 @@ public interface IPaginationService
     PagedResult GetPaginatedResult<T>(List<T> paginatedList, PaginationParameters paginationParameters);
 
     /// <summary>
+    /// Add metadata to paginated list.
+    /// </summary>
+    /// <typeparam name="T">Type of items in the list.</typeparam>
+    /// <param name="paginatedList">Paginated list.</param>
+    /// <param name="paginationParameters">Pagination parameters including cursor and limit.</param>
+    /// <returns>Paginated result containing a subset of the source list.</returns>
+    QueryResult GetPaginatedQueryResult<T>(List<T> paginatedList, PaginationParameters paginationParameters);
+
+    /// <summary>
     /// Add metadata a paginated list of PackageDescription objects based on provided parameters.
     /// </summary>
     /// <param name="paginatedList">Source list of paginated PackageDescription objects</param>
