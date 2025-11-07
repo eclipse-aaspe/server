@@ -14,6 +14,7 @@
 namespace Contracts.Events;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
@@ -26,6 +27,7 @@ public enum EventPayloadType
     Deleted,
     NotDeleted
 }
+
 
 public class EventPayload : IComparable<EventPayload>
 {
@@ -72,8 +74,9 @@ public class EventPayload : IComparable<EventPayload>
 
     public void SetType(EventPayloadType type)
     {
-        this.type = type.ToString();
         this.eventPayloadEntryType = type;
+        this.type = $"io.admin-shell.events.v1.{type.ToString()?.ToLower()}";
+
     }
 
     public string GetSubdmodelId()
