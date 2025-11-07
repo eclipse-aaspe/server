@@ -524,56 +524,56 @@ namespace AasxServerDB
             if (querySME == null)
                 return null;
 
-            IQueryable<SValueSet> sValueSets = db.SValueSets;
+            IQueryable<ValueSet> sValueSets = db.ValueSets;
             if (securityCondition != null && securityCondition["svalue"] != "")
             {
                 sValueSets = sValueSets.Where(securityCondition["svalue"]);
             }
 
-            IQueryable<IValueSet> iValueSets = db.IValueSets;
-            IQueryable<DValueSet> dValueSets = db.DValueSets;
-            if (securityCondition != null && securityCondition["mvalue"] != "")
-            {
-                iValueSets = iValueSets.Where(securityCondition["mvalue"]);
-                dValueSets = dValueSets.Where(securityCondition["mvalue"]);
-            }
+            //IQueryable<IValueSet> iValueSets = db.IValueSets;
+            //IQueryable<DValueSet> dValueSets = db.DValueSets;
+            //if (securityCondition != null && securityCondition["mvalue"] != "")
+            //{
+            //    iValueSets = iValueSets.Where(securityCondition["mvalue"]);
+            //    dValueSets = dValueSets.Where(securityCondition["mvalue"]);
+            //}
 
             var joinSValue = querySME.Join(
                 sValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, valueSet = sv, oValueSet = null })
                 .ToList();
 
-            var joinIValue = querySME.Join(
-                iValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
-                .ToList();
+            //var joinIValue = querySME.Join(
+            //    iValueSets,
+            //    sme => sme.Id,
+            //    sv => sv.SMEId,
+            //    (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
+            //    .ToList();
 
-            var joinDValue = querySME.Join(
-                dValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
-                .ToList();
+            //var joinDValue = querySME.Join(
+            //    dValueSets,
+            //    sme => sme.Id,
+            //    sv => sv.SMEId,
+            //    (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
+            //    .ToList();
 
             var joinOValue = querySME.Join(
                 db.OValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = sv })
+                (sme, sv) => new SmeMerged {smSet = smSet, smeSet = sme, valueSet = null, oValueSet = sv })
                 .ToList();
 
             var result = joinSValue;
-            result.AddRange(joinIValue);
-            result.AddRange(joinDValue);
+            //result.AddRange(joinIValue);
+            //result.AddRange(joinDValue);
             result.AddRange(joinOValue);
 
             var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
             var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
-                .Select(sme => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = null })
+                .Select(sme => new SmeMerged {smSet = smSet, smeSet = sme, valueSet = null, oValueSet = null })
                 .ToList();
             result.AddRange(noValue);
 
@@ -722,9 +722,9 @@ namespace AasxServerDB
                     {
                         sm = sme.smSet,
                         sme = sme.smeSet,
-                        svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
-                        mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
-                            (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
+                        svalue = (sme.smeSet.TValue == "S" && sme.valueSet != null && sme.valueSet.SValue != null) ? sme.valueSet.SValue : "",
+                        //mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
+                        //    (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
                     }).Distinct();
                     // at least 1 must exist to also approve security condition for SME
                     var resultCondition = mergeForCondition.AsQueryable().Where(sCondition);
@@ -835,9 +835,7 @@ namespace AasxServerDB
                     var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
                     var smeDBIDList = smeDB.Select(sme => sme.Id).ToList();
 
-                    db.SValueSets.Where(s => smeDBIDList.Contains(s.SMEId)).ExecuteDelete();
-                    db.IValueSets.Where(i => smeDBIDList.Contains(i.SMEId)).ExecuteDelete();
-                    db.DValueSets.Where(d => smeDBIDList.Contains(d.SMEId)).ExecuteDelete();
+                    db.ValueSets.Where(s => smeDBIDList.Contains(s.SMEId)).ExecuteDelete();
                     db.OValueSets.Where(o => smeDBIDList.Contains(o.SMEId)).ExecuteDelete();
                     smeDB.ExecuteDelete();
                     smDB.ExecuteDelete();
@@ -1040,9 +1038,9 @@ namespace AasxServerDB
                 {
                     sm = sme.smSet,
                     sme = sme.smeSet,
-                    svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
-                    mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
-                        (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
+                    svalue = (sme.smeSet.TValue == "S" && sme.valueSet != null && sme.valueSet.SValue != null) ? sme.valueSet.SValue : "",
+                    //mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
+                    //    (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
                 }).Distinct();
                 // at least 1 must exist to approve security condition
                 var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
@@ -1385,9 +1383,9 @@ namespace AasxServerDB
         {
             public SMSet? smSet;
             public SMESet? smeSet;
-            public SValueSet? sValueSet;
-            public IValueSet? iValueSet;
-            public DValueSet? dValueSet;
+            public ValueSet? valueSet;
+            //public IValueSet? iValueSet;
+            //public DValueSet? dValueSet;
             public OValueSet? oValueSet;
         }
 
@@ -1442,27 +1440,27 @@ namespace AasxServerDB
                     smeFound.TimeStampTree = timeStamp;
                     if (value != null && smeFound.SMEType == "Prop")
                     {
-                        var sValue = db.SValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
+                        var sValue = db.ValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
                         if (sValue != null)
                         {
-                            sValue.Value = value;
+                            sValue.SValue = value;
                         }
-                        else
-                        {
-                            var iValue = db.IValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
-                            if (iValue != null)
-                            {
-                                iValue.Value = Convert.ToInt64(value);
-                            }
-                            else
-                            {
-                                var dValue = db.DValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
-                                if (dValue != null)
-                                {
-                                    dValue.Value = Convert.ToDouble(value);
-                                }
-                            }
-                        }
+                        //else
+                        //{
+                        //    var iValue = db.IValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
+                        //    if (iValue != null)
+                        //    {
+                        //        iValue.Value = Convert.ToInt64(value);
+                        //    }
+                        //    else
+                        //    {
+                        //        var dValue = db.DValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
+                        //        if (dValue != null)
+                        //        {
+                        //            dValue.Value = Convert.ToDouble(value);
+                        //        }
+                        //    }
+                        //}
                     }
                     setTimeStampTree(db, smDB, smeFound, timeStamp);
 
@@ -1497,7 +1495,7 @@ namespace AasxServerDB
             };
         }
 
-        public static List<string[]>? GetValue(SMESet smeSet, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)
+        public static List<string[]>? GetValue(SMESet smeSet, List<ValueSet> sValueList)
         {
             var TValue = smeSet.TValue;
             var SMEType = smeSet.SMEType;
@@ -1511,16 +1509,16 @@ namespace AasxServerDB
             {
                 case "S":
                     list = sValueList
-                        .ConvertAll<string[]>(s => [s.Value ?? string.Empty, s.Annotation ?? string.Empty]);
+                        .ConvertAll<string[]>(s => [s.SValue ?? string.Empty, s.Annotation ?? string.Empty]);
                     break;
-                case "I":
-                    list = iValueList
-                        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
-                    break;
-                case "D":
-                    list = dValueList
-                        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
-                    break;
+                //case "I":
+                //    list = iValueList
+                //        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
+                //    break;
+                //case "D":
+                //    list = dValueList
+                //        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
+                //    break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
                 return list;
@@ -1540,17 +1538,17 @@ namespace AasxServerDB
             switch (TValue)
             {
                 case "S":
-                    list = tree.Where(s => s.sValueSet?.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(s => [s.sValueSet.Value ?? string.Empty, s.sValueSet.Annotation ?? string.Empty]);
+                    list = tree.Where(s => s.valueSet?.SMEId == Id).ToList()
+                        .ConvertAll<string[]>(s => [s.valueSet.SValue ?? string.Empty, s.valueSet.Annotation ?? string.Empty]);
                     break;
-                case "I":
-                    list = tree.Where(s => s.iValueSet?.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(s => [s.iValueSet.Value == null ? string.Empty : s.iValueSet.Value.ToString(), s.iValueSet.Annotation ?? string.Empty]);
-                    break;
-                case "D":
-                    list = tree.Where(s => s.dValueSet?.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(s => [s.dValueSet.Value == null ? string.Empty : s.dValueSet.Value.ToString(), s.dValueSet.Annotation ?? string.Empty]);
-                    break;
+                //case "I":
+                //    list = tree.Where(s => s.iValueSet?.SMEId == Id).ToList()
+                //        .ConvertAll<string[]>(s => [s.iValueSet.Value == null ? string.Empty : s.iValueSet.Value.ToString(), s.iValueSet.Annotation ?? string.Empty]);
+                //    break;
+                //case "D":
+                //    list = tree.Where(s => s.dValueSet?.SMEId == Id).ToList()
+                //        .ConvertAll<string[]>(s => [s.dValueSet.Value == null ? string.Empty : s.dValueSet.Value.ToString(), s.dValueSet.Annotation ?? string.Empty]);
+                //    break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
                 return list;
