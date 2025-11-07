@@ -398,7 +398,7 @@ public class EventService : IEventService
         {
             foreach (var eventElement in e)
             {
-                var payloadObjString = JsonSerializer.Serialize(e, options);
+                var payloadObjString = JsonSerializer.Serialize(eventElement, options);
 
                 try
                 {
