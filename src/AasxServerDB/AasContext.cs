@@ -53,9 +53,7 @@ namespace AasxServerDB
         public DbSet<SMSet> SMSets { get; set; }
         public DbSet<SMRefSet> SMRefSets { get; set; }
         public DbSet<SMESet> SMESets { get; set; }
-        public DbSet<SValueSet> SValueSets { get; set; }
-        public DbSet<IValueSet> IValueSets { get; set; }
-        public DbSet<DValueSet> DValueSets { get; set; }
+        public DbSet<ValueSet> ValueSets { get; set; }
         public DbSet<OValueSet> OValueSets { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)

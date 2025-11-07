@@ -554,9 +554,9 @@ namespace AasxServerDB
             if (update)
             {
                 smeDB.OValueSets.Clear();
-                smeDB.SValueSets.Clear();
-                smeDB.IValueSets.Clear();
-                smeDB.DValueSets.Clear();
+                smeDB.ValueSets.Clear();
+                //smeDB.IValueSets.Clear();
+                //smeDB.DValueSets.Clear();
             }
             if (sme is RelationshipElement rel)
             {
@@ -584,11 +584,11 @@ namespace AasxServerDB
                     smeDB.TValue = "S";
 
                 if (smeDB.TValue.Equals("S"))
-                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                else if (smeDB.TValue.Equals("I"))
-                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                else if (smeDB.TValue.Equals("D"))
-                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                    smeDB.ValueSets.Add(new ValueSet { SValue = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                //else if (smeDB.TValue.Equals("I"))
+                //    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                //else if (smeDB.TValue.Equals("D"))
+                //    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
@@ -601,7 +601,7 @@ namespace AasxServerDB
                 smeDB.TValue = "S";
                 foreach (var sValueMLP in mlp.Value)
                     if (!sValueMLP.Text.IsNullOrEmpty())
-                        smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
+                        smeDB.ValueSets.Add(new ValueSet() { Annotation = sValueMLP.Language, SValue = sValueMLP.Text });
             }
             else if (sme is Range range)
             {
@@ -653,24 +653,24 @@ namespace AasxServerDB
                 if (tableDataType.Equals("S"))
                 {
                     if (hasValueMin)
-                        smeDB.SValueSets.Add(new SValueSet { Value = sValueMin, Annotation = "Min" });
+                        smeDB.ValueSets.Add(new ValueSet { SValue = sValueMin, Annotation = "Min" });
                     if (hasValueMax)
-                        smeDB.SValueSets.Add(new SValueSet { Value = sValueMax, Annotation = "Max" });
+                        smeDB.ValueSets.Add(new ValueSet { SValue = sValueMax, Annotation = "Max" });
                 }
-                else if (tableDataType.Equals("I"))
-                {
-                    if (hasValueMin)
-                        smeDB.IValueSets.Add(new IValueSet { Value = iValueMin, Annotation = "Min" });
-                    if (hasValueMax)
-                        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
-                }
-                else if (tableDataType.Equals("D"))
-                {
-                    if (hasValueMin)
-                        smeDB.DValueSets.Add(new DValueSet { Value = dValueMin, Annotation = "Min" });
-                    if (hasValueMax)
-                        smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
-                }
+                //else if (tableDataType.Equals("I"))
+                //{
+                //    if (hasValueMin)
+                //        smeDB.IValueSets.Add(new IValueSet { Value = iValueMin, Annotation = "Min" });
+                //    if (hasValueMax)
+                //        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
+                //}
+                //else if (tableDataType.Equals("D"))
+                //{
+                //    if (hasValueMin)
+                //        smeDB.DValueSets.Add(new DValueSet { Value = dValueMin, Annotation = "Min" });
+                //    if (hasValueMax)
+                //        smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
+                //}
             }
             else if (sme is Blob blob)
             {
@@ -678,7 +678,7 @@ namespace AasxServerDB
                     return;
 
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
+                smeDB.ValueSets.Add(new ValueSet { SValue = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
             }
             else if (sme is File file)
             {
@@ -686,7 +686,7 @@ namespace AasxServerDB
                     return;
 
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
+                smeDB.ValueSets.Add(new ValueSet { SValue = file.Value, Annotation = file.ContentType });
             }
             else if (sme is ReferenceElement refEle)
             {
@@ -709,7 +709,7 @@ namespace AasxServerDB
             else if (sme is Entity ent)
             {
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
+                smeDB.ValueSets.Add(new ValueSet { SValue = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
 
                 if (ent.SpecificAssetIds != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = Serializer.SerializeList(ent.SpecificAssetIds) });

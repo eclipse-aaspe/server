@@ -205,9 +205,9 @@ namespace AasxServerDB
                         (sme.TValue != null && sme.TValue.ToLower().Contains(searchLower)) ||
                         db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || sv.Value.ToLower().Contains(searchLower))) ||
                         (sme.TValue != null && (
-                            (sme.TValue.Equals("S") && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
-                            (sme.TValue.Equals("I") && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
-                            (sme.TValue.Equals("D") && db.DValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))))
+                            (sme.TValue.Equals("S") && db.ValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.SValue != null && sv.SValue.ToLower().Contains(searchLower))))) //||
+                            //(sme.TValue.Equals("I") && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
+                            //(sme.TValue.Equals("D") && db.DValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))))
                         )));
 
                 // Return the results
@@ -233,56 +233,56 @@ namespace AasxServerDB
         }
 
 
-        public static List<SValueSet> GetPageSValueData(int size = 1000, int offset = 0, string searchLower = "", long smeid = 0)
+        public static List<ValueSet> GetPageSValueData(int size = 1000, int offset = 0, string searchLower = "", long smeid = 0)
         {
             using (var db = new AasContext())
             {
-                return [.. db.SValueSets
+                return [.. db.ValueSets
                         .Where(v =>
                             (smeid == 0 || v.SMEId == smeid) &&
                             (searchLower.IsNullOrEmpty() ||
                                 (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
-                                (v.Value != null && v.Value.ToLower().Contains(searchLower))))
+                                (v.SValue != null && v.SValue.ToLower().Contains(searchLower))))
                         .OrderBy(q => q.Id)
                         .Skip(offset)
                         .Take(size)];
             }
         }
 
-        public static List<IValueSet> GetPageIValueData(int size = 1000, int offset = 0, string searchLower = "", long smeid = 0)
-        {
-            var withNum = Int64.TryParse(searchLower, out var iEqual);
-            using (var db = new AasContext())
-            {
-                return [.. db.IValueSets
-                .Where(v =>
-                    (smeid == 0 || v.SMEId == smeid) &&
-                    (searchLower.IsNullOrEmpty() ||
-                        (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
-                        (withNum              && v.Value == iEqual)))
-                .OrderBy(q => q.Id)
-                .Skip(offset)
-                .Take(size)];
-            }
-        }
+        //public static List<IValueSet> GetPageIValueData(int size = 1000, int offset = 0, string searchLower = "", long smeid = 0)
+        //{
+        //    var withNum = Int64.TryParse(searchLower, out var iEqual);
+        //    using (var db = new AasContext())
+        //    {
+        //        return [.. db.IValueSets
+        //        .Where(v =>
+        //            (smeid == 0 || v.SMEId == smeid) &&
+        //            (searchLower.IsNullOrEmpty() ||
+        //                (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
+        //                (withNum              && v.Value == iEqual)))
+        //        .OrderBy(q => q.Id)
+        //        .Skip(offset)
+        //        .Take(size)];
+        //    }
+        //}
 
-        public static List<DValueSet> GetPageDValueData(int size = 1000, int offset = 0, string searchLower = "", long smeid = 0)
-        {
-            var withNum = double.TryParse(searchLower, out var dEqual);
+        //public static List<DValueSet> GetPageDValueData(int size = 1000, int offset = 0, string searchLower = "", long smeid = 0)
+        //{
+        //    var withNum = double.TryParse(searchLower, out var dEqual);
 
-            using (var db = new AasContext())
-            {
-                return [.. db.DValueSets
-                .Where(v =>
-                    (smeid == 0 || v.SMEId == smeid) &&
-                    (searchLower.IsNullOrEmpty() ||
-                        (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
-                        (withNum && v.Value == dEqual)))
-                .OrderBy(q => q.Id)
-                .Skip(offset)
-                .Take(size)];
-            }
-        }
+        //    using (var db = new AasContext())
+        //    {
+        //        return [.. db.DValueSets
+        //        .Where(v =>
+        //            (smeid == 0 || v.SMEId == smeid) &&
+        //            (searchLower.IsNullOrEmpty() ||
+        //                (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
+        //                (withNum && v.Value == dEqual)))
+        //        .OrderBy(q => q.Id)
+        //        .Skip(offset)
+        //        .Take(size)];
+        //    }
+        //}
     }
 }
 

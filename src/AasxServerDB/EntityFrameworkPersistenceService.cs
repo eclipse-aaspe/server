@@ -145,7 +145,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     // Applies any pending migrations
                     try
                     {
-                        sqliteDb.Database.Migrate();
+
+                        sqliteDb.Database.EnsureCreated();
+
+                        //sqliteDb.Database.Migrate();
                     }
                     catch (Exception ex)
                     {

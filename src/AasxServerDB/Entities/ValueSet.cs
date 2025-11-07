@@ -16,23 +16,35 @@ namespace AasxServerDB.Entities
     using System.ComponentModel.DataAnnotations.Schema;
     using Microsoft.EntityFrameworkCore;
 
+
     // indexes
     [Index(nameof(Id))]
     [Index(nameof(SMEId))]
-    [Index(nameof(Value))]
+    [Index(nameof(SMId))]
 
-    public class IValueSet
+    public class ValueSet
     {
         // sme
         [ForeignKey("SMESet")]
-        public         int     SMEId  { get; set; }
+        public int SMEId { get; set; }
         public virtual SMESet? SMESet { get; set; }
+
+        // sm
+        [ForeignKey("SMSet")]
+        public int SMId { get; set; }
+        public virtual SMSet? SMSet { get; set; }
 
         // id
         public int Id { get; set; }
 
-        // integer value
-        public long?   Value      { get; set; }
-        public string? Annotation { get; set; }
+        // object value // additional attributes
+        public string Attribute { get; set; }
+        public string SValue { get; set; }
+        public double DValue { get; set; }
+        public TimeOnly TValue { get; set; }
+        public DateTime DTValue { get; set; }
+
+        public string Annotation { get; set; }
+
     }
 }

@@ -16,32 +16,34 @@ using System.Collections.Generic;
 using System.IO;
 using AasSecurity;
 using AasxServerStandardBib.ServiceExtensions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.Connections;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
 using IO.Swagger.Controllers;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Middleware;
 using IO.Swagger.Registry.Lib.V3.Formatters;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 namespace AasxServerBlazor.Configuration;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AasxServerDB;
 using AdminShellNS;
 using Contracts;
 #if GRAPHQL
 using HotChocolate.AspNetCore;
 #endif
 using IO.Swagger.Lib.V3.GraphQL;
+using ScottPlot.Drawing.Colormaps;
 
 public static class ServerConfiguration
 {
@@ -97,7 +99,7 @@ public static class ServerConfiguration
                 .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>(AuthenticationScheme, null);
 
         AddAuthorization(services);
-    }
+        }
 
     /// <summary>
     /// Configures Swagger UI for API documentation.

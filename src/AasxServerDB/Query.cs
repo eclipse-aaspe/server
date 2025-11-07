@@ -678,9 +678,9 @@ public partial class Query
         IQueryable<AASSet>? aasTable;
         IQueryable<SMSet> smTable;
         IQueryable<SMESet> smeTable;
-        IQueryable<SValueSet>? sValueTable;
-        IQueryable<IValueSet>? iValueTable;
-        IQueryable<DValueSet>? dValueTable;
+        IQueryable<ValueSet>? sValueTable;
+        //IQueryable<IValueSet>? iValueTable;
+        //IQueryable<DValueSet>? dValueTable;
 
         // get data
         var skip = false;
@@ -773,7 +773,7 @@ public partial class Query
                         {
                             var index = "Index1,";
                             var sme = db.SMESets.Where(expSME[iExp]);
-                            var svalue = db.SValueSets.Where(distinctExp[iExp].Replace("svalue", "value"));
+                            var svalue = db.ValueSets.Where(distinctExp[iExp].Replace("svalue", "value"));
                             IQueryable joinSmeValuePath = sme.Join(
                                 svalue,
                                 "Id",
@@ -918,22 +918,22 @@ public partial class Query
                     {
                         smeTable = db.SMESets.Where(smeCondition);
                     }
-                    sValueTable = db.SValueSets;
+                    sValueTable = db.ValueSets;
                     if (valueCondition != "")
                     {
-                        sValueTable = db.SValueSets.Where(valueCondition);
+                        sValueTable = db.ValueSets.Where(valueCondition);
                     }
-                    iValueTable = db.IValueSets;
-                    dValueTable = db.DValueSets;
+                    //iValueTable = db.IValueSets;
+                    //dValueTable = db.DValueSets;
 
                     var t1 = smTable.ToQueryString();
                     var t2 = smeTable.ToQueryString();
                     var t3 = sValueTable.ToQueryString();
-                    var t4 = iValueTable.ToQueryString();
-                    var t5 = dValueTable.ToQueryString();
+                    //var t4 = iValueTable.ToQueryString();
+                    //var t5 = dValueTable.ToQueryString();
 
                     // combine tables to a raw sql 
-                    rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                    rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, false);
                     // table name needed for EXISTS in path search
                     rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
                     comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
@@ -1067,16 +1067,14 @@ public partial class Query
                     smTable = db.SMSets;
                     smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
                     smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
-                    sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : null;
-                    iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : null;
-                    dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : null;
+                    sValueTable = restrictValue ? (restrictSValue ? db.ValueSets.Where(conditionsExpression["svalue"]) : null) : null;
 
                     var conditionAll = "true";
                     if (conditionsExpression.TryGetValue("all-aas", out _))
                     {
                         conditionAll = conditionsExpression["all-aas"];
                     }
-                    comTable = CombineTables(db, aasTable, smTable, smeTable, sValueTable, iValueTable, dValueTable, conditionAll);
+                    comTable = CombineTables(db, aasTable, smTable, smeTable, sValueTable, conditionAll);
                     // var x1 = comTable.Take(10).ToList();
                 }
                 else
@@ -1087,9 +1085,9 @@ public partial class Query
                     smTable = db.SMSets;
                     smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
                     smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
-                    sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
-                    iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
-                    dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
+                    sValueTable = restrictValue ? (restrictSValue ? db.ValueSets.Where(conditionsExpression["svalue"]) : null) : db.ValueSets;
+                    //iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
+                    //dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
 
                     if (smRefId != null)
                     {
@@ -1098,7 +1096,7 @@ public partial class Query
                     }
 
                     // combine tables to a raw sql 
-                    rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                    rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, false);
                     // table name needed for EXISTS in path search
                     rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
                     comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
@@ -1593,9 +1591,9 @@ public partial class Query
         // restrict all tables seperate 
         IQueryable<SMSet> smTable;
         IQueryable<SMESet> smeTable;
-        IQueryable<SValueSet>? sValueTable;
-        IQueryable<IValueSet>? iValueTable;
-        IQueryable<DValueSet>? dValueTable;
+        IQueryable<ValueSet>? sValueTable;
+        //IQueryable<IValueSet>? iValueTable;
+        //IQueryable<DValueSet>? dValueTable;
 
         // get data
         if (withExpression) // with expression
@@ -1610,9 +1608,9 @@ public partial class Query
             // restrict all tables seperate
             smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
             smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
-            sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
-            iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
-            dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
+            sValueTable = restrictValue ? (restrictSValue ? db.ValueSets.Where(conditionsExpression["svalue"]) : null) : db.ValueSets;
+            //iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
+            //dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
         }
         else // with parameters
         {
@@ -1626,9 +1624,9 @@ public partial class Query
             // restrict all tables seperate
             smTable = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
             smeTable = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
-            sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(v => restrictSValue && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
-            iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
-            dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
+            sValueTable = restrictValue ? (restrictSValue ? db.ValueSets.Where(v => restrictSValue && v.SValue != null && (!withContains || v.SValue.Contains(contains)) && (!withEqualString || v.SValue.Equals(equal))) : null) : db.ValueSets;
+            //iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
+            //dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
         }
 
         var smSelect = smTable.Select("new { Id, Identifier, IdShort }");
@@ -1655,49 +1653,49 @@ public partial class Query
             var sValueSelect = sValueTable.Select(sv => new CombinedValue
             {
                 SMEId = sv.SMEId,
-                SValue = sv.Value,
-                MValue = null
+                SValue = sv.SValue,
+                MValue = sv.DValue
             });
             combinedValues = sValueSelect;
         }
-        if (iValueTable != null)
-        {
-            var iValueSelect = iValueTable.Select(iv => new CombinedValue
-            {
-                SMEId = iv.SMEId,
-                SValue = null,
-                MValue = iv.Value
-            });
+        //if (iValueTable != null)
+        //{
+        //    var iValueSelect = iValueTable.Select(iv => new CombinedValue
+        //    {
+        //        SMEId = iv.SMEId,
+        //        SValue = null,
+        //        MValue = iv.Value
+        //    });
 
-            if (combinedValues != null)
-            {
-                combinedValues = combinedValues
-                    .Concat(iValueSelect);
-            }
-            else
-            {
-                combinedValues = iValueSelect;
-            }
-        }
-        if (dValueTable != null)
-        {
-            var dValueSelect = dValueTable.Select(dv => new CombinedValue
-            {
-                SMEId = dv.SMEId,
-                SValue = null,
-                MValue = dv.Value
-            });
+        //    if (combinedValues != null)
+        //    {
+        //        combinedValues = combinedValues
+        //            .Concat(iValueSelect);
+        //    }
+        //    else
+        //    {
+        //        combinedValues = iValueSelect;
+        //    }
+        //}
+        //if (dValueTable != null)
+        //{
+        //    var dValueSelect = dValueTable.Select(dv => new CombinedValue
+        //    {
+        //        SMEId = dv.SMEId,
+        //        SValue = null,
+        //        MValue = dv.Value
+        //    });
 
-            if (combinedValues != null)
-            {
-                combinedValues = combinedValues
-                    .Concat(dValueSelect);
-            }
-            else
-            {
-                combinedValues = dValueSelect;
-            }
-        }
+        //    if (combinedValues != null)
+        //    {
+        //        combinedValues = combinedValues
+        //            .Concat(dValueSelect);
+        //    }
+        //    else
+        //    {
+        //        combinedValues = dValueSelect;
+        //    }
+        //}
 
         var smSmeValue = smSmeSelect.AsQueryable().Join(
             combinedValues.AsQueryable(),
@@ -2078,7 +2076,7 @@ public partial class Query
         return result;
     }
 
-    private static string CombineTablesToRawSQL(int direction, IQueryable<SMSet> smTable, IQueryable<SMESet> smeTable, IQueryable<SValueSet>? sValueTable, IQueryable<IValueSet>? iValueTable, IQueryable<DValueSet>? dValueTable, bool withParaWithoutValue)
+    private static string CombineTablesToRawSQL(int direction, IQueryable<SMSet> smTable, IQueryable<SMESet> smeTable, IQueryable<ValueSet>? sValueTable, bool withParaWithoutValue)
     {
         // set select
         var smSelect = smTable.Select(sm => new
@@ -2106,43 +2104,43 @@ public partial class Query
         var sValueSelect = sValueTable?.Select(sV => new
         {
             V_SMEId = sV.SMEId,
-            V_Value = sV.Value,
-            V_D_Value = sV.Value
+            V_Value = sV.SValue,
+            V_D_Value = sV.DValue
         });
-        var iValueSelect = iValueTable?.Select(iV => new
-        {
-            V_SMEId = iV.SMEId,
-            V_Value = iV.Value,
-            V_D_Value = iV.Value
-        });
-        var dValueSelect = dValueTable?.Select(dV => new
-        {
-            V_SMEId = dV.SMEId,
-            V_Value = dV.Value,
-            V_D_Value = dV.Value
-        });
+        //var iValueSelect = iValueTable?.Select(iV => new
+        //{
+        //    V_SMEId = iV.SMEId,
+        //    V_Value = iV.Value,
+        //    V_D_Value = iV.Value
+        //});
+        //var dValueSelect = dValueTable?.Select(dV => new
+        //{
+        //    V_SMEId = dV.SMEId,
+        //    V_Value = dV.Value,
+        //    V_D_Value = dV.Value
+        //});
 
         // to query string
         var smQueryString = smSelect.ToQueryString();
         var smeQueryString = smeSelect.ToQueryString();
         var sValueQueryString = sValueSelect?.ToQueryString();
-        var iValueQueryString = iValueSelect?.ToQueryString();
-        var dValueQueryString = dValueSelect?.ToQueryString();
+        //var iValueQueryString = iValueSelect?.ToQueryString();
+        //var dValueQueryString = dValueSelect?.ToQueryString();
 
         // modify the raw sql (example set parameters, INSTR)
         smQueryString = ModifiyRawSQL(smQueryString);
         smeQueryString = ModifiyRawSQL(smeQueryString);
         sValueQueryString = ModifiyRawSQL(sValueQueryString);
-        iValueQueryString = ModifiyRawSQL(iValueQueryString);
-        dValueQueryString = ModifiyRawSQL(dValueQueryString);
+        //iValueQueryString = ModifiyRawSQL(iValueQueryString);
+        //dValueQueryString = ModifiyRawSQL(dValueQueryString);
 
         // with querys for each table
         var rawSQL = $"WITH\n" +
             $"FilteredSM AS (\n{smQueryString}\n),\n" +
             $"FilteredSME AS (\n{smeQueryString}\n),\n" +
-            (sValueQueryString != null ? $"FilteredSValue AS (\n{sValueQueryString}\n),\n" : string.Empty) +
+            (sValueQueryString != null ? $"FilteredSValue AS (\n{sValueQueryString}\n),\n" : string.Empty) /*+
             (iValueQueryString != null ? $"FilteredIValue AS (\n{iValueQueryString}\n),\n" : string.Empty) +
-            (dValueQueryString != null ? $"FilteredDValue AS (\n{dValueQueryString}\n),\n" : string.Empty);
+            (dValueQueryString != null ? $"FilteredDValue AS (\n{dValueQueryString}\n),\n" : string.Empty)*/;
 
         if (direction == 0) // top-down
         {
@@ -2192,10 +2190,11 @@ public partial class Query
             var selectEnd = $" AS v ON sm_sme.SME_Id = v.V_SMEId \n";
             rawSQL +=
                     (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}NULL{selectDValueFROM}FilteredSValue{selectEnd}" : string.Empty) +
-                    ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                    (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredIValue{selectEnd}" : string.Empty) +
-                    ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredDValue{selectEnd}" : string.Empty) +
+                    //((!sValueQueryString.IsNullOrEmpty()
+                    //&& !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                    //(!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredIValue{selectEnd}" : string.Empty) +
+                    //((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                    //(!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredDValue{selectEnd}" : string.Empty) +
                     (withParaWithoutValue ?
                         $"UNION ALL \n" +
                         $"SELECT " +
@@ -2265,10 +2264,11 @@ public partial class Query
             var selectEnd = $" AS v ON sm_sme.SME_Id = v.V_SMEId\n ";
             rawSQL +=
                     (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}NULL{selectDValueFROM}FilteredSValue{selectEnd}" : string.Empty) +
-                    ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                    (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredIValue{selectEnd}" : string.Empty) +
-                    ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredDValue{selectEnd}" : string.Empty) +
+                    //((!sValueQueryString.IsNullOrEmpty()
+                    //&& !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                    //(!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredIValue{selectEnd}" : string.Empty) +
+                    //((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                    //(!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredDValue{selectEnd}" : string.Empty) +
                     (withParaWithoutValue ?
                         $"UNION ALL \n" +
                         $"SELECT " +
@@ -2310,10 +2310,11 @@ public partial class Query
             rawSQL +=
                 $"FilteredSMEAndValue AS (\n" +
                     (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}NULL{selectDValueFROM}FilteredSValue{selectWithEnd}" : string.Empty) +
-                    ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                    (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}v.V_Value{selectDValueFROM}FilteredIValue{selectWithEnd}" : string.Empty) +
-                    ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}v.V_Value{selectDValueFROM}FilteredDValue{selectWithEnd}" : string.Empty) +
+                    //((!sValueQueryString.IsNullOrEmpty()
+                    //&& !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                    //(!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}v.V_Value{selectDValueFROM}FilteredIValue{selectWithEnd}" : string.Empty) +
+                    //((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                    //(!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}v.V_Value{selectDValueFROM}FilteredDValue{selectWithEnd}" : string.Empty) +
                     (withParaWithoutValue ?
                         $"UNION ALL \n" +
                         $"SELECT " +
@@ -2396,9 +2397,9 @@ public partial class Query
         IQueryable<AASSet>? aasTable,
         IQueryable<SMSet> smTable,
         IQueryable<SMESet> smeTable,
-        IQueryable<SValueSet>? sValueTable,
-        IQueryable<IValueSet>? iValueTable,
-        IQueryable<DValueSet>? dValueTable,
+        IQueryable<ValueSet>? sValueTable,
+        //IQueryable<IValueSet>? iValueTable,
+        //IQueryable<DValueSet>? dValueTable,
         string conditionAll = "true")
     {
         IQueryable<joinAll>? result = null;
@@ -2445,35 +2446,35 @@ public partial class Query
             combineValue = sValueTable.Select(v => new CombinedValue
             {
                 SMEId = v.SMEId,
-                SValue = v.Value,
-                MValue = null
+                SValue = v.SValue,
+                MValue = v.DValue
             }
             );
         }
 
-        if (iValueTable != null)
-        {
-            var combineIValue = iValueTable.Select(v => new CombinedValue
-            {
-                SMEId = v.SMEId,
-                SValue = null,
-                MValue = v.Value
-            }
-            );
-            combineValue = (combineValue == null) ? combineIValue : combineValue.Concat(combineIValue);
-        }
+        //if (iValueTable != null)
+        //{
+        //    var combineIValue = iValueTable.Select(v => new CombinedValue
+        //    {
+        //        SMEId = v.SMEId,
+        //        SValue = null,
+        //        MValue = v.Value
+        //    }
+        //    );
+        //    combineValue = (combineValue == null) ? combineIValue : combineValue.Concat(combineIValue);
+        //}
 
-        if (dValueTable != null)
-        {
-            var combineDValue = dValueTable.Select(v => new CombinedValue
-            {
-                SMEId = v.SMEId,
-                SValue = null,
-                MValue = v.Value
-            }
-            );
-            combineValue = (combineValue == null) ? combineDValue : combineValue.Concat(combineDValue);
-        }
+        //if (dValueTable != null)
+        //{
+        //    var combineDValue = dValueTable.Select(v => new CombinedValue
+        //    {
+        //        SMEId = v.SMEId,
+        //        SValue = null,
+        //        MValue = v.Value
+        //    }
+        //    );
+        //    combineValue = (combineValue == null) ? combineDValue : combineValue.Concat(combineDValue);
+        //}
 
         if (combineValue != null)
         {
@@ -2528,17 +2529,15 @@ public partial class Query
         AasContext db,
         IQueryable<SMSet> smTable,
         IQueryable<SMESet> smeTable,
-        IQueryable<SValueSet>? sValueTable,
-        IQueryable<IValueSet>? iValueTable,
-        IQueryable<DValueSet>? dValueTable,
+        IQueryable<ValueSet>? sValueTable,
         bool includeEmptyValues = false)
     {
         // Hole EF-SQL
         var smRaw = smTable.ToQueryString();
         var smeRaw = smeTable.ToQueryString();
         var sValueRaw = sValueTable?.ToQueryString();
-        var iValueRaw = iValueTable?.ToQueryString();
-        var dValueRaw = dValueTable?.ToQueryString();
+        //var iValueRaw = iValueTable?.ToQueryString();
+        //var dValueRaw = dValueTable?.ToQueryString();
 
         // Extrahiere FROM + WHERE aus EF-SQL
         string ExtractFromWhere(string raw)
@@ -2550,8 +2549,8 @@ public partial class Query
         var smFromWhere = ExtractFromWhere(smRaw);
         var smeFromWhere = ExtractFromWhere(smeRaw);
         var sValueFromWhere = sValueRaw != null ? ExtractFromWhere(sValueRaw) : null;
-        var iValueFromWhere = iValueRaw != null ? ExtractFromWhere(iValueRaw) : null;
-        var dValueFromWhere = dValueRaw != null ? ExtractFromWhere(dValueRaw) : null;
+        //var iValueFromWhere = iValueRaw != null ? ExtractFromWhere(iValueRaw) : null;
+        //var dValueFromWhere = dValueRaw != null ? ExtractFromWhere(dValueRaw) : null;
 
         // Baue CTEs mit eigener SELECT-Liste
         var sb = new StringBuilder("WITH\n");
@@ -2560,10 +2559,10 @@ public partial class Query
 
         if (sValueFromWhere != null)
             sb.AppendLine($"FilteredSValue AS (\nSELECT \"s\".\"SMEId\" AS V_SMEId, \"s\".\"Value\" AS V_Value\n{sValueFromWhere}\n),");
-        if (iValueFromWhere != null)
-            sb.AppendLine($"FilteredIValue AS (\nSELECT \"i\".\"SMEId\" AS V_SMEId, \"i\".\"Value\" AS V_Value\n{iValueFromWhere}\n),");
-        if (dValueFromWhere != null)
-            sb.AppendLine($"FilteredDValue AS (\nSELECT \"d\".\"SMEId\" AS V_SMEId, \"d\".\"Value\" AS V_Value\n{dValueFromWhere}\n),");
+        //if (iValueFromWhere != null)
+        //    sb.AppendLine($"FilteredIValue AS (\nSELECT \"i\".\"SMEId\" AS V_SMEId, \"i\".\"Value\" AS V_Value\n{iValueFromWhere}\n),");
+        //if (dValueFromWhere != null)
+        //    sb.AppendLine($"FilteredDValue AS (\nSELECT \"d\".\"SMEId\" AS V_SMEId, \"d\".\"Value\" AS V_Value\n{dValueFromWhere}\n),");
 
         // Join SM und SME
         sb.AppendLine(@"
@@ -2583,23 +2582,23 @@ FilteredSMAndSME AS (
         sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, NULL AS V_D_Value");
         sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredSValue AS v ON sm_sme.SME_Id = v.V_SMEId");
 
-        if (iValueFromWhere != null)
-        {
-            sb.AppendLine("UNION ALL");
-            sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
-            sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
-            sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
-            sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredIValue AS v ON sm_sme.SME_Id = v.V_SMEId");
-        }
+        //if (iValueFromWhere != null)
+        //{
+        //    sb.AppendLine("UNION ALL");
+        //    sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
+        //    sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
+        //    sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
+        //    sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredIValue AS v ON sm_sme.SME_Id = v.V_SMEId");
+        //}
 
-        if (dValueFromWhere != null)
-        {
-            sb.AppendLine("UNION ALL");
-            sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
-            sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
-            sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
-            sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredDValue AS v ON sm_sme.SME_Id = v.V_SMEId");
-        }
+        //if (dValueFromWhere != null)
+        //{
+        //    sb.AppendLine("UNION ALL");
+        //    sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
+        //    sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
+        //    sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
+        //    sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredDValue AS v ON sm_sme.SME_Id = v.V_SMEId");
+        //}
 
         if (includeEmptyValues)
         {
