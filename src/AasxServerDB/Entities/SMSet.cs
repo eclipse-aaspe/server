@@ -76,5 +76,7 @@ namespace AasxServerDB.Entities
 
         // sme
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
+
+        public virtual ICollection<ValueSet> ValueSets { get; } = new List<ValueSet>();
     }
 }
