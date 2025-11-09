@@ -80,12 +80,30 @@ namespace AasSecurity
             domain = "";
             if (GlobalSecurityVariables.ServerCertFileNames != null)
             {
-                for (int i = 0; i < GlobalSecurityVariables.ServerCertFileNames.Count; i++)
+                for (var i = 0; i < GlobalSecurityVariables.ServerCertFileNames.Count; i++)
                 {
                     if (Path.GetFileName(GlobalSecurityVariables.ServerCertFileNames[i]) == serverName + ".cer")
                     {
                         domain = GlobalSecurityVariables.ServerDomain[i];
                         return GlobalSecurityVariables.ServerCertificates[i];
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        internal static string? FindServerJwksUrl(string kid, out string domain)
+        {
+            domain = "";
+            if (GlobalSecurityVariables.ServerKid != null)
+            {
+                for (var i = 0; i < GlobalSecurityVariables.ServerKid.Count; i++)
+                {
+                    if (GlobalSecurityVariables.ServerKid[i] == kid)
+                    {
+                        domain = GlobalSecurityVariables.ServerDomain[i];
+                        return GlobalSecurityVariables.ServerJwksUrl[i];
                     }
                 }
             }

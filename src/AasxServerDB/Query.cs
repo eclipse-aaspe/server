@@ -2073,7 +2073,7 @@ public partial class Query
             }
             i++;
             // result = result + $"{param[0]} LIKE \'%{paramS[1]}%\' {splitParam[i]}";
-            result += $"{param[0]} LIKE '%' || {paramSNotEmpty} || '%' {splitParam[i]}";
+            result += $"{param[0]} LIKE '%' || '{paramSNotEmpty}' || '%' {splitParam[i]}";
         }
         return result;
     }

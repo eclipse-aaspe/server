@@ -11,18 +11,20 @@
 * SPDX-License-Identifier: MIT
 ********************************************************************************/
 
-using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.JsonWebTokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Net;
 using IdentityModel.Client;
-using System.Net.Sockets;
-using System.Text;
 using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Sockets;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.Json;
 using static System.Net.WebRequestMethods;
 
 var tenant = "common"; // Damit auch externe Konten wie @live.de funktionieren
@@ -39,18 +41,32 @@ for (var i = 0; i < configUrlList.Count; i++)
 {
     Console.WriteLine(i + ": " + configUrlList[i]);
 }
-Console.WriteLine("Enter index: ");
-var input = Console.ReadLine();
+var input = "0";
+if (configUrlList.Count > 1)
+{
+    Console.WriteLine("Enter index: ");
+    input = Console.ReadLine();
+}
 var configUrl = configUrlList[Convert.ToInt32(input)];
 
-Console.WriteLine("Enter character: (C)ertificateStore or (F)ile or (E)ntraID or (I)nteractive Entra or (S)ecret");
+Console.WriteLine("Enter character: (C)ertificateStore or (F)ile or (E)ntraID or (I)nteractive Entra or (S)ecret + optional Token(X)Change");
 input = Console.ReadLine().ToLower();
+
+var exchange = false;
+if (input.EndsWith("x"))
+{
+    exchange = true;
+    input = input.Substring(0, 1);
+}
 
 X509Certificate2? certificate = null;
 string[]? x5c = null;
 
 var handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
 var client = new HttpClient(handler);
+
+JsonDocument doc;
+string accessToken;
 
 if (input == "s")
 {
@@ -74,200 +90,200 @@ if (input == "s")
     var response1 = await client.SendAsync(request1);
     string json = await response1.Content.ReadAsStringAsync();
 
-    using JsonDocument doc = JsonDocument.Parse(json);
-    string accessToken = doc.RootElement.GetProperty("access_token").GetString();
+    doc = JsonDocument.Parse(json);
+    accessToken = doc.RootElement.GetProperty("access_token").GetString();
 
     Console.WriteLine("Access Token : " + accessToken);
-    return;
 }
-
-var configJson = await client.GetStringAsync(configUrl);
-var config = JsonDocument.Parse(configJson);
-var tokenEndpoint = config.RootElement.GetProperty("token_endpoint").GetString();
-
-List<string> rootCertSubjects = [];
-if (config.RootElement.TryGetProperty("rootCertSubjects", out JsonElement rootCerts))
+else
 {
-    foreach (var subject in rootCerts.EnumerateArray())
+    var configJson = await client.GetStringAsync(configUrl);
+    var config = JsonDocument.Parse(configJson);
+    var tokenEndpoint = config.RootElement.GetProperty("token_endpoint").GetString();
+
+    List<string> rootCertSubjects = [];
+    if (config.RootElement.TryGetProperty("rootCertSubjects", out JsonElement rootCerts))
     {
-        var s = subject.GetString();
-        if (s != null)
+        foreach (var subject in rootCerts.EnumerateArray())
         {
-            rootCertSubjects.Add(s);
+            var s = subject.GetString();
+            if (s != null)
+            {
+                rootCertSubjects.Add(s);
+            }
         }
     }
-}
 
-string? email = "";
-var entraid = "";
+    string? email = "";
+    var entraid = "";
 
-switch (input)
-{
-    case "c":
-        X509Store store = new X509Store("MY", StoreLocation.CurrentUser);
-        store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+    switch (input)
+    {
+        case "c":
+            X509Store store = new X509Store("MY", StoreLocation.CurrentUser);
+            store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
-        X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
-        X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(
-            X509FindType.FindByTimeValid, DateTime.Now, false);
+            X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
+            X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(
+                X509FindType.FindByTimeValid, DateTime.Now, false);
 
-        Boolean rootCertFound = false;
-        X509Certificate2Collection fcollection2 = new X509Certificate2Collection();
-        foreach (X509Certificate2 fc in fcollection)
-        {
-            X509Chain fch = new X509Chain();
-            fch.Build(fc);
-            foreach (X509ChainElement element in fch.ChainElements)
+            Boolean rootCertFound = false;
+            X509Certificate2Collection fcollection2 = new X509Certificate2Collection();
+            foreach (X509Certificate2 fc in fcollection)
             {
-                if (rootCertSubjects.Contains(element.Certificate.Subject))
+                X509Chain fch = new X509Chain();
+                fch.Build(fc);
+                foreach (X509ChainElement element in fch.ChainElements)
                 {
-                    rootCertFound = true;
-                    fcollection2.Add(fc);
+                    if (rootCertSubjects.Contains(element.Certificate.Subject))
+                    {
+                        rootCertFound = true;
+                        fcollection2.Add(fc);
+                    }
                 }
             }
-        }
-        if (rootCertFound)
-            fcollection = fcollection2;
+            if (rootCertFound)
+                fcollection = fcollection2;
 
-        X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(fcollection,
-            "Test Certificate Select",
-            "Select a certificate from the following list to get information on that certificate",
-            X509SelectionFlag.SingleSelection);
-        if (scollection.Count != 0)
-        {
-            certificate = scollection[0];
-            X509Chain ch = new X509Chain();
-            ch.Build(certificate);
-
-            string[] X509Base64 = new string[ch.ChainElements.Count];
-
-            int j = 0;
-            foreach (X509ChainElement element in ch.ChainElements)
+            X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(fcollection,
+                "Test Certificate Select",
+                "Select a certificate from the following list to get information on that certificate",
+                X509SelectionFlag.SingleSelection);
+            if (scollection.Count != 0)
             {
-                X509Base64[j++] = Convert.ToBase64String(element.Certificate.GetRawCertData());
+                certificate = scollection[0];
+                X509Chain ch = new X509Chain();
+                ch.Build(certificate);
+
+                string[] X509Base64 = new string[ch.ChainElements.Count];
+
+                int j = 0;
+                foreach (X509ChainElement element in ch.ChainElements)
+                {
+                    X509Base64[j++] = Convert.ToBase64String(element.Certificate.GetRawCertData());
+                }
+
+                x5c = X509Base64;
             }
+            break;
+        case "f":
+            var name = "Andreas_Orzelski_Chain.pfx";
+            var pw = "i40";
+            // var name = "I40_IDTA_Sandeep_Rudra.pfx";
+            // var name = "idta-client.pfx";
+            certificate = new X509Certificate2($"../../../{name}", pw);
 
-            x5c = X509Base64;
-        }
-        break;
-    case "f":
-        var name = "Andreas_Orzelski_Chain.pfx";
-        var pw = "i40";
-        // var name = "I40_IDTA_Sandeep_Rudra.pfx";
-        // var name = "idta-client.pfx";
-        certificate = new X509Certificate2($"../../../{name}", pw);
-        
-        // Zertifikatskette vorbereiten
-        var chain = new X509Certificate2Collection();
-        chain.Import($"../../../{name}", pw);
-        x5c = chain.Cast<X509Certificate2>().Reverse().Select(c => Convert.ToBase64String(c.RawData)).ToArray();
+            // Zertifikatskette vorbereiten
+            var chain = new X509Certificate2Collection();
+            chain.Import($"../../../{name}", pw);
+            x5c = chain.Cast<X509Certificate2>().Reverse().Select(c => Convert.ToBase64String(c.RawData)).ToArray();
 
-        var ch2 = new X509Chain
-        {
-            ChainPolicy = {
+            var ch2 = new X509Chain
+            {
+                ChainPolicy = {
                 RevocationMode   = X509RevocationMode.NoCheck,
                 VerificationFlags= X509VerificationFlags.NoFlag,
                 TrustMode = X509ChainTrustMode.CustomRootTrust
             }
-        };
+            };
 
-        var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
-        ch2.ChainPolicy.CustomTrustStore.Add(root);
+            var root = new X509Certificate2(Convert.FromBase64String(x5c.Last()));
+            ch2.ChainPolicy.CustomTrustStore.Add(root);
 
-        for (var i = 1; i < x5c.Length - 1; i++)
-        {
-            var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
-            ch2.ChainPolicy.ExtraStore.Add(cert);
-        }
+            for (var i = 1; i < x5c.Length - 1; i++)
+            {
+                var cert = new X509Certificate2(Convert.FromBase64String(x5c[i]));
+                ch2.ChainPolicy.ExtraStore.Add(cert);
+            }
 
-        var isValid = ch2.Build(certificate);
-        break;
-    case "e":
-        Console.WriteLine("Entra ID?");
-        entraid = Console.ReadLine();
-        break;
-    case "i":
-        var app = PublicClientApplicationBuilder
-            .Create(clientId)
-            .WithAuthority(AzureCloudInstance.AzurePublic, tenant)
-            .WithDefaultRedirectUri()             // entspricht http://localhost
-            .Build();
+            var isValid = ch2.Build(certificate);
+            break;
+        case "e":
+            Console.WriteLine("Entra ID?");
+            entraid = Console.ReadLine();
+            break;
+        case "i":
+            var app = PublicClientApplicationBuilder
+                .Create(clientId)
+                .WithAuthority(AzureCloudInstance.AzurePublic, tenant)
+                .WithDefaultRedirectUri()             // entspricht http://localhost
+                .Build();
 
-        var result = await app
-            .AcquireTokenInteractive(scopes)
-            .WithPrompt(Prompt.SelectAccount)
-            .ExecuteAsync();
+            var result = await app
+                .AcquireTokenInteractive(scopes)
+                .WithPrompt(Prompt.SelectAccount)
+                .ExecuteAsync();
 
-        entraid = result.IdToken;
-        break;
-}
-
-if (entraid == "")
-{
-    if (certificate == null || x5c == null)
-        return;
-
-    // E-Mail extrahieren
-    email = certificate.GetNameInfo(X509NameType.EmailName, false);
-    if (string.IsNullOrEmpty(email))
-    {
-        var subject = certificate.Subject;
-        var match = subject.Split(',').FirstOrDefault(s => s.Trim().StartsWith("E="));
-        email = match?.Split('=')[1];
+            entraid = result.IdToken;
+            break;
     }
-}
+
+    if (entraid == "")
+    {
+        if (certificate == null || x5c == null)
+            return;
+
+        // E-Mail extrahieren
+        email = certificate.GetNameInfo(X509NameType.EmailName, false);
+        if (string.IsNullOrEmpty(email))
+        {
+            var subject = certificate.Subject;
+            var match = subject.Split(',').FirstOrDefault(s => s.Trim().StartsWith("E="));
+            email = match?.Split('=')[1];
+        }
+    }
 
 
-// JWT erstellen
-var now = DateTime.UtcNow;
-var claims = new List<Claim>
+    // JWT erstellen
+    var now = DateTime.UtcNow;
+    var claims = new List<Claim>
 {
     new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
     new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, "client.jwt"),
     new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Iat, EpochTime.GetIntDate(now).ToString(), ClaimValueTypes.Integer64),
 };
 
-JwtSecurityToken? token = null;
+    JwtSecurityToken? token = null;
 
-if (entraid == "")
-{
-    claims.Add(new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, email!));
+    if (entraid == "")
+    {
+        claims.Add(new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, email!));
 
-    var credentials = new X509SigningCredentials(certificate);
-    token = new JwtSecurityToken(
-        issuer: "client.jwt",
-        audience: tokenEndpoint,
-        claims: claims,
-        notBefore: now,
-        expires: now.AddMinutes(1),
-        signingCredentials: credentials
-    );
-    token.Header["x5c"] = x5c;
-}
-else
-{
-    claims.Add(new("entraid", entraid));
+        var credentials = new X509SigningCredentials(certificate);
+        token = new JwtSecurityToken(
+            issuer: "client.jwt",
+            audience: tokenEndpoint,
+            claims: claims,
+            notBefore: now,
+            expires: now.AddMinutes(1),
+            signingCredentials: credentials
+        );
+        token.Header["x5c"] = x5c;
+    }
+    else
+    {
+        claims.Add(new("entraid", entraid));
 
-    // var secret = "test-with-entra-id-34zu8934h89ehhghbgeg54tgfbufrbbssdbsbibu4trui45tr";
-    var secret = entraid;
-    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-    token = new JwtSecurityToken(
-        issuer: "client.jwt",
-        audience: tokenEndpoint,
-        claims: claims,
-        notBefore: now,
-        expires: now.AddMinutes(1),
-        signingCredentials: credentials
-    );
-}
+        // var secret = "test-with-entra-id-34zu8934h89ehhghbgeg54tgfbufrbbssdbsbibu4trui45tr";
+        var secret = entraid;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        token = new JwtSecurityToken(
+            issuer: "client.jwt",
+            audience: tokenEndpoint,
+            claims: claims,
+            notBefore: now,
+            expires: now.AddMinutes(1),
+            signingCredentials: credentials
+        );
+    }
 
-var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+    var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-// Token anfordern
-var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
-{
-    Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    // Token anfordern
+    var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
+    {
+        Content = new FormUrlEncodedContent(new Dictionary<string, string>
     {
         { "grant_type", "client_credentials" },
         // { "scope", "resource1.scope1" },
@@ -275,18 +291,108 @@ var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
         { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
         { "client_assertion", jwt }
     })
-    /*
-    Content = new FormUrlEncodedContent(new Dictionary<string, string>
-    {
-        { "grant_type", "client_credentials" },
-        { "scope", "read write" },
-        { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
-        { "client_assertion", jwt }
-    })
-    */
-};
-request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+        /*
+        Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "grant_type", "client_credentials" },
+            { "scope", "read write" },
+            { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+            { "client_assertion", jwt }
+        })
+        */
+    };
+    request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
-var response = await client.SendAsync(request);
-var content = await response.Content.ReadAsStringAsync();
-Console.WriteLine("Access Token Response: " + content);
+    var response = await client.SendAsync(request);
+    var content = await response.Content.ReadAsStringAsync();
+
+    accessToken = "";
+    doc = JsonDocument.Parse(content);
+    if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+    {
+        accessToken = tokenElement.GetString();
+        Console.WriteLine("Access Token: " + accessToken);
+        Console.WriteLine();
+    }
+}
+
+if (exchange)
+{
+    Console.WriteLine("Token Exchange");
+    configUrlList = [
+        "https://iam-security-training.com/sts"
+    ];
+    for (var i = 0; i < configUrlList.Count; i++)
+    {
+        Console.WriteLine(i + ": " + configUrlList[i]);
+    }
+    input = "0";
+    if (configUrlList.Count > 1)
+    {
+        Console.WriteLine("Enter index: ");
+        input = Console.ReadLine();
+    }
+    configUrl = configUrlList[Convert.ToInt32(input)];
+
+    var request = new HttpRequestMessage(HttpMethod.Post, $"{configUrl}/token")
+    {
+        Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
+            { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
+            { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
+            { "subject_token", accessToken }
+        })
+    };
+    request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+    var response = await client.SendAsync(request);
+    var content = await response.Content.ReadAsStringAsync();
+
+    accessToken = "";
+    doc = JsonDocument.Parse(content);
+    if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+    {
+        accessToken = tokenElement.GetString();
+        Console.WriteLine("Access Token: " + accessToken);
+
+        using var httpClient = new HttpClient(handler);
+        var jwksJson = await httpClient.GetStringAsync($"{configUrl}/jwks");
+        var jwks = JObject.Parse(jwksJson)["keys"];
+
+        var handler2 = new JwtSecurityTokenHandler();
+        var jwt2 = handler2.ReadJwtToken(accessToken);
+        var kid = jwt2.Header["kid"].ToString();
+
+        // 3. Find matching key
+        var key = jwks.First(k => k["kid"].ToString() == kid);
+
+        // 4. Build RSA key
+        var e = Base64UrlEncoder.DecodeBytes(key["e"].ToString());
+        var n = Base64UrlEncoder.DecodeBytes(key["n"].ToString());
+        var rsa = new RSAParameters { Exponent = e, Modulus = n };
+        var rsaKey = new RsaSecurityKey(rsa);
+
+        // 5. Validate token
+        var validationParams = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            // ValidIssuer = issuer,
+            ValidateAudience = false,
+            // ValidAudience = "https://aasx-server-p5.dev.pxcio.net/",
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = rsaKey
+        };
+
+        try
+        {
+            handler2.ValidateToken(accessToken, validationParams, out _);
+            Console.WriteLine("Token is valid");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Validation failed: {ex.Message}");
+        }
+    }
+}

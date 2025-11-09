@@ -11,12 +11,13 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasSecurity.Models;
-using AasxServer;
-using AdminShellNS;
 using System;
 using System.Buffers.Text;
 using System.Security.Cryptography.X509Certificates;
+using AasSecurity.Models;
+using AasxServer;
+using AdminShellNS;
+using IdentityModel;
 
 namespace AasSecurity
 {
@@ -91,6 +92,8 @@ namespace AasSecurity
                     var domain = "";
                     var base64 = "";
                     var insideBas64 = false;
+                    var jwks = "";
+                    var kid = "";
                     foreach (var line in lines)
                     {
                         if (line == "" || line.StartsWith("# "))
@@ -104,11 +107,28 @@ namespace AasSecurity
                             serverName = split[1];
                             Console.WriteLine(" serverName: " + serverName);
                         }
-                        if (line.Contains("domain: "))
+                        else if (line.Contains("domain: "))
                         {
                             var split = line.Split(": ");
                             domain = split[1];
                             Console.WriteLine("  domain: " + domain);
+                        }
+                        else if (line.Contains("jwks: "))
+                        {
+                            var split = line.Split(": ");
+                            jwks = split[1];
+                            Console.WriteLine("  jwks: " + jwks);
+                        }
+                        else if (line.Contains("kid: "))
+                        {
+                            var split = line.Split(": ");
+                            kid = split[1];
+                            Console.WriteLine("  kid: " + kid);
+                            GlobalSecurityVariables.ServerCertificates.Add(null);
+                            GlobalSecurityVariables.ServerCertFileNames.Add("");
+                            GlobalSecurityVariables.ServerDomain.Add(domain);
+                            GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
+                            GlobalSecurityVariables.ServerKid.Add(kid);
                         }
                         else if (line.Contains("BEGIN CERTIFICATE"))
                         {
@@ -124,6 +144,8 @@ namespace AasSecurity
                             GlobalSecurityVariables.ServerCertificates.Add(x509);
                             GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
                             GlobalSecurityVariables.ServerDomain.Add(domain);
+                            GlobalSecurityVariables.ServerJwksUrl.Add("");
+                            GlobalSecurityVariables.ServerKid.Add("");
                         }
                         else if (insideBas64)
                         {

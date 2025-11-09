@@ -398,13 +398,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReadSubmodelById:
                         found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel);
 
+                        var aasText = aasIdentifier == null ? "" : $" in Asset Administration Shell with id {aasIdentifier}";
                         if (found)
                         {
-                            scopedLogger.LogDebug($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
+                            scopedLogger.LogDebug($"Submodel with id {submodelIdentifier}{aasText} found.");
                         }
                         else
                         {
-                            throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier}{aasText} not found.");
                         }
 
                         if (dbRequest.Context.Params.IsSigned)
@@ -1406,7 +1407,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new NotFoundException($"Submodel with id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+            var aasText = aasIdentifier == null ? "" : $" in Asset Administration Shell with id {aasIdentifier}";
+            throw new NotFoundException($"Submodel with id {submodelIdentifier}{aasText} not found.");
         }
     }
 
