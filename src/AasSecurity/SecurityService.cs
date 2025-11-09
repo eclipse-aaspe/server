@@ -472,7 +472,7 @@ namespace AasSecurity
                                 {
                                     jwksUrl = SecurityHelper.FindServerJwksUrl(kid, out domain);
                                 }
-                                if (jwksUrl != "")
+                                if (!jwksUrl.IsNullOrEmpty())
                                 {
                                     var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                                     using var httpClient = new HttpClient(clientHandler);
