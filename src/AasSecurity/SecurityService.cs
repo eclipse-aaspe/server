@@ -11,33 +11,37 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasSecurity.Models;
-using AasSecurity.Exceptions;
-using AasxServer;
-using AasxServerStandardBib.Logging;
-using AasxServerStandardBib.Services;
-using Extensions;
-using Jose;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using System.Collections.Specialized;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Web;
-using File = AasCore.Aas3_0.File;
+using AasSecurity.Exceptions;
+using AasSecurity.Models;
+using AasxServer;
+using AasxServerStandardBib.Logging;
+using AasxServerStandardBib.Services;
 using Contracts;
-using System.Linq.Expressions;
+using Extensions;
 using Irony.Parsing;
-using System.Linq.Dynamic.Core;
+using Jose;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
-using static QRCoder.PayloadGenerator;
-using System.Data;
+using Microsoft.IdentityModel.Tokens;
 using Namotion.Reflection;
+using Newtonsoft.Json.Linq;
+using static QRCoder.PayloadGenerator;
+using File = AasCore.Aas3_0.File;
 
 namespace AasSecurity
 {
@@ -427,7 +431,8 @@ namespace AasSecurity
                                 .First(c => c.Type == "tid").Value;
 
                             var jwksUrl = $"https://login.microsoftonline.com/{tenantId}/discovery/v2.0/keys";
-                            using var httpClient = new HttpClient();
+                            var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                            using var httpClient = new HttpClient(clientHandler);
                             var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
                             var jwks = new JsonWebKeySet(jwksJson);
                             var signingKeys = jwks.GetSigningKeys();
@@ -458,6 +463,50 @@ namespace AasSecurity
                         }
                         else
                         {
+                            if (jwtSecurityToken.Header.TryGetValue("kid", out _))
+                            {
+                                user = "";
+                                var jwksUrl = "";
+                                var kid = jwtSecurityToken.Header["kid"].ToString();
+                                if (kid != null)
+                                {
+                                    jwksUrl = SecurityHelper.FindServerJwksUrl(kid, out domain);
+                                }
+                                if (jwksUrl != "")
+                                {
+                                    var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                                    using var httpClient = new HttpClient(clientHandler);
+                                    var jwksJson = httpClient.GetStringAsync(jwksUrl + "/jwks").Result;
+                                    var jwks = new JsonWebKeySet(jwksJson);
+                                    var signingKeys = jwks.GetSigningKeys();
+
+                                    var tokenHandler = new JwtSecurityTokenHandler();
+                                    var validationParameters = new TokenValidationParameters
+                                    {
+                                        ValidateIssuer = false,
+                                        ValidateAudience = false,
+                                        ValidateLifetime = true,
+                                        ValidateIssuerSigningKey = true,
+                                        IssuerSigningKeys = signingKeys
+                                    };
+
+                                    try
+                                    {
+                                        var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
+
+                                        user = jwtSecurityToken.Claims.First(c => c.Type == "userName").Value;
+                                        if (!string.IsNullOrEmpty(user))
+                                        {
+                                            return "";
+                                        }
+                                        user = "";
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                    }
+                                }
+                            }
+
                             var serverName = jwtSecurityToken.Claims.First(c => c.Type == "serverName").Value;
                             if (!string.IsNullOrEmpty(serverName))
                             {

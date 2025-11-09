@@ -604,7 +604,7 @@
 
 @code {
 
-// void toggle(int clickIndex)
+    // void toggle(int clickIndex)
     void toggle(CfpNode n)
     {
         if (closedNode.Contains(n.aas.Id))
@@ -642,19 +642,24 @@
         var    idEncoded = Base64UrlEncoder.Encode(sm.Id);
         if (sm.Extensions != null)
         {
-            endpoint = sm.Extensions[ 0 ].Value;
-            var s1 = endpoint.Split("/shells/");
-            if (s1.Length == 2)
+            endpoint = sm.Extensions[0].Value;
+            if (endpoint.Contains("/shells/"))
             {
-                var s2 = s1[ 1 ].Split("/submodels/");
-                if (s2.Length == 2)
+                var s1 = endpoint.Split("/shells/");
+                if (s1.Length == 2)
                 {
-                    idEncoded = s2[ 1 ].Replace("/submodel/", "");
-                    ;
-                    endpoint = s1[ 0 ] + "/submodels/" + idEncoded;
+                    var s2 = s1[1].Split("/submodels/");
+                    if (s2.Length == 2)
+                    {
+                        idEncoded = s2[1].Replace("/submodel/", "");
+                        endpoint = s1[0] + "/submodels/" + idEncoded;
+                    }
                 }
             }
-            // endpoint = endpoint.Replace("/submodel/", "");
+            else
+            {
+                ;
+            }
         }
         else
         {
@@ -709,7 +714,7 @@
         if (f.Value != "")
         {
             string[] split = f.Value.Split(new Char[] {'/'});
-            if (split.Length == 2 || (split.Length > 1 && (split[ 1 ].ToLower() == "aasx" || split[ 1 ].ToLower() == "tmp")))
+            if (split.Length == 1 || split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
             {
                 split = f.Value.Split(new Char[] {'.'});
                 switch (split.Last().ToLower())
@@ -768,6 +773,10 @@
 
                         break;
                 }
+            }
+            else
+            {
+                ;
             }
         }
 

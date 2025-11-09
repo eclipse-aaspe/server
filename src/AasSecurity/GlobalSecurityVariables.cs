@@ -23,6 +23,8 @@ namespace AasSecurity
         internal static List<X509Certificate2> ServerCertificates = new();
         internal static List<string> ServerCertFileNames = new();
         internal static List<string> ServerDomain = new();
+        internal static List<string> ServerJwksUrl = new();
+        internal static List<string> ServerKid = new();
         internal static List<SecurityRight> SecurityRights = new();
         internal static Dictionary<string, string> SecurityUsernamePassword = new();
         internal static Property ConditionSM = null;
