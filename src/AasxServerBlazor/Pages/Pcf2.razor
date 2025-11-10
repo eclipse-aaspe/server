@@ -487,7 +487,7 @@
                                                         // textList.Add(id);
                                                         if (id != null && color != null)
                                                         {
-                                                            smlink        = getSmLink(sm);
+                                                            smlink        = getSmLink(sm, cs.credentials);
                                                             queryPara     = "";
                                                             userPW        = "";
                                                             urlEdcWrapper = "";
@@ -636,29 +636,32 @@
         return path;
     }
 
-    static string getSmLink(ISubmodel sm)
+    static string getSmLink(ISubmodel sm, List<AasxCredentialsEntry> credentials)
     {
         string endpoint  = null;
         var    idEncoded = Base64UrlEncoder.Encode(sm.Id);
         if (sm.Extensions != null)
         {
             endpoint = sm.Extensions[0].Value;
-            if (endpoint.Contains("/shells/"))
+            if ((!AasxCredentials.keep(credentials, endpoint, true)))
             {
-                var s1 = endpoint.Split("/shells/");
-                if (s1.Length == 2)
+                if (endpoint.Contains("/shells/"))
                 {
-                    var s2 = s1[1].Split("/submodels/");
-                    if (s2.Length == 2)
+                    var s1 = endpoint.Split("/shells/");
+                    if (s1.Length == 2)
                     {
-                        idEncoded = s2[1].Replace("/submodel/", "");
-                        endpoint = s1[0] + "/submodels/" + idEncoded;
+                        var s2 = s1[1].Split("/submodels/");
+                        if (s2.Length == 2)
+                        {
+                            idEncoded = s2[1].Replace("/submodel/", "");
+                            endpoint = s1[0] + "/submodels/" + idEncoded;
+                        }
                     }
                 }
-            }
-            else
-            {
-                ;
+                else
+                {
+                    ;
+                }
             }
         }
         else
@@ -740,7 +743,7 @@
 
                             var sm = p as Submodel;
                             // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
-                            string endpoint = getSmLink(sm);
+                            string endpoint = getSmLink(sm, cs.credentials);
                             path =  endpoint + "/submodel-elements/" + path;
                             path += "/attachment";
 

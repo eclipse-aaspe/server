@@ -24,39 +24,39 @@ namespace IO.Swagger.Controllers
      */
     using System;
     using System.Collections.Generic;
-    using Microsoft.AspNetCore.Mvc;
-    using Swashbuckle.AspNetCore.Annotations;
-    using Newtonsoft.Json;
     using System.ComponentModel.DataAnnotations;
-    using IO.Swagger.Attributes;
-
-    using Microsoft.AspNetCore.Authorization;
-    using IO.Swagger.Models;
+    using System.IO;
+    using System.Linq;
+    using System.Net.Mime;
+    using System.Security.Claims;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+    using System.Text.Json;
+    using System.Text.Json.Nodes;
+    using System.Threading.Tasks;
+    using AasxServer;
     using AasxServerStandardBib.Interfaces;
     using AasxServerStandardBib.Logging;
-    using IO.Swagger.Lib.V3.Interfaces;
-    using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
-    using AasxServer;
-    using System.Linq;
-    using System.Security.Claims;
-    using IO.Swagger.Lib.V3.Models;
-    using DataTransferObjects.MetadataDTOs;
+    using AdminShellNS.Exceptions;
     using AdminShellNS.Lib.V3.Models;
-    using DataTransferObjects.ValueDTOs;
-    using System.Net.Mime;
-    using Microsoft.AspNetCore.Http;
-    using System.IO;
-    using System.Text.Json.Nodes;
-    using Contracts.Pagination;
     using Contracts;
-    using System.Threading.Tasks;
     using Contracts.Exceptions;
+    using Contracts.Pagination;
     using Contracts.Security;
-    using Microsoft.IdentityModel.Tokens;
+    using DataTransferObjects.MetadataDTOs;
+    using DataTransferObjects.ValueDTOs;
+    using IO.Swagger.Attributes;
+    using IO.Swagger.Lib.V3.Interfaces;
+    using IO.Swagger.Lib.V3.Models;
+    using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
+    using IO.Swagger.Models;
     using Jose;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Text.Json;
-    using System.Text;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.IdentityModel.Tokens;
+    using Newtonsoft.Json;
+    using Swashbuckle.AspNetCore.Annotations;
 
     /// <summary>
     /// 
@@ -1110,7 +1110,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public async virtual Task<IActionResult> GetFileByPathAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, 
 		[FromRoute][Required]string idShortPath)
-        { 
+        {
+            /*
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1152,6 +1153,52 @@ namespace IO.Swagger.Controllers
             }
 
             HttpContext.Response.Body.WriteAsync(content);
+            return new EmptyResult();
+            */
+
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            if (decodedSubmodelIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+            }
+
+            _logger.LogInformation($"Received request to get file by path at the submodel element {idShortPath} from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var dbFileRequestResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+
+            var fileName = dbFileRequestResult.File;
+            var fileSize = dbFileRequestResult.FileSize;
+            var content = dbFileRequestResult.Content;
+
+            //content-disposition so that the aasx file can be downloaded from the web browser.
+            ContentDisposition contentDisposition = new()
+            {
+                FileName = fileName ?? throw new NullValueException(nameof(fileName)),
+                Inline = fileName.EndsWith(".pdf", StringComparison.InvariantCulture)
+            };
+
+            HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
+            HttpContext.Response.ContentLength = fileSize;
+            if (fileName.EndsWith(".svg", StringComparison.InvariantCulture))
+            {
+                HttpContext.Response.ContentType = "image/svg+xml";
+            }
+
+            if (fileName.EndsWith(".pdf", StringComparison.InvariantCulture))
+            {
+                HttpContext.Response.ContentType = "application/pdf";
+            }
+
+            await HttpContext.Response.Body.WriteAsync(content);
             return new EmptyResult();
         }
 

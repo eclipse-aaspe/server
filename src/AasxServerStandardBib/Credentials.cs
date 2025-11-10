@@ -13,22 +13,23 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Text;
-using IdentityModel.Client;
-using IdentityModel;
-using Microsoft.Identity.Client;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
-using System.Net.Sockets;
+using System.Text;
 using System.Text.Json;
-using static System.Formats.Asn1.AsnWriter;
+using System.Threading.Tasks;
+using IdentityModel;
+using IdentityModel.Client;
+using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
+using Microsoft.IdentityModel.Tokens;
+using static System.Formats.Asn1.AsnWriter;
 using static QRCoder.PayloadGenerator;
 
 namespace AasxServer
@@ -74,7 +75,7 @@ namespace AasxServer
                             if (line != "" && line.Substring(0, 1) != "#")
                             {
                                 var cols = line.Split(',');
-                                if (cols.Length > 2)
+                                if (cols.Length >= 2)
                                 {
                                     var c = new AasxCredentialsEntry();
                                     c.urlPrefix = cols[0];
@@ -227,6 +228,31 @@ namespace AasxServer
             return result;
         }
 
+        public static bool keep(List<AasxCredentialsEntry> cList, string urlPath, bool blazor = false)
+        {
+            bool result = false;
+
+            for (int i = 0; i < cList.Count; i++)
+            {
+                int lenPrefix = cList[i].urlPrefix.Length;
+                int lenUrl = urlPath.Length;
+                if (lenPrefix <= lenUrl)
+                {
+                    string u = urlPath.Substring(0, lenPrefix);
+                    if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
+                    {
+                        switch (cList[i].type)
+                        {
+                            case "keeppath":
+                                result = true;
+                                break;
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
         public static void bearerCheckAndInit(AasxCredentialsEntry c, AasxTaskService aasxTaskService)
         {
             // check if existing bearer is still valid
@@ -240,6 +266,12 @@ namespace AasxServer
             }
 
             string authServerEndPoint = c.parameters[0];
+
+            var exchange = "";
+            if (c.parameters.Count > 3)
+            {
+                exchange = c.parameters[3];
+            }
 
             if (!authServerEndPoint.EndsWith("/token"))
             {
@@ -481,6 +513,35 @@ namespace AasxServer
                         Console.WriteLine("Valid from: " + jwtToken.ValidFrom);
                         Console.WriteLine("Valid to: " + jwtToken.ValidTo);
                     }
+                }
+            }
+
+            if (exchange != "" && c.bearer != null && c.bearer != "")
+            {
+                var handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                var client = new HttpClient(handler);
+
+                JsonDocument doc;
+                var request = new HttpRequestMessage(HttpMethod.Post, exchange)
+                {
+                    Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
+                        { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
+                        { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
+                        { "subject_token", c.bearer }
+                    })
+                };
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+                var response = client.SendAsync(request);
+                var content = response.GetAwaiter().GetResult().Content.ContentToString();
+
+                doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+                {
+                    c.bearer = tokenElement.GetString();
+                    Console.WriteLine("token exchange " + c.bearer);
                 }
             }
         }
