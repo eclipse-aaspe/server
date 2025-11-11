@@ -585,14 +585,18 @@ public class RegistryInitializerService : IRegistryInitializerService
                                         var    external = false;
                                         string idEncoded;
                                         var    endpoint = sd.Endpoints?[0].ProtocolInformation?.Href;
-                                        var    s1       = endpoint?.Split("/shells/");
-                                        if (s1 != null && s1.Length == 2)
+
+                                        if (endpoint != null && !AasxCredentials.keep(cList, endpoint, false))
                                         {
-                                            var s2 = s1[1].Split("/submodels/");
-                                            if (s2.Length == 2)
+                                            var s1 = endpoint?.Split("/shells/");
+                                            if (s1 != null && s1.Length == 2)
                                             {
-                                                idEncoded = s2[1].Replace("/submodel/", "");
-                                                endpoint  = s1[0] + "/submodels/" + idEncoded;
+                                                var s2 = s1[1].Split("/submodels/");
+                                                if (s2.Length == 2)
+                                                {
+                                                    idEncoded = s2[1].Replace("/submodel/", "");
+                                                    endpoint = s1[0] + "/submodels/" + idEncoded;
+                                                }
                                             }
                                         }
 
@@ -607,7 +611,16 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                                             if (queryPara != "")
                                             {
-                                                queryPara = "?" + queryPara;
+                                                if (queryPara.StartsWith("bearerHead="))
+                                                {
+                                                    var bearer = queryPara.Replace("bearerHead=", "");
+                                                    queryPara = "";
+                                                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
+                                                }
+                                                else
+                                                {
+                                                    queryPara = "?" + queryPara;
+                                                }
                                             }
 
                                             if (userPW != "")

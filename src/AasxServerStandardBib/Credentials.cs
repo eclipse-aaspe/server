@@ -186,6 +186,11 @@ namespace AasxServer
                                 qp.Add("bearer=" + cList[i].bearer);
                                 result = true;
                                 break;
+                            case "bearerHead":
+                                bearerCheckAndInit(cList[i], aasxTaskService);
+                                qp.Add("bearerHead=" + cList[i].bearer);
+                                result = true;
+                                break;
                             case "querypara":
                                 if (cList[i].parameters.Count == 2)
                                 {
@@ -230,24 +235,24 @@ namespace AasxServer
 
         public static bool keep(List<AasxCredentialsEntry> cList, string urlPath, bool blazor = false)
         {
-            bool result = false;
+            var result = false;
 
-            for (int i = 0; i < cList.Count; i++)
+            for (var i = 0; i < cList.Count; i++)
             {
-                int lenPrefix = cList[i].urlPrefix.Length;
-                int lenUrl = urlPath.Length;
-                if (lenPrefix <= lenUrl)
+                switch (cList[i].type.ToLower())
                 {
-                    string u = urlPath.Substring(0, lenPrefix);
-                    if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
-                    {
-                        switch (cList[i].type)
+                    case "keeppath":
+                        var lenPrefix = cList[i].urlPrefix.Length;
+                        var lenUrl = urlPath.Length;
+                        if (lenPrefix <= lenUrl)
                         {
-                            case "keeppath":
+                            var u = urlPath.Substring(0, lenPrefix);
+                            if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
+                            {
                                 result = true;
-                                break;
+                            }
                         }
-                    }
+                        break;
                 }
             }
             return result;

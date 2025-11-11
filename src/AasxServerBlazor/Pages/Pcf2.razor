@@ -663,6 +663,10 @@
                     ;
                 }
             }
+            else
+            {
+                ;
+            }
         }
         else
         {
@@ -768,6 +772,10 @@
                                 }
                             }
 
+                            if (path.Contains("?bearerHead="))
+                            {
+                                path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
+                            }
                             return path;
                         }
                         catch
