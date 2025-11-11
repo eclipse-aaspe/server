@@ -1,10 +1,9 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AasxServerDB.Migrations.Postgres
+namespace AasxServerDB.Migrations.Sqlite
 {
     /// <inheritdoc />
     public partial class SingleValueSet : Migration
@@ -30,16 +29,15 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "ValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SMEId = table.Column<int>(type: "integer", nullable: false),
-                    SMId = table.Column<int>(type: "integer", nullable: false),
-                    Attribute = table.Column<string>(type: "text", nullable: false),
-                    SValue = table.Column<string>(type: "text", nullable: false),
-                    DValue = table.Column<double>(type: "double precision", nullable: false),
-                    TValue = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
-                    DTValue = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Annotation = table.Column<string>(type: "text", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SMId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SValue = table.Column<string>(type: "TEXT", nullable: false),
+                    DValue = table.Column<double>(type: "REAL", nullable: false),
+                    TValue = table.Column<TimeOnly>(type: "TEXT", nullable: false),
+                    DTValue = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -54,8 +52,7 @@ namespace AasxServerDB.Migrations.Postgres
                         name: "FK_ValueSets_SMSets_SMId",
                         column: x => x.SMId,
                         principalTable: "SMSets",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -107,11 +104,11 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "DValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SMEId = table.Column<int>(type: "integer", nullable: false),
-                    Annotation = table.Column<string>(type: "text", nullable: true),
-                    Value = table.Column<double>(type: "double precision", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true),
+                    Value = table.Column<double>(type: "REAL", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -128,11 +125,11 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "IValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SMEId = table.Column<int>(type: "integer", nullable: false),
-                    Annotation = table.Column<string>(type: "text", nullable: true),
-                    Value = table.Column<long>(type: "bigint", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true),
+                    Value = table.Column<long>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -149,11 +146,11 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "SValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SMEId = table.Column<int>(type: "integer", nullable: false),
-                    Annotation = table.Column<string>(type: "text", nullable: true),
-                    Value = table.Column<string>(type: "text", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true),
+                    Value = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
