@@ -20,7 +20,6 @@ namespace AasxServerDB.Entities
     // indexes
     [Index(nameof(Id))]
     [Index(nameof(SMEId))]
-    [Index(nameof(SMId))]
 
     public class ValueSet
     {
@@ -31,14 +30,12 @@ namespace AasxServerDB.Entities
 
         // sm
         [ForeignKey("SMSet")]
-        public int SMId { get; set; }
+        public int? SMId { get; set; }
         public virtual SMSet? SMSet { get; set; }
 
         // id
         public int Id { get; set; }
 
-        // object value // additional attributes
-        public string Attribute { get; set; }
         public string SValue { get; set; }
         public double DValue { get; set; }
         public TimeOnly TValue { get; set; }
