@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AasxServerDB.Migrations.Postgres
 {
     [DbContext(typeof(PostgreAasContext))]
-    [Migration("20251106143005_SingleValueSet")]
+    [Migration("20251111075800_SingleValueSet")]
     partial class SingleValueSet
     {
         /// <inheritdoc />
@@ -496,10 +496,6 @@ namespace AasxServerDB.Migrations.Postgres
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Attribute")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("DTValue")
                         .HasColumnType("timestamp with time zone");
 
@@ -509,7 +505,7 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<int>("SMEId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SMId")
+                    b.Property<int?>("SMId")
                         .HasColumnType("integer");
 
                     b.Property<string>("SValue")
@@ -620,9 +616,7 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasOne("AasxServerDB.Entities.SMSet", "SMSet")
                         .WithMany("ValueSets")
-                        .HasForeignKey("SMId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SMId");
 
                     b.Navigation("SMESet");
 
