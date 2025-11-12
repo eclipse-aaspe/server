@@ -588,13 +588,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AasxServerDB.Entities.SMSet", "SMSet")
-                        .WithMany("ValueSets")
-                        .HasForeignKey("SMId");
-
                     b.Navigation("SMESet");
-
-                    b.Navigation("SMSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
@@ -628,8 +622,6 @@ namespace AasxServerDB.Migrations.Sqlite
             modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>
                 {
                     b.Navigation("SMESets");
-
-                    b.Navigation("ValueSets");
                 });
 #pragma warning restore 612, 618
         }
