@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+namespace AasxServerBlazor.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,18 +33,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 
-namespace AasxServerBlazor.Configuration;
-
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AasxServerDB;
 using AdminShellNS;
-using Contracts;
 #if GRAPHQL
 using HotChocolate.AspNetCore;
 #endif
-using IO.Swagger.Lib.V3.GraphQL;
-using ScottPlot.Drawing.Colormaps;
 
 public static class ServerConfiguration
 {

@@ -556,7 +556,7 @@ namespace AasxServerDB
                 smeDB.OValueSets.Clear();
                 smeDB.ValueSets.Clear();
 
-                smeDB?.SMSet?.ValueSets.Clear(); 
+                //smeDB?.SMSet?.ValueSets.Clear(); 
                 //smeDB.IValueSets.Clear();
                 //smeDB.DValueSets.Clear();
             }
@@ -590,7 +590,7 @@ namespace AasxServerDB
                 if (smeDB.TValue.Equals("S"))
                 {
                     smeDB.ValueSets.Add(new ValueSet { SValue = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                    smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                    //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
                 }
                 //else if (smeDB.TValue.Equals("I"))
                 //    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
@@ -610,7 +610,7 @@ namespace AasxServerDB
                     if (!sValueMLP.Text.IsNullOrEmpty())
                     {
                         smeDB.ValueSets.Add(new ValueSet() { Annotation = sValueMLP.Language, SValue = sValueMLP.Text });
-                        smeDB?.SMSet?.ValueSets.Add(new ValueSet() { Annotation = sValueMLP.Language, SValue = sValueMLP.Text });
+                        //smeDB?.SMSet?.ValueSets.Add(new ValueSet() { Annotation = sValueMLP.Language, SValue = sValueMLP.Text });
 
                     }
             }
@@ -666,13 +666,13 @@ namespace AasxServerDB
                     if (hasValueMin)
                     {
                         smeDB.ValueSets.Add(new ValueSet { SValue = sValueMin, Annotation = "Min" });
-                        smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValueMin, Annotation = "Min" });
+                        //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValueMin, Annotation = "Min" });
 
                     }
                     if (hasValueMax)
                     {
                         smeDB.ValueSets.Add(new ValueSet { SValue = sValueMax, Annotation = "Max" });
-                        smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValueMax, Annotation = "Max" });
+                        //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValueMax, Annotation = "Max" });
                     }
                 }
                 //else if (tableDataType.Equals("I"))
@@ -697,7 +697,7 @@ namespace AasxServerDB
 
                 smeDB.TValue = "S";
                 smeDB.ValueSets.Add(new ValueSet { SValue = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
-                smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
+                //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
             }
             else if (sme is File file)
             {
@@ -706,7 +706,7 @@ namespace AasxServerDB
 
                 smeDB.TValue = "S";
                 smeDB.ValueSets.Add(new ValueSet { SValue = file.Value, Annotation = file.ContentType });
-                smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = file.Value, Annotation = file.ContentType });
+                //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = file.Value, Annotation = file.ContentType });
             }
             else if (sme is ReferenceElement refEle)
             {
@@ -730,7 +730,7 @@ namespace AasxServerDB
             {
                 smeDB.TValue = "S";
                 smeDB.ValueSets.Add(new ValueSet { SValue = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
-                smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
+                //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
 
                 if (ent.SpecificAssetIds != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = Serializer.SerializeList(ent.SpecificAssetIds) });
