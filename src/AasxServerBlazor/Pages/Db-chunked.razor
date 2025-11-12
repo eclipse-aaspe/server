@@ -5,9 +5,7 @@
 @page "/db-chunked/smref";
 @page "/db-chunked/sm";
 @page "/db-chunked/sme";
-@page "/db-chunked/svalue";
-@page "/db-chunked/ivalue";
-@page "/db-chunked/dvalue";
+@page "/db-chunked/value";
 @page "/db-chunked/ovalue";
 @using AasxServer
 @using AasxServerDB
@@ -116,7 +114,7 @@
 
 			// change parameters to input window
 			if (url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm")
-				|| url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ovalue"))
+				|| url.EndsWith("/sme") || url.EndsWith("/value") || url.EndsWith("/ovalue"))
 			{
 				<input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
 				@code {
@@ -188,7 +186,7 @@
 			using (AasContext db = new AasContext())
 			{
 				if (!(url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smref")
-					|| url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ovalue")))
+					|| url.EndsWith("/sme") || url.EndsWith("/value") || url.EndsWith("/ovalue")))
 				{
 					if (AasContext.IsPostgres)
 					{
@@ -279,13 +277,13 @@
 							</tr>
 							<tr>
 								<td>
-									<span>SValue#:</span>
+									<span>Value#:</span>
 								</td>
 								<td>
 									<span>@db.ValueSets.Select(x => x.Id).Count()</span>
 								</td>
 								<td>
-									<a href="@($"{url}/svalue")" target="_blank">svalue</a>
+									<a href="@($"{url}/value")" target="_blank">value</a>
 								</td>
 							</tr>
 							<tr>
@@ -1158,7 +1156,7 @@
 												{
 													if (SMEVirtualize.smeSet.TValue.Equals("S"))
 													{
-														<a href="@($"{shorturl}/svalue?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">svalue </a>
+														<a href="@($"{shorturl}/value?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">value </a>
 													}
 													else if (SMEVirtualize.smeSet.TValue.Equals("I"))
 													{
@@ -1186,7 +1184,7 @@
 					</div>
 				}
 
-				if (url.EndsWith("/svalue"))
+				if (url.EndsWith("/value"))
 				{
 					if (totalCount == 0)
 					{
@@ -1197,15 +1195,15 @@
 					{
 						update = false;
 						loadedItems = null;
-						if (SValueSetContainer != null)
+						if (ValueSetContainer != null)
 						{
-							SValueSetContainer.RefreshDataAsync();
+							ValueSetContainer.RefreshDataAsync();
 							this.StateHasChanged();
 						}
 					}
 
 					<span>
-						&nbsp&nbsp@($"SValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid} details={details}")
+						&nbsp&nbsp@($"Value#: {totalCount} size={size} offset={offset} search={search} smeid={smeid} details={details}")
 					</span>
 					<br />
 					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
@@ -1213,7 +1211,8 @@
 							<thead>
 								<tr>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">Par#</th>
-									<th style="font-size:small;word-break: break-all;border-color:blue;">Value</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">SValue</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">DValue</th>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">Annotation</th>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">Links</th>
 								</tr>						</thead>
@@ -1226,7 +1225,7 @@
 										cell = "cell-details";
 									}
 								}
-								<Virtualize Context="ValueSet" @ref="SValueSetContainer" ItemsProvider="LoadSValueSetItems" >
+								<Virtualize Context="ValueSet" @ref="ValueSetContainer" ItemsProvider="LoadValueSetItems" >
 									<tr>
 										<td style="word-break:keep-all; break-all;border-color:blue;">@ValueSet.SMEId</td>
 										<td style="word-break:keep-all; break-all;border-color:blue;" title="@ValueSet?.SValue">
@@ -1244,6 +1243,19 @@
 														text = text.Substring(0, MAX_LENGTH_VCELL_TEXT) + " ..";
 
 													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
+										<td style="word-break:keep-all; break-all;border-color:blue;" title="@ValueSet?.DValue">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@ValueSet?.DValue</span>
+												}
+												else
+												{
+													var text = @ValueSet?.DValue;
 													<span>@text</span>
 												}
 											</div>
@@ -1615,7 +1627,7 @@
 
 	private Virtualize<SMRefSetVirtualize> SMRefSetContainer { get; set; }
 
-	private async ValueTask<ItemsProviderResult<ValueSet>> LoadSValueSetItems(ItemsProviderRequest request)
+	private async ValueTask<ItemsProviderResult<ValueSet>> LoadValueSetItems(ItemsProviderRequest request)
 	{
 		var watch = System.Diagnostics.Stopwatch.StartNew();
 		watch.Start();
@@ -1646,12 +1658,12 @@
 		watch.Stop();
 		elapsedTime = watch.ElapsedMilliseconds;
 
-		Console.WriteLine($"LoadItems SValue: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+		Console.WriteLine($"LoadItems Value: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
 		return new ItemsProviderResult<ValueSet>(result, size);
 	}
 
-	private Virtualize<ValueSet> SValueSetContainer { get; set; }
+	private Virtualize<ValueSet> ValueSetContainer { get; set; }
 
 	private async ValueTask<ItemsProviderResult<OValueSet>> LoadOValueSetItems(ItemsProviderRequest request)
 	{
