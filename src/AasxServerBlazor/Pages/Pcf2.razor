@@ -349,7 +349,11 @@
                                             bool   moreDotsToPrint = false;
                                             string iframePath      = getIframePath();
                                             link = getAasLink(@node.aas);
-                                            // JUIJUI
+
+                                            if (AasxCredentials.keep(cs.credentials, link, true))
+                                            {
+                                                link += "&keep=true";
+                                            }
 
                                             // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
                                             var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
@@ -530,11 +534,13 @@
                                                                     smlink += "?" + queryPara;
                                                                 }
 
+                                                                /*
                                                                 if (userPW != "")
                                                                 {
                                                                     smlink = smlink.Replace("https://", "https://" + userPW + "@");
                                                                     smlink = smlink.Replace("http://", "http://" + userPW + "@");
                                                                 }
+                                                                */
                                                             }
 
                                                             if (color == "red")
@@ -765,14 +771,20 @@
                                     path += "?" + queryPara;
                                 }
 
+                                /*
                                 if (userPW != "")
                                 {
                                     path = path.Replace("https://", "https://" + userPW + "@");
                                     path = path.Replace("http://", "http://" + userPW + "@");
                                 }
+                                */
                             }
 
                             if (path.Contains("?bearerHead="))
+                            {
+                                path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
+                            }
+                            else if (path.Contains("?basicAuth="))
                             {
                                 path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
                             }

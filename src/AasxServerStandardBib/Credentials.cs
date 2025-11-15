@@ -171,6 +171,7 @@ namespace AasxServer
                                     switch (cList[i].type)
                                     {
                                         case "basicauth": // for http header
+                                            qp.Add("basicAuth=" + basicAuth64);
                                             userPW = basicAuth64;
                                             break;
                                         case "userpw": // as query parameter _up
@@ -239,20 +240,19 @@ namespace AasxServer
 
             for (var i = 0; i < cList.Count; i++)
             {
-                switch (cList[i].type.ToLower())
+                if (cList[i].type.ToLower() == "keeppath")
                 {
-                    case "keeppath":
-                        var lenPrefix = cList[i].urlPrefix.Length;
-                        var lenUrl = urlPath.Length;
-                        if (lenPrefix <= lenUrl)
+                    var lenPrefix = cList[i].urlPrefix.Length;
+                    var lenUrl = urlPath.Length;
+                    if (lenPrefix <= lenUrl)
+                    {
+                        var u = urlPath.Substring(0, lenPrefix);
+                        if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
                         {
-                            var u = urlPath.Substring(0, lenPrefix);
-                            if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
-                            {
-                                result = true;
-                            }
+                            result = true;
+                            break;
                         }
-                        break;
+                    }
                 }
             }
             return result;
@@ -272,10 +272,20 @@ namespace AasxServer
 
             string authServerEndPoint = c.parameters[0];
 
-            var exchange = "";
+            var exchange1 = "";
             if (c.parameters.Count > 3)
             {
-                exchange = c.parameters[3];
+                exchange1 = c.parameters[3];
+            }
+            var target = "";
+            if (c.parameters.Count > 4)
+            {
+                target = c.parameters[4];
+            }
+            var exchange2 = "";
+            if (c.parameters.Count > 5)
+            {
+                exchange2 = c.parameters[5];
             }
 
             if (!authServerEndPoint.EndsWith("/token"))
@@ -521,20 +531,60 @@ namespace AasxServer
                 }
             }
 
-            if (exchange != "" && c.bearer != null && c.bearer != "")
+            if (exchange1 != "" && c.bearer != null && c.bearer != "")
             {
                 var handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                 var client = new HttpClient(handler);
 
                 JsonDocument doc;
-                var request = new HttpRequestMessage(HttpMethod.Post, exchange)
-                {
-                    Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                var parameters = new Dictionary<string, string>
                     {
                         { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
                         { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
                         { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
                         { "subject_token", c.bearer }
+                    };
+                if (target != "")
+                {
+                    parameters.Add("audience", target);
+
+                }
+                var request = new HttpRequestMessage(HttpMethod.Post, exchange1)
+                {
+                    Content = new FormUrlEncodedContent(parameters)
+                };
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+                var response = client.SendAsync(request);
+                var content = response.GetAwaiter().GetResult().Content.ContentToString();
+
+                doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+                {
+                    c.bearer = tokenElement.GetString();
+                    Console.WriteLine("token exchange " + c.bearer);
+                }
+            }
+
+            if (exchange2 != "" && c.bearer != null && c.bearer != "")
+            {
+                var handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                var client = new HttpClient(handler);
+
+                var service = "service-user-basyx";
+                if (target == "assetfox")
+                {
+                    service = "sts-client";
+                }
+                JsonDocument doc;
+                var request = new HttpRequestMessage(HttpMethod.Post, exchange2)
+                {
+                    Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        { "grant_type", "client_credentials" },
+                        { "client_id", service },
+                        { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+                        { "client_assertion", c.bearer }
                     })
                 };
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");

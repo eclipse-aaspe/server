@@ -34,8 +34,9 @@ var scopes = new[] { "openid", "profile", "email" }; // für ID Token im JWT-For
 List<string> configUrlList = [
     "https://www.admin-shell-io.com/50001/.well-known/openid-configuration",
     "https://auth.aas-voyager.com/.well-known/openid-configuration",
-    "https://idp.admin-shell-io.com/api/.well-known/openid-configuration/",
-    "https://credential.aas-voyager.com/token"
+    // "https://idp.admin-shell-io.com/api/.well-known/openid-configuration/",
+    "https://credential.aas-voyager.com/token",
+    "https://credential3.aas-voyager.com/token"
     ];
 for (var i = 0; i < configUrlList.Count; i++)
 {
@@ -52,10 +53,10 @@ var configUrl = configUrlList[Convert.ToInt32(input)];
 Console.WriteLine("Enter character: (C)ertificateStore or (F)ile or (E)ntraID or (I)nteractive Entra or (S)ecret + optional Token(X)Change");
 input = Console.ReadLine().ToLower();
 
-var exchange = false;
-if (input.EndsWith("x"))
+var exchange = "0";
+if (input.EndsWith("x") || input.EndsWith("1") || input.EndsWith("2"))
 {
-    exchange = true;
+    exchange = input.Substring(1, 1);
     input = input.Substring(0, 1);
 }
 
@@ -316,7 +317,7 @@ else
     }
 }
 
-if (exchange)
+if (exchange != "0")
 {
     Console.WriteLine("Token Exchange");
     configUrlList = [
@@ -334,15 +335,37 @@ if (exchange)
     }
     configUrl = configUrlList[Convert.ToInt32(input)];
 
-    var request = new HttpRequestMessage(HttpMethod.Post, $"{configUrl}/token")
+    configUrlList = [
+        "",
+        "basyx",
+        "assetfox"
+    ];
+    for (var i = 0; i < configUrlList.Count; i++)
     {
-        Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        Console.WriteLine(i + ": " + configUrlList[i]);
+    }
+    input = "0";
+    if (configUrlList.Count > 1)
+    {
+        Console.WriteLine("Enter index: ");
+        input = Console.ReadLine();
+    }
+    var target = configUrlList[Convert.ToInt32(input)];
+
+    var d = new Dictionary<string, string>
         {
             { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
             { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
             { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
-            { "subject_token", accessToken }
-        })
+            { "subject_token", accessToken },
+         };
+    if (target != "")
+    {
+        d.Add("audience", target);
+    }
+    var request = new HttpRequestMessage(HttpMethod.Post, $"{configUrl}/token")
+    {
+        Content = new FormUrlEncodedContent(d)
     };
     request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
@@ -394,5 +417,50 @@ if (exchange)
         {
             Console.WriteLine($"Validation failed: {ex.Message}");
         }
+    }
+}
+
+if (exchange == "2")
+{
+    handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+    client = new HttpClient(handler);
+
+    Console.WriteLine("Token Exchange");
+    configUrlList = [
+        "https://demo2.digital-twin.host/identity-management/realms/D4E/protocol/openid-connect"
+    ];
+    for (var i = 0; i < configUrlList.Count; i++)
+    {
+        Console.WriteLine(i + ": " + configUrlList[i]);
+    }
+    input = "0";
+    if (configUrlList.Count > 1)
+    {
+        Console.WriteLine("Enter index: ");
+        input = Console.ReadLine();
+    }
+    configUrl = configUrlList[Convert.ToInt32(input)];
+
+    var request = new HttpRequestMessage(HttpMethod.Post, $"{configUrl}/token")
+    {
+        Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "grant_type", "client_credentials" },
+            { "client_id", "service-user-basyx" },
+            { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+            { "client_assertion", accessToken }
+        })
+    };
+    request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+    var response = await client.SendAsync(request);
+    var content = await response.Content.ReadAsStringAsync();
+
+    accessToken = "";
+    doc = JsonDocument.Parse(content);
+    if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+    {
+        accessToken = tokenElement.GetString();
+        Console.WriteLine("Access Token: " + accessToken);
     }
 }

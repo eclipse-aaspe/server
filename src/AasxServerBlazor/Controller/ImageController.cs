@@ -64,6 +64,13 @@ namespace AasxServerBlazor.Controller
                 bearer = split[1];
             }
 
+            if (id.Contains("?basicAuth="))
+            {
+                split = id.Split("?basicAuth=");
+                id = split[0];
+                basicAuth = split[1];
+            }
+
             var handler = new HttpClientHandler
             {
                 DefaultProxyCredentials = CredentialCache.DefaultCredentials
