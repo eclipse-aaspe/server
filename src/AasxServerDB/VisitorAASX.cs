@@ -594,8 +594,8 @@ namespace AasxServerDB
                 }
                 //else if (smeDB.TValue.Equals("I"))
                 //    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                //else if (smeDB.TValue.Equals("D"))
-                //    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                else if (smeDB.TValue.Equals("D"))
+                    smeDB.ValueSets.Add(new ValueSet { DValue = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
@@ -682,13 +682,13 @@ namespace AasxServerDB
                 //    if (hasValueMax)
                 //        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
                 //}
-                //else if (tableDataType.Equals("D"))
-                //{
-                //    if (hasValueMin)
-                //        smeDB.DValueSets.Add(new DValueSet { Value = dValueMin, Annotation = "Min" });
-                //    if (hasValueMax)
-                //        smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
-                //}
+                else if (tableDataType.Equals("D"))
+                {
+                    if (hasValueMin)
+                        smeDB.ValueSets.Add(new ValueSet{ DValue = dValueMin, Annotation = "Min" });
+                    if (hasValueMax)
+                        smeDB.ValueSets.Add(new ValueSet { DValue = dValueMax, Annotation = "Max" });
+                }
             }
             else if (sme is Blob blob)
             {

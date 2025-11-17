@@ -864,7 +864,24 @@
 												}
 											</div>
 										</td>
-										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.EmbeddedDataSpecifications</td>
+										<td style="width:3%;font-size:small;border-color:blue;" title="@SMVirtualize?.smSet?.EmbeddedDataSpecifications">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@SMVirtualize?.smSet?.EmbeddedDataSpecifications</span>
+												}
+												else
+												{
+													var text = SMVirtualize?.smSet?.EmbeddedDataSpecifications;
+
+													if (text?.Length > MAX_LENGTH_TEXT)
+													{
+														text = text.Substring(0, MAX_LENGTH_TEXT) + " ..";
+													}
+													<span>@text</span>
+												}
+											</div>
+										</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Version</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Revision</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Creator</td>
@@ -1158,14 +1175,14 @@
 													{
 														<a href="@($"{shorturl}/value?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">value </a>
 													}
-													else if (SMEVirtualize.smeSet.TValue.Equals("I"))
-													{
-														<a href="@($"{shorturl}/ivalue?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">ivalue </a>
-													}
-													else if (SMEVirtualize.smeSet.TValue.Equals("D"))
-													{
-														<a href="@($"{shorturl}/dvalue?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">dvalue </a>
-													}
+													// else if (SMEVirtualize.smeSet.TValue.Equals("I"))
+													// {
+													// 	<a href="@($"{shorturl}/ivalue?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">ivalue </a>
+													// }
+													// else if (SMEVirtualize.smeSet.TValue.Equals("D"))
+													// {
+													// 	<a href="@($"{shorturl}/dvalue?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">dvalue </a>
+													// }
 												}
 												if (SMEVirtualize.oValueList?.Count > 0)
 												{

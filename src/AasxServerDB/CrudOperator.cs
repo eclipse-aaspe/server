@@ -1495,7 +1495,7 @@ namespace AasxServerDB
             };
         }
 
-        public static List<string[]>? GetValue(SMESet smeSet, List<ValueSet> sValueList)
+        public static List<string[]>? GetValue(SMESet smeSet, List<ValueSet> valueList)
         {
             var TValue = smeSet.TValue;
             var SMEType = smeSet.SMEType;
@@ -1508,17 +1508,17 @@ namespace AasxServerDB
             switch (TValue)
             {
                 case "S":
-                    list = sValueList
+                    list = valueList
                         .ConvertAll<string[]>(s => [s.SValue ?? string.Empty, s.Annotation ?? string.Empty]);
                     break;
                 //case "I":
                 //    list = iValueList
                 //        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
                 //    break;
-                //case "D":
-                //    list = dValueList
-                //        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
-                //    break;
+                case "D":
+                    list = valueList
+                        .ConvertAll<string[]>(s => [s.DValue == null ? string.Empty : s.DValue.ToString(), s.Annotation ?? string.Empty]);
+                    break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
                 return list;
@@ -1545,10 +1545,10 @@ namespace AasxServerDB
                 //    list = tree.Where(s => s.iValueSet?.SMEId == Id).ToList()
                 //        .ConvertAll<string[]>(s => [s.iValueSet.Value == null ? string.Empty : s.iValueSet.Value.ToString(), s.iValueSet.Annotation ?? string.Empty]);
                 //    break;
-                //case "D":
-                //    list = tree.Where(s => s.dValueSet?.SMEId == Id).ToList()
-                //        .ConvertAll<string[]>(s => [s.dValueSet.Value == null ? string.Empty : s.dValueSet.Value.ToString(), s.dValueSet.Annotation ?? string.Empty]);
-                //    break;
+                case "D":
+                    list = tree.Where(s => s.valueSet?.SMEId == Id).ToList()
+                        .ConvertAll<string[]>(s => [s.valueSet.DValue == null ? string.Empty : s.valueSet.DValue.ToString(), s.valueSet.Annotation ?? string.Empty]);
+                    break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
                 return list;
