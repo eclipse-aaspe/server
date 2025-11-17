@@ -65,8 +65,6 @@ namespace AasxServerDB.Entities
         // value
         [Column(TypeName = "char(1)")]
         public string? TValue { get; set; }
-        //public virtual ICollection<ValueSet> IValueSets { get; } = new List<ValueSet>();
-        //public virtual ICollection<ValueSet> DValueSets { get; } = new List<ValueSet>();
         public virtual ICollection<ValueSet> ValueSets { get; } = new List<ValueSet>();
         public List<string[]> GetValue()
         {
@@ -86,10 +84,10 @@ namespace AasxServerDB.Entities
                     //    list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
                     //        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
                     //    break;
-                    //case "D":
-                    //    list = db.DValueSets.Where(s => s.SMEId == Id).ToList()
-                    //        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
-                    //    break;
+                    case "D":
+                        list = db.ValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.DValue == null ? string.Empty : valueDB.DValue.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
                 }
 
 

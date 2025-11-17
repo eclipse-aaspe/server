@@ -470,10 +470,10 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("DTValue")
+                    b.Property<DateTime?>("DTValue")
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("DValue")
+                    b.Property<double?>("DValue")
                         .HasColumnType("REAL");
 
                     b.Property<int>("SMEId")
@@ -483,10 +483,9 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SValue")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<TimeOnly>("TValue")
+                    b.Property<TimeOnly?>("TValue")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
