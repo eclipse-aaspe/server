@@ -12,10 +12,12 @@
 ********************************************************************************/
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mime;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Mvc;
@@ -97,6 +99,21 @@ namespace AasxServerBlazor.Controller
             }
 
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "image/jpeg";
+
+            if (contentType == "application/octet-stream")
+            {
+                var fileName = response.Content.Headers.ContentDisposition.FileName.Replace("\"", "");
+                var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+                contentType = extension switch
+                {
+                    ".png" => "image/png",
+                    ".jpg" or ".jpeg" => "image/jpeg",
+                    ".bmp" => "image/bmp",
+                    ".svg" => "image/svg+xml",
+                    _ => "application/octet-stream"
+                };
+            }
             var stream = await response.Content.ReadAsStreamAsync();
 
             return new FileStreamResult(stream, contentType);

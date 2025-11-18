@@ -726,80 +726,93 @@
 
         if (f.Value != "")
         {
-            string[] split = f.Value.Split(new Char[] {'/'});
-            if (split.Length == 1 || split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
+            var createPath = false;
+
+            if (f.Value.ToLower().StartsWith("http"))
             {
-                split = f.Value.Split(new Char[] {'.'});
-                switch (split.Last().ToLower())
-                {
-                    case "jpg":
-                    case "bmp":
-                    case "png":
-                    case "svg":
-                        try
-                        {
-                            // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
-                            var    sme  = f;
-                            string path = sme.IdShort;
-                            var    p    = sme.Parent;
-                            while (p != null && !(p is Submodel))
-                            {
-                                path = (p as ISubmodelElement).IdShort + "." + path;
-                                p    = (p as ISubmodelElement).Parent;
-                            }
-
-                            if (p == null)
-                                return path;
-
-                            var sm = p as Submodel;
-                            // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
-                            string endpoint = getSmLink(sm, cs.credentials);
-                            path =  endpoint + "/submodel-elements/" + path;
-                            path += "/attachment";
-
-                            string queryPara     = "";
-                            string userPW        = "";
-                            string urlEdcWrapper = "";
-                            string replace       = "";
-                            if (AasxCredentials.get(AasxTaskService, credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
-                            {
-                                if (replace != "")
-                                    path = replace;
-                                queryPara = addBearer(queryPara, sm);
-                                if (queryPara != "")
-                                {
-                                    path += "?" + queryPara;
-                                }
-
-                                /*
-                                if (userPW != "")
-                                {
-                                    path = path.Replace("https://", "https://" + userPW + "@");
-                                    path = path.Replace("http://", "http://" + userPW + "@");
-                                }
-                                */
-                            }
-
-                            if (path.Contains("?bearerHead="))
-                            {
-                                path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
-                            }
-                            else if (path.Contains("?basicAuth="))
-                            {
-                                path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
-                            }
-                            return path;
-                        }
-                        catch
-                        {
-                        }
-
-                        break;
-                }
+                createPath = true;
             }
             else
             {
-                ;
+                string[] split = f.Value.Split(new Char[] {'/'});
+                if (split.Length == 1 || split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
+                {
+                    split = f.Value.Split(new Char[] {'.'});
+                    switch (split.Last().ToLower())
+                    {
+                        case "jpg":
+                        case "bmp":
+                        case "png":
+                        case "svg":
+                            createPath = true;
+                            break;
+                    }
+                }
+                else
+                {
+                    ;
+                }
+            }
+
+            if (createPath)
+            {
+                try
+                {
+                    // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
+                    var    sme  = f;
+                    string path = sme.IdShort;
+                    var    p    = sme.Parent;
+                    while (p != null && !(p is Submodel))
+                    {
+                        path = (p as ISubmodelElement).IdShort + "." + path;
+                        p    = (p as ISubmodelElement).Parent;
+                    }
+
+                    if (p == null)
+                        return path;
+
+                    var sm = p as Submodel;
+                    // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
+                    string endpoint = getSmLink(sm, cs.credentials);
+                    path =  endpoint + "/submodel-elements/" + path;
+                    path += "/attachment";
+
+                    string queryPara     = "";
+                    string userPW        = "";
+                    string urlEdcWrapper = "";
+                    string replace       = "";
+                    if (AasxCredentials.get(AasxTaskService, credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                    {
+                        if (replace != "")
+                            path = replace;
+                        queryPara = addBearer(queryPara, sm);
+                        if (queryPara != "")
+                        {
+                            path += "?" + queryPara;
+                        }
+
+                        /*
+                        if (userPW != "")
+                        {
+                            path = path.Replace("https://", "https://" + userPW + "@");
+                            path = path.Replace("http://", "http://" + userPW + "@");
+                        }
+                        */
+                    }
+
+                    if (path.Contains("?bearerHead="))
+                    {
+                        path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
+                    }
+                    else if (path.Contains("?basicAuth="))
+                    {
+                        path = "/blazor/image/"+Base64UrlEncoder.Encode("$$"+path);
+                    }
+                    return path;
+                }
+                catch
+                {
+                }
             }
         }
 

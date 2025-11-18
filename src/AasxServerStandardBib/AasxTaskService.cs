@@ -2840,10 +2840,20 @@ namespace AasxServer
                                                 {
                                                     if (sme is AasCore.Aas3_0.File f)
                                                     {
-                                                        if (f.IdShort == "ManufacturerLogo")
+                                                        if (f.IdShort == "ManufacturerLogo" || f.IdShort == "CompanyLogo")
                                                             cfp.manufacturerLogo = f;
                                                         if (f.IdShort == "ProductImage")
                                                             cfp.productImage = f;
+                                                    }
+                                                    if (sme.IdShort == "ProductImages" && sme is SubmodelElementList l)
+                                                    {
+                                                        if (l.Value != null && l.Value[0] is SubmodelElementCollection cc)
+                                                        {
+                                                            if (cc.Value?[0].IdShort == "ImageFile" && cc.Value[0] is AasCore.Aas3_0.File ff)
+                                                            {
+                                                                cfp.productImage = ff;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
