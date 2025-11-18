@@ -68,6 +68,7 @@
         <Content Remove="schema.json" />
         <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
         <Content Remove="wwwroot\Cable2.jpg" />
+        <Content Remove="wwwroot\css\input.css" />
         <Content Remove="wwwroot\db-schema.jpg" />
         <Content Remove="wwwroot\ex.png" />
         <Content Remove="wwwroot\Ex_IECEx.jpg" />

@@ -12,10 +12,11 @@
 @using System.Drawing;
 @using System.Globalization;
 @using static AasxServer.AasxTask;
-@inject NavigationManager           NavMan
+@inject NavigationManager NavMan
 @implements IDisposable
 
 @{
+    // npm run build:css
     DateTime timeStamp = DateTime.UtcNow;
     // AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
     // AasxTask.cfpNode node = AasxTask.root;
