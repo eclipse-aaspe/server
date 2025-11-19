@@ -467,13 +467,21 @@ public class QueryGrammarJSON : Grammar
                 case "$le":
                     if (eList != null)
                     {
-                        if (eList[0].ExpressionType == "$numVal" || eList[1].ExpressionType == "$numVal")
+                        if (eList[0].ExpressionType == "$strVal" || eList[1].ExpressionType == "$strVal")
+                        {
+                            smeValue = "svalue";
+                        }
+                        else if (eList[0].ExpressionType == "$numVal" || eList[1].ExpressionType == "$numVal")
                         {
                             smeValue = "mvalue";
                         }
-                        else if (eList[0].ExpressionType == "$strVal" || eList[1].ExpressionType == "$strVal")
+                        else if (eList[0].ExpressionType == "$dateTimeVal" || eList[1].ExpressionType == "$dateTimeVal")
                         {
-                            smeValue = "svalue";
+                            smeValue = "dtvalue";
+                        }
+                        else if (eList[0].ExpressionType == "$hexVal" || eList[1].ExpressionType == "$hexVal")
+                        {
+                            smeValue = "mvalue";
                         }
                         string left = createExpression(mode, eList[0], smeValue: smeValue);
                         string right = createExpression(mode, eList[1], smeValue: smeValue);
@@ -591,6 +599,30 @@ public class QueryGrammarJSON : Grammar
                         return obj.ToString();
                     }
                     break;
+                case "$dateTimeVal":
+                    if (mode == "svalue")
+                    {
+                        return "$SKIP";
+                    }
+                    if (obj is string)
+                    {
+                        var v = obj as string;
+                        return "\"" + v + "\"";
+                    }
+                    break;
+                case "$hexVal":
+                    if (mode == "svalue")
+                    {
+                        return "$SKIP";
+                    }
+                    if (obj is string)
+                    {
+                        var v = obj as string;
+                        v = v.Replace("16#", "");
+                        var value = Convert.ToInt64(v, 16);
+                        return value.ToString();
+                    }
+                    break;
                 default:
                     break;
             }
@@ -620,6 +652,13 @@ public class QueryGrammarJSON : Grammar
                     if (value == "sme.value")
                     {
                         value = "mvalue";
+                    }
+                }
+                if (smeValue == "dtvalue")
+                {
+                    if (value == "sme.value")
+                    {
+                        value = "dtvalue";
                     }
                 }
                 if (mode == "all" && value.StartsWith("aas."))
@@ -663,6 +702,16 @@ public class QueryGrammarJSON : Grammar
                 if (value == "sme.value")
                 {
                     value = "mvalue";
+                }
+                else
+                {
+                    value = "$SKIP";
+                }
+                break;
+            case "value":
+                if (value == "sme.value")
+                {
+                    value = smeValue;
                 }
                 else
                 {

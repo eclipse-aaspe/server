@@ -2781,6 +2781,8 @@ FilteredSMAndSME AS (
                                             conditions[i].Add("svalue", le._expression);
                                             QueryGrammarJSON.createExpression("mvalue", le);
                                             conditions[i].Add("mvalue", le._expression);
+                                            QueryGrammarJSON.createExpression("value", le);
+                                            conditions[i].Add("value", le._expression);
                                         }
                                     }
                                 }
