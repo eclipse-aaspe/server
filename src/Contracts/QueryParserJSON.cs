@@ -815,7 +815,7 @@ public class QueryGrammarJSON : Grammar
             }
             if (!isValid)
             {
-                Console.WriteLine("âŒ JSON not valid:");
+                Console.WriteLine("JSON not valid:");
                 /*
                 foreach (var error in validationErrors)
                 {
@@ -828,7 +828,7 @@ public class QueryGrammarJSON : Grammar
         }
         else
         {
-            Console.WriteLine("âŒ jsonschema-access.txt not found.");
+            Console.WriteLine("jsonschema-access.txt not found.");
             return;
         }
 
@@ -880,6 +880,7 @@ public class QueryGrammarJSON : Grammar
                             le._expression = le._expression.Replace("sme.", "");
                         }
                         conditions[i].Add("sme.", le._expression);
+                        /*
                         createExpression("svalue", le);
                         if (le._expression == "$SKIP")
                         {
@@ -894,6 +895,13 @@ public class QueryGrammarJSON : Grammar
                         }
                         le._expression = le._expression.Replace("mvalue", "Value");
                         conditions[i].Add("mvalue", le._expression);
+                        */
+                        createExpression("value", le);
+                        if (le._expression == "$SKIP")
+                        {
+                            le._expression = "";
+                        }
+                        conditions[i].Add("value", le._expression);
                     }
                 }
             }
