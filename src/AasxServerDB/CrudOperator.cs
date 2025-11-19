@@ -1511,13 +1511,13 @@ namespace AasxServerDB
                     list = valueList
                         .ConvertAll<string[]>(s => [s.SValue ?? string.Empty, s.Annotation ?? string.Empty]);
                     break;
-                //case "I":
-                //    list = iValueList
-                //        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
-                //    break;
-                case "D":
+                case "N":
                     list = valueList
-                        .ConvertAll<string[]>(s => [s.DValue == null ? string.Empty : s.DValue.ToString(), s.Annotation ?? string.Empty]);
+                        .ConvertAll<string[]>(s => [s.NValue == null ? string.Empty : ConvertNvalueToString(s.NValue, s.Annotation), s.Annotation ?? string.Empty]);
+                    break;
+                case "DT":
+                    list = valueList
+                        .ConvertAll<string[]>(s => [s.DTValue == null ? string.Empty : TimeStamp.TimeStamp.DateTimeToString(s.DTValue.Value), s.Annotation ?? string.Empty]);
                     break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
@@ -1525,6 +1525,17 @@ namespace AasxServerDB
 
             return [[string.Empty, string.Empty]];
         }
+
+        private static String ConvertNvalueToString(double? nValue, string annotation)
+        {
+            if (annotation == "xs:boolean")
+            {
+                return nValue == 0 ? "false" : "true";
+            }
+
+            return nValue.ToString();
+        }
+
         public static List<string[]>? GetValue(SMESet smeSet, List<SmeMerged> tree)
         {
             var TValue = smeSet.TValue;
@@ -1547,7 +1558,7 @@ namespace AasxServerDB
                 //    break;
                 case "D":
                     list = tree.Where(s => s.valueSet?.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(s => [s.valueSet.DValue == null ? string.Empty : s.valueSet.DValue.ToString(), s.valueSet.Annotation ?? string.Empty]);
+                        .ConvertAll<string[]>(s => [s.valueSet.NValue == null ? string.Empty : s.valueSet.NValue.ToString(), s.valueSet.Annotation ?? string.Empty]);
                     break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))

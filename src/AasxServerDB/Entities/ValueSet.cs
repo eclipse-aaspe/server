@@ -38,8 +38,7 @@ namespace AasxServerDB.Entities
         public int Id { get; set; }
 
         public string? SValue { get; set; }
-        public double? DValue { get; set; }
-        public TimeOnly? TValue { get; set; }
+        public double? NValue { get; set; }
         public DateTime? DTValue { get; set; }
 
         public string Annotation { get; set; }

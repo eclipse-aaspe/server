@@ -121,16 +121,16 @@ public class FileService
         if (!Directory.Exists(thumbnailFolderPath))
             Directory.CreateDirectory(thumbnailFolderPath);
 
-        var certFilesFolderPath = Path.Combine(filesPath, JwsFolderName);
-        if (!Directory.Exists(certFilesFolderPath))
-            Directory.CreateDirectory(certFilesFolderPath);
+        var jwsFilesFolderPath = Path.Combine(filesPath, JwsFolderName);
+        if (!Directory.Exists(jwsFilesFolderPath))
+            Directory.CreateDirectory(jwsFilesFolderPath);
 
-        foreach (JwsFileType certFileType in Enum.GetValues(typeof(JwsFileType)))
+        foreach (JwsFileType jwsFileType in Enum.GetValues(typeof(JwsFileType)))
         {
-            var certFilesTypeFolderPath = Path.Combine(certFilesFolderPath, certFileType.ToString());
+            var jwsFilesTypeFolderPath = Path.Combine(jwsFilesFolderPath, jwsFileType.ToString());
 
-            if (!Directory.Exists(certFilesTypeFolderPath))
-                Directory.CreateDirectory(certFilesTypeFolderPath);
+            if (!Directory.Exists(jwsFilesTypeFolderPath))
+                Directory.CreateDirectory(jwsFilesTypeFolderPath);
         }
 
         var path = Path.Combine(filesPath, "_unpacked" + ".zip");
