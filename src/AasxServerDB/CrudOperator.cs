@@ -524,10 +524,11 @@ namespace AasxServerDB
             if (querySME == null)
                 return null;
 
-            IQueryable<ValueSet> sValueSets = db.ValueSets;
-            if (securityCondition != null && securityCondition["svalue"] != "")
+            IQueryable<ValueSet> valueSets = db.ValueSets;
+            if (securityCondition != null && securityCondition["value"] != "")
             {
-                sValueSets = sValueSets.Where(securityCondition["svalue"]);
+                var c = securityCondition["value"].Replace("svalue", "SValue").Replace("mvalue", "DValue").Replace("dtvalue", "DTValue");
+                valueSets = valueSets.Where(c);
             }
 
             //IQueryable<IValueSet> iValueSets = db.IValueSets;
@@ -539,7 +540,7 @@ namespace AasxServerDB
             //}
 
             var joinSValue = querySME.Join(
-                sValueSets,
+                valueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
                 (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, valueSet = sv, oValueSet = null })
