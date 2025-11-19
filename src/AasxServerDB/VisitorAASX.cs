@@ -25,6 +25,7 @@ namespace AasxServerDB
     using HotChocolate.Language;
     using static AasxServerDB.CrudOperator;
     using Microsoft.EntityFrameworkCore;
+    using System.Globalization;
 
     public class VisitorAASX : VisitorThrough
     {
@@ -477,41 +478,41 @@ namespace AasxServerDB
         public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
             { DataTypeDefXsd.AnyUri, "S" },
             { DataTypeDefXsd.Base64Binary, "S" },
-            { DataTypeDefXsd.Boolean, "S" },
-            { DataTypeDefXsd.Byte, "I" },
-            { DataTypeDefXsd.Date, "S" },
-            { DataTypeDefXsd.DateTime, "S" },
+            { DataTypeDefXsd.Boolean, "N" },
+            { DataTypeDefXsd.Byte, "N" },
+            { DataTypeDefXsd.Date, "DT" },
+            { DataTypeDefXsd.DateTime, "DT" },
             { DataTypeDefXsd.Decimal, "S" },
-            { DataTypeDefXsd.Double, "D" },
+            { DataTypeDefXsd.Double, "N" },
             { DataTypeDefXsd.Duration, "S" },
-            { DataTypeDefXsd.Float, "D" },
+            { DataTypeDefXsd.Float, "N" },
             { DataTypeDefXsd.GDay, "S" },
             { DataTypeDefXsd.GMonth, "S" },
             { DataTypeDefXsd.GMonthDay, "S" },
             { DataTypeDefXsd.GYear, "S" },
             { DataTypeDefXsd.GYearMonth, "S" },
-            { DataTypeDefXsd.HexBinary, "S" },
-            { DataTypeDefXsd.Int, "I" },
-            { DataTypeDefXsd.Integer, "I" },
-            { DataTypeDefXsd.Long, "I" },
-            { DataTypeDefXsd.NegativeInteger, "I" },
-            { DataTypeDefXsd.NonNegativeInteger, "I" },
-            { DataTypeDefXsd.NonPositiveInteger, "I" },
-            { DataTypeDefXsd.PositiveInteger, "I" },
-            { DataTypeDefXsd.Short, "I" },
+            { DataTypeDefXsd.HexBinary, "N" }, //Was ist die maximale Wert, der in den Hex passt?
+            { DataTypeDefXsd.Int, "N" },
+            { DataTypeDefXsd.Integer, "N" },
+            { DataTypeDefXsd.Long, "N" },
+            { DataTypeDefXsd.NegativeInteger, "N" },
+            { DataTypeDefXsd.NonNegativeInteger, "N" },
+            { DataTypeDefXsd.NonPositiveInteger, "N" },
+            { DataTypeDefXsd.PositiveInteger, "N" },
+            { DataTypeDefXsd.Short, "N" },
             { DataTypeDefXsd.String, "S" },
-            { DataTypeDefXsd.Time, "S" },
-            { DataTypeDefXsd.UnsignedByte, "I" },
-            { DataTypeDefXsd.UnsignedInt, "I" },
-            { DataTypeDefXsd.UnsignedLong, "I" },
-            { DataTypeDefXsd.UnsignedShort, "I" }
+            { DataTypeDefXsd.Time, "DT" },
+            { DataTypeDefXsd.UnsignedByte, "N" },
+            { DataTypeDefXsd.UnsignedInt, "N" },
+            { DataTypeDefXsd.UnsignedLong, "N" },
+            { DataTypeDefXsd.UnsignedShort, "N" }
         };
-        private static bool GetValueAndDataType(string value, DataTypeDefXsd dataType, out string tableDataType, out string sValue, out long iValue, out double dValue)
+        private static bool GetValueAndDataType(string value, DataTypeDefXsd dataType, out string tableDataType, out string sValue, out double nValue, out DateTime dtValue)
         {
             tableDataType = DataTypeToTable[dataType];
             sValue = string.Empty;
-            iValue = 0;
-            dValue = 0;
+            dtValue = DateTime.MinValue;
+            nValue = 0.0;
 
             if (value.IsNullOrEmpty())
                 return false;
@@ -522,32 +523,76 @@ namespace AasxServerDB
                 case "S":
                     sValue = value;
                     return true;
-                case "I":
-                    if (Int64.TryParse(value, out iValue))
-                        return true;
+                case "N":
+                    switch (dataType)
+                    {
+                        case DataTypeDefXsd.Boolean:
+                            nValue = value.ToLower() == "false" ? 0 : 1;
+                            break;
+                        case DataTypeDefXsd.Byte:
+                        case DataTypeDefXsd.Int:
+                        case DataTypeDefXsd.Integer:
+                        case DataTypeDefXsd.Long:
+                        case DataTypeDefXsd.NegativeInteger:
+                        case DataTypeDefXsd.NonNegativeInteger:
+                        case DataTypeDefXsd.NonPositiveInteger:
+                        case DataTypeDefXsd.PositiveInteger:
+                        case DataTypeDefXsd.Short:
+                        case DataTypeDefXsd.UnsignedByte:
+                        case DataTypeDefXsd.UnsignedInt:
+                        case DataTypeDefXsd.UnsignedLong:
+                        case DataTypeDefXsd.UnsignedShort:
+                            long iValue = 0;
+                            if (Int64.TryParse(value, out iValue))
+                            {
+                                nValue = Convert.ToDouble(iValue);
+                                return true;
+                            }
+                            return false;
+                        case DataTypeDefXsd.Double:
+                        case DataTypeDefXsd.Float:
+                            if (Double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out nValue))
+                                return true;
+                            return false;
+                        case DataTypeDefXsd.HexBinary:
+                            //ToDo: Calculate Hex
+                            throw new NotImplementedException();
+                        default:
+                            break;
+                    }
                     break;
-                case "D":
-                    if (Double.TryParse(value, out dValue))
-                        return true;
+                case "DT":
+                    switch (dataType)
+                    {
+                        case DataTypeDefXsd.Date:
+                        case DataTypeDefXsd.DateTime:
+                            dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
+                            return true;
+                        case DataTypeDefXsd.Time:
+                            //ToDo: Needs to be tested
+                            dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
+                            return true;
+                    }
+
                     break;
             }
 
             // incorrect table type
-            if (Int64.TryParse(value, out iValue))
-            {
-                tableDataType = "I";
-                return true;
-            }
+            //if (Int64.TryParse(value, out iValue))
+            //{
+            //    tableDataType = "I";
+            //    return true;
+            //}
 
-            if (Double.TryParse(value, out dValue))
-            {
-                tableDataType = "D";
-                return true;
-            }
+            //if (Double.TryParse(value, out nValue))
+            //{
+            //    tableDataType = "D";
+            //    return true;
+            //}
 
-            sValue = value;
-            tableDataType = "S";
-            return true;
+            //sValue = value;
+            //tableDataType = "S";
+            return false;
         }
         private void SetValues(ISubmodelElement sme, SMESet smeDB)
         {
@@ -581,7 +626,7 @@ namespace AasxServerDB
                 if (prop.ValueId != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = Serializer.SerializeElement(prop.ValueId) });
 
-                GetValueAndDataType(prop.Value ?? string.Empty, prop.ValueType, out var tValue, out var sValue, out var iValue, out var dValue);
+                GetValueAndDataType(prop.Value ?? string.Empty, prop.ValueType, out var tValue, out var sValue, out var nValue, out var dtValue);
                 if (!tValue.IsNullOrEmpty())
                     smeDB.TValue = tValue;
                 else
@@ -594,8 +639,8 @@ namespace AasxServerDB
                 }
                 //else if (smeDB.TValue.Equals("I"))
                 //    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                else if (smeDB.TValue.Equals("D"))
-                    smeDB.ValueSets.Add(new ValueSet { DValue = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                else if (smeDB.TValue.Equals("N"))
+                    smeDB.ValueSets.Add(new ValueSet { NValue = nValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
@@ -621,8 +666,8 @@ namespace AasxServerDB
                 if (range.Min.IsNullOrEmpty() && range.Max.IsNullOrEmpty())
                     return;
 
-                var hasValueMin = GetValueAndDataType(range.Min ?? string.Empty, range.ValueType, out var tableDataTypeMin, out var sValueMin, out var iValueMin, out var dValueMin);
-                var hasValueMax = GetValueAndDataType(range.Max ?? string.Empty, range.ValueType, out var tableDataTypeMax, out var sValueMax, out var iValueMax, out var dValueMax);
+                var hasValueMin = GetValueAndDataType(range.Min ?? string.Empty, range.ValueType, out var tableDataTypeMin, out var sValueMin, out var nValueMin, out var dtValueMin);
+                var hasValueMax = GetValueAndDataType(range.Max ?? string.Empty, range.ValueType, out var tableDataTypeMax, out var sValueMax, out var nValueMax, out var dtValueMax);
 
                 // determine which data types apply
                 var tableDataType = "S";
@@ -644,19 +689,15 @@ namespace AasxServerDB
                     }
                     else if (!tableDataTypeMin.Equals("S") && !tableDataTypeMax.Equals("S")) // both a number
                     {
-                        tableDataType = "D";
-                        if (tableDataTypeMin.Equals("I"))
-                            dValueMin = Convert.ToDouble(iValueMin);
-                        else if (tableDataTypeMax.Equals("I"))
-                            dValueMax = Convert.ToDouble(iValueMax);
+                        tableDataType = "N";
                     }
                     else // default: save in string
                     {
                         tableDataType = "S";
                         if (!tableDataTypeMin.Equals("S"))
-                            sValueMin = tableDataTypeMin.Equals("I") ? iValueMin.ToString() : dValueMin.ToString();
+                            sValueMin = nValueMin.ToString();
                         if (!tableDataTypeMax.Equals("S"))
-                            sValueMax = tableDataTypeMax.Equals("I") ? iValueMax.ToString() : dValueMax.ToString();
+                            sValueMax = nValueMax.ToString();
                     }
                 }
 
@@ -682,12 +723,12 @@ namespace AasxServerDB
                 //    if (hasValueMax)
                 //        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
                 //}
-                else if (tableDataType.Equals("D"))
+                else if (tableDataType.Equals("N"))
                 {
                     if (hasValueMin)
-                        smeDB.ValueSets.Add(new ValueSet{ DValue = dValueMin, Annotation = "Min" });
+                        smeDB.ValueSets.Add(new ValueSet{ NValue = nValueMin, Annotation = "Min" });
                     if (hasValueMax)
-                        smeDB.ValueSets.Add(new ValueSet { DValue = dValueMax, Annotation = "Max" });
+                        smeDB.ValueSets.Add(new ValueSet { NValue = nValueMax, Annotation = "Max" });
                 }
             }
             else if (sme is Blob blob)

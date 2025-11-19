@@ -1229,7 +1229,8 @@
 								<tr>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">Par#</th>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">SValue</th>
-									<th style="font-size:small;word-break: break-all;border-color:blue;">DValue</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">NValue</th>
+									<th style="font-size:small;word-break: break-all;border-color:blue;">DTValue</th>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">Annotation</th>
 									<th style="font-size:small;word-break: break-all;border-color:blue;">Links</th>
 								</tr>						</thead>
@@ -1264,15 +1265,28 @@
 												}
 											</div>
 										</td>
-										<td style="word-break:keep-all; break-all;border-color:blue;" title="@ValueSet?.DValue">
+										<td style="word-break:keep-all; break-all;border-color:blue;" title="@ValueSet?.NValue">
 											<div class="@cell">
 												@if (withDetails)
 												{
-													<span>@ValueSet?.DValue</span>
+													<span>@ValueSet?.NValue</span>
 												}
 												else
 												{
-													var text = @ValueSet?.DValue;
+													var text = @ValueSet?.NValue;
+													<span>@text</span>
+												}
+											</div>
+										</td>
+										<td style="word-break:keep-all; break-all;border-color:blue;" title="@ValueSet?.DTValue">
+											<div class="@cell">
+												@if (withDetails)
+												{
+													<span>@ValueSet?.DTValue</span>
+												}
+												else
+												{
+													var text = @ValueSet?.DTValue;
 													<span>@text</span>
 												}
 											</div>
@@ -1404,7 +1418,7 @@
 	object loadedItems = null;
 
 	const int MAX_LENGTH_TEXT = 40;
-	const int MAX_LENGTH_VCELL_TEXT = 360;
+	const int MAX_LENGTH_VCELL_TEXT = 250;
 
 	private void CheckTotalCountAndUpdate()
 	{
@@ -1654,6 +1668,7 @@
 		using (AasContext db = new AasContext())
 		{
 			IQueryable<ValueSet> qSValue = db.ValueSets;
+
 			if (smeid != 0)
 			{
 				qSValue = qSValue.Where(s => s.SMEId == smeid);
