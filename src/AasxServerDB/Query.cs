@@ -1654,7 +1654,7 @@ public partial class Query
             {
                 SMEId = sv.SMEId,
                 SValue = sv.SValue,
-                MValue = sv.DValue
+                MValue = sv.NValue
             });
             combinedValues = sValueSelect;
         }
@@ -2105,7 +2105,7 @@ public partial class Query
         {
             V_SMEId = sV.SMEId,
             V_Value = sV.SValue,
-            V_D_Value = sV.DValue
+            V_D_Value = sV.NValue
         });
         //var iValueSelect = iValueTable?.Select(iV => new
         //{
@@ -2447,7 +2447,7 @@ public partial class Query
             {
                 SMEId = v.SMEId,
                 SValue = v.SValue,
-                MValue = v.DValue
+                MValue = v.NValue
             }
             );
         }

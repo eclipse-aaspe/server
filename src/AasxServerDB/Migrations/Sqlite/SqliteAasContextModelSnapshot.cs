@@ -473,7 +473,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<DateTime?>("DTValue")
                         .HasColumnType("TEXT");
 
-                    b.Property<double?>("DValue")
+                    b.Property<double?>("NValue")
                         .HasColumnType("REAL");
 
                     b.Property<int>("SMEId")
@@ -483,9 +483,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SValue")
-                        .HasColumnType("TEXT");
-
-                    b.Property<TimeOnly?>("TValue")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

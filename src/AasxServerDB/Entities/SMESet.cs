@@ -86,7 +86,7 @@ namespace AasxServerDB.Entities
                     //    break;
                     case "D":
                         list = db.ValueSets.Where(s => s.SMEId == Id).ToList()
-                            .ConvertAll<string[]>(valueDB => [valueDB.DValue == null ? string.Empty : valueDB.DValue.ToString(), valueDB.Annotation ?? string.Empty]);
+                            .ConvertAll<string[]>(valueDB => [valueDB.NValue == null ? string.Empty : valueDB.NValue.ToString(), valueDB.Annotation ?? string.Empty]);
                         break;
                 }
 
