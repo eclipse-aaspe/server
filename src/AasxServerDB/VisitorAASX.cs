@@ -564,12 +564,9 @@ namespace AasxServerDB
                 case "DT":
                     switch (dataType)
                     {
-                        case DataTypeDefXsd.Date:
-                        case DataTypeDefXsd.DateTime:
-                            dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
-                            return true;
-                        case DataTypeDefXsd.Time:
-                            //ToDo: Needs to be tested
+                        case DataTypeDefXsd.Date:           //Will take zero for time
+                        case DataTypeDefXsd.DateTime:       
+                        case DataTypeDefXsd.Time:           //Will take today as date
                             dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
                             return true;
                     }
