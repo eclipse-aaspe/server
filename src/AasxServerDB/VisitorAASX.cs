@@ -566,8 +566,15 @@ namespace AasxServerDB
                     {
                         case DataTypeDefXsd.Date:           //Will take zero for time
                         case DataTypeDefXsd.DateTime:       
-                        case DataTypeDefXsd.Time:           //Will take today as date
                             dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
+                            return true;
+                        case DataTypeDefXsd.Time:
+                            dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
+                            var minDate = DateTime.MinValue;
+                            minDate.Add(TimeSpan.FromSeconds(dtValue.Second));
+                            minDate.Add(TimeSpan.FromMinutes(dtValue.Minute));
+                            minDate.Add(TimeSpan.FromHours(dtValue.Hour));
+                            dtValue = minDate;
                             return true;
                     }
 
