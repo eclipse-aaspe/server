@@ -32,11 +32,12 @@
 namespace AasxServerDB
 {
     using System;
+    using System.IO;
     using AasxServerDB.Entities;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
-    using System.IO;
+    using static AasxServerDB.Query;
 
     public class AasContext : DbContext
     {
@@ -119,6 +120,8 @@ namespace AasxServerDB
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<SMSetIdResult>().HasNoKey();
 
             modelBuilder.Entity<SMRefSet>()
                 .HasIndex(e => e.AASId)

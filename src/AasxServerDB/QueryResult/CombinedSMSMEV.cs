@@ -34,7 +34,7 @@ namespace AasxServerDB
             public DateTime SME_TimeStamp { get; set; }
 
             public string? V_Value { get; set; }
-            public double? V_N_Value { get; set; } // needed for the WHERE at the ending 
+            public double? V_D_Value { get; set; } // needed for the WHERE at the ending 
         }
     }
 }
