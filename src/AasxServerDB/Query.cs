@@ -2655,8 +2655,8 @@ public partial class Query
 
         if (pathConditions.Count != 0)
         {
-            // sme idShortPath needs SQL EXITS subquery
-            // EXITS is only possible with SQL raw in EF
+            // sme with idShortPath use CTE (common table expressions)
+            // for each idShortPath there is 1 CTE: pathCTE#
             // Convert C# conditions to SQL conditions by EF
             // Use placeholder in condition conversion: "Math.Abs(SMId)"
             // Include SQL conditions into SQL
@@ -2665,49 +2665,57 @@ public partial class Query
             var placeholderSQL = new string[pathConditions.Count];
             var pathConditionsSQL = new string[pathConditions.Count];
             var pathAllExists = pathAllCondition.Copy();
-            var pathAllRecursive = pathAllCondition.Copy();
+
+            var raw = "WITH\r\n";
 
             for (var i = 0; i < pathConditions.Count; i++)
             {
                 // convert path condition to SQL syntax
                 var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
                 var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                pathConditionsSQL[i] = convertPathConditionSQL.Split("WHERE").Last();
+                var where = convertPathConditionSQL.Split("WHERE").Last();
+                pathConditionsSQL[i] = where;
+
+                if (i != 0)
+                {
+                    raw += ",\r\n";
+                }
+
+                // Define CTE for idShortPath with condition
+                raw += $"pathCTE{i} AS (\r\nSELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS s0 ON s.\"Id\" = s0.\"SMId\"\r\nINNER JOIN \"ValueSets\" AS v ON s0.\"Id\" = v.\"SMEId\"\r\nWHERE\r\n";
+                raw += where + "\r\n)\r\n";
 
                 // change placeholder in complete condition
+                // pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == {i}");
                 pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == {i}");
                 // placeholder after conversion to SQL
                 placeholderSQL[i] = $"abs(\"s\".\"Id\") = {i}";
-                // Replace by true for recursive conditions
-                pathAllRecursive = pathAllRecursive.Replace($"$$path{i}$$", "true");
             }
 
             // convert complete condition with placeholders
             var convertCondition = result.Where(pathAllExists);
             var convertConditionSQL = convertCondition.ToQueryString();
             convertConditionSQL = convertConditionSQL.Split("WHERE").Last();
-            convertConditionSQL = convertConditionSQL.Replace("\"v\".", "\"v1\".").Replace("\"s0\".", "\"s1\".");
 
             // replace placeholders by path conditions
-            // var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\nWHERE ";
-            var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s1\" ON \"s\".\"Id\" = \"s1\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v1\" ON \"s1\".\"Id\" = \"v1\".\"SMEId\"\r\nWHERE ";
-            // var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nWHERE EXISTS (\r\nSELECT 1\r\nFROM \"SMESets\" AS s1\r\nINNER JOIN \"ValueSets\" AS v1 ON s1.\"Id\" = v1.\"SMEId\"\r\nWHERE s1.\"SMId\" = s.\"Id\"\r\nAND (\r\n";
-            raw += convertConditionSQL;
+            raw += "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\n";
             for (var i = 0; i < pathConditionsSQL.Length; i++)
             {
-                var exists = $"\r\nEXISTS (\r\nSELECT 1\r\nFROM \"SMESets\" AS s0\r\nINNER JOIN \"ValueSets\" AS v ON s0.\"Id\" = v.\"SMEId\"\r\nWHERE s0.\"SMId\" = s.\"Id\"\r\nAND ({pathConditionsSQL[i]})\r\n)\r\n";
-                raw = raw.Replace(placeholderSQL[i], exists);
+                var exists = $"path{i}.\"Id\" IS NOT NULL";
+                convertConditionSQL = convertConditionSQL.Replace(placeholderSQL[i], exists);
+                raw += $"LEFT JOIN pathCTE{i} path{i} ON s.\"Id\" = path{i}.\"Id\"\r\n";
             }
-            // raw += "\r\n)\r\n)\r\n";
+            raw += "WHERE\r\n";
+            raw += convertConditionSQL;
 
             var resultSMId = db.Set<SMSetIdResult>()
                            .FromSqlRaw(raw)
                            .AsQueryable();
 
-            var x = resultSMId.ToList();
             var smRawSQL2 = resultSMId.ToQueryString();
             var qp2 = GetQueryPlan(db, smRawSQL2);
 
+            // back to normal joinall result
             result = result.Join(resultSMId,
                 r => r.SMId,
                 r2 => r2.Id,
