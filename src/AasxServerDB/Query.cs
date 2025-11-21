@@ -1240,9 +1240,9 @@ public partial class Query
                     smTable = db.SMSets;
                     smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
                     smeTable = db.SMESets;
-                    smeTable = restrictSME ? smeTable.Where(conditionsExpression["sme"]) : smeTable;
+                    // smeTable = restrictSME ? smeTable.Where(conditionsExpression["sme"]) : smeTable;
                     valueTable = db.ValueSets;
-                    valueTable = restrictValue ? valueTable.Where(conditionsExpression["value"]) : valueTable;
+                    // valueTable = restrictValue ? valueTable.Where(conditionsExpression["value"]) : valueTable;
 
                     var conditionAll = "true";
                     if (conditionsExpression.TryGetValue("all-aas", out _))
@@ -2590,7 +2590,7 @@ public partial class Query
         //IQueryable<IValueSet>? iValueTable,
         //IQueryable<DValueSet>? dValueTable,
         string pathAllCondition,
-        List<string> anyConditions,
+        List<string> pathConditions,
         string conditionAll = "true")
     {
         IQueryable<joinAll>? result = null;
@@ -2633,23 +2633,9 @@ public partial class Query
                 SMId = r.sm.Id
             });
 
-        IQueryable<CombinedValue> combineValue = null;
-
         if (valueTable != null)
         {
-            combineValue = valueTable.Select(v => new CombinedValue
-            {
-                SMEId = v.SMEId,
-                SValue = v.SValue,
-                MValue = v.DValue,
-                DTValue = v.DTValue
-            }
-            );
-        }
-
-        if (combineValue != null)
-        {
-            result = result.Join(combineValue,
+            result = result.Join(valueTable,
             r => r.sme.Id,
             v => v.SMEId,
             (r, v) => new joinAll
@@ -2659,57 +2645,107 @@ public partial class Query
                 sm = r.sm,
                 sme = r.sme,
                 svalue = v.SValue,
-                mvalue = v.MValue,
+                mvalue = v.DValue,
                 dtvalue = v.DTValue,
             });
         }
 
-        // var x1 = result.Take(10).ToList();
         var smRawSQL = result.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
 
-        if (anyConditions.Count != 0)
+        if (pathConditions.Count != 0)
         {
-            var smList = new IQueryable<int>[anyConditions.Count];
-            var raw = new string[anyConditions.Count];
+            // sme idShortPath needs SQL EXITS subquery
+            // EXITS is only possible with SQL raw in EF
+            // Convert C# conditions to SQL conditions by EF
+            // Use placeholder in condition conversion: "Math.Abs(SMId)"
+            // Include SQL conditions into SQL
+            // Convert result back to EF by SMId only
+
+            var placeholderSQL = new string[pathConditions.Count];
+            var pathConditionsSQL = new string[pathConditions.Count];
+            var pathAllExists = pathAllCondition.Copy();
+            var pathAllRecursive = pathAllCondition.Copy();
+
+            for (var i = 0; i < pathConditions.Count; i++)
+            {
+                // convert path condition to SQL syntax
+                var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                pathConditionsSQL[i] = convertPathConditionSQL.Split("WHERE").Last();
+
+                // change placeholder in complete condition
+                pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == {i}");
+                // placeholder after conversion to SQL
+                placeholderSQL[i] = $"abs(\"s\".\"Id\") = {i}";
+                // Replace by true for recursive conditions
+                pathAllRecursive = pathAllRecursive.Replace($"$$path{i}$$", "true");
+            }
+
+            // convert complete condition with placeholders
+            var convertCondition = result.Where(pathAllExists);
+            var convertConditionSQL = convertCondition.ToQueryString();
+            convertConditionSQL = convertConditionSQL.Split("WHERE").Last();
+            convertConditionSQL = convertConditionSQL.Replace("\"v\".", "\"v1\".").Replace("\"s0\".", "\"s1\".");
+
+            // replace placeholders by path conditions
+            // var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\nWHERE ";
+            var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s1\" ON \"s\".\"Id\" = \"s1\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v1\" ON \"s1\".\"Id\" = \"v1\".\"SMEId\"\r\nWHERE ";
+            // var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nWHERE EXISTS (\r\nSELECT 1\r\nFROM \"SMESets\" AS s1\r\nINNER JOIN \"ValueSets\" AS v1 ON s1.\"Id\" = v1.\"SMEId\"\r\nWHERE s1.\"SMId\" = s.\"Id\"\r\nAND (\r\n";
+            raw += convertConditionSQL;
+            for (var i = 0; i < pathConditionsSQL.Length; i++)
+            {
+                var exists = $"\r\nEXISTS (\r\nSELECT 1\r\nFROM \"SMESets\" AS s0\r\nINNER JOIN \"ValueSets\" AS v ON s0.\"Id\" = v.\"SMEId\"\r\nWHERE s0.\"SMId\" = s.\"Id\"\r\nAND ({pathConditionsSQL[i]})\r\n)\r\n";
+                raw = raw.Replace(placeholderSQL[i], exists);
+            }
+            // raw += "\r\n)\r\n)\r\n";
+
+            var resultSMId = db.Set<SMSetIdResult>()
+                           .FromSqlRaw(raw)
+                           .AsQueryable();
+
+            var x = resultSMId.ToList();
+            var smRawSQL2 = resultSMId.ToQueryString();
+            var qp2 = GetQueryPlan(db, smRawSQL2);
+
+            result = result.Join(resultSMId,
+                r => r.SMId,
+                r2 => r2.Id,
+                (r, r2) => r);
+
+            /*
+            var smList = new IQueryable<int>[pathConditions.Count];
+            var raw = new string[pathConditions.Count];
             // List <IQueryable> smList = new List<IQueryable>();
-            for (var i = 0; i < anyConditions.Count; i++)
+            for (var i = 0; i < pathConditions.Count; i++)
             {
                 // var q = result.Where(anyConditions[i]).Select(r => new { r.SMId });
-                var q = result.Where(anyConditions[i]).Select(r => r.SMId);
+                var q = result.Where(pathConditions[i]).Select(r => r.SMId);
                 // smList.Add(q);
                 smList[i] = q;
             }
 
-            /*
-            var config = new ParsingConfig
-            {
-                CustomTypeProvider = new MyDynamicLinqTypeProvider()
-            };
-            */
-
             // var parameters = smList.Cast<object>().ToArray();
             var parameters = smList as object[];
-            var replaceSqlFrom = new string[smList.Length];
             var replaceSqlTo = new string[smList.Length];
-            var anyConditionsSQL = new string[smList.Length];
 
-            var pathAll = pathAllCondition.Copy();
+            pathAll = pathAllCondition.Copy();
             for (var i = 0; i < smList.Length; i++)
             {
+                // Change placeholder
                 pathAll = pathAll.Replace($"$$path{i}$$", $"Math.Abs(SMId) == {i}");
                 // pathAll = pathAll.Replace($"$$path{i}$$", $"@{i}.Contains(SMId)");
                 // pathAll = pathAll.Replace($"$$path{i}$$", $"@{i}.Any(SMId == it.SMId)");
                 // pathAll = pathAll.Replace($"$$path{i}$$", $"((IQueryable<int>)@{i}).Contains(sm.Id)");
                 // pathAll = pathAll.Replace($"$$path{i}$$", $"Queryable.Contains(@{i}, SMId)");
                 raw[i] = smList[i].ToQueryString();
-                anyConditionsSQL[i] = raw[i].Split("WHERE").Last();
+                pathConditionsSQL[i] = raw[i].Split("WHERE").Last();
                 raw[i] = raw[i]
                     .Replace("SELECT \"s\".\"Id\"", "SELECT 1")
                     // .Replace("FROM \"SMSets\" AS \"s\"", "")
                     // .Replace("INNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"", "FROM \"SMESets\" AS s0")
                     .Replace("\r\n\r\n", "\r\n");
-                replaceSqlFrom[i] = $"abs(\"s\".\"Id\") = {i}";
+                placeholderSQL[i] = $"abs(\"s\".\"Id\") = {i}";
                 replaceSqlTo[i] = $"EXISTS ( {raw[i]} )\r\n";
             }
             // result = result.Where(config, pathAll, parameters);
@@ -2719,7 +2755,7 @@ public partial class Query
             var whereConditionsSQL = raw2.Split("WHERE").Last();
             for (var i = 0; i < smList.Length; i++)
             {
-                raw2 = raw2.Replace(replaceSqlFrom[i], replaceSqlTo[i]);
+                raw2 = raw2.Replace(placeholderSQL[i], replaceSqlTo[i]);
             }
             var split = raw2.Split("FROM");
             // raw2 = raw2.Replace(split[0], "SELECT \"s\".\"Id\" AS SMId\r\n");
@@ -2727,24 +2763,26 @@ public partial class Query
 
             raw2 = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\nWHERE ";
             raw2 += whereConditionsSQL;
-            for (var i = 0; i < anyConditionsSQL.Length; i++)
+            for (var i = 0; i < pathConditionsSQL.Length; i++)
             {
-                var c = $"EXISTS (\r\nSELECT 1\r\nWHERE s0.\"SMId\" = s.\"Id\"\r\nAND ({anyConditionsSQL[i]}))\r\n";
-                raw2 = raw2.Replace(replaceSqlFrom[i], c);
+                var c = $"EXISTS (\r\nSELECT 1\r\nWHERE s0.\"SMId\" = s.\"Id\"\r\nAND ({pathConditionsSQL[i]}))\r\n";
+                raw2 = raw2.Replace(placeholderSQL[i], c);
             }
-
-            // var result3 = db.Database.SqlQuery<int>($"{raw2}").ToList();
 
             var result2 = db.Set<SMSetIdResult>()
                            .FromSqlRaw(raw2)
                            .AsQueryable();
 
+            var smRawSQL2 = result.ToQueryString();
+            var qp2 = GetQueryPlan(db, smRawSQL);
+
             result = result.Join(result2,
                 r => r.SMId,
                 r2 => r2.Id,
                 (r, r2) => r);
+            */
 
-            /*
+            /* Keep old code for join, in case of performance problems with large data
             IQueryable join = result.Select($"new (sm.Id as Id, ({anyConditions[0]}) as c0)");
             // var x1 = join.Take(100).ToDynamicList();
             var selectOuter = "outer.c0 as c0";
@@ -2787,9 +2825,6 @@ public partial class Query
 
             result = filteredResult.Select("j") as IQueryable<joinAll>;
             */
-
-            var smRawSQL2 = result.ToQueryString();
-            var qp2 = GetQueryPlan(db, smRawSQL);
         }
         else
         {
