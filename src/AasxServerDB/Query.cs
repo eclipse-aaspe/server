@@ -2067,10 +2067,12 @@ public partial class Query
             var param = splitParam[i].Split(", ", 2);
             var paramS = param[1].Split("\'", 3);
             var paramSNotEmpty = paramS.FirstOrDefault(s => s != "");
+            /*
             if (!paramSNotEmpty.Contains("."))
             {
                 paramSNotEmpty = "'" + paramSNotEmpty + "'";
             }
+            */
             i++;
             // result = result + $"{param[0]} LIKE \'%{paramS[1]}%\' {splitParam[i]}";
             result += $"{param[0]} LIKE '%' || '{paramSNotEmpty}' || '%' {splitParam[i]}";
