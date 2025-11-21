@@ -639,6 +639,7 @@ public class QueryGrammarJSON : Grammar
         {
             value = value.Replace("sm.Id", "sm.Identifier");
         }
+        value = value.Replace("sm.id", "sm.Identifier");
         switch (mode)
         {
             case "all":
