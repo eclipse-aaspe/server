@@ -1518,13 +1518,32 @@ namespace AasxServerDB
                     break;
                 case "DT":
                     list = valueList
-                        .ConvertAll<string[]>(s => [s.DTValue == null ? string.Empty : TimeStamp.TimeStamp.DateTimeToString(s.DTValue.Value), s.Annotation ?? string.Empty]);
+                        .ConvertAll<string[]>(s => [s.DTValue == null ? string.Empty : ConvertDTValueToString(s.DTValue.Value, s.Annotation), s.Annotation ?? string.Empty]);
                     break;
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
                 return list;
 
             return [[string.Empty, string.Empty]];
+        }
+
+        private static string ConvertDTValueToString(DateTime dtValue, string annotation)
+        {
+            if (annotation == "xs:dateTime"
+                || annotation == "xs:date")
+            {
+                var dtstring = TimeStamp.TimeStamp.DateTimeToString(dtValue);
+
+                if (annotation == "xs:date")
+                {
+                    var splittedString = dtstring.Split(" ");
+                    return splittedString[0];
+                }
+            }
+            else if (annotation == "xs:time")
+                return new TimeOnly(dtValue.Hour,dtValue.Minute,dtValue.Second).ToString();
+
+            return String.Empty;
         }
 
         private static String ConvertNvalueToString(double? nValue, string annotation)
@@ -1553,14 +1572,15 @@ namespace AasxServerDB
                     list = tree.Where(s => s.valueSet?.SMEId == Id).ToList()
                         .ConvertAll<string[]>(s => [s.valueSet.SValue ?? string.Empty, s.valueSet.Annotation ?? string.Empty]);
                     break;
-                //case "I":
-                //    list = tree.Where(s => s.iValueSet?.SMEId == Id).ToList()
-                //        .ConvertAll<string[]>(s => [s.iValueSet.Value == null ? string.Empty : s.iValueSet.Value.ToString(), s.iValueSet.Annotation ?? string.Empty]);
-                //    break;
-                case "D":
+                case "N":
                     list = tree.Where(s => s.valueSet?.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(s => [s.valueSet.NValue == null ? string.Empty : s.valueSet.NValue.ToString(), s.valueSet.Annotation ?? string.Empty]);
+                        .ConvertAll<string[]>(s => [s.valueSet.NValue == null ? string.Empty : ConvertNvalueToString(s.valueSet.NValue, s.valueSet.Annotation), s.valueSet.Annotation ?? string.Empty]);
                     break;
+                case "DT":
+                    list = tree.Where(s => s.valueSet?.SMEId == Id).ToList()
+                        .ConvertAll<string[]>(s => [s.valueSet.DTValue == null ? string.Empty : ConvertDTValueToString(s.valueSet.DTValue.Value, s.valueSet.Annotation), s.valueSet.Annotation ?? string.Empty]);
+                    break;
+
             }
             if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
                 return list;
