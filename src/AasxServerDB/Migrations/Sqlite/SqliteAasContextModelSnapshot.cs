@@ -487,13 +487,27 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DTValue");
+
                     b.HasIndex("Id");
+
+                    b.HasIndex("NValue");
 
                     b.HasIndex("SMEId");
 
                     b.HasIndex("SMId");
 
+                    b.HasIndex("SValue");
+
                     b.ToTable("ValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.SMSetIdResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.ToTable("SMSetIdResult");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
