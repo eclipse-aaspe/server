@@ -33,6 +33,11 @@ namespace AasSecurity
 
         private static void ParseSecurityMetamodel()
         {
+            if (Program.env == null)
+            {
+                return;
+            }
+
             foreach (var env in Program.env)
             {
                 if (env != null && env.AasEnv != null && env.AasEnv.AssetAdministrationShells != null)
