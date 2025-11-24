@@ -3015,7 +3015,7 @@ public partial class Query
                 foreach (var s1 in split1)
                 {
                     var split2 = s1.Split(" ");
-                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\"")
+                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\" || split2[0] == \"\\\"DTValue\\\"")
                     {
                         var s = split2[0] + " " + split2[1] + " " + split2[2];
                         s = s.Replace(")", "");
