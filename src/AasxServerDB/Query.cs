@@ -3015,7 +3015,7 @@ public partial class Query
                 foreach (var s1 in split1)
                 {
                     var split2 = s1.Split(" ");
-                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\" || split2[0] == \"\\\"DTValue\\\"")
+                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\"" || split2[0] == "\"DTValue\"")
                     {
                         var s = split2[0] + " " + split2[1] + " " + split2[2];
                         s = s.Replace(")", "");
@@ -3169,11 +3169,11 @@ public partial class Query
             if (conditionAll != "true")
             {
                 result = result.Where(conditionAll);
-
-                var smRawSQL2 = result.ToQueryString();
-                var qp2 = GetQueryPlan(db, smRawSQL2);
             }
         }
+
+        var smRawSQL3 = result.ToQueryString();
+        var qp3 = GetQueryPlan(db, smRawSQL3);
 
         var combined = result.Select(r => new CombinedSMSMEV
         {
@@ -3199,94 +3199,321 @@ public partial class Query
 
         return combined;
     }
-    private static IQueryable<CombinedSMSMEV> CombineTablesWithCTE(
-        AasContext db,
-        IQueryable<SMSet> smTable,
-        IQueryable<SMESet> smeTable,
-        IQueryable<ValueSet>? sValueTable,
-        bool includeEmptyValues = false)
+
+    private static IQueryable<CombinedSMSMEV> CombineTablesANY(
+    AasContext db,
+    IQueryable<AASSet>? aasTable,
+    IQueryable<SMSet> smTable,
+    IQueryable<SMESet> smeTable,
+    IQueryable<ValueSet>? valueTable,
+    //IQueryable<IValueSet>? iValueTable,
+    //IQueryable<DValueSet>? dValueTable,
+    string pathAllCondition,
+    List<string> pathConditions,
+    string conditionAll = "true")
     {
-        // Hole EF-SQL
-        var smRaw = smTable.ToQueryString();
-        var smeRaw = smeTable.ToQueryString();
-        var sValueRaw = sValueTable?.ToQueryString();
-        //var iValueRaw = iValueTable?.ToQueryString();
-        //var dValueRaw = dValueTable?.ToQueryString();
+        var q1 = aasTable?.ToQueryString();
+        var q2 = smTable?.ToQueryString();
+        var q3 = smeTable?.ToQueryString();
+        var q4 = valueTable?.ToQueryString();
 
-        // Extrahiere FROM + WHERE aus EF-SQL
-        string ExtractFromWhere(string raw)
+        IQueryable<joinAll>? result = null;
+
+        if (aasTable != null)
         {
-            var fromIndex = raw.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
-            return fromIndex > 0 ? raw.Substring(fromIndex) : raw;
+            result = aasTable
+                .Join(db.SMRefSets,
+                      aas => aas.Id,
+                      r => r.AASId,
+                      (aas, r) => new { aas, r })
+                .Join(smTable,
+                      x => x.r.Identifier,
+                      sm => sm.Identifier,
+                      (x, sm) => new { x.aas, sm })
+                .Select(x => new joinAll
+                {
+                    aas = x.aas,
+                    sm = x.sm,
+                    SMId = x.sm.Id
+                });
+        }
+        else
+        {
+            result = smTable.Select(sm => new joinAll
+            {
+                sm = sm,
+                SMId = sm.Id
+            });
         }
 
-        var smFromWhere = ExtractFromWhere(smRaw);
-        var smeFromWhere = ExtractFromWhere(smeRaw);
-        var sValueFromWhere = sValueRaw != null ? ExtractFromWhere(sValueRaw) : null;
-        //var iValueFromWhere = iValueRaw != null ? ExtractFromWhere(iValueRaw) : null;
-        //var dValueFromWhere = dValueRaw != null ? ExtractFromWhere(dValueRaw) : null;
+        result = result.Join(smeTable,
+            r => r.sm.Id,
+            sme => sme.SMId,
+            (r, sme) => new joinAll
+            {
+                aas = r.aas,
+                sm = r.sm,
+                sme = sme,
+                SMId = r.sm.Id
+            });
 
-        // Baue CTEs mit eigener SELECT-Liste
-        var sb = new StringBuilder("WITH\n");
-        sb.AppendLine($"FilteredSM AS (\nSELECT \"s\".\"Id\" AS SM_Id, \"s\".\"SemanticId\" AS SM_SemanticId, \"s\".\"IdShort\" AS SM_IdShort, \"s\".\"DisplayName\" AS SM_DisplayName, \"s\".\"Description\" AS SM_Description, \"s\".\"Identifier\" AS SM_Identifier, \"s\".\"TimeStampTree\" AS SM_TimeStampTree\n{smFromWhere}\n),");
-        sb.AppendLine($"FilteredSME AS (\nSELECT \"s\".\"Id\" AS SME_Id, \"s\".\"SMId\" AS SME_SMId, \"s\".\"SemanticId\" AS SME_SemanticId, \"s\".\"IdShort\" AS SME_IdShort, \"s\".\"IdShortPath\" AS SME_IdShortPath, \"s\".\"DisplayName\" AS SME_DisplayName, \"s\".\"Description\" AS SME_Description, \"s\".\"TimeStamp\" AS SME_TimeStamp, \"s\".\"TValue\" AS SME_TValue\n{smeFromWhere}\n),");
-
-        if (sValueFromWhere != null)
-            sb.AppendLine($"FilteredSValue AS (\nSELECT \"s\".\"SMEId\" AS V_SMEId, \"s\".\"Value\" AS V_Value\n{sValueFromWhere}\n),");
-        //if (iValueFromWhere != null)
-        //    sb.AppendLine($"FilteredIValue AS (\nSELECT \"i\".\"SMEId\" AS V_SMEId, \"i\".\"Value\" AS V_Value\n{iValueFromWhere}\n),");
-        //if (dValueFromWhere != null)
-        //    sb.AppendLine($"FilteredDValue AS (\nSELECT \"d\".\"SMEId\" AS V_SMEId, \"d\".\"Value\" AS V_Value\n{dValueFromWhere}\n),");
-
-        // Join SM und SME
-        sb.AppendLine(@"
-FilteredSMAndSME AS (
-    SELECT sm.SM_Id, sm.SM_SemanticId, sm.SM_IdShort, sm.SM_DisplayName, sm.SM_Description,
-           sm.SM_Identifier, sm.SM_TimeStampTree, sme.SME_SemanticId, sme.SME_IdShort,
-           sme.SME_IdShortPath, sme.SME_DisplayName, sme.SME_Description, sme.SME_Id,
-           sme.SME_TimeStamp, sme.SME_TValue
-    FROM FilteredSM AS sm
-    INNER JOIN FilteredSME AS sme ON sm.SM_Id = sme.SME_SMId
-)
-");
-
-        // Haupt-SELECT mit UNION ALL
-        sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
-        sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
-        sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, NULL AS V_D_Value");
-        sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredSValue AS v ON sm_sme.SME_Id = v.V_SMEId");
-
-        //if (iValueFromWhere != null)
-        //{
-        //    sb.AppendLine("UNION ALL");
-        //    sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
-        //    sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
-        //    sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
-        //    sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredIValue AS v ON sm_sme.SME_Id = v.V_SMEId");
-        //}
-
-        //if (dValueFromWhere != null)
-        //{
-        //    sb.AppendLine("UNION ALL");
-        //    sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
-        //    sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
-        //    sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, v.V_Value, v.V_Value AS V_D_Value");
-        //    sb.AppendLine("FROM FilteredSMAndSME AS sm_sme INNER JOIN FilteredDValue AS v ON sm_sme.SME_Id = v.V_SMEId");
-        //}
-
-        if (includeEmptyValues)
+        if (valueTable != null)
         {
-            sb.AppendLine("UNION ALL");
-            sb.AppendLine("SELECT sm_sme.SM_Id, sm_sme.SM_SemanticId, sm_sme.SM_IdShort, sm_sme.SM_DisplayName, sm_sme.SM_Description,");
-            sb.AppendLine("       sm_sme.SM_Identifier, sm_sme.SM_TimeStampTree, sm_sme.SME_SemanticId, sm_sme.SME_IdShort, sm_sme.SME_IdShortPath,");
-            sb.AppendLine("       sm_sme.SME_DisplayName, sm_sme.SME_Description, sm_sme.SME_Id, sm_sme.SME_TimeStamp, NULL, NULL");
-            sb.AppendLine("FROM FilteredSMAndSME AS sm_sme WHERE sm_sme.SME_TValue IS NULL OR sm_sme.SME_TValue = ''");
+            result = result.Join(valueTable,
+            r => r.sme.Id,
+            v => v.SMEId,
+            (r, v) => new joinAll
+            {
+                SMId = r.SMId,
+                aas = r.aas,
+                sm = r.sm,
+                sme = r.sme,
+                svalue = v.SValue,
+                mvalue = v.NValue,
+                dtvalue = v.DTValue,
+            });
         }
 
-        var finalSql = sb.ToString();
+        var smRawSQL = result.ToQueryString();
+        var qp = GetQueryPlan(db, smRawSQL);
 
-        // Ausführen und typisierte Ergebnisse zurückgeben
-        return db.Database.SqlQueryRaw<CombinedSMSMEV>(finalSql).AsQueryable();
+        if (pathConditions.Count != 0)
+        {
+            var pathAllAny1 = "";
+            if (pathAllCondition.Contains(" (svalue"))
+            {
+                var split1 = pathAllCondition.Split(" (svalue");
+                pathAllAny1 += split1[0];
+                for (var i = 1; i < split1.Length; i++)
+                {
+                    var split2 = split1[i].Split(")");
+                    pathAllAny1 += $" SMESets.Any(ValueSets.Any(SValue != null && SValue{split2[0]})";
+                    for (var i2 = 1; i2 < split2.Length; i2++)
+                    {
+                        pathAllAny1 += ")";
+                        pathAllAny1 += split2[i2];
+                    }
+                }
+            }
+            var pathAllAny2 = "";
+            if (pathAllAny1.Contains(" (mvalue "))
+            {
+                var split1 = pathAllAny1.Split(" (mvalue");
+                pathAllAny2 += split1[0];
+                for (var i = 1; i < split1.Length; i++)
+                {
+                    var split2 = split1[i].Split(")");
+                    pathAllAny2 += $" SMESets.Any(ValueSets.Any(NValue != null && NValue{split2[0]})";
+                    for (var i2 = 1; i2 < split2.Length; i2++)
+                    {
+                        pathAllAny2 += ")";
+                        pathAllAny2 += split2[i2];
+                    }
+                }
+            }
+            pathAllCondition = pathAllAny2;
+            for (var i = 0; i < pathConditions.Count; i++)
+            {
+                pathConditions[i] = pathConditions[i].Replace("sme.", "").Replace("svalue", "SValue").Replace("mvalue", "NValue");
+                var split = pathConditions[i].Split(" && ");
+                if (split[2].Contains("SValue"))
+                {
+                    split[2] = "SValue != null && " + split[2];
+                }
+                if (split[2].Contains("NValue"))
+                {
+                    split[2] = "NValue != null && " + split[2];
+                }
+                var p = $"SMESets.Any({split[0]} && {split[1]} && ValueSets.Any({split[2]}))";
+                pathAllCondition = pathAllCondition.Replace($"$$path{i}$$", p);
+            }
+
+            var resultSMId = db.SMSets.Where(pathAllCondition).Select(sm => new SMSetIdResult { Id = sm.Id });
+
+            var smRawSQL2 = resultSMId.ToQueryString();
+            var qp2 = GetQueryPlan(db, smRawSQL2);
+
+            result = smTable.Where(pathAllCondition).Select(sm => new joinAll
+            {
+                sm = sm,
+                SMId = sm.Id
+            });
+
+            result = result.Join(smeTable,
+                r => r.sm.Id,
+                sme => sme.SMId,
+                (r, sme) => new joinAll
+                {
+                    aas = r.aas,
+                    sm = r.sm,
+                    sme = sme,
+                    SMId = r.sm.Id
+                });
+
+            if (valueTable != null)
+            {
+                result = result.Join(valueTable,
+                r => r.sme.Id,
+                v => v.SMEId,
+                (r, v) => new joinAll
+                {
+                    SMId = r.SMId,
+                    aas = r.aas,
+                    sm = r.sm,
+                    sme = r.sme,
+                    svalue = v.SValue,
+                    mvalue = v.NValue,
+                    dtvalue = v.DTValue,
+                });
+            }
+
+            /*
+            var smList = new IQueryable<int>[pathConditions.Count];
+            var raw = new string[pathConditions.Count];
+            // List <IQueryable> smList = new List<IQueryable>();
+            for (var i = 0; i < pathConditions.Count; i++)
+            {
+                // var q = result.Where(anyConditions[i]).Select(r => new { r.SMId });
+                var q = result.Where(pathConditions[i]).Select(r => r.SMId);
+                // smList.Add(q);
+                smList[i] = q;
+            }
+
+            // var parameters = smList.Cast<object>().ToArray();
+            var parameters = smList as object[];
+            var replaceSqlTo = new string[smList.Length];
+
+            pathAll = pathAllCondition.Copy();
+            for (var i = 0; i < smList.Length; i++)
+            {
+                // Change placeholder
+                pathAll = pathAll.Replace($"$$path{i}$$", $"Math.Abs(SMId) == {i}");
+                // pathAll = pathAll.Replace($"$$path{i}$$", $"@{i}.Contains(SMId)");
+                // pathAll = pathAll.Replace($"$$path{i}$$", $"@{i}.Any(SMId == it.SMId)");
+                // pathAll = pathAll.Replace($"$$path{i}$$", $"((IQueryable<int>)@{i}).Contains(sm.Id)");
+                // pathAll = pathAll.Replace($"$$path{i}$$", $"Queryable.Contains(@{i}, SMId)");
+                raw[i] = smList[i].ToQueryString();
+                pathConditionsSQL[i] = raw[i].Split("WHERE").Last();
+                raw[i] = raw[i]
+                    .Replace("SELECT \"s\".\"Id\"", "SELECT 1")
+                    // .Replace("FROM \"SMSets\" AS \"s\"", "")
+                    // .Replace("INNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"", "FROM \"SMESets\" AS s0")
+                    .Replace("\r\n\r\n", "\r\n");
+                placeholderSQL[i] = $"abs(\"s\".\"Id\") = {i}";
+                replaceSqlTo[i] = $"EXISTS ( {raw[i]} )\r\n";
+            }
+            // result = result.Where(config, pathAll, parameters);
+            // result = result.Where(pathAll, parameters);
+            var resultx = result.Where(pathAll);
+            var raw2 = resultx.ToQueryString();
+            var whereConditionsSQL = raw2.Split("WHERE").Last();
+            for (var i = 0; i < smList.Length; i++)
+            {
+                raw2 = raw2.Replace(placeholderSQL[i], replaceSqlTo[i]);
+            }
+            var split = raw2.Split("FROM");
+            // raw2 = raw2.Replace(split[0], "SELECT \"s\".\"Id\" AS SMId\r\n");
+            raw2 = raw2.Replace(split[0], "SELECT DISTINCT \"s\".\"Id\"\r\n");
+
+            raw2 = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\nWHERE ";
+            raw2 += whereConditionsSQL;
+            for (var i = 0; i < pathConditionsSQL.Length; i++)
+            {
+                var c = $"EXISTS (\r\nSELECT 1\r\nWHERE s0.\"SMId\" = s.\"Id\"\r\nAND ({pathConditionsSQL[i]}))\r\n";
+                raw2 = raw2.Replace(placeholderSQL[i], c);
+            }
+
+            var result2 = db.Set<SMSetIdResult>()
+                           .FromSqlRaw(raw2)
+                           .AsQueryable();
+
+            var smRawSQL2 = result.ToQueryString();
+            var qp2 = GetQueryPlan(db, smRawSQL);
+
+            result = result.Join(result2,
+                r => r.SMId,
+                r2 => r2.Id,
+                (r, r2) => r);
+            */
+
+            /* Keep old code for join, in case of performance problems with large data
+            IQueryable join = result.Select($"new (sm.Id as Id, ({anyConditions[0]}) as c0)");
+            // var x1 = join.Take(100).ToDynamicList();
+            var selectOuter = "outer.c0 as c0";
+            var whereOr = "c0";
+            for (var i = 1; i < anyConditions.Count; i++)
+            {
+                var ji = result.Select($"new (sm.Id as Id, ({anyConditions[i]}) as c{i})");
+                // var x2 = ji.Take(100).ToDynamicList();
+                whereOr += $" | c{i}";
+                join = join.Join(
+                    ji,
+                    "Id",
+                    "Id",
+                    $"new (outer.Id as Id, {selectOuter}, inner.c{i} as c{i})"
+                    );
+                selectOuter += $", outer.c{i} as c{i}";
+            }
+            join = join.Where(whereOr);
+            var x3 = join.Take(10).ToDynamicList();
+
+            var filteredResult = result.Join(
+                join,
+                "sm.Id",
+                "Id",
+                $"new (outer as j, inner as c)"
+            );
+            var x5 = filteredResult.Take(100).ToDynamicList();
+
+            var pa = pathAllCondition.Copy();
+            for (var i = 0; i < anyConditions.Count; i++)
+            {
+                pa = pa.Replace($"$$path{i}$$", $"c.c{i}");
+            }
+            pa = pa.Replace("aas.", "j.aas.").Replace("sm.", "j.sm.").Replace("sme.", "j.sme.").Replace("svalue", "j.svalue").Replace("mvalue", "j.mvalue").Replace("dtvalue", "j.dtvalue");
+            // conditionAll = conditionAll.Replace("aas.", "j.aas.").Replace("sm.", "j.sm.").Replace("sme.", "j.sme.").Replace("svalue", "j.svalue.").Replace("nvalue", "j.nvalue.");
+
+            filteredResult = filteredResult.Where(pa);
+            var x6 = filteredResult.Take(100).ToDynamicList();
+            // filteredResult = filteredResult.Where(conditionAll);
+
+            result = filteredResult.Select("j") as IQueryable<joinAll>;
+            */
+        }
+        else
+        {
+            if (conditionAll != "true")
+            {
+                result = result.Where(conditionAll);
+            }
+        }
+
+        var smRawSQL3 = result.ToQueryString();
+        var qp3 = GetQueryPlan(db, smRawSQL3);
+
+        var combined = result.Select(r => new CombinedSMSMEV
+        {
+            SM_Id = r.sm.Id,
+            SM_SemanticId = r.sm.SemanticId,
+            SM_IdShort = r.sm.IdShort,
+            SM_DisplayName = r.sm.DisplayName,
+            SM_Description = r.sm.Description,
+            SM_Identifier = r.sm.Identifier,
+            SM_TimeStampTree = r.sm.TimeStampTree,
+
+            SME_SemanticId = r.sme.SemanticId,
+            SME_IdShort = r.sme.IdShort,
+            SME_IdShortPath = r.sme.IdShortPath,
+            SME_DisplayName = r.sme.DisplayName,
+            SME_Description = r.sme.Description,
+            SME_Id = r.sme.Id,
+            SME_TimeStamp = r.sme.TimeStamp,
+
+            V_Value = r.svalue,
+            V_D_Value = r.mvalue
+        });
+
+        return combined;
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
