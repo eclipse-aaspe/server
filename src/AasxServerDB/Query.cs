@@ -36,6 +36,7 @@ using Contracts.Security;
 using Extensions;
 // using Newtonsoft.Json.Schema;
 using HotChocolate.Types.Relay;
+using IdentityModel.Client;
 using Irony.Parsing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -799,172 +800,296 @@ public partial class Query
 
             if (withMatch)
             {
-                var splitMatch = pathAllConditionRaw.Split("$$match$$");
-                pathAllCondition = "";
-                var iCondition = 0;
-                var conditionCount = splitMatch.Where(s => s.Contains("$$tag$$path$$")).Count();
-                var smContains = new IQueryable[conditionCount];
-                List<string> matchPathList = [];
-                for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
+                if (!consolidate)
                 {
-                    var match = splitMatch[iMatch];
-                    if (!match.Contains("$$tag$$path$$"))
+                    var splitMatch = pathAllConditionRaw.Split("$$match$$");
+                    pathAllCondition = "";
+                    var iCondition = 0;
+                    var conditionCount = splitMatch.Where(s => s.Contains("$$tag$$path$$")).Count();
+                    var smContains = new IQueryable[conditionCount];
+                    List<string> matchPathList = [];
+                    for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
                     {
-                        pathAllCondition += match;
-                    }
-                    else
-                    {
-                        var matchCondition = "false";
-                        List<string> idShortPath = [];
-                        var idShortPathSplit = new List<List<string>>();
-                        List<string> field = [];
-                        List<string> exp = [];
-                        var split = match.Split("$$tag$$path$$");
-                        for (var i = 1; i < split.Length; i++)
+                        var match = splitMatch[iMatch];
+                        if (!match.Contains("$$tag$$path$$"))
                         {
-                            var firstTag = split[i];
-                            var split2 = firstTag.Split("$$");
-                            idShortPath.Add(split2[0]);
-                            field.Add(split2[1]);
-                            exp.Add(split2[2]);
+                            pathAllCondition += match;
                         }
-                        List<string> expSME = [];
-                        var distinctPaths = idShortPath.Distinct().OrderByDescending(p => p.Count(c => c == '[')).ToList();
-                        List<string> distinctExp = [];
-                        for (var iDistinct = 0; iDistinct < distinctPaths.Count; iDistinct++)
+                        else
                         {
-                            idShortPathSplit.Add(distinctPaths[iDistinct].Split("[]").ToList());
-                            var e = "";
-                            for (var i = 0; i < idShortPath.Count; i++)
+                            var matchCondition = "false";
+                            List<string> idShortPath = [];
+                            var idShortPathSplit = new List<List<string>>();
+                            List<string> field = [];
+                            List<string> exp = [];
+                            var split = match.Split("$$tag$$path$$");
+                            for (var i = 1; i < split.Length; i++)
                             {
-                                if (idShortPath[i] == distinctPaths[iDistinct])
-                                {
-                                    if (e != "")
-                                    {
-                                        e += " && ";
-                                    }
-                                    e += field[i] + exp[i];
-                                }
+                                var firstTag = split[i];
+                                var split2 = firstTag.Split("$$");
+                                idShortPath.Add(split2[0]);
+                                field.Add(split2[1]);
+                                exp.Add(split2[2]);
                             }
-                            distinctExp.Add(e);
-                        }
-                        foreach (var ids in idShortPathSplit)
-                        {
-                            string e = "";
-                            for (var i = 0; i < ids.Count; i++)
+                            List<string> expSME = [];
+                            var distinctPaths = idShortPath.Distinct().OrderByDescending(p => p.Count(c => c == '[')).ToList();
+                            List<string> distinctExp = [];
+                            for (var iDistinct = 0; iDistinct < distinctPaths.Count; iDistinct++)
                             {
-                                if (i == 0)
+                                idShortPathSplit.Add(distinctPaths[iDistinct].Split("[]").ToList());
+                                var e = "";
+                                for (var i = 0; i < idShortPath.Count; i++)
                                 {
-                                    e = $"idShortPath.StartsWith(\"{ids[i]}[\")";
+                                    if (idShortPath[i] == distinctPaths[iDistinct])
+                                    {
+                                        if (e != "")
+                                        {
+                                            e += " && ";
+                                        }
+                                        e += field[i] + exp[i];
+                                    }
                                 }
-                                else if (i == ids.Count - 1)
+                                distinctExp.Add(e);
+                            }
+                            foreach (var ids in idShortPathSplit)
+                            {
+                                string e = "";
+                                for (var i = 0; i < ids.Count; i++)
                                 {
-                                    e += $" && idShortPath.EndsWith(\"]{ids[i]}\")";
+                                    if (i == 0)
+                                    {
+                                        e = $"idShortPath.StartsWith(\"{ids[i]}[\")";
+                                    }
+                                    else if (i == ids.Count - 1)
+                                    {
+                                        e += $" && idShortPath.EndsWith(\"]{ids[i]}\")";
+                                    }
+                                    else
+                                    {
+                                        e += $" && idShortPath.Contains(\"]{ids[i]}[\")";
+                                    }
+                                }
+                                expSME.Add(e);
+                            }
+
+                            var smeList = new List<IQueryable>();
+                            for (var iExp = 0; iExp < expSME.Count; iExp++)
+                            {
+                                var index = "Index1,";
+                                var sme = db.SMESets.Where(expSME[iExp]);
+                                // var svalue = db.ValueSets.Where(distinctExp[iExp].Replace("svalue", "value"));
+                                var svalue = db.ValueSets.Where(distinctExp[iExp]);
+                                IQueryable joinSmeValuePath = sme.Join(
+                                    svalue,
+                                    "Id",
+                                    "SMEId",
+                                    "new (outer.SMId," +
+                                        "outer.IdShortPath," +
+                                        "outer.IdShortPath.IndexOf(\"]\") + 1 as Index1," +
+                                        ")"
+                                    );
+                                for (var i = 1; i < idShortPathSplit[iExp].Count - 1; i++)
+                                {
+                                    joinSmeValuePath = joinSmeValuePath
+                                        .Select("new (SMId," +
+                                            "IdShortPath," +
+                                            index +
+                                            $"(IdShortPath.Substring(Index{i}).IndexOf(\"]\") + 1  + Index{i}) as Index{i + 1}," +
+                                            ")"
+                                        );
+                                    index += $" Index{i + 1},";
+                                }
+                                smeList.Add(joinSmeValuePath);
+                            }
+                            for (var iExp = 1; iExp < expSME.Count; iExp++)
+                            {
+                                var index = "";
+                                var pathMax = 0;
+                                while (pathMax < idShortPathSplit[iExp].Count &&
+                                    pathMax < idShortPathSplit[iExp - 1].Count &&
+                                    idShortPathSplit[iExp][pathMax] == idShortPathSplit[iExp - 1][pathMax])
+                                {
+                                    pathMax++;
+                                    index += $"Index{pathMax}, ";
+                                }
+
+                                var smeListCompare = smeList[iExp - 1].Join(
+                                    smeList[iExp],
+                                    "SMId",
+                                    "SMId",
+                                    "new (outer.SMId as SMId," +
+                                        "outer as O," +
+                                        "inner as I" +
+                                        ")"
+                                ).Distinct();
+                                index = $"Index{pathMax}";
+                                smeListCompare = smeListCompare.Where(
+                                        $"o.{index} == i.{index} && " +
+                                        $"o.IdShortPath.Substring(0, o.{index}) == i.IdShortPath.Substring(0, i.{index})"
+                                    );
+                                smeList[iExp - 1] = smeListCompare.Select("O").Distinct();
+                                smeList[iExp] = smeListCompare.Select("I").Distinct();
+                            }
+                            var pm = smeList.Last().Select($"new (IdShortPath.Substring(0, Index1) as IdShortPath)").FirstOrDefault()?.IdShortPath;
+                            if (pm != null)
+                            {
+                                matchPathList.Add(pm);
+                            }
+                            smContains[iCondition] = smeList.Last().Select("SMId");
+                            pathAllCondition += $"@{iCondition}.Contains(Id)";
+                            iCondition++;
+
+                        }
+                    }
+
+                    qResult.MatchPathList = matchPathList;
+                    var parameters = new object[conditionCount];
+                    for (var i = 0; i < conditionCount; i++)
+                    {
+                        parameters[i] = smContains[i];
+                    }
+                    smTable = db.SMSets;
+                    if (smRef != null)
+                    {
+                        var smRefString = smRef.Select<string>("Identifier");
+                        smTable = smTable.Where(s => smRefString.Contains(s.Identifier));
+                    }
+                    smTable = smTable.Where(pathAllCondition, parameters).Skip(pageFrom).Take(pageSize).Distinct();
+
+                    var resultSMPath = smTable.Select(sm => new CombinedSMResult
+                    {
+                        SM_Id = sm.Id,
+                        Identifier = sm.Identifier,
+                        TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree),
+                        MatchPathList = null
+                    });
+
+                    // resultSMPath = resultSMPath.Skip(pageFrom).Take(pageSize);
+                    result = CombineSMWithAas(db, resultSMPath, smRef);
+                    result = result.Skip(pageFrom).Take(pageSize);
+
+                    return result;
+                }
+                else
+                {
+                    var raw = "";
+                    var splitMatch = pathAllConditionRaw.Split("$$match$$");
+                    pathAllCondition = "";
+                    List<string> matchPathList = [];
+                    for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
+                    {
+                        var match = splitMatch[iMatch];
+                        if (!match.Contains("$$tag$$path$$"))
+                        {
+                            pathAllCondition += match;
+                        }
+                        else
+                        {
+                            List<int> order = [];
+                            List<int> count = [];
+                            List<string> idShortPath = [];
+                            List<string> idShortPathLast = [];
+                            List<string> idShort = [];
+                            List<string> field = [];
+                            // List<string> exp = [];
+                            var split = match.Split("$$tag$$path$$");
+                            for (var i = 1; i < split.Length; i++)
+                            {
+                                var firstTag = split[i];
+                                var split2 = firstTag.Split("$$");
+                                order.Add(i - 1);
+                                idShortPath.Add(split2[0]);
+                                idShortPathLast.Add(split2[0].Split("[]").Last());
+                                count.Add(split2[0].Count(c => c == '['));
+                                idShort.Add(split2[0].Split(".").Last());
+                                // field.Add(split2[1].Replace("svalue", "SValue").Replace("mvalue", "NValue"));
+                                // exp.Add(split2[2].Replace("==", "=").Replace("\"", "'"));
+
+                                var c = split2[1] + split2[2];
+                                var v = db.ValueSets.Where(c).ToQueryString();
+                                var sql = v.Split("WHERE").Last();
+                                field.Add(sql);
+                            }
+                            order = order.OrderBy(x => count[x]).ToList();
+
+                            raw = "EXISTS (\r\nSELECT 1\r\nFROM (\r\nSELECT ";
+                            for (var i = 0; i < order.Count; i++)
+                            {
+                                if (i != 0)
+                                {
+                                    raw += ", ";
+                                }
+                                raw += $"Path{i + 1}";
+                            }
+                            raw += "\r\nFROM (\r\nSELECT ";
+                            for (var i = 0; i < order.Count; i++)
+                            {
+                                if (i != 0)
+                                {
+                                    raw += ", ";
+                                }
+                                raw += $"s{i + 1}.IdShortPath AS Path{i + 1}";
+                            }
+                            raw += "\r\nFROM SMESets AS s1\r\n";
+                            var where1 = "WHERE s1.SMId = s.Id\r\n";
+                            var where2 = "";
+                            var where3 = "WHERE TRUE\r\n";
+
+                            for (var i = 0; i < order.Count; i++)
+                            {
+                                if (i != 0)
+                                {
+                                    raw += $"JOIN SMESets AS s{i + 1} ON s{i + 1}.SMId = s1.SMId\r\n";
+                                }
+                                raw += $"JOIN ValueSets AS v{i + 1} ON s{i + 1}.Id = v{i + 1}.SMEId\r\n";
+                                // where1 += $"AND s{i + 1}.IdShort = '{idShort[order[i]]}' AND v{i + 1}.{field[order[i]]}{exp[order[i]]}\r\n";
+                                where1 += $"AND s{i + 1}.IdShort = '{idShort[order[i]]}' AND ({field[order[i]].Replace("\"v\".", $"v{i + 1}.")})\r\n";
+                                where2 += (i == 0) ? "WHERE " : "AND ";
+                                if (idShortPath[order[i]].Contains("[]"))
+                                {
+                                    where2 += $"filtered1.Path{i + 1} LIKE '{idShortPath[order[i]].Replace("[]", "[%]")}'\r\n";
                                 }
                                 else
                                 {
-                                    e += $" && idShortPath.Contains(\"]{ids[i]}[\")";
+                                    where2 += $"filtered1.Path{i + 1} = '{idShortPath[order[i]]}'\r\n";
+                                }
+                                if (i < order.Count - 1 && idShortPathLast[order[i]].Contains("[]") && idShortPathLast[order[i + 1]].Contains("[]"))
+                                {
+                                    where3 += $"AND substr(filtered2.Path{i + 2}, 1, length(filtered2.Path{i + 2}) - length('{idShortPathLast[order[i + 1]]}')) LIKE\r\n" +
+                                        $"substr(filtered2.Path{i + 1}, 1, length(filtered2.Path{i + 1}) - length('{idShortPathLast[order[i]]}')) || '%'\r\n";
                                 }
                             }
-                            expSME.Add(e);
+                            raw += where1 + ") AS filtered1\r\n" + where2 + ") AS filtered2\r\n" + where3;
+                            raw += ")\r\n";
                         }
-
-                        var smeList = new List<IQueryable>();
-                        for (var iExp = 0; iExp < expSME.Count; iExp++)
-                        {
-                            var index = "Index1,";
-                            var sme = db.SMESets.Where(expSME[iExp]);
-                            // var svalue = db.ValueSets.Where(distinctExp[iExp].Replace("svalue", "value"));
-                            var svalue = db.ValueSets.Where(distinctExp[iExp]);
-                            IQueryable joinSmeValuePath = sme.Join(
-                                svalue,
-                                "Id",
-                                "SMEId",
-                                "new (outer.SMId," +
-                                    "outer.IdShortPath," +
-                                    "outer.IdShortPath.IndexOf(\"]\") + 1 as Index1," +
-                                    ")"
-                                );
-                            for (var i = 1; i < idShortPathSplit[iExp].Count - 1; i++)
-                            {
-                                joinSmeValuePath = joinSmeValuePath
-                                    .Select("new (SMId," +
-                                        "IdShortPath," +
-                                        index +
-                                        $"(IdShortPath.Substring(Index{i}).IndexOf(\"]\") + 1  + Index{i}) as Index{i + 1}," +
-                                        ")"
-                                    );
-                                index += $" Index{i + 1},";
-                            }
-                            smeList.Add(joinSmeValuePath);
-                        }
-                        for (var iExp = 1; iExp < expSME.Count; iExp++)
-                        {
-                            var index = "";
-                            var pathMax = 0;
-                            while (pathMax < idShortPathSplit[iExp].Count &&
-                                pathMax < idShortPathSplit[iExp - 1].Count &&
-                                idShortPathSplit[iExp][pathMax] == idShortPathSplit[iExp - 1][pathMax])
-                            {
-                                pathMax++;
-                                index += $"Index{pathMax}, ";
-                            }
-
-                            var smeListCompare = smeList[iExp - 1].Join(
-                                smeList[iExp],
-                                "SMId",
-                                "SMId",
-                                "new (outer.SMId as SMId," +
-                                    "outer as O," +
-                                    "inner as I" +
-                                    ")"
-                            ).Distinct();
-                            index = $"Index{pathMax}";
-                            smeListCompare = smeListCompare.Where(
-                                    $"o.{index} == i.{index} && " +
-                                    $"o.IdShortPath.Substring(0, o.{index}) == i.IdShortPath.Substring(0, i.{index})"
-                                );
-                            smeList[iExp - 1] = smeListCompare.Select("O").Distinct();
-                            smeList[iExp] = smeListCompare.Select("I").Distinct();
-                        }
-                        var pm = smeList.Last().Select($"new (IdShortPath.Substring(0, Index1) as IdShortPath)").FirstOrDefault()?.IdShortPath;
-                        if (pm != null)
-                        {
-                            matchPathList.Add(pm);
-                        }
-                        smContains[iCondition] = smeList.Last().Select("SMId");
-                        pathAllCondition += $"@{iCondition}.Contains(Id)";
-                        iCondition++;
                     }
+
+                    raw = "SELECT *\r\nFROM SMSets AS s\r\nWHERE\r\n" + raw;
+
+                    smTable = db.Set<SMSet>()
+                       .FromSqlRaw(raw)
+                       .AsQueryable();
+
+                    if (smRef != null)
+                    {
+                        var smRefString = smRef.Select<string>("Identifier");
+                        smTable = smTable.Where(s => smRefString.Contains(s.Identifier));
+                    }
+
+                    var resultSMPath = smTable.Select(sm => new CombinedSMResult
+                    {
+                        SM_Id = sm.Id,
+                        Identifier = sm.Identifier,
+                        TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree),
+                        MatchPathList = null
+                    });
+
+                    // resultSMPath = resultSMPath.Skip(pageFrom).Take(pageSize);
+                    result = CombineSMWithAas(db, resultSMPath, smRef);
+                    result = result.Skip(pageFrom).Take(pageSize);
+
+                    return result;
                 }
-
-                qResult.MatchPathList = matchPathList;
-                var parameters = new object[conditionCount];
-                for (var i = 0; i < conditionCount; i++)
-                {
-                    parameters[i] = smContains[i];
-                }
-                smTable = db.SMSets;
-                if (smRef != null)
-                {
-                    var smRefString = smRef.Select<string>("Identifier");
-                    smTable = smTable.Where(s => smRefString.Contains(s.Identifier));
-                }
-                smTable = smTable.Where(pathAllCondition, parameters).Skip(pageFrom).Take(pageSize).Distinct();
-
-                var resultSMPath = smTable.Select(sm => new CombinedSMResult
-                {
-                    SM_Id = sm.Id,
-                    Identifier = sm.Identifier,
-                    TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree),
-                    MatchPathList = null
-                });
-
-                // resultSMPath = resultSMPath.Skip(pageFrom).Take(pageSize);
-                result = CombineSMWithAas(db, resultSMPath, smRef);
-                result = result.Skip(pageFrom).Take(pageSize);
-
-                return result;
             }
             else
             {
