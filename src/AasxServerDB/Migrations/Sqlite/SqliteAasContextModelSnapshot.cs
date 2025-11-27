@@ -324,6 +324,9 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("IdShort");
 
+                    b.HasIndex("IdShortPath")
+                        .HasDatabaseName("IX_SMESet_IdShortPath");
+
                     b.HasIndex("ParentSMEId");
 
                     b.HasIndex("SMId");

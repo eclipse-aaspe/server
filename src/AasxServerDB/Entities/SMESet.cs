@@ -26,6 +26,7 @@ namespace AasxServerDB.Entities
     [Index(nameof(ParentSMEId))]
     [Index(nameof(SemanticId))]
     [Index(nameof(IdShort))]
+    [Index(nameof(IdShortPath))]
     [Index(nameof(TimeStamp))]
 
     public class SMESet
