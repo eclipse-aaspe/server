@@ -45,6 +45,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static AasCore.Aas3_0.Reporting;
 using static AasxServerDB.CrudOperator;
 using static AasxServerDB.Query;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -972,10 +973,12 @@ public partial class Query
                 }
                 else
                 {
-                    var raw = "";
+                    string raw = "";
                     var splitMatch = pathAllConditionRaw.Split("$$match$$");
+                    var matchCount = 0;
                     pathAllCondition = "";
                     List<string> matchPathList = [];
+                    List<string> exists = [];
                     for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
                     {
                         var match = splitMatch[iMatch];
@@ -985,6 +988,9 @@ public partial class Query
                         }
                         else
                         {
+                            pathAllCondition += $"Math.Abs(Id) == {matchCount}";
+                            matchCount++;
+
                             List<int> order = [];
                             List<int> count = [];
                             List<string> idShortPath = [];
@@ -993,14 +999,24 @@ public partial class Query
                             List<string> field = [];
                             // List<string> exp = [];
                             var split = match.Split("$$tag$$path$$");
+                            var with = "";
                             for (var i = 1; i < split.Length; i++)
                             {
                                 var firstTag = split[i];
                                 var split2 = firstTag.Split("$$");
                                 order.Add(i - 1);
                                 idShortPath.Add(split2[0]);
-                                idShortPathLast.Add(split2[0].Split("[]").Last());
-                                count.Add(split2[0].Count(c => c == '['));
+                                with = "";
+                                if (split2[0].Contains("[]"))
+                                {
+                                    with = "[]";
+                                }
+                                if (split2[0].Contains("%"))
+                                {
+                                    with = "%";
+                                }
+                                idShortPathLast.Add(split2[0].Split(with).Last());
+                                count.Add(split2[0].Count(c => c == (with == "[]" ? '[' : '%')));
                                 idShort.Add(split2[0].Split(".").Last());
                                 // field.Add(split2[1].Replace("svalue", "SValue").Replace("mvalue", "NValue"));
                                 // exp.Add(split2[2].Replace("==", "=").Replace("\"", "'"));
@@ -1012,16 +1028,71 @@ public partial class Query
                             }
                             order = order.OrderBy(x => count[x]).ToList();
 
-                            raw = "EXISTS (\r\nSELECT 1\r\nFROM (\r\nSELECT ";
-                            for (var i = 0; i < order.Count; i++)
+                            with = "";
+                            var replace = "";
+                            if (idShortPath[0].Contains("[]"))
                             {
-                                if (i != 0)
-                                {
-                                    raw += ", ";
-                                }
-                                raw += $"Path{i + 1}";
+                                with = "[]";
+                                replace = "[%]";
                             }
-                            raw += "\r\nFROM (\r\nSELECT ";
+                            if (idShortPath[0].Contains("%"))
+                            {
+                                with = "%";
+                                replace = "%";
+                            }
+
+                            raw = "EXISTS (\r\nSELECT 1\r\nFROM (\r\nSELECT ";
+                            if (with == "[]")
+                            {
+                                for (var i = 0; i < order.Count; i++)
+                                {
+                                    if (i != 0)
+                                    {
+                                        raw += ", ";
+                                    }
+                                    if (with == "[]")
+                                    {
+                                        raw += $"Path{i + 1}";
+                                    }
+                                }
+                                raw += "\r\n";
+                            }
+                            var where3p = "";
+                            if (with == "%")
+                            {
+                                raw += "\r\n";
+                                var shortestPath = idShortPath[order[0]];
+                                var lastDotIndex = shortestPath.LastIndexOf('.');
+                                shortestPath = (lastDotIndex >= 0) ? shortestPath.Substring(0, lastDotIndex + 1) : shortestPath;
+                                var shortestPathSplit = shortestPath.Split("%").ToList();
+                                var segments = shortestPathSplit;
+
+                                for (var p = 0; p < idShortPath.Count; p++)
+                                {
+                                    for (var s = 0; s < segments.Count - 1; s++)
+                                    {
+                                        var startSegment = segments[s];
+                                        var endSegment = segments[s + 1];
+                                        var alias = $"Part{p + 1}_{s + 1}";
+                                        var sql = $"substr(Path{p + 1}, instr(Path{p + 1}, '{startSegment}') + length('{startSegment}'),\r\n" +
+                                           $"instr(Path{p + 1}, '{endSegment}') - (instr(Path{p + 1}, '{startSegment}') + length('{startSegment}'))) AS {alias}";
+                                        raw += sql;
+                                        if (s != segments.Count - 2 || p != idShortPath.Count - 1)
+                                        {
+                                            raw += ",";
+                                        }
+                                        raw += "\r\n";
+                                    }
+                                }
+                                for (var p = 0; p < idShortPath.Count - 1; p++)
+                                {
+                                    for (var s = 0; s < segments.Count - 1; s++)
+                                    {
+                                        where3p += $"AND Part{p + 1}_{s + 1} = Part{p + 2}_{s + 1}\r\n";
+                                    }
+                                }
+                            }
+                            raw += "FROM (\r\nSELECT ";
                             for (var i = 0; i < order.Count; i++)
                             {
                                 if (i != 0)
@@ -1042,26 +1113,47 @@ public partial class Query
                                     raw += $"JOIN SMESets AS s{i + 1} ON s{i + 1}.SMId = s1.SMId\r\n";
                                 }
                                 raw += $"JOIN ValueSets AS v{i + 1} ON s{i + 1}.Id = v{i + 1}.SMEId\r\n";
-                                // where1 += $"AND s{i + 1}.IdShort = '{idShort[order[i]]}' AND v{i + 1}.{field[order[i]]}{exp[order[i]]}\r\n";
-                                where1 += $"AND s{i + 1}.IdShort = '{idShort[order[i]]}' AND ({field[order[i]].Replace("\"v\".", $"v{i + 1}.")})\r\n";
-                                where2 += (i == 0) ? "WHERE " : "AND ";
-                                if (idShortPath[order[i]].Contains("[]"))
+                                var op = "=";
+                                if (idShort[order[i]].Contains(with))
                                 {
-                                    where2 += $"filtered1.Path{i + 1} LIKE '{idShortPath[order[i]].Replace("[]", "[%]")}'\r\n";
+                                    op = "LIKE";
+                                    idShort[order[i]] = idShort[order[i]].Replace(with, replace);
+                                }
+                                where1 += $"AND s{i + 1}.IdShort {op} '{idShort[order[i]]}' AND ({field[order[i]].Replace("\"v\".", $"v{i + 1}.")})\r\n";
+                                where2 += (i == 0) ? "WHERE " : "AND ";
+                                if (with != "")
+                                {
+                                    where2 += $"filtered1.Path{i + 1} LIKE '{idShortPath[order[i]].Replace(with, replace)}'\r\n";
                                 }
                                 else
                                 {
                                     where2 += $"filtered1.Path{i + 1} = '{idShortPath[order[i]]}'\r\n";
                                 }
-                                if (i < order.Count - 1 && idShortPathLast[order[i]].Contains("[]") && idShortPathLast[order[i + 1]].Contains("[]"))
+                                // if (i < order.Count - 1 && idShortPathLast[order[i]].Contains("[]") && idShortPathLast[order[i + 1]].Contains("[]"))
+                                if (with == "[]")
                                 {
-                                    where3 += $"AND substr(filtered2.Path{i + 2}, 1, length(filtered2.Path{i + 2}) - length('{idShortPathLast[order[i + 1]]}')) LIKE\r\n" +
-                                        $"substr(filtered2.Path{i + 1}, 1, length(filtered2.Path{i + 1}) - length('{idShortPathLast[order[i]]}')) || '%'\r\n";
+                                    if (i < order.Count - 1 && with != "")
+                                    {
+                                        where3 += $"AND substr(filtered2.Path{i + 2}, 1, length(filtered2.Path{i + 2}) - length('{idShortPathLast[order[i + 1]]}')) LIKE\r\n" +
+                                            $"substr(filtered2.Path{i + 1}, 1, length(filtered2.Path{i + 1}) - length('{idShortPathLast[order[i]]}')) || '%'\r\n";
+                                    }
                                 }
+                            }
+                            if (with == "%")
+                            {
+                                where3 += where3p;
                             }
                             raw += where1 + ") AS filtered1\r\n" + where2 + ") AS filtered2\r\n" + where3;
                             raw += ")\r\n";
+                            exists.Add(raw);
                         }
+                    }
+
+                    var q = db.SMSets.Where(pathAllCondition);
+                    raw = q.ToQueryString().Split("WHERE").Last();
+                    for (var e = 0; e < exists.Count; e++)
+                    {
+                        raw = raw.Replace($"abs(\"s\".\"Id\") = {e}", "(" + exists[e] + ")");
                     }
 
                     raw = "SELECT *\r\nFROM SMSets AS s\r\nWHERE\r\n" + raw;
