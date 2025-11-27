@@ -134,6 +134,10 @@ namespace AasxServerDB
             modelBuilder.Entity<SMSet>()
                 .HasIndex(e => e.IdShort)
                 .HasDatabaseName("IX_SMSet_IdShort");
+
+            modelBuilder.Entity<SMESet>()
+                .HasIndex(e => e.IdShortPath)
+                .HasDatabaseName("IX_SMESet_IdShortPath");
         }
     }
 }
