@@ -45,6 +45,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SQLitePCL;
 using static AasCore.Aas3_0.Reporting;
 using static AasxServerDB.CrudOperator;
 using static AasxServerDB.Query;
@@ -1435,6 +1436,7 @@ public partial class Query
                     }
                     // anyConditions.Clear();
                     // anyConditions.Add(pathAll2);
+                    /*
                     if (conditionsExpression["sm"] == "")
                     {
                         conditionsExpression["sm"] = $"({pathAll})".Replace("sm.", "").Replace("mvalue", "MValue");
@@ -1444,6 +1446,7 @@ public partial class Query
                         conditionsExpression["sm"] = $"({conditionsExpression["sm"]}) && ({pathAll})".Replace("sm.", "").Replace("mvalue", "MValue");
                     }
                     restrictSM = false;
+                    */
                 }
             }
             // else
@@ -1473,7 +1476,7 @@ public partial class Query
                         conditionAll = conditionsExpression["all-aas"];
                         // conditionAll = conditionsExpression["all-aas"].Replace("svalue", "SValue").Replace("mvalue", "DValue").Replace("dtvalue", "DTValue");
                     }
-                    comTable = CombineTablesEXISTS(db, aasTable, smTable, smeTable, valueTable, pathAllCondition, anyConditions, conditionAll);
+                    comTable = CombineTablesEXISTS(db, aasTable, smTable, smeTable, valueTable, pathAllCondition, anyConditions, conditionAll, pageFrom, pageSize);
                     // var x1 = comTable.Take(10).ToList();
                 }
                 else
@@ -3099,21 +3102,28 @@ public partial class Query
     }
 
     private static IQueryable<CombinedSMSMEV> CombineTablesEXISTS(
-    AasContext db,
-    IQueryable<AASSet>? aasTable,
-    IQueryable<SMSet> smTable,
-    IQueryable<SMESet> smeTable,
-    IQueryable<ValueSet>? valueTable,
-    //IQueryable<IValueSet>? iValueTable,
-    //IQueryable<DValueSet>? dValueTable,
-    string pathAllCondition,
-    List<string> pathConditions,
-    string conditionAll = "true")
+        AasContext db,
+        IQueryable<AASSet>? aasTable,
+        IQueryable<SMSet> smTable,
+        IQueryable<SMESet> smeTable,
+        IQueryable<ValueSet>? valueTable,
+        //IQueryable<IValueSet>? iValueTable,
+        //IQueryable<DValueSet>? dValueTable,
+        string pathAllCondition,
+        List<string> pathConditions,
+        string conditionAll,
+        int pageFrom,
+        int pageSize
+        )
     {
-        var q1 = aasTable?.ToQueryString();
-        var q2 = smTable?.ToQueryString();
-        var q3 = smeTable?.ToQueryString();
-        var q4 = valueTable?.ToQueryString();
+        var rawAas = aasTable?.ToQueryString();
+        var whereAas = rawAas?.Split("WHERE").Last();
+        var rawSm = smTable?.ToQueryString();
+        var whereSm = rawSm?.Split("WHERE").Last();
+        var rawSme = smeTable?.ToQueryString();
+        var whereSme = rawSme?.Split("WHERE").Last();
+        var rawValue = valueTable?.ToQueryString();
+        var whereValue = rawValue?.Split("WHERE").Last();
 
         IQueryable<joinAll>? result = null;
 
@@ -3172,9 +3182,54 @@ public partial class Query
             });
         }
 
+        IQueryable<SMSetIdResult> resultSMId = null;
+
         var smRawSQL = result.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
 
+        var rawResult = "";
+        if (false && pathConditions.Count != 0)
+        {
+            for (var p = 0; p < pathConditions.Count; p++)
+            {
+                var pResult = result.Where(pathConditions[p]).Select(r => new { Id = r.SMId });
+                if (p == 0)
+                {
+                    rawResult += pResult.ToQueryString() + "\r\n";
+                }
+                else
+                {
+                    rawResult += "INTERSECT\r\n" + pResult.ToQueryString() + "\r\n";
+                }
+            }
+
+            if (conditionAll.Contains("sme.") || conditionAll.Contains("value."))
+            {
+                var pResult = result.Where(conditionAll).Select(r => new { Id = r.SMId });
+                rawResult = "INTERSECT\r\n" + pResult.ToQueryString() + "\r\n";
+            }
+
+            resultSMId = db.Set<SMSetIdResult>()
+                   .FromSqlRaw(rawResult)
+                   .AsQueryable();
+            /*
+            var resultSMIdList = resultSMId
+                .Skip(pageFrom)
+                .Take(pageSize)
+                .ToList();
+            */
+            // var x = resultSMId.Take(10).ToList();
+
+            var smRawSQL2 = resultSMId.ToQueryString();
+            var qp2 = GetQueryPlan(db, smRawSQL2);
+
+            // back to normal joinall result
+            result = result.Join(resultSMId,
+                r => r.SMId,
+                r2 => r2.Id,
+                (r, r2) => r);
+
+        }
         if (pathConditions.Count != 0)
         {
             // sme with idShortPath use CTE (common table expressions)
@@ -3245,22 +3300,24 @@ public partial class Query
 
             // replace placeholders by path conditions
             // var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nINNER JOIN \"SMESets\" AS \"s0\" ON \"s\".\"Id\" = \"s0\".\"SMId\"\r\nINNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\n";
-            var raw = "SELECT DISTINCT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\n";
+            // var raw = $"SELECT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nWHERE {whereSm}\r\nAND (\r\n";
+            var raw = $"SELECT s.\"Id\"\r\nFROM \"SMSets\" AS s\r\nWHERE (\r\n";
             for (var i = 0; i < pathConditionsSQL.Length; i++)
             {
                 // var exists = $"path{i}.\"Id\" IS NOT NULL";
                 convertAll = convertAll.Replace(placeholderSQL[i], exists[i]);
                 // raw += $"LEFT JOIN pathCTE{i} path{i} ON s.\"Id\" = path{i}.\"Id\"\r\n";
             }
-            raw += "WHERE\r\n";
+            // raw += "WHERE\r\n";
             raw += convertAll;
+            raw += ")";
 
-            var resultSMId = db.Set<SMSetIdResult>()
+            resultSMId = db.Set<SMSetIdResult>()
                            .FromSqlRaw(raw)
                            .AsQueryable();
 
-            var smRawSQL2 = resultSMId.ToQueryString();
-            var qp2 = GetQueryPlan(db, smRawSQL2);
+            // var smRawSQL2 = resultSMId.ToQueryString();
+            // var qp2 = GetQueryPlan(db, smRawSQL2);
 
             // back to normal joinall result
             result = result.Join(resultSMId,
@@ -4142,7 +4199,8 @@ public partial class Query
                     var s = idShort.Split(".");
                     idShort = s.Last();
                 }
-                nextPathExpression = $"({field}{exp} && sme.idShort == \"{idShort}\" && sme.idShortPath == \"{idShortPath}\" )";
+                // nextPathExpression = $"({field}{exp} && sme.idShort == \"{idShort}\" && sme.idShortPath == \"{idShortPath}\" )";
+                nextPathExpression = $"({field}{exp} && sme.idShortPath == \"{idShortPath}\")";
                 if (c.Key == "all")
                 {
                     if (allPathExpressions == "")
