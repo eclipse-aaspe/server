@@ -3613,9 +3613,41 @@ public partial class Query
                         }
                         rawMatch += "\r\n";
                         // selectMatch += "\r\n";
+                        var where = "";
+                        for (var i = 0; i < order.Count - 1; i++)
+                        {
+                            var firstSplit = idShortPath[order[i]].Split("[]").ToList();
+                            var secondSplit = idShortPath[order[i + 1]].Split("[]").ToList();
+                            var c = count[order[i]];
+                            var firstStartSegment = firstSplit[c - 1];
+                            var firstEndSegment = firstSplit[c];
+                            var firstIndex = $"Part{matchCount}_{i + 1}_1";
+                            selectMatch += $"substr(smePath{order[i] + 1}.IdShortPath, instr(smePath{order[i] + 1}.IdShortPath, '{firstStartSegment}') + length('{firstStartSegment}'),\r\n" +
+                               $"instr(smePath{order[i] + 1}.IdShortPath, '{firstEndSegment}') - (instr(smePath{order[i] + 1}.IdShortPath, '{firstStartSegment}') + length('{firstStartSegment}'))) AS {firstIndex},\r\n";
+                            var secondStartSegment = secondSplit[c - 1];
+                            var secondEndSegment = secondSplit[c];
+                            var secondIndex = $"Part{matchCount}_{i + 1}_2";
+                            selectMatch += $"substr(smePath{order[i + 1] + 1}.IdShortPath, instr(smePath{order[i + 1] + 1}.IdShortPath, '{secondStartSegment}') + length('{secondStartSegment}'),\r\n" +
+                               $"instr(smePath{order[i + 1] + 1}.IdShortPath, '{secondEndSegment}') - (instr(smePath{order[i + 1] + 1}.IdShortPath, '{secondStartSegment}') + length('{secondStartSegment}'))) AS {secondIndex}";
+                            if (where != "")
+                            {
+                                where += " AND ";
+                            }
+                            where += $"{firstIndex} = {secondIndex}";
+                            if (i != order.Count - 2)
+                            {
+                                selectMatch += ",\r\n";
+                            }
+                        }
+                        for (var i = 0; i < order.Count; i++)
+                        {
+                            where += $" AND path{order[i] + 1} = 1";
+                        }
+                        whereMatch.Add(where);
+                        selectMatch += "\r\n";
                     }
                     var where3p = "";
-                    if (with == "[]" || with == "%")
+                    if (with == "%")
                     {
                         rawMatch += "\r\n";
                         var shortestPath = idShortPath[order[0]];
@@ -3630,7 +3662,7 @@ public partial class Query
                             {
                                 var startSegment = segments[s];
                                 var endSegment = segments[s + 1];
-                                var alias = $"Part{p + 1}_{s + 1}";
+                                var alias = $"Part{matchCount}_{p + 1}_{s + 1}";
                                 var sql = $"substr(smePath{p + 1}.IdShortPath, instr(smePath{p + 1}.IdShortPath, '{startSegment}') + length('{startSegment}'),\r\n" +
                                    $"instr(smePath{p + 1}.IdShortPath, '{endSegment}') - (instr(smePath{p + 1}.IdShortPath, '{startSegment}') + length('{startSegment}'))) AS {alias}";
                                 rawMatch += sql;
@@ -3648,8 +3680,8 @@ public partial class Query
                         {
                             for (var s = 0; s < segments.Count - 1; s++)
                             {
-                                where3p += $"AND Part{p + 1}_{s + 1} = Part{p + 2}_{s + 1}\r\n";
-                                whereMatch.Add($"Part{p + 1}_{s + 1} = Part{p + 2}_{s + 1}");
+                                where3p += $"AND Part{matchCount}_{p + 1}_{s + 1} = Part{matchCount}_{p + 2}_{s + 1}\r\n";
+                                whereMatch.Add($"Part{matchCount}_{p + 1}_{s + 1} = Part{matchCount}_{p + 2}_{s + 1}");
                             }
                         }
                     }
@@ -3923,6 +3955,10 @@ public partial class Query
                 pathConditionsSQL[i] = where;
                 var split = where.Split(" AND ");
                 smeSQL[i] = split[split.Length - 2];
+                if (smeSQL[i].Contains("[]"))
+                {
+                    smeSQL[i] = smeSQL[i].Replace("[]", "[%]");
+                }
                 if (smeSQL[i].Contains("%"))
                 {
                     smeSQL[i] = smeSQL[i].Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
