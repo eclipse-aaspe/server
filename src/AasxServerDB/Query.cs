@@ -1616,12 +1616,10 @@ public partial class Query
         List<string> whereMatch = [];
         if (withMatch)
         {
-            var rawMatch = "";
             var splitMatch = pathAllConditionRaw.Split("$$match$$");
             var matchCount = 0;
             pathAllCondition = "";
             List<string> matchPathList = [];
-            List<string> exists = [];
             for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
             {
                 var match = splitMatch[iMatch];
@@ -1662,49 +1660,19 @@ public partial class Query
                         idShortPathLast.Add(split2[0].Split(with).Last());
                         count.Add(split2[0].Count(c => c == (with == "[]" ? '[' : '%')));
                         idShort.Add(split2[0].Split(".").Last());
-                        // field.Add(split2[1].Replace("svalue", "SValue").Replace("mvalue", "NValue"));
-                        // exp.Add(split2[2].Replace("==", "=").Replace("\"", "'"));
 
                         var c = split2[1] + split2[2];
                         var v = db.ValueSets.Where(c).ToQueryString();
                         var sql = v.Split("WHERE").Last();
                         field.Add(sql);
-                        // pathConditions.Add($"sme.IdShortPath == {split2[0]} && {c}");
                     }
                     order = order.OrderBy(x => count[x]).ToList();
 
                     with = "";
-                    var replace = "";
+                    var where = "";
                     if (idShortPath[0].Contains("[]"))
                     {
                         with = "[]";
-                        replace = "[%]";
-                    }
-                    if (idShortPath[0].Contains("%"))
-                    {
-                        with = "%";
-                        replace = "%";
-                    }
-
-                    rawMatch = "EXISTS (\r\nSELECT 1\r\nFROM (\r\nSELECT ";
-                    if (with == "[]")
-                    {
-                        for (var i = 0; i < order.Count; i++)
-                        {
-                            if (i != 0)
-                            {
-                                rawMatch += ", ";
-                                // selectMatch += ", ";
-                            }
-                            if (with == "[]")
-                            {
-                                rawMatch += $"Path{i + 1}";
-                                // selectMatch += $"Path{i + 1}";
-                            }
-                        }
-                        rawMatch += "\r\n";
-                        // selectMatch += "\r\n";
-                        var where = "";
                         for (var i = 0; i < order.Count - 1; i++)
                         {
                             var firstSplit = idShortPath[order[i]].Split("[]").ToList();
@@ -1737,16 +1705,14 @@ public partial class Query
                         whereMatch.Add(where);
                         selectMatch += "\r\n";
                     }
-                    var where3p = "";
-                    if (with == "%")
+                    if (idShortPath[0].Contains("%"))
                     {
-                        rawMatch += "\r\n";
+                        with = "%";
                         var shortestPath = idShortPath[order[0]];
                         var lastDotIndex = shortestPath.LastIndexOf('.');
                         shortestPath = (lastDotIndex >= 0) ? shortestPath.Substring(0, lastDotIndex + 1) : shortestPath;
                         var shortestPathSplit = shortestPath.Split(with).ToList();
                         var segments = shortestPathSplit;
-                        var where = "";
 
                         for (var p = 0; p < idShortPath.Count; p++)
                         {
@@ -1757,14 +1723,11 @@ public partial class Query
                                 var alias = $"Part{matchCount}_{p + 1}_{s + 1}";
                                 var sql = $"substr(smePath{p + 1}.IdShortPath, instr(smePath{p + 1}.IdShortPath, '{startSegment}') + length('{startSegment}'),\r\n" +
                                    $"instr(smePath{p + 1}.IdShortPath, '{endSegment}') - (instr(smePath{p + 1}.IdShortPath, '{startSegment}') + length('{startSegment}'))) AS {alias}";
-                                rawMatch += sql;
                                 selectMatch += sql;
                                 if (s != segments.Count - 2 || p != idShortPath.Count - 1)
                                 {
-                                    rawMatch += ",";
                                     selectMatch += ",";
                                 }
-                                rawMatch += "\r\n";
                                 selectMatch += "\r\n";
                             }
                         }
@@ -1772,7 +1735,6 @@ public partial class Query
                         {
                             for (var s = 0; s < segments.Count - 1; s++)
                             {
-                                where3p += $"AND Part{matchCount}_{p + 1}_{s + 1} = Part{matchCount}_{p + 2}_{s + 1}\r\n";
                                 if (where != "")
                                 {
                                     where += " AND ";
@@ -1786,65 +1748,10 @@ public partial class Query
                         }
                         whereMatch.Add(where);
                     }
-                    rawMatch += "FROM (\r\nSELECT ";
-                    for (var i = 0; i < order.Count; i++)
-                    {
-                        if (i != 0)
-                        {
-                            rawMatch += ", ";
-                        }
-                        rawMatch += $"s{i + 1}.IdShortPath AS Path{i + 1}";
-                    }
-                    rawMatch += "\r\nFROM SMESets AS s1\r\n";
-                    var where1 = "WHERE s1.SMId = s.Id\r\n";
-                    var where2 = "";
-                    var where3 = "WHERE TRUE\r\n";
-
-                    for (var i = 0; i < order.Count; i++)
-                    {
-                        if (i != 0)
-                        {
-                            rawMatch += $"JOIN SMESets AS s{i + 1} ON s{i + 1}.SMId = s1.SMId\r\n";
-                        }
-                        rawMatch += $"JOIN ValueSets AS v{i + 1} ON s{i + 1}.Id = v{i + 1}.SMEId\r\n";
-                        var op = "=";
-                        if (idShort[order[i]].Contains(with))
-                        {
-                            op = "LIKE";
-                            idShort[order[i]] = idShort[order[i]].Replace(with, replace);
-                        }
-                        where1 += $"AND s{i + 1}.IdShort {op} '{idShort[order[i]]}' AND ({field[order[i]].Replace("\"v\".", $"v{i + 1}.")})\r\n";
-                        where2 += (i == 0) ? "WHERE " : "AND ";
-                        if (with != "")
-                        {
-                            where2 += $"filtered1.Path{i + 1} LIKE '{idShortPath[order[i]].Replace(with, replace)}'\r\n";
-                        }
-                        else
-                        {
-                            where2 += $"filtered1.Path{i + 1} = '{idShortPath[order[i]]}'\r\n";
-                        }
-                        // if (i < order.Count - 1 && idShortPathLast[order[i]].Contains("[]") && idShortPathLast[order[i + 1]].Contains("[]"))
-                        if (with == "[]")
-                        {
-                            if (i < order.Count - 1 && with != "")
-                            {
-                                where3 += $"AND substr(filtered2.Path{i + 2}, 1, length(filtered2.Path{i + 2}) - length('{idShortPathLast[order[i + 1]]}')) LIKE\r\n" +
-                                    $"substr(filtered2.Path{i + 1}, 1, length(filtered2.Path{i + 1}) - length('{idShortPathLast[order[i]]}')) || '%'\r\n";
-                            }
-                        }
-                    }
-                    if (with == "%")
-                    {
-                        where3 += where3p;
-                    }
-                    rawMatch += where1 + ") AS filtered1\r\n" + where2 + ") AS filtered2\r\n" + where3;
-                    rawMatch += ")\r\n";
-                    exists.Add(rawMatch);
                 }
             }
 
             pathAllAas = pathAllAas.Replace("$$match$$", "");
-            // pathAllCondition = "true";
         }
 
         if (withPathSme)
@@ -1885,22 +1792,16 @@ public partial class Query
             {
                 var splitField = fieldList[i].Split("#");
                 var idShort = pathList[i].Split(".").Last();
-                var smeCondition = $"idShort == \"{idShort}\" && idShortPath == \"{pathList[i]}\"";
                 var allCondition = $"sme.idShort == \"{idShort}\" && sme.idShortPath == \"{pathList[i]}\"";
                 if (splitField.Length > 1 && splitField[1] != "value")
                 {
-                    smeCondition += $" && {splitField[1]}{opList[i]}";
-                    smeCondition = $"SMESets.Any({smeCondition})";
                     allCondition += $" && sme.{splitField[1]}{opList[i]}";
                 }
                 else
                 {
-                    smeCondition = $"SMESets.Any({smeCondition} && ValueSets.Any({splitField[0]}{opList[i]}))";
                     allCondition = $"{allCondition} && {splitField[0]}{opList[i]}";
                 }
-                // pathAll = pathAll.Replace($"$$path{i}$$", "(" + smeCondition + ")");
                 var replace = $"$$tag$$path$${pathList[i]}$${fieldList[i]}$${opList[i]}$$";
-                // pathAllAas = pathAllAas.Replace(replace, $"Any({allCondition})");
                 pathAllCondition = pathAllCondition.Replace(replace, $"$$path{i}$$");
                 pathConditions.Add(allCondition);
             }
@@ -1925,7 +1826,6 @@ public partial class Query
         if (!withMatch && conditionsExpression.TryGetValue("all-aas", out _))
         {
             conditionAll = conditionsExpression["all-aas"];
-            // conditionAll = conditionsExpression["all-aas"].Replace("svalue", "SValue").Replace("mvalue", "DValue").Replace("dtvalue", "DTValue");
         }
 
         var rawAas = aasTable?.ToQueryString();
@@ -2066,7 +1966,6 @@ public partial class Query
                 var ii = i + 1;
 
                 caseWhen += $"CASE WHEN {valueSQL[i]} THEN 1 ELSE 0 END AS path{ii}";
-                // caseWhen += $"CASE WHEN ({pathAllConditionsSQL[i]}) AND ({pathConditionsSQL[i]}) THEN 1 ELSE 0 END AS path{ii}";
                 if (i != pathConditions.Count - 1)
                 {
                     caseWhen += ",";
@@ -2077,13 +1976,6 @@ public partial class Query
                 join += $"LEFT JOIN ValueSets AS vPath{ii} ON smePath{ii}.Id = vPath{ii}.SMEId \r\n";
 
                 wherePath = wherePath.Replace(placeholderSQL[i], $"path{ii} = 1");
-                /*
-                if (wherePath != "")
-                {
-                    wherePath += " OR ";
-                }
-                wherePath += $"path{ii}";
-                */
             }
 
             var smeSelect = "";
@@ -2169,11 +2061,6 @@ public partial class Query
                 raw += $"WHERE ({whereSm})\r\n";
             }
             raw += ") AS base\r\n";
-            /*
-            raw += ") AS result\r\n" +
-                $"WHERE {wherePath}\r\n" +
-                $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
-            */
             rawBase = raw;
             if (whereMatch.Count != 0)
             {
@@ -2211,13 +2098,11 @@ public partial class Query
                 rawBase += $" AND ({whereSme})";
             }
             rawBase += "\r\n";
-            // rawBase += $"LEFT JOIN ValueSets AS v ON sme.Id = v.SMEId AND ({whereValue})\r\n";
             rawBase += $"LEFT JOIN ValueSets AS v ON sme.Id = v.SMEId\r\n";
             if (!whereSm.StartsWith("SELECT"))
             {
                 rawBase += $"WHERE ({whereSm})\r\n";
             }
-            // rawBase += ") AS result\r\n";
 
             rawBase = "SELECT DISTINCT result.Id\r\n" + "" +
                 "FROM (\r\n" +
