@@ -90,8 +90,7 @@ public partial class Query
     private readonly QueryGrammar grammar;
     */
 
-    public QResult SearchSMs(Dictionary<string, string>? securityCondition, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
-        string identifier, string diff, int pageFrom, int pageSize, string expression)
+    public List<int> SearchSMs(Dictionary<string, string>? securityCondition, AasContext db, int pageFrom, int pageSize, string expression)
     {
         bool noSecurity = securityCondition == null;
 
@@ -115,135 +114,166 @@ public partial class Query
 
         watch.Restart();
         Dictionary<string, string>? condition;
-        var query = GetSMs(noSecurity, securityCondition, out condition, "submodel", qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
-        if (query == null)
-        {
-            text = "No query is generated.";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
-        }
-        else
-        {
-            text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
 
-            watch.Restart();
-            int lastId = 0;
-            var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, "Submodel", withLastId, out lastId);
-            qResult.LastID = lastId;
-            qResult.Count = result.Count;
-            text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
-            text = "SMs found ";
-            if (withTotalCount)
-            {
-                text += qResult.TotalCount;
-            }
-            else
-            {
-                text += "totalCount";
-            }
-            text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
+        var query = GetSMs(false, securityCondition, out condition, "submodel", qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
 
-            qResult.SMResults = result;
-        }
-
-        return qResult;
+        return query;
     }
 
-    public int CountSMs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
-    {
-        var watch = Stopwatch.StartNew();
-        Console.WriteLine("\nCountSMs");
+    //public QResult SearchSMs(Dictionary<string, string>? securityCondition, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
+    //    string identifier, string diff, int pageFrom, int pageSize, string expression)
+    //{
+    //    bool noSecurity = securityCondition == null;
 
-        watch.Restart();
-        Dictionary<string, string>? condition;
-        var query = GetSMs(securityConfig.NoSecurity, securityCondition, out condition, "submodel",
-            new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
-        if (query == null)
-        {
-            Console.WriteLine("No query is generated.");
-            return 0;
-        }
-        Console.WriteLine("Generate query in " + watch.ElapsedMilliseconds + " ms");
+    //    var qResult = new QResult()
+    //    {
+    //        Count = 0,
+    //        TotalCount = 0,
+    //        PageFrom = 0,
+    //        PageSize = QResult.DefaultPageSize,
+    //        LastID = 0,
+    //        Messages = new List<string>(),
+    //        SMResults = new List<SMResult>(),
+    //        SMEResults = new List<SMEResult>(),
+    //        SQL = new List<string>()
+    //    };
 
-        watch.Restart();
-        var result = query.Count();
-        Console.WriteLine("Collect results in " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result + "/" + db.SMSets.Count());
+    //    var text = string.Empty;
 
-        return result;
-    }
+    //    var watch = Stopwatch.StartNew();
+    //    Console.WriteLine("\nSearchSMs");
 
-    public QResult SearchSMEs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition,
-        AasContext db, string requested, bool withTotalCount, bool withLastId,
-        string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
-        string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
-    {
+    //    watch.Restart();
+    //    Dictionary<string, string>? condition;
+    //    var query = GetSMs(noSecurity, securityCondition, out condition, "submodel", qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        //if (query == null)
+        //{
+        //    text = "No query is generated.";
+        //    Console.WriteLine(text);
+        //    qResult.Messages.Add(text);
+        //}
+        //else
+        //{
+        //    text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
+        //    Console.WriteLine(text);
+        //    qResult.Messages.Add(text);
 
-        var qResult = new QResult()
-        {
-            Count = 0,
-            TotalCount = 0,
-            PageFrom = 0,
-            PageSize = QResult.DefaultPageSize,
-            LastID = 0,
-            Messages = new List<string>(),
-            SMResults = new List<SMResult>(),
-            SMEResults = new List<SMEResult>(),
-            SQL = new List<string>()
-        };
+        //    watch.Restart();
+        //    int lastId = 0;
+        //    var result = GetSMResult(qResult, query, "Submodel", withLastId, out lastId);
+        //    qResult.LastID = lastId;
+        //    qResult.Count = result.Count;
+        //    text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+        //    Console.WriteLine(text);
+        //    qResult.Messages.Add(text);
+        //    text = "SMs found ";
+        //    if (withTotalCount)
+        //    {
+        //        text += qResult.TotalCount;
+        //    }
+        //    else
+        //    {
+        //        text += "totalCount";
+        //    }
+        //    text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
+        //    Console.WriteLine(text);
+        //    qResult.Messages.Add(text);
 
-        var text = string.Empty;
+        //    qResult.SMResults = result;
+        //}
 
-        var watch = Stopwatch.StartNew();
-        Console.WriteLine("\nSearchSMEs");
+    //    return qResult;
+    //}
 
-        watch.Restart();
-        var query = GetSMEs(securityConfig.NoSecurity, securityCondition, qResult, watch, requested, db, false, withTotalCount,
-            smSemanticId, smIdentifier, semanticId, diff, pageFrom, pageSize, contains, equal, lower, upper, expression);
-        if (query == null)
-        {
-            text = "No query is generated.";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
-        }
-        else
-        {
-            text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
+    //public int CountSMs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
+    //{
+    //    var watch = Stopwatch.StartNew();
+    //    Console.WriteLine("\nCountSMs");
 
-            watch.Restart();
-            // var result = GetSMEResult(requested, (IQueryable<CombinedSMEResult>)query);
-            int lastId = 0;
-            var result = GetSMEResult(qResult, db, requested, query, withLastId, out lastId);
-            qResult.LastID = lastId;
-            qResult.Count = result.Count;
-            text = "SMEs found ";
-            if (withTotalCount)
-            {
-                text += qResult.TotalCount;
-            }
-            else
-            {
-                text += "totalCount";
-            }
-            text += "/" + db.SMESets.Count() + ": " + qResult.Count + " queried";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
-            text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
-            Console.WriteLine(text);
-            qResult.Messages.Add(text);
+    //    watch.Restart();
+    //    Dictionary<string, string>? condition;
+    //    var query = GetSMs(securityConfig.NoSecurity, securityCondition, out condition, "submodel",
+    //        new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
+    //    if (query == null)
+    //    {
+    //        Console.WriteLine("No query is generated.");
+    //        return 0;
+    //    }
+    //    Console.WriteLine("Generate query in " + watch.ElapsedMilliseconds + " ms");
 
-            qResult.SMEResults = result;
-        }
+    //    watch.Restart();
+    //    var result = query.Count();
+    //    Console.WriteLine("Collect results in " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result + "/" + db.SMSets.Count());
 
-        return qResult;
-    }
+    //    return result;
+    //}
+
+    //public QResult SearchSMEs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition,
+    //    AasContext db, string requested, bool withTotalCount, bool withLastId,
+    //    string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
+    //    string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
+    //{
+
+    //    var qResult = new QResult()
+    //    {
+    //        Count = 0,
+    //        TotalCount = 0,
+    //        PageFrom = 0,
+    //        PageSize = QResult.DefaultPageSize,
+    //        LastID = 0,
+    //        Messages = new List<string>(),
+    //        SMResults = new List<SMResult>(),
+    //        SMEResults = new List<SMEResult>(),
+    //        SQL = new List<string>()
+    //    };
+
+    //    var text = string.Empty;
+
+    //    var watch = Stopwatch.StartNew();
+    //    Console.WriteLine("\nSearchSMEs");
+
+    //    watch.Restart();
+    //    var query = GetSMEs(securityConfig.NoSecurity, securityCondition, qResult, watch, requested, db, false, withTotalCount,
+    //        smSemanticId, smIdentifier, semanticId, diff, pageFrom, pageSize, contains, equal, lower, upper, expression);
+    //    if (query == null)
+    //    {
+    //        text = "No query is generated.";
+    //        Console.WriteLine(text);
+    //        qResult.Messages.Add(text);
+    //    }
+    //    else
+    //    {
+    //        text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
+    //        Console.WriteLine(text);
+    //        qResult.Messages.Add(text);
+
+    //        watch.Restart();
+    //        // var result = GetSMEResult(requested, (IQueryable<CombinedSMEResult>)query);
+    //        int lastId = 0;
+    //        var result = GetSMEResult(qResult, db, requested, query, withLastId, out lastId);
+    //        qResult.LastID = lastId;
+    //        qResult.Count = result.Count;
+    //        text = "SMEs found ";
+    //        if (withTotalCount)
+    //        {
+    //            text += qResult.TotalCount;
+    //        }
+    //        else
+    //        {
+    //            text += "totalCount";
+    //        }
+    //        text += "/" + db.SMESets.Count() + ": " + qResult.Count + " queried";
+    //        Console.WriteLine(text);
+    //        qResult.Messages.Add(text);
+    //        text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+    //        Console.WriteLine(text);
+    //        qResult.Messages.Add(text);
+
+    //        qResult.SMEResults = result;
+    //    }
+
+    //    return qResult;
+    //}
 
     public int CountSMEs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db,
         string smSemanticId, string smIdentifier, string semanticId, string diff,
@@ -294,9 +324,9 @@ public partial class Query
         expression = "$JSONGRAMMAR " + expression;
 
         Dictionary<string, string>? condition;
-        var query = GetSMs(noSecurity, securityCondition, out condition, resultType,
+        var result = GetSMs(noSecurity, securityCondition, out condition, resultType,
             qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
-        if (query == null)
+        if (result == null)
         {
             text = "No query is generated.";
             Console.WriteLine(text);
@@ -316,105 +346,106 @@ public partial class Query
             Console.WriteLine(text);
 
             watch.Restart();
-            var lastId = 0;
+            //var lastId = 0;
 
-            if (resultType == "SubmodelElement")
-            {
-                var smIdList = query.Select("SM_Id").Distinct().ToDynamicList();
-                var smeIdList = query.Select("SME_Id").Distinct().ToDynamicList();
+            //if (resultType == "SubmodelElement")
+            //{
+            //    var smIdList = query;
+            //    //var smeIdList = query.Select("SME_Id").Distinct().ToDynamicList();
 
-                var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
-                var smeList = db.SMESets.Where(sme => smeIdList.Contains(sme.Id)).ToList();
+            //    var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
+            //    //var smeList = db.SMESets.Where(sme => smeIdList.Contains(sme.Id)).ToList();
 
-                foreach (var sm in smList)
-                {
-                    var smeSmList = smeList.Where(sme => sme.SMId == sm.Id);
-                    var smeTree = GetTree(db, sm, smeSmList.ToList());
-                    var smeMerged = GetSmeMerged(db, null, smeTree, sm);
+            //    foreach (var sm in smList)
+            //    {
+            //        var smeSmList = smeList.Where(sme => sme.SMId == sm.Id);
+            //        var smeTree = GetTree(db, sm, smeSmList.ToList());
+            //        var smeMerged = GetSmeMerged(db, null, smeTree, sm);
 
-                    var smeSmListMerged = smeSmList;
+            //        var smeSmListMerged = smeSmList;
 
-                    foreach (var sme in smeSmListMerged)
-                    {
-                        var readSme = ReadSubmodelElement(sme, smeMerged);
-                        if (readSme != null)
-                        {
-                            readSme.Extensions ??= [];
-                            readSme.Extensions.Add(new Extension("sm#id", value: sm.Identifier));
-                            if (sm.IdShort != null)
-                            {
-                                readSme.Extensions.Add(new Extension("sm#idShort", value: sm.IdShort));
-                            }
-                            if (sm.SemanticId != null)
-                            {
-                                readSme.Extensions.Add(new Extension("sm#semanticId", value: sm.SemanticId));
-                            }
-                            if (sme.IdShortPath != null)
-                            {
-                                readSme.Extensions.Add(new Extension("sme#IdShortPath", value: sme.IdShortPath));
-                            }
-                            submodelsResult.SubmodelElements.Add(readSme);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, resultType, false, out lastId);
-                text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+            //        foreach (var sme in smeSmListMerged)
+            //        {
+            //            var readSme = ReadSubmodelElement(sme, smeMerged);
+            //            if (readSme != null)
+            //            {
+            //                readSme.Extensions ??= [];
+            //                readSme.Extensions.Add(new Extension("sm#id", value: sm.Identifier));
+            //                if (sm.IdShort != null)
+            //                {
+            //                    readSme.Extensions.Add(new Extension("sm#idShort", value: sm.IdShort));
+            //                }
+            //                if (sm.SemanticId != null)
+            //                {
+            //                    readSme.Extensions.Add(new Extension("sm#semanticId", value: sm.SemanticId));
+            //                }
+            //                if (sme.IdShortPath != null)
+            //                {
+            //                    readSme.Extensions.Add(new Extension("sme#IdShortPath", value: sme.IdShortPath));
+            //                }
+            //                submodelsResult.SubmodelElements.Add(readSme);
+            //            }
+            //        }
+            //    }
+            //}
+            //else
+            //{
+                //var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, resultType, false, out lastId);
+                //text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+                //Console.WriteLine(text);
+                //text = "SMs found ";
+                //text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
                 Console.WriteLine(text);
-                text = "SMs found ";
-                text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
-                Console.WriteLine(text);
 
-                if (resultType == "AssetAdministrationShell")
-                {
-                    var timeStamp = DateTime.UtcNow;
-                    var shells = new List<IAssetAdministrationShell>();
+                //if (resultType == "AssetAdministrationShell")
+                //{
+                //    var timeStamp = DateTime.UtcNow;
+                //    var shells = new List<IAssetAdministrationShell>();
 
-                    var aasIdList = result.Where(r => r.aasId != null).Select(r => r.aasId).Distinct();
+                //    var aasIdList = result.Where(r => r.aasId != null).Select(r => r.aasId).Distinct();
 
-                    if (aasIdList.IsNullOrEmpty())
-                    {
-                        var smIdentifierList = result.Select(r => r.smIdentifier).Distinct();
+                //    if (aasIdList.IsNullOrEmpty())
+                //    {
+                //        var smIdentifierList = result.Select(r => r.smIdentifier).Distinct();
 
-                        aasIdList = db.SMRefSets.Where(sm => smIdentifierList.Contains(sm.Identifier)).
-                            Select(s => s.AASId);
-                    }
-                    if (!aasIdList.IsNullOrEmpty())
-                    {
-                        var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+                //        aasIdList = db.SMRefSets.Where(sm => smIdentifierList.Contains(sm.Identifier)).
+                //            Select(s => s.AASId);
+                //    }
+                //    if (!aasIdList.IsNullOrEmpty())
+                //    {
+                //        var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
 
-                        for (var i = 0; i < aasList.Count; i++)
-                        {
-                            var aasDB = aasList[i];
-                            var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
-                            if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
-                            {
-                                if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
-                                {
-                                    if (filterAas.Contains("globalAssetId"))
-                                    {
-                                        aas.Submodels = null;
-                                        aas.Description = null;
-                                        aas.DisplayName = null;
-                                    }
-                                }
-                            }
-                            if (aas != null)
-                            {
-                                shells.Add(aas);
-                            }
-                        }
-                    }
-                    submodelsResult.Shells = shells;
-                }
-                else if (!qResult.WithSelectId && !qResult.WithSelectMatch)
+                //        for (var i = 0; i < aasList.Count; i++)
+                //        {
+                //            var aasDB = aasList[i];
+                //            var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
+                //            if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
+                //            {
+                //                if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
+                //                {
+                //                    if (filterAas.Contains("globalAssetId"))
+                //                    {
+                //                        aas.Submodels = null;
+                //                        aas.Description = null;
+                //                        aas.DisplayName = null;
+                //                    }
+                //                }
+                //            }
+                //            if (aas != null)
+                //            {
+                //                shells.Add(aas);
+                //            }
+                //        }
+                //    }
+                //    submodelsResult.Shells = shells;
+                //}
+                //else
+                if (!qResult.WithSelectId && !qResult.WithSelectMatch)
                 {
                     var timeStamp = DateTime.UtcNow;
                     var submodels = new List<ISubmodel>();
 
-                    var smIdList = result.Select(sm => sm.smId).Distinct();
+                    var smIdList = result;
                     var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                     foreach (var sm in smList.Select(selector: submodelDB =>
@@ -422,24 +453,24 @@ public partial class Query
                     {
                         if (sm != null)
                         {
-                            var aasId = result.FirstOrDefault(r => r.smIdentifier == sm.Id)?.aasId;
-                            if (aasId != null)
-                            {
-                                var aasSet = db.AASSets.FirstOrDefault(a => a.Id == aasId);
-                                if (aasSet != null)
-                                {
-                                    sm.Extensions ??= [];
-                                    sm.Extensions.Add(new Extension("$aas#id", value: aasSet.Identifier));
-                                    if (aasSet.IdShort != null)
-                                    {
-                                        sm.Extensions.Add(new Extension("$aas#idShort", value: aasSet.IdShort));
-                                    }
-                                    if (aasSet.GlobalAssetId != null)
-                                    {
-                                        sm.Extensions.Add(new Extension("$aas#globalAssetId", value: aasSet.GlobalAssetId));
-                                    }
-                                }
-                            }
+                            //var aasId = result.FirstOrDefault(r => r.smIdentifier == sm.Id)?.aasId;
+                            //if (aasId != null)
+                            //{
+                            //    var aasSet = db.AASSets.FirstOrDefault(a => a.Id == aasId);
+                            //    if (aasSet != null)
+                            //    {
+                            //        sm.Extensions ??= [];
+                            //        sm.Extensions.Add(new Extension("$aas#id", value: aasSet.Identifier));
+                            //        if (aasSet.IdShort != null)
+                            //        {
+                            //            sm.Extensions.Add(new Extension("$aas#idShort", value: aasSet.IdShort));
+                            //        }
+                            //        if (aasSet.GlobalAssetId != null)
+                            //        {
+                            //            sm.Extensions.Add(new Extension("$aas#globalAssetId", value: aasSet.GlobalAssetId));
+                            //        }
+                            //    }
+                            //}
 
                             if (sm.TimeStamp == DateTime.MinValue)
                             {
@@ -453,13 +484,16 @@ public partial class Query
                 }
                 else
                 {
+                    var smIdList = result;
+
                     if (qResult.WithSelectId)
                     {
-                        submodelsResult.Ids = result.Select(sm => sm.smIdentifier).Distinct().ToList();
+                        var smList = db.SMSets.Where(sm =>
+                                smIdList.Contains(sm.Id));
+                        submodelsResult.Ids = smList.Select(sm => sm.Identifier).ToList();
                     }
                     if (qResult.WithSelectMatch)
                     {
-                        var smIdList = result.Where(sm => sm.smId != null).Select(sm => sm.smId).Distinct().ToList();
                         var smMatchPathList = qResult.MatchPathList;
                         if (smIdList != null && smMatchPathList != null)
                         {
@@ -500,7 +534,7 @@ public partial class Query
                         }
                     }
                 }
-            }
+            //}
             return submodelsResult;
         }
     }
@@ -514,12 +548,12 @@ public partial class Query
         public List<bool> Conditions { get; set; } = new List<bool>();
     }
 
-    private IQueryable? GetSMs(bool noSecurity, Dictionary<string, string>? securityCondition, out Dictionary<string, string>? condition,
+    private List<int>? GetSMs(bool noSecurity, Dictionary<string, string>? securityCondition, out Dictionary<string, string>? condition,
         string resultType,
         QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
         string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
-        IQueryable<CombinedSMResultWithAas>? result = null;
+        List<int>? result = null;
         condition = null;
 
         // parameter
@@ -647,7 +681,7 @@ public partial class Query
         List<string> anyConditions = [];
 
         // restrict all tables seperate
-        IQueryable<CombinedSMSMEV> comTable = null;
+        List<int> comTable = null;
 
         // get data
         if (withExpression) // with expression
@@ -664,7 +698,7 @@ public partial class Query
                     (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
 
             // Convert to CombinedSMSMEV
-            comTable = smTable.Select(sm => new CombinedSMSMEV { SM_Identifier = sm.Identifier, SM_TimeStampTree = sm.TimeStampTree }).Distinct();
+            comTable = smTable.Select(sm =>  sm.Id).Distinct().ToList();
         }
 
         if (comTable == null)
@@ -672,96 +706,99 @@ public partial class Query
             return null;
         }
 
-        if (resultType == "SubmodelElement")
-        {
-            if (condition != null && condition.TryGetValue("filter-all", out var filter))
-            {
-                filter = filter.Replace("sme.", "SME_");
-                comTable = comTable.Where(filter);
-            }
-            var resultSME = comTable.Select("new (SM_Id as SM_Id, SME_Id as SME_Id)").Distinct().Skip(pageFrom).Take(pageSize);
-            return resultSME;
-        }
+        //if (resultType == "SubmodelElement")
+        //{
+        //    if (condition != null && condition.TryGetValue("filter-all", out var filter))
+        //    {
+        //        filter = filter.Replace("sme.", "SME_");
+        //        comTable = comTable.AsQueryable().Where(filter).ToList();
+        //    }
+        //    //ToDo: Add SME
+        //    //var resultSME = comTable.AsQueryable().Select("new (SM_Id as SM_Id, SME_Id as SME_Id)").Distinct().Skip(pageFrom).Take(pageSize);
+        //    var resultSME = comTable.AsQueryable().Select("new (SM_Id as SM_Id)").Distinct().Skip(pageFrom).Take(pageSize);
+        //    return resultSME;
+        //}
 
-        var smRawSQL = comTable.ToQueryString();
-        IQueryable<CombinedSMResult> resultSM = null;
+        var smRawSQL = comTable.AsQueryable().ToQueryString();
+        //IQueryable<CombinedSMResult> resultSM = null;
+        //List<CombinedSMResult> resultSM = null;
 
-        resultSM = comTable.Select(c => new CombinedSMResult
-        {
-            SM_Id = c.SM_Id,
-            Identifier = c.SM_Identifier,
-            TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(c.SM_TimeStampTree),
-            MatchPathList = null
-        }).Distinct();
+        //resultSM = comTable.Select(c => new CombinedSMResult
+        //{
+        //    SM_Id = c,
+        //    Identifier = c.SM_Identifier,
+        //    TimeStampTree = TimeStamp.TimeStamp.DateTimeToString(c.SM_TimeStampTree),
+        //    MatchPathList = null
+        //}).Distinct().ToList();
 
         // select for count
-        if (withCount)
-        {
-            // var qCount = comTable.Select(sm => sm.SM_Identifier);
-            // return qCount;
-            result = CombineSMWithAas(db, resultSM, smRef);
-            return result;
-        }
+        //if (withCount)
+        //{
+        //    // var qCount = comTable.Select(sm => sm.SM_Identifier);
+        //    // return qCount;
+        //    result = CombineSMWithAas(db, resultSM, smRef);
+        //    return result;
+        //}
 
-        if (withTotalCount)
-        {
-            var text = "-- Start totalCount at " + watch.ElapsedMilliseconds + " ms";
-            Console.WriteLine(text);
-            messages.Add(text);
-            result = CombineSMWithAas(db, resultSM, smRef);
-            qResult.TotalCount = result.Count();
-            text = "-- End totalCount at " + watch.ElapsedMilliseconds + " ms";
-            Console.WriteLine(text);
-            messages.Add(text);
-        }
+        //if (withTotalCount)
+        //{
+        //    var text = "-- Start totalCount at " + watch.ElapsedMilliseconds + " ms";
+        //    Console.WriteLine(text);
+        //    messages.Add(text);
+        //    result = CombineSMWithAas(db, resultSM, smRef);
+        //    qResult.TotalCount = result.Count();
+        //    text = "-- End totalCount at " + watch.ElapsedMilliseconds + " ms";
+        //    Console.WriteLine(text);
+        //    messages.Add(text);
+        //}
 
         // create queryable with pagenation
-        qResult.PageFrom = pageFrom;
-        qResult.PageSize = pageSize;
-        if (pageFrom != -1)
-        {
-            if (orderBy)
-            {
-                Console.WriteLine("OrderBy");
-                messages.Add("OrderBy");
-                resultSM = resultSM.OrderBy(sm => sm.SM_Id);
-                // resultSM = resultSM.Skip(pageFrom).Take(pageSize);
-                result = CombineSMWithAas(db, resultSM, smRef);
-                result = result.Skip(pageFrom).Take(pageSize);
-            }
-            else
-            {
-                // resultSM = resultSM.Skip(pageFrom).Take(pageSize);
-                result = CombineSMWithAas(db, resultSM, smRef);
-                result = result.Skip(pageFrom).Take(pageSize);
-            }
-            var text = "Using pageFrom and pageSize.";
-            Console.WriteLine(text);
-            messages.Add(text);
-        }
-        else
-        {
-            if (lastID != -1 && pageSize != -1)
-            {
-                if (orderBy)
-                {
-                    Console.WriteLine("OrderBy");
-                    messages.Add("OrderBy");
-                    // resultSM = resultSM.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
-                    result = CombineSMWithAas(db, resultSM, smRef);
-                    result = result.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
-                }
-                else
-                {
-                    // resultSM = resultSM.Where(sm => sm.SM_Id > lastID).Take(pageSize);
-                    result = CombineSMWithAas(db, resultSM, smRef);
-                    result = result.Where(sm => sm.SM_Id > lastID).Take(pageSize);
-                }
-                var text = "Using lastID and pageSize.";
-                Console.WriteLine(text);
-                messages.Add(text);
-            }
-        }
+        //qResult.PageFrom = pageFrom;
+        //qResult.PageSize = pageSize;
+        //if (pageFrom != -1)
+        //{
+        //    if (orderBy)
+        //    {
+        //        Console.WriteLine("OrderBy");
+        //        messages.Add("OrderBy");
+        //        resultSM = resultSM.OrderBy(sm => sm.SM_Id);
+        //        // resultSM = resultSM.Skip(pageFrom).Take(pageSize);
+        //        result = CombineSMWithAas(db, resultSM, smRef);
+        //        result = result.Skip(pageFrom).Take(pageSize);
+        //    }
+        //    else
+        //    {
+        //        // resultSM = resultSM.Skip(pageFrom).Take(pageSize);
+        //        result = CombineSMWithAas(db, resultSM, smRef);
+        //        result = result.Skip(pageFrom).Take(pageSize);
+        //    }
+        //    var text = "Using pageFrom and pageSize.";
+        //    Console.WriteLine(text);
+        //    messages.Add(text);
+        //}
+        //else
+        //{
+        //    if (lastID != -1 && pageSize != -1)
+        //    {
+        //        if (orderBy)
+        //        {
+        //            Console.WriteLine("OrderBy");
+        //            messages.Add("OrderBy");
+        //            // resultSM = resultSM.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
+        //            result = CombineSMWithAas(db, resultSM, smRef);
+        //            result = result.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
+        //        }
+        //        else
+        //        {
+        //            // resultSM = resultSM.Where(sm => sm.SM_Id > lastID).Take(pageSize);
+        //            result = CombineSMWithAas(db, resultSM, smRef);
+        //            result = result.Where(sm => sm.SM_Id > lastID).Take(pageSize);
+        //        }
+        //        var text = "Using lastID and pageSize.";
+        //        Console.WriteLine(text);
+        //        messages.Add(text);
+        //    }
+        //}
         // qResult.LastID = result.LastOrDefault().SM_Id;
         // smRawSQL = $".param set :pagesize {pageSize}\r\n" + $".param set :pagefrom {pageFrom}\r\n" + smRawSQL + "LIMIT :pagesize OFFSET :pagefrom\r\n";
         // var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
@@ -769,7 +806,7 @@ public partial class Query
         // return raw SQL
         if (result != null)
         {
-            smRawSQL = result.ToQueryString();
+            smRawSQL = result.AsQueryable().ToQueryString();
             var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
             rawSQL.AddRange(rawSqlSplit);
         }
@@ -793,126 +830,126 @@ public partial class Query
         return qp;
     }
 
-    private static IQueryable<CombinedSMResultWithAas> CombineSMWithAas(AasContext db, IQueryable<CombinedSMResult> smResult, IQueryable<SMRefSet>? smRef)
-    {
-        IQueryable<CombinedSMResultWithAas> smResultWithAas;
-        if (smRef != null)
-        {
-            var smRefDict = smRef
-                .Where(r => r.Identifier != null && r.AASId != null)
-                .Take(10000)
-                .ToDictionary(r => r.Identifier!, r => r.AASId);
+    //private static IQueryable<CombinedSMResultWithAas> CombineSMWithAas(AasContext db, IQueryable<CombinedSMResult> smResult, IQueryable<SMRefSet>? smRef)
+    //{
+    //    IQueryable<CombinedSMResultWithAas> smResultWithAas;
+    //    if (smRef != null)
+    //    {
+    //        var smRefDict = smRef
+    //            .Where(r => r.Identifier != null && r.AASId != null)
+    //            .Take(10000)
+    //            .ToDictionary(r => r.Identifier!, r => r.AASId);
 
-            smResultWithAas = smResult
-                .Select(s => new CombinedSMResultWithAas
-                {
-                    AAS_Id = s.Identifier != null ? smRefDict[s.Identifier] : null,
-                    SM_Id = s.SM_Id,
-                    Identifier = s.Identifier,
-                    TimeStampTree = s.TimeStampTree,
-                    MatchPathList = null
-                });
+    //        smResultWithAas = smResult
+    //            .Select(s => new CombinedSMResultWithAas
+    //            {
+    //                AAS_Id = s.Identifier != null ? smRefDict[s.Identifier] : null,
+    //                SM_Id = s.SM_Id,
+    //                Identifier = s.Identifier,
+    //                TimeStampTree = s.TimeStampTree,
+    //                MatchPathList = null
+    //            });
 
-            //var smRawSQL = smResultWithAas.ToQueryString();
-            //var qp = GetQueryPlan(db, smRawSQL);
-            return smResultWithAas;
-        }
-        else
-        {
-            smResultWithAas = smResult.Select(r1 => new CombinedSMResultWithAas
-            {
-                AAS_Id = null,
-                SM_Id = r1.SM_Id,
-                Identifier = r1.Identifier,
-                TimeStampTree = r1.TimeStampTree,
-                MatchPathList = null
-            });
-        }
-        return smResultWithAas;
-    }
+    //        //var smRawSQL = smResultWithAas.ToQueryString();
+    //        //var qp = GetQueryPlan(db, smRawSQL);
+    //        return smResultWithAas;
+    //    }
+    //    else
+    //    {
+    //        smResultWithAas = smResult.Select(r1 => new CombinedSMResultWithAas
+    //        {
+    //            AAS_Id = null,
+    //            SM_Id = r1.SM_Id,
+    //            Identifier = r1.Identifier,
+    //            TimeStampTree = r1.TimeStampTree,
+    //            MatchPathList = null
+    //        });
+    //    }
+    //    return smResultWithAas;
+    //}
 
-    private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResultWithAas> query, string resultType, bool withLastID, out int lastID)
-    {
-        var messages = qResult.Messages ?? [];
-        lastID = 0;
+    //private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResultWithAas> query, string resultType, bool withLastID, out int lastID)
+    //{
+    //    var messages = qResult.Messages ?? [];
+    //    lastID = 0;
 
-        if (withLastID)
-        {
-            var resultWithSMID = query
-                .Select(sm => new
-                {
-                    sm.AAS_Id,
-                    sm.SM_Id,
-                    sm.Identifier,
-                    sm.TimeStampTree,
-                    lastID = sm.SM_Id
-                })
-                .ToList();
-            var l = resultWithSMID.LastOrDefault();
-            if (l != null && l.lastID != null)
-            {
-                lastID = (int)l.lastID;
-            }
+    //    if (withLastID)
+    //    {
+    //        var resultWithSMID = query
+    //            .Select(sm => new
+    //            {
+    //                sm.AAS_Id,
+    //                sm.SM_Id,
+    //                sm.Identifier,
+    //                sm.TimeStampTree,
+    //                lastID = sm.SM_Id
+    //            })
+    //            .ToList();
+    //        var l = resultWithSMID.LastOrDefault();
+    //        if (l != null && l.lastID != null)
+    //        {
+    //            lastID = (int)l.lastID;
+    //        }
 
-            var wrong = 0;
-            var min = 0;
-            var max = 0;
-            var last = 0;
-            foreach (var x in resultWithSMID)
-            {
-                var id = (int)x.lastID;
-                if (last != 0)
-                {
-                    if (id <= last)
-                    {
-                        wrong++;
-                    }
-                }
-                last = id;
-                if (min == 0)
-                {
-                    min = id;
-                }
-                if (id < min)
-                {
-                    min = id;
-                }
-                if (id > max)
-                {
-                    max = id;
-                }
-            }
-            messages.Add($"Wrong ID sequences: {wrong}");
-            messages.Add($"Min ID: {min}");
-            messages.Add($"Max ID: {max}");
+    //        var wrong = 0;
+    //        var min = 0;
+    //        var max = 0;
+    //        var last = 0;
+    //        foreach (var x in resultWithSMID)
+    //        {
+    //            var id = (int)x.lastID;
+    //            if (last != 0)
+    //            {
+    //                if (id <= last)
+    //                {
+    //                    wrong++;
+    //                }
+    //            }
+    //            last = id;
+    //            if (min == 0)
+    //            {
+    //                min = id;
+    //            }
+    //            if (id < min)
+    //            {
+    //                min = id;
+    //            }
+    //            if (id > max)
+    //            {
+    //                max = id;
+    //            }
+    //        }
+    //        messages.Add($"Wrong ID sequences: {wrong}");
+    //        messages.Add($"Min ID: {min}");
+    //        messages.Add($"Max ID: {max}");
 
-            var result = resultWithSMID
-                .Select(sm => new SMResult()
-                {
-                    aasId = sm.AAS_Id,
-                    smId = sm.SM_Id,
-                    smIdentifier = sm.Identifier,
-                    timeStampTree = sm.TimeStampTree,
-                    url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
-                })
-                .ToList();
-            return result;
-        }
-        else
-        {
-            var result = query
-                .Select(sm => new SMResult()
-                {
-                    aasId = sm.AAS_Id,
-                    smId = sm.SM_Id,
-                    smIdentifier = sm.Identifier,
-                    timeStampTree = sm.TimeStampTree,
-                    url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
-                })
-                .ToList();
-            return result;
-        }
-    }
+    //        var result = resultWithSMID
+    //            .Select(sm => new SMResult()
+    //            {
+    //                aasId = sm.AAS_Id,
+    //                smId = sm.SM_Id,
+    //                smIdentifier = sm.Identifier,
+    //                timeStampTree = sm.TimeStampTree,
+    //                url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
+    //            })
+    //            .ToList();
+    //        return result;
+    //    }
+    //    else
+    //    {
+    //        var result = query
+    //            .Select(sm => new SMResult()
+    //            {
+    //                aasId = sm.AAS_Id,
+    //                smId = sm.SM_Id,
+    //                smIdentifier = sm.Identifier,
+    //                timeStampTree = sm.TimeStampTree,
+    //                url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
+    //            })
+    //            .ToList();
+    //        return result;
+    //    }
+    //}
 
     // --------------- SME Methods ---------------
     private static IQueryable<SMESet> GetFilteredSMESets(DbSet<SMESet> smeSets, List<string> idShortPathList)
@@ -1326,36 +1363,36 @@ public partial class Query
             }
         }
 
-        // if needed create idShortPath
-        if (false && (requested.Contains("idShortPath") || requested.Contains("url")))
-        {
-            var combineTableRawSQL = qSearch.ToQueryString();
-            // Append the "get path" section
-            combineTableRawSQL = $@"
-                    WITH FilteredSMAndSMEAndValue AS (
-                        {combineTableRawSQL}
-                    ), 
-                    RecursiveSME AS (
-                        WITH RECURSIVE SME_CTE AS (
-                            SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId 
-                            FROM SMESets 
-                            WHERE Id IN (SELECT ""SME_Id"" FROM FilteredSMAndSMEAndValue) 
-                            UNION ALL 
-                            SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId 
-                            FROM SMESets x 
-                            INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId 
-                        ) 
-                        SELECT StartId AS Id, IdShortPath 
-                        FROM SME_CTE 
-                        WHERE ParentSMEId IS NULL 
-                    )
-                    SELECT sme.SM_Identifier, r.IdShortPath, strftime('%Y-%m-%d %H:%M:%f', sme.TimeStamp) AS SME_TimeStamp, sme.SValue, sme.MValue
-                    FROM FilteredSMAndSMEAndValue AS sme 
-                    INNER JOIN RecursiveSME AS r ON sme.SME_Id = r.Id;
-                    ";
-            // qSearch = db.Set<SMEResultRaw>().FromSqlRaw(combineTableRawSQL).AsQueryable();
-            qSearch = db.Database.SqlQueryRaw<CombinedSMEResult>(combineTableRawSQL);
-        }
+        //// if needed create idShortPath
+        //if (false && (requested.Contains("idShortPath") || requested.Contains("url")))
+        //{
+        //    var combineTableRawSQL = qSearch.ToQueryString();
+        //    // Append the "get path" section
+        //    combineTableRawSQL = $@"
+        //            WITH FilteredSMAndSMEAndValue AS (
+        //                {combineTableRawSQL}
+        //            ), 
+        //            RecursiveSME AS (
+        //                WITH RECURSIVE SME_CTE AS (
+        //                    SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId 
+        //                    FROM SMESets 
+        //                    WHERE Id IN (SELECT ""SME_Id"" FROM FilteredSMAndSMEAndValue) 
+        //                    UNION ALL 
+        //                    SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId 
+        //                    FROM SMESets x 
+        //                    INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId 
+        //                ) 
+        //                SELECT StartId AS Id, IdShortPath 
+        //                FROM SME_CTE 
+        //                WHERE ParentSMEId IS NULL 
+        //            )
+        //            SELECT sme.SM_Identifier, r.IdShortPath, strftime('%Y-%m-%d %H:%M:%f', sme.TimeStamp) AS SME_TimeStamp, sme.SValue, sme.MValue
+        //            FROM FilteredSMAndSMEAndValue AS sme 
+        //            INNER JOIN RecursiveSME AS r ON sme.SME_Id = r.Id;
+        //            ";
+        //    // qSearch = db.Set<SMEResultRaw>().FromSqlRaw(combineTableRawSQL).AsQueryable();
+        //    qSearch = db.Database.SqlQueryRaw<CombinedSMEResult>(combineTableRawSQL);
+        //}
 
         // return raw SQL
         var smRawSQL = qSearch.ToQueryString();
@@ -1568,7 +1605,7 @@ public partial class Query
         public DateTime? dtvalue;
     }
 
-    private static IQueryable<CombinedSMSMEV> CombineTablesCASE(
+    private static List<int> CombineTablesCASE(
         AasContext db,
         Dictionary<string, string>? conditionsExpression,
         int pageFrom,
@@ -2129,29 +2166,29 @@ public partial class Query
         var smRawSQL = result.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
 
-        var combined = result.Select(r => new CombinedSMSMEV
-        {
-            SM_Id = r.sm.Id,
-            SM_SemanticId = r.sm.SemanticId,
-            SM_IdShort = r.sm.IdShort,
-            SM_DisplayName = r.sm.DisplayName,
-            SM_Description = r.sm.Description,
-            SM_Identifier = r.sm.Identifier,
-            SM_TimeStampTree = r.sm.TimeStampTree,
+        //var combined = result.Select(r => new CombinedSMSMEV
+        //{
+        //    SM_Id = r.sm.Id,
+        //    SM_SemanticId = r.sm.SemanticId,
+        //    SM_IdShort = r.sm.IdShort,
+        //    SM_DisplayName = r.sm.DisplayName,
+        //    SM_Description = r.sm.Description,
+        //    SM_Identifier = r.sm.Identifier,
+        //    SM_TimeStampTree = r.sm.TimeStampTree,
 
-            SME_SemanticId = r.sme.SemanticId,
-            SME_IdShort = r.sme.IdShort,
-            SME_IdShortPath = r.sme.IdShortPath,
-            SME_DisplayName = r.sme.DisplayName,
-            SME_Description = r.sme.Description,
-            SME_Id = r.sme.Id,
-            SME_TimeStamp = r.sme.TimeStamp,
+        //    SME_SemanticId = r.sme.SemanticId,
+        //    SME_IdShort = r.sme.IdShort,
+        //    SME_IdShortPath = r.sme.IdShortPath,
+        //    SME_DisplayName = r.sme.DisplayName,
+        //    SME_Description = r.sme.Description,
+        //    SME_Id = r.sme.Id,
+        //    SME_TimeStamp = r.sme.TimeStamp,
 
-            V_Value = r.svalue,
-            V_D_Value = r.mvalue
-        });
+        //    V_Value = r.svalue,
+        //    V_D_Value = r.mvalue
+        //});
 
-        return combined;
+        return result.Select(r => r.SMId).ToList();
     }
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
     {
