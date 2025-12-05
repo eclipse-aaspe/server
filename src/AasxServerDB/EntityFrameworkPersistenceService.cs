@@ -697,38 +697,38 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             dbRequest.Context.Params.EventRequest);
                         break;
 
-                    case DbRequestOp.QuerySearchSMs:
+                    //case DbRequestOp.QuerySearchSMs:
+                    //    var queryRequest = dbRequest.Context.Params.QueryRequest;
+                    //    var query = new Query(_grammar);
+                    //    var qresult = query.SearchSMs(securityCondition, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                    //        queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                    //    result.QueryResult = qresult;
+                    //    break;
+                    //case DbRequestOp.QueryCountSMs:
+                    //    queryRequest = dbRequest.Context.Params.QueryRequest;
+                    //    query = new Query(_grammar);
+                    //    var count = query.CountSMs(securityConfig, securityCondition, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
+                    //        queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                    //    result.Count = count;
+                    //    break;
+                    //case DbRequestOp.QuerySearchSMEs:
+                    //    queryRequest = dbRequest.Context.Params.QueryRequest;
+                    //    query = new Query(_grammar);
+                    //    qresult = query.SearchSMEs(securityConfig, securityCondition,
+                    //        db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                    //        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                    //    result.QueryResult = qresult;
+                    //    break;
+                    //case DbRequestOp.QueryCountSMEs:
+                    //    queryRequest = dbRequest.Context.Params.QueryRequest;
+                    //    query = new Query(_grammar);
+                    //    count = query.CountSMEs(securityConfig, securityCondition, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                    //        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                    //    result.Count = count;
+                    //    break;
+                    case DbRequestOp.QueryGetSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var qresult = query.SearchSMs(securityCondition, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
-                            queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                        result.QueryResult = qresult;
-                        break;
-                    case DbRequestOp.QueryCountSMs:
-                        queryRequest = dbRequest.Context.Params.QueryRequest;
-                        query = new Query(_grammar);
-                        var count = query.CountSMs(securityConfig, securityCondition, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
-                            queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                        result.Count = count;
-                        break;
-                    case DbRequestOp.QuerySearchSMEs:
-                        queryRequest = dbRequest.Context.Params.QueryRequest;
-                        query = new Query(_grammar);
-                        qresult = query.SearchSMEs(securityConfig, securityCondition,
-                            db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
-                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                        result.QueryResult = qresult;
-                        break;
-                    case DbRequestOp.QueryCountSMEs:
-                        queryRequest = dbRequest.Context.Params.QueryRequest;
-                        query = new Query(_grammar);
-                        count = query.CountSMEs(securityConfig, securityCondition, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
-                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                        result.Count = count;
-                        break;
-                    case DbRequestOp.QueryGetSMs:
-                        queryRequest = dbRequest.Context.Params.QueryRequest;
-                        query = new Query(_grammar);
                         var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.ResultType, queryRequest.Expression);
 
                         if (queryResult.Shells != null && queryResult.Shells.Count != 0)

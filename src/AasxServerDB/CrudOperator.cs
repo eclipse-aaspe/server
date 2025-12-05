@@ -585,7 +585,9 @@ namespace AasxServerDB
         {
             List<ISubmodel> output = new List<ISubmodel>();
 
-            var qresult = new QResult();
+            //var qresult = new QResult();
+            var result = new List<int>();
+
             if (querySM != null)
             {
                 Dictionary<string, string> condition = [];
@@ -632,12 +634,11 @@ namespace AasxServerDB
                     }
                 }
 
-                qresult = querySM.SearchSMs(condition, db, withTotalCount: false, withLastId: false, semanticId: "",
-                identifier: "", diff: "", pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit,
+                result = querySM.SearchSMs(condition, db, pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit,
                 expression: "$all");
             }
 
-            var smList = qresult.SMResults.Select(sm => sm.smId).ToList();
+            var smList = result;
             var smDBList = db.SMSets.Where(sm => smList.Contains(sm.Id)).ToList();
 
             var timeStamp = DateTime.UtcNow;
