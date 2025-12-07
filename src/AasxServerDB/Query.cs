@@ -1616,6 +1616,7 @@ public partial class Query
         {
             var splitMatch = pathAllConditionRaw.Split("$$match$$");
             var matchCount = 0;
+            var matchOffset = 0;
             pathAllCondition = "";
             List<string> matchPathList = [];
             for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
@@ -1630,6 +1631,10 @@ public partial class Query
                 {
                     pathAllCondition += $"Math.Abs(SmId) == 10{matchCount}";
                     matchCount++;
+                    if (selectMatch != "")
+                    {
+                        selectMatch += ",";
+                    }
 
                     List<int> order = [];
                     List<int> count = [];
@@ -1637,7 +1642,6 @@ public partial class Query
                     List<string> idShortPathLast = [];
                     List<string> idShort = [];
                     List<string> field = [];
-                    // List<string> exp = [];
                     var split = match.Split("$$tag$$path$$");
                     var with = "";
                     for (var i = 1; i < split.Length; i++)
@@ -1696,11 +1700,6 @@ public partial class Query
                                 selectMatch += ",\r\n";
                             }
                         }
-                        for (var i = 0; i < order.Count; i++)
-                        {
-                            where += $" AND path{order[i] + 1} = 1";
-                        }
-                        whereMatch.Add(where);
                         selectMatch += "\r\n";
                     }
                     if (idShortPath[0].Contains("%"))
@@ -1740,12 +1739,17 @@ public partial class Query
                                 where += $"Part{matchCount}_{p + 1}_{s + 1} = Part{matchCount}_{p + 2}_{s + 1}";
                             }
                         }
-                        for (var i = 0; i < order.Count; i++)
-                        {
-                            where += $" AND path{order[i] + 1} = 1";
-                        }
-                        whereMatch.Add(where);
                     }
+                    for (var i = 0; i < order.Count; i++)
+                    {
+                        if (where != "")
+                        {
+                            where += " AND ";
+                        }
+                        where += $"path{matchOffset + order[i] + 1} = 1";
+                    }
+                    whereMatch.Add($"({where})");
+                    matchOffset += idShortPath.Count;
                 }
             }
 
@@ -2051,13 +2055,14 @@ public partial class Query
 
             raw = "SELECT DISTINCT Id\r\n" +
                 $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n" +
-                caseWhen +
-                "FROM SMSets AS s\r\n" +
-                join;
+                caseWhen;
+            raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
             if (!whereSm.StartsWith("SELECT"))
             {
-                raw += $"WHERE ({whereSm})\r\n";
+                raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
             }
+            raw += ") AS s\r\n";
+            raw += join;
             raw += ") AS base\r\n";
             rawBase = raw;
             if (whereMatch.Count != 0)
@@ -2076,38 +2081,42 @@ public partial class Query
         }
         else
         {
-            var rawComplete = result.Where(conditionAll).ToQueryString();
-            var whereComplete = rawComplete?.Split("WHERE").Last();
-            if (whereComplete.Contains("t0"))
+            // rawBase = result.Where(conditionAll).Select(r => r.SMId).Distinct().ToQueryString();
+            // if (false)
             {
-                whereComplete = whereComplete?.Replace("\"t\".", "\"sme\".").Replace("\"t0\".", "\"v\".");
-            }
-            else
-            {
-                whereComplete = whereComplete?.Replace("\"t\".", "\"v\".");
-            }
+                var rawComplete = result.Where(conditionAll).ToQueryString();
+                var whereComplete = rawComplete?.Split("WHERE").Last();
+                if (whereComplete.Contains("t0"))
+                {
+                    whereComplete = whereComplete?.Replace("\"t\".", "\"sme\".").Replace("\"t0\".", "\"v\".");
+                }
+                else
+                {
+                    whereComplete = whereComplete?.Replace("\"t\".", "\"v\".");
+                }
 
-            rawBase = "SELECT s.Id,\r\n" +
-                $"CASE WHEN ({whereComplete}) THEN 1 ELSE 0 END AS PathAll\r\n" +
-                "FROM SMSets AS s\r\n" +
-                $"LEFT JOIN SMESets AS sme ON s.Id = sme.SMId";
-            if (!whereSme.StartsWith("SELECT"))
-            {
-                rawBase += $" AND ({whereSme})";
-            }
-            rawBase += "\r\n";
-            rawBase += $"LEFT JOIN ValueSets AS v ON sme.Id = v.SMEId\r\n";
-            if (!whereSm.StartsWith("SELECT"))
-            {
-                rawBase += $"WHERE ({whereSm})\r\n";
-            }
+                rawBase = "SELECT s.Id,\r\n" +
+                    $"CASE WHEN ({whereComplete}) THEN 1 ELSE 0 END AS PathAll\r\n" +
+                    "FROM SMSets AS s\r\n" +
+                    $"LEFT JOIN SMESets AS sme ON s.Id = sme.SMId";
+                if (!whereSme.StartsWith("SELECT"))
+                {
+                    rawBase += $" AND ({whereSme})";
+                }
+                rawBase += "\r\n";
+                rawBase += $"LEFT JOIN ValueSets AS v ON sme.Id = v.SMEId\r\n";
+                if (!whereSm.StartsWith("SELECT"))
+                {
+                    rawBase += $"WHERE ({whereSm})\r\n";
+                }
 
-            rawBase = "SELECT DISTINCT result.Id\r\n" + "" +
-                "FROM (\r\n" +
-                rawBase +
-                ") AS result\r\n" +
-                "WHERE PathAll = 1\r\n" +
-                $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
+                rawBase = "SELECT DISTINCT result.Id\r\n" + "" +
+                    "FROM (\r\n" +
+                    rawBase +
+                    ") AS result\r\n" +
+                    "WHERE PathAll = 1\r\n" +
+                    $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
+            }
         }
 
         raw = rawBase;
@@ -2122,7 +2131,6 @@ public partial class Query
             r => r.SMId,
             r2 => r2.Id,
             (r, r2) => r);
-
 
         var smRawSQL = result.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
