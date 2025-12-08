@@ -2166,12 +2166,7 @@ public partial class Query
                .FromSqlRaw(raw)
                .AsQueryable();
 
-        result = result.Join(resultSMId,
-            r => r.SMId,
-            r2 => r2.Id,
-            (r, r2) => r);
-
-        var smRawSQL = result.ToQueryString();
+        var smRawSQL = resultSMId.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
 
         //var combined = result.Select(r => new CombinedSMSMEV
@@ -2196,7 +2191,7 @@ public partial class Query
         //    V_D_Value = r.mvalue
         //});
 
-        return result.Select(r => r.SMId).ToList();
+        return resultSMId.Select(r => r.Id).ToList();
     }
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
     {
