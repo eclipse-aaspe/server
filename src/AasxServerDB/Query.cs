@@ -705,21 +705,25 @@ public partial class Query
         {
             return null;
         }
+        else
+        {
+            result = comTable;
+        }
 
-        //if (resultType == "SubmodelElement")
-        //{
-        //    if (condition != null && condition.TryGetValue("filter-all", out var filter))
-        //    {
-        //        filter = filter.Replace("sme.", "SME_");
-        //        comTable = comTable.AsQueryable().Where(filter).ToList();
-        //    }
-        //    //ToDo: Add SME
-        //    //var resultSME = comTable.AsQueryable().Select("new (SM_Id as SM_Id, SME_Id as SME_Id)").Distinct().Skip(pageFrom).Take(pageSize);
-        //    var resultSME = comTable.AsQueryable().Select("new (SM_Id as SM_Id)").Distinct().Skip(pageFrom).Take(pageSize);
-        //    return resultSME;
-        //}
+            //if (resultType == "SubmodelElement")
+            //{
+            //    if (condition != null && condition.TryGetValue("filter-all", out var filter))
+            //    {
+            //        filter = filter.Replace("sme.", "SME_");
+            //        comTable = comTable.AsQueryable().Where(filter).ToList();
+            //    }
+            //    //ToDo: Add SME
+            //    //var resultSME = comTable.AsQueryable().Select("new (SM_Id as SM_Id, SME_Id as SME_Id)").Distinct().Skip(pageFrom).Take(pageSize);
+            //    var resultSME = comTable.AsQueryable().Select("new (SM_Id as SM_Id)").Distinct().Skip(pageFrom).Take(pageSize);
+            //    return resultSME;
+            //}
 
-        var smRawSQL = comTable.AsQueryable().ToQueryString();
+            var smRawSQL = comTable.AsQueryable().ToQueryString();
         //IQueryable<CombinedSMResult> resultSM = null;
         //List<CombinedSMResult> resultSM = null;
 
