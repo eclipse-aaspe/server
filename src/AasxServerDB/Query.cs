@@ -688,18 +688,17 @@ public partial class Query
         {
             comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize);
         }
-        else // with parameters
-        {
-            // set conditions
-            var smTable = db.SMSets
-                .Where(s =>
-                    (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
-                    (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
-                    (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
+        //else // with parameters
+        //{
+        //    // set conditions
+        //    var smTable = db.SMSets
+        //        .Where(s =>
+        //            (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
+        //            (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
+        //            (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
 
-            // Convert to CombinedSMSMEV
-            comTable = smTable.Select(sm =>  sm.Id).Distinct().ToList();
-        }
+        //    comTable = smTable.Select(sm =>  sm.Id).Distinct().Skip(pageFrom).Take(pageSize).ToList();
+        //}
 
         if (comTable == null)
         {
@@ -723,7 +722,7 @@ public partial class Query
             //    return resultSME;
             //}
 
-            var smRawSQL = comTable.AsQueryable().ToQueryString();
+          //var smRawSQL = comTable.AsQueryable().ToQueryString();
         //IQueryable<CombinedSMResult> resultSM = null;
         //List<CombinedSMResult> resultSM = null;
 
@@ -808,12 +807,12 @@ public partial class Query
         // var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
 
         // return raw SQL
-        if (result != null)
-        {
-            smRawSQL = result.AsQueryable().ToQueryString();
-            var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
-            rawSQL.AddRange(rawSqlSplit);
-        }
+        //if (result != null)
+        //{
+        //    var smRawSQL = result.AsQueryable().ToQueryString();
+        //    var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
+        //    rawSQL.AddRange(rawSqlSplit);
+        //}
 
         return result;
     }
@@ -2118,7 +2117,6 @@ public partial class Query
             {
                 rawBase += $"WHERE {wherePath}\r\n";
             }
-            rawBase += $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
         }
         else
         {
@@ -2193,7 +2191,7 @@ public partial class Query
         //    V_D_Value = r.mvalue
         //});
 
-        return resultSMId.Select(r => r.Id).ToList();
+        return resultSMId.Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
     }
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
     {
