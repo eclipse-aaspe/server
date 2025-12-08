@@ -736,7 +736,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         {
                             result.ResultData = queryResult.Shells.ConvertAll(r => r as IClass);
                         }
-                        else if (queryResult.Submodels != null && queryResult.Submodels.Count != 0)
+                        else
+                        if (queryResult.Submodels != null && queryResult.Submodels.Count != 0)
                         {
                             result.ResultData = queryResult.Submodels.ConvertAll(r => r as IClass);
                         }
@@ -746,10 +747,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             {
                                 result.Ids = queryResult.Ids;
                             }
-                            else
-                            {
-                                result.ResultData = queryResult.SubmodelElements.ConvertAll(r => r as IClass);
-                            }
+                            //else
+                            //{
+                            //    result.ResultData = queryResult.SubmodelElements.ConvertAll(r => r as IClass);
+                            //}
                         }
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:
