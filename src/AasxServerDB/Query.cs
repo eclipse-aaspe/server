@@ -395,7 +395,7 @@ public partial class Query
                 //Console.WriteLine(text);
                 //text = "SMs found ";
                 //text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
-                Console.WriteLine(text);
+                //Console.WriteLine(text);
 
                 //if (resultType == "AssetAdministrationShell")
                 //{
@@ -680,7 +680,6 @@ public partial class Query
         }
         List<string> anyConditions = [];
 
-        // restrict all tables seperate
         List<int> comTable = null;
 
         // get data
@@ -1625,6 +1624,8 @@ public partial class Query
 
         var withPathSme = false;
         var withMatch = false;
+        var withRecursive = value.Contains("==");
+
         var pathSME = "";
         var pathAllCondition = "";
         var pathAllConditionRaw = "";
@@ -1950,172 +1951,179 @@ public partial class Query
             var valueSQL = new string[pathConditions.Count];
             var pathAllExists = pathAllCondition.Copy();
 
-            for (var i = 0; i < pathConditions.Count; i++)
+            if (!withRecursive)
             {
-                var ii = i + 1;
-
-                var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
-                var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                var where = convertPathConditionSQL.Split("WHERE").Last();
-                where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
-                pathConditionsSQL[i] = where;
-                var split = where.Split(" AND ");
-                smeSQL[i] = split[split.Length - 2];
-                if (smeSQL[i].Contains("[]"))
-                {
-                    smeSQL[i] = smeSQL[i].Replace("[]", "[%]");
-                }
-                if (smeSQL[i].Contains("%"))
-                {
-                    smeSQL[i] = smeSQL[i].Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
-                }
-                valueSQL[i] = split[split.Length - 1];
-
-                pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
-                placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
+                //ToDo
             }
-
-            // convert complete condition with placeholders
-            var convertCondition = result.Where(pathAllExists);
-            var convertConditionSQL = convertCondition.ToQueryString();
-            convertConditionSQL = convertConditionSQL.Split("WHERE").Last();
-            if (convertConditionSQL.StartsWith("SELECT"))
+            else
             {
-                convertConditionSQL = "";
-            }
-
-            for (var i = 0; i < pathConditions.Count; i++)
-            {
-                pathAllConditionsSQL[i] = convertConditionSQL.Copy();
-                for (var j = 0; j < pathConditions.Count; j++)
+                for (var i = 0; i < pathConditions.Count; i++)
                 {
-                    var replace = "false";
-                    if (j == i)
+                    var ii = i + 1;
+
+                    var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                    var where = convertPathConditionSQL.Split("WHERE").Last();
+                    where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
+                    pathConditionsSQL[i] = where;
+                    var split = where.Split(" AND ");
+                    smeSQL[i] = split[split.Length - 2];
+                    if (smeSQL[i].Contains("[]"))
                     {
-                        replace = "true";
+                        smeSQL[i] = smeSQL[i].Replace("[]", "[%]");
                     }
-                    pathAllConditionsSQL[i] = pathAllConditionsSQL[i].Replace(placeholderSQL[j], replace);
-                }
-            }
-
-            var caseWhen = "";
-            var join = "";
-            var wherePath = convertConditionSQL.Copy();
-            // var wherePath = "";
-
-            for (var i = 0; i < pathConditions.Count; i++)
-            {
-                var ii = i + 1;
-
-                caseWhen += $"CASE WHEN {valueSQL[i]} THEN 1 ELSE 0 END AS path{ii}";
-                if (i != pathConditions.Count - 1)
-                {
-                    caseWhen += ",";
-                }
-                caseWhen += "\r\n";
-
-                join += $"LEFT JOIN SMESets AS smePath{ii} ON s.Id = smePath{ii}.SMId AND {smeSQL[i]}\r\n";
-                join += $"LEFT JOIN ValueSets AS vPath{ii} ON smePath{ii}.Id = vPath{ii}.SMEId \r\n";
-
-                wherePath = wherePath.Replace(placeholderSQL[i], $"path{ii} = 1");
-            }
-
-            var smeSelect = "";
-            if (wherePath.Contains("\"s0\"."))
-            {
-                var ii = 1;
-                var split1 = wherePath.Split("\"s0\".");
-                foreach (var s1 in split1)
-                {
-                    var split2 = s1.Split(" ");
-
-                    if (split2[0] == "\"IdShort\"" || split2[0] == "\"SemanticId\"")
+                    if (smeSQL[i].Contains("%"))
                     {
-                        var s = split2[0] + " " + split2[1] + " " + split2[2];
-                        s = s.Replace(")", "");
+                        smeSQL[i] = smeSQL[i].Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                    }
+                    valueSQL[i] = split[split.Length - 1];
 
-                        if (split2.Length >= 7 && split2[3] == "AND")
+                    pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
+                    placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
+                }
+
+                // convert complete condition with placeholders
+                var convertCondition = result.Where(pathAllExists);
+                var convertConditionSQL = convertCondition.ToQueryString();
+                convertConditionSQL = convertConditionSQL.Split("WHERE").Last();
+                if (convertConditionSQL.StartsWith("SELECT"))
+                {
+                    convertConditionSQL = "";
+                }
+
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    pathAllConditionsSQL[i] = convertConditionSQL.Copy();
+                    for (var j = 0; j < pathConditions.Count; j++)
+                    {
+                        var replace = "false";
+                        if (j == i)
                         {
-                            var v = split2[4] + " " + split2[5] + " " + split2[6];
-                            v = v.Replace(")", "").Replace($"\"v\".", "");
+                            replace = "true";
+                        }
+                        pathAllConditionsSQL[i] = pathAllConditionsSQL[i].Replace(placeholderSQL[j], replace);
+                    }
+                }
 
-                            caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
-                            join += $"LEFT JOIN SMESets AS sme{ii} ON s.Id = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+                var caseWhen = "";
+                var join = "";
+                var wherePath = convertConditionSQL.Copy();
+                // var wherePath = "";
 
-                            wherePath = wherePath.Replace($"\"s0\".{s} AND", "");
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    var ii = i + 1;
 
-                            caseWhen += $", CASE WHEN valueSme{ii}.{v} THEN 1 ELSE 0 END AS valueSme{ii}\r\n";
-                            join += $"LEFT JOIN ValueSets AS valueSme{ii} ON sme{ii}.Id = valueSme{ii}.SMEId AND valueSme{ii}.{v}\r\n";
+                    caseWhen += $"CASE WHEN {valueSQL[i]} THEN 1 ELSE 0 END AS path{ii}";
+                    if (i != pathConditions.Count - 1)
+                    {
+                        caseWhen += ",";
+                    }
+                    caseWhen += "\r\n";
 
-                            wherePath = wherePath.Replace($"\"v\".{v}", $"valueSme{ii} = 1");
+                    join += $"LEFT JOIN SMESets AS smePath{ii} ON s.Id = smePath{ii}.SMId AND {smeSQL[i]}\r\n";
+                    join += $"LEFT JOIN ValueSets AS vPath{ii} ON smePath{ii}.Id = vPath{ii}.SMEId \r\n";
+
+                    wherePath = wherePath.Replace(placeholderSQL[i], $"path{ii} = 1");
+                }
+
+                var smeSelect = "";
+                if (wherePath.Contains("\"s0\"."))
+                {
+                    var ii = 1;
+                    var split1 = wherePath.Split("\"s0\".");
+                    foreach (var s1 in split1)
+                    {
+                        var split2 = s1.Split(" ");
+
+                        if (split2[0] == "\"IdShort\"" || split2[0] == "\"SemanticId\"")
+                        {
+                            var s = split2[0] + " " + split2[1] + " " + split2[2];
+                            s = s.Replace(")", "");
+
+                            if (split2.Length >= 7 && split2[3] == "AND")
+                            {
+                                var v = split2[4] + " " + split2[5] + " " + split2[6];
+                                v = v.Replace(")", "").Replace($"\"v\".", "");
+
+                                caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
+                                join += $"LEFT JOIN SMESets AS sme{ii} ON s.Id = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+
+                                wherePath = wherePath.Replace($"\"s0\".{s} AND", "");
+
+                                caseWhen += $", CASE WHEN valueSme{ii}.{v} THEN 1 ELSE 0 END AS valueSme{ii}\r\n";
+                                join += $"LEFT JOIN ValueSets AS valueSme{ii} ON sme{ii}.Id = valueSme{ii}.SMEId AND valueSme{ii}.{v}\r\n";
+
+                                wherePath = wherePath.Replace($"\"v\".{v}", $"valueSme{ii} = 1");
+
+                                ii++;
+                            }
+                            else
+                            {
+                                caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
+                                join += $"LEFT JOIN SMESets AS sme{ii} ON s.Id = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+
+                                wherePath = wherePath.Replace($"\"s0\".{s}", $"sme{ii} = 1");
+
+                                ii++;
+                            }
+                        }
+                    }
+                }
+
+                if (wherePath.Contains("\"v\"."))
+                {
+                    join += $"LEFT JOIN SMESets AS sme ON s.Id = sme.SMId\r\n";
+
+                    var ii = 1;
+                    var split1 = wherePath.Split("\"v\".");
+                    foreach (var s1 in split1)
+                    {
+                        var split2 = s1.Split(" ");
+                        if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\"" || split2[0] == "\"DTValue\"")
+                        {
+                            var v = split2[0] + " " + split2[1] + " " + split2[2];
+                            v = v.Replace(")", "");
+
+                            caseWhen += $", CASE WHEN value{ii}.{v} THEN 1 ELSE 0 END AS value{ii}\r\n";
+                            join += $"LEFT JOIN ValueSets AS value{ii} ON sme.Id = value{ii}.SMEId AND value{ii}.{v}\r\n";
+
+                            wherePath = wherePath.Replace($"\"v\".{v}", $"value{ii} = 1");
 
                             ii++;
                         }
-                        else
-                        {
-                            caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
-                            join += $"LEFT JOIN SMESets AS sme{ii} ON s.Id = sme{ii}.SMId AND sme{ii}.{s}\r\n";
-
-                            wherePath = wherePath.Replace($"\"s0\".{s}", $"sme{ii} = 1");
-
-                            ii++;
-                        }
                     }
                 }
-            }
 
-            if (wherePath.Contains("\"v\"."))
-            {
-                join += $"LEFT JOIN SMESets AS sme ON s.Id = sme.SMId\r\n";
-
-                var ii = 1;
-                var split1 = wherePath.Split("\"v\".");
-                foreach (var s1 in split1)
+                if (selectMatch != "")
                 {
-                    var split2 = s1.Split(" ");
-                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\"" || split2[0] == "\"DTValue\"")
+                    caseWhen += "," + selectMatch;
+                }
+
+                raw = "SELECT DISTINCT Id\r\n" +
+                    $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n" +
+                    caseWhen;
+                raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
+                if (!whereSm.StartsWith("SELECT"))
+                {
+                    raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                }
+                raw += ") AS s\r\n";
+                raw += join;
+                raw += ") AS base\r\n";
+                rawBase = raw;
+                if (whereMatch.Count != 0)
+                {
+                    for (var i = 0; i < whereMatch.Count; i++)
                     {
-                        var v = split2[0] + " " + split2[1] + " " + split2[2];
-                        v = v.Replace(")", "");
-
-                        caseWhen += $", CASE WHEN value{ii}.{v} THEN 1 ELSE 0 END AS value{ii}\r\n";
-                        join += $"LEFT JOIN ValueSets AS value{ii} ON sme.Id = value{ii}.SMEId AND value{ii}.{v}\r\n";
-
-                        wherePath = wherePath.Replace($"\"v\".{v}", $"value{ii} = 1");
-
-                        ii++;
+                        wherePath = wherePath.Replace($"abs(\"s\".\"Id\") = 10{i}", whereMatch[i]);
                     }
                 }
-            }
-
-            if (selectMatch != "")
-            {
-                caseWhen += "," + selectMatch;
-            }
-
-            raw = "SELECT DISTINCT Id\r\n" +
-                $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n" +
-                caseWhen;
-            raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
-            if (!whereSm.StartsWith("SELECT"))
-            {
-                raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
-            }
-            raw += ") AS s\r\n";
-            raw += join;
-            raw += ") AS base\r\n";
-            rawBase = raw;
-            if (whereMatch.Count != 0)
-            {
-                for (var i = 0; i < whereMatch.Count; i++)
+                wherePath = wherePath.Replace("\"s\".", "\"base\".");
+                if (wherePath != "")
                 {
-                    wherePath = wherePath.Replace($"abs(\"s\".\"Id\") = 10{i}", whereMatch[i]);
+                    rawBase += $"WHERE {wherePath}\r\n";
                 }
-            }
-            wherePath = wherePath.Replace("\"s\".", "\"base\".");
-            if (wherePath != "")
-            {
-                rawBase += $"WHERE {wherePath}\r\n";
             }
         }
         else
@@ -2153,8 +2161,7 @@ public partial class Query
                     "FROM (\r\n" +
                     rawBase +
                     ") AS result\r\n" +
-                    "WHERE PathAll = 1\r\n" +
-                    $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
+                    "WHERE PathAll = 1\r\n";
             }
         }
 
