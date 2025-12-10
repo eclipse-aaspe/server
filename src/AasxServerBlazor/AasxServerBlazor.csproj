@@ -91,15 +91,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Update="Pages\Trustlist.razor">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </Content>
-      <Content Update="Pages\Credentials.razor">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
         <None Update="accessrules.txt">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
