@@ -52,10 +52,10 @@ namespace AasxServer
 
             text += $"urlPrefix: {urlPrefix}\r\n";
             text += $"type: {type}\r\n";
-            text += "parameters:";
-            foreach (var p in parameters)
+            text += "parameters:\r\n";
+            for (var p = 0; p < parameters.Count; p++)
             {
-                text += " " + p;
+                text += p + ": " + parameters[p] + "\r\n";
             }
             text += $"bearer: {bearer}\r\n";
             text += "\r\n";
