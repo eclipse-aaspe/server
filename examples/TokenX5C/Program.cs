@@ -338,7 +338,8 @@ if (exchange != "0")
     configUrlList = [
         "",
         "basyx",
-        "assetfox"
+        "assetfox",
+        "factory-x"
     ];
     for (var i = 0; i < configUrlList.Count; i++)
     {
