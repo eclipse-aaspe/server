@@ -45,6 +45,23 @@ namespace AasxServer
         public string bearer = string.Empty;
         public DateTime bearerValidFrom = DateTime.MinValue;
         public DateTime bearerValidTo = DateTime.MinValue;
+
+        public string GetAsText()
+        {
+            var text = "";
+
+            text += $"urlPrefix: {urlPrefix}\r\n";
+            text += $"type: {type}\r\n";
+            text += "parameters:";
+            foreach (var p in parameters)
+            {
+                text += " " + p;
+            }
+            text += $"bearer: {bearer}\r\n";
+            text += "\r\n";
+
+            return text;
+        }
     }
 
     public class cs
@@ -52,6 +69,17 @@ namespace AasxServer
         // static for the moment
         // service already prepared CredentialService.cs
         public static List<AasxServer.AasxCredentialsEntry> credentials = new List<AasxServer.AasxCredentialsEntry>();
+        public static string GetAsText()
+        {
+            var text = "";
+
+            foreach (var c in credentials)
+            {
+                text += c.GetAsText();
+            }
+
+            return text;
+        }
     }
 
     public class AasxCredentials

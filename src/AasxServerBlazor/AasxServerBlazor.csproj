@@ -94,7 +94,7 @@
       <Content Update="Pages\Trustlist.razor">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </Content>
-      <Content Update="Pages\Access.razor">
+      <Content Update="Pages\Credentials.razor">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </Content>
     </ItemGroup>
