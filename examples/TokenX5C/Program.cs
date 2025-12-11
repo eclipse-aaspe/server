@@ -317,6 +317,7 @@ else
     }
 }
 
+var target = "";
 if (exchange != "0")
 {
     Console.WriteLine("Token Exchange");
@@ -351,7 +352,7 @@ if (exchange != "0")
         Console.WriteLine("Enter index: ");
         input = Console.ReadLine();
     }
-    var target = configUrlList[Convert.ToInt32(input)];
+    target = configUrlList[Convert.ToInt32(input)];
 
     var d = new Dictionary<string, string>
         {
@@ -428,7 +429,8 @@ if (exchange == "2")
 
     Console.WriteLine("Token Exchange");
     configUrlList = [
-        "https://demo2.digital-twin.host/identity-management/realms/D4E/protocol/openid-connect"
+        "https://demo2.digital-twin.host/identity-management/realms/D4E/protocol/openid-connect",
+        "https://integration.assetfox.apps.siemens.cloud/auth/realms/assetfox/protocol/openid-connect"
     ];
     for (var i = 0; i < configUrlList.Count; i++)
     {
@@ -442,12 +444,17 @@ if (exchange == "2")
     }
     configUrl = configUrlList[Convert.ToInt32(input)];
 
+    var service = "service-user-basyx";
+    if (target == "assetfox")
+    {
+        service = "sts-client";
+    }
     var request = new HttpRequestMessage(HttpMethod.Post, $"{configUrl}/token")
     {
         Content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             { "grant_type", "client_credentials" },
-            { "client_id", "service-user-basyx" },
+            { "client_id", service },
             { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
             { "client_assertion", accessToken }
         })
