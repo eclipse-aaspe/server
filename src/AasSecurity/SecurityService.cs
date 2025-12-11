@@ -321,6 +321,7 @@ namespace AasSecurity
             policy = "";
             policyRequestedResource = "";
             tokenClaims = [];
+            var domain = "";
 
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
@@ -330,11 +331,7 @@ namespace AasSecurity
 
             if (!error)
             {
-                accessRole = HandleBearerToken(bearerToken, ref user, ref error, out policy, out policyRequestedResource, out tokenClaims);
-                //if (accessRole == null)
-                //{
-                //    return accessRole;
-                //}
+                accessRole = HandleBearerToken(bearerToken, ref user, ref error, out policy, out policyRequestedResource, out tokenClaims, out domain);
             }
 
             if (!string.IsNullOrEmpty(user))
@@ -356,27 +353,23 @@ namespace AasSecurity
                     }
 
                     //Domain
-                    foreach (var securityRight in securityRights)
+                    if (domain != "")
                     {
-                        if (!securityRight.Name.Contains('@'))
+                        foreach (var securityRight in securityRights)
                         {
-                            string? domain = null;
-                            if (user.Contains('@'))
+                            if (!securityRight.Name.Contains('@'))
                             {
-                                string?[] split = user.Split('@');
-                                domain = split[1];
-                            }
+                                if (domain != null && domain.Equals(securityRight.Name))
+                                {
+                                    accessRole = securityRight.Role;
+                                    return accessRole;
+                                }
 
-                            if (domain != null && domain.Equals(securityRight.Name))
-                            {
-                                accessRole = securityRight.Role;
-                                return accessRole;
-                            }
-
-                            if (user == securityRight.Name)
-                            {
-                                accessRole = securityRight.Role;
-                                return accessRole;
+                                if (user == securityRight.Name)
+                                {
+                                    accessRole = securityRight.Role;
+                                    return accessRole;
+                                }
                             }
                         }
                     }
@@ -387,9 +380,9 @@ namespace AasSecurity
         }
 
         private string HandleBearerToken(string? bearerToken, ref string user, ref bool error,
-            out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
+            out string policy, out string policyRequestedResource, out List<Claim> tokenClaims, out string domain)
         {
-            var domain = "";
+            domain = "";
             policy = "";
             policyRequestedResource = "";
             tokenClaims = [];
@@ -401,143 +394,165 @@ namespace AasSecurity
             {
                 var handler = new JwtSecurityTokenHandler();
                 var jwtSecurityToken = handler.ReadJwtToken(bearerToken);
-                if (jwtSecurityToken != null)
+                if (jwtSecurityToken != null && jwtSecurityToken.Claims != null)
                 {
-                    if (jwtSecurityToken.Claims != null)
+                    var iss = "";
+                    var issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
+                    if (issClaim.Any())
                     {
-                        tokenClaims.AddRange(jwtSecurityToken.Claims);
+                        iss = issClaim.First().Value;
+                    }
 
-                        var emailClaim = jwtSecurityToken.Claims.Where(c => c.Type == "email");
-                        if (emailClaim != null && emailClaim.Any())
+                    var valid = false;
+                    if (!string.IsNullOrEmpty(iss) && iss.StartsWith("https://login.microsoftonline.com"))
+                    {
+                        var clientId = "865f6ac0-cdbc-44c6-98cc-3e35c39ecb6e";
+                        var tenantId = jwtSecurityToken.Claims
+                            .First(c => c.Type == "tid").Value;
+
+                        var jwksUrl = $"https://login.microsoftonline.com/{tenantId}/discovery/v2.0/keys";
+                        var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                        using var httpClient = new HttpClient(clientHandler);
+                        var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
+                        var jwks = new JsonWebKeySet(jwksJson);
+                        var signingKeys = jwks.GetSigningKeys();
+
+                        var tokenHandler = new JwtSecurityTokenHandler();
+                        var validationParameters = new TokenValidationParameters
                         {
-                            var email = emailClaim.First().Value;
-                            if (!string.IsNullOrEmpty(email))
+                            ValidateIssuer = true,
+                            ValidIssuer = $"https://login.microsoftonline.com/{tenantId}/v2.0",
+                            ValidateAudience = true,
+                            ValidAudience = clientId,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKeys = signingKeys
+                        };
+
+                        try
+                        {
+                            var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
+                            Console.WriteLine("Token is valid.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Token validation failed: {ex.Message}");
+                            user = "";
+                            return "";
+                        }
+                        valid = true;
+                    }
+                    if (!valid)
+                    {
+                        if (jwtSecurityToken.Header.TryGetValue("kid", out _))
+                        {
+                            user = "";
+                            var jwksUrl = "";
+                            var kid = jwtSecurityToken.Header["kid"].ToString();
+                            if (kid != null)
                             {
-                                user = email.ToLower();
+                                jwksUrl = SecurityHelper.FindServerJwksUrl(kid, out domain);
+                            }
+                            if (!jwksUrl.IsNullOrEmpty())
+                            {
+                                var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                                using var httpClient = new HttpClient(clientHandler);
+                                var jwksJson = httpClient.GetStringAsync(jwksUrl + "/jwks").Result;
+                                var jwks = new JsonWebKeySet(jwksJson);
+                                var signingKeys = jwks.GetSigningKeys();
+
+                                var tokenHandler = new JwtSecurityTokenHandler();
+                                var validationParameters = new TokenValidationParameters
+                                {
+                                    ValidateIssuer = false,
+                                    ValidateAudience = false,
+                                    ValidateLifetime = true,
+                                    ValidateIssuerSigningKey = true,
+                                    IssuerSigningKeys = signingKeys
+                                };
+
+                                try
+                                {
+                                    var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
+
+                                    valid = true;
+                                }
+                                catch (Exception ex)
+                                {
+                                }
                             }
                         }
-
-                        var iss = "";
-                        var issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
-                        if (issClaim != null && issClaim.Any())
+                    }
+                    if (!valid)
+                    {
+                        var serverNameClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == "serverName");
+                        if (serverNameClaim != null)
                         {
-                            iss = issClaim.First().Value;
-                        }
-
-                        if (!string.IsNullOrEmpty(iss) && iss.StartsWith("https://login.microsoftonline.com"))
-                        {
-                            var clientId = "865f6ac0-cdbc-44c6-98cc-3e35c39ecb6e";
-                            var tenantId = jwtSecurityToken.Claims
-                                .First(c => c.Type == "tid").Value;
-
-                            var jwksUrl = $"https://login.microsoftonline.com/{tenantId}/discovery/v2.0/keys";
-                            var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
-                            using var httpClient = new HttpClient(clientHandler);
-                            var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
-                            var jwks = new JsonWebKeySet(jwksJson);
-                            var signingKeys = jwks.GetSigningKeys();
-
-                            var tokenHandler = new JwtSecurityTokenHandler();
-                            var validationParameters = new TokenValidationParameters
+                            var serverName = serverNameClaim.Value;
+                            X509Certificate2? cert = SecurityHelper.FindServerCertificate(serverName, out domain);
+                            if (cert == null)
                             {
-                                ValidateIssuer = true,
-                                ValidIssuer = $"https://login.microsoftonline.com/{tenantId}/v2.0",
-                                ValidateAudience = true,
-                                ValidAudience = clientId,
-                                ValidateLifetime = true,
-                                ValidateIssuerSigningKey = true,
-                                IssuerSigningKeys = signingKeys
-                            };
+                                user = "";
+                                return "";
+                            }
 
+                            StringBuilder builder = new StringBuilder();
+                            builder.AppendLine("-----BEGIN CERTIFICATE-----");
+                            builder.AppendLine(
+                                               Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
+                            builder.AppendLine("-----END CERTIFICATE-----");
+                            _logger.LogDebug("Token Server Certificate: " + serverName);
+                            _logger.LogDebug(builder.ToString());
+                            //check if server cert is correctly signed
                             try
                             {
-                                var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-                                Console.WriteLine("Token is valid.");
+                                Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
+
+                                valid = true;
                             }
-                            catch (Exception ex)
+                            catch
                             {
-                                Console.WriteLine($"Token validation failed: {ex.Message}");
                                 user = "";
                                 return "";
                             }
                         }
+                    }
+
+                    if (valid)
+                    {
+                        tokenClaims.AddRange(jwtSecurityToken.Claims);
+
+                        var emailClaim = jwtSecurityToken.Claims.Where(c => c.Type == "userName");
+                        if (emailClaim.Any())
+                        {
+                            var userName = emailClaim.First().Value;
+                            if (!string.IsNullOrEmpty(userName))
+                            {
+                                user = userName.ToLower();
+                            }
+                        }
                         else
                         {
-                            if (jwtSecurityToken.Header.TryGetValue("kid", out _))
+                            emailClaim = jwtSecurityToken.Claims.Where(c => c.Type == "email");
+                            if (emailClaim.Any())
                             {
-                                user = "";
-                                var jwksUrl = "";
-                                var kid = jwtSecurityToken.Header["kid"].ToString();
-                                if (kid != null)
+                                var email = emailClaim.First().Value;
+                                if (!string.IsNullOrEmpty(email))
                                 {
-                                    jwksUrl = SecurityHelper.FindServerJwksUrl(kid, out domain);
-                                }
-                                if (!jwksUrl.IsNullOrEmpty())
-                                {
-                                    var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
-                                    using var httpClient = new HttpClient(clientHandler);
-                                    var jwksJson = httpClient.GetStringAsync(jwksUrl + "/jwks").Result;
-                                    var jwks = new JsonWebKeySet(jwksJson);
-                                    var signingKeys = jwks.GetSigningKeys();
-
-                                    var tokenHandler = new JwtSecurityTokenHandler();
-                                    var validationParameters = new TokenValidationParameters
-                                    {
-                                        ValidateIssuer = false,
-                                        ValidateAudience = false,
-                                        ValidateLifetime = true,
-                                        ValidateIssuerSigningKey = true,
-                                        IssuerSigningKeys = signingKeys
-                                    };
-
-                                    try
-                                    {
-                                        var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-
-                                        user = jwtSecurityToken.Claims.First(c => c.Type == "userName").Value;
-                                        if (!string.IsNullOrEmpty(user))
-                                        {
-                                            return "";
-                                        }
-                                        user = "";
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                    }
-                                }
-                            }
-
-                            var serverName = jwtSecurityToken.Claims.First(c => c.Type == "serverName").Value;
-                            if (!string.IsNullOrEmpty(serverName))
-                            {
-                                X509Certificate2? cert = SecurityHelper.FindServerCertificate(serverName, out domain);
-                                if (cert == null)
-                                {
-                                    user = "";
-                                    return "";
-                                }
-
-                                StringBuilder builder = new StringBuilder();
-                                builder.AppendLine("-----BEGIN CERTIFICATE-----");
-                                builder.AppendLine(
-                                                   Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
-                                builder.AppendLine("-----END CERTIFICATE-----");
-                                _logger.LogDebug("Token Server Certificate: " + serverName);
-                                _logger.LogDebug(builder.ToString());
-                                //check if server cert is correctly signed
-                                try
-                                {
-                                    Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
-                                }
-                                catch
-                                {
-                                    user = "";
-                                    return "";
+                                    user = email.ToLower();
                                 }
                             }
                             else
                             {
-                                serverName = "keycloak";
+                                emailClaim = jwtSecurityToken.Claims.Where(c => c.Type == "sub");
+                                if (emailClaim.Any())
+                                {
+                                    var email = emailClaim.First().Value;
+                                    if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                                    {
+                                        user = email.ToLower();
+                                    }
+                                }
                             }
                         }
 
@@ -553,14 +568,22 @@ namespace AasSecurity
                             policyRequestedResource = policyRequestedResourceClaim.First().Value;
                         }
 
-                        var userNameClaim = jwtSecurityToken.Claims.Where(c => c.Type == "userName");
-                        if (userNameClaim.Any())
+                        if (user != "")
                         {
-                            var userName = userNameClaim.First().Value;
-                            if (!string.IsNullOrEmpty(userName) && (domain == ""|| userName.EndsWith(domain)))
+                            if (domain == "" && user != "")
                             {
-                                user = userName.ToLower();
+                                var split = user.Split('@');
+                                if (split.Length == 2)
+                                {
+                                    domain = split[1];
+                                }
                             }
+                            if (domain != "")
+                            {
+                                tokenClaims.Add(new Claim("domain", domain));
+                            }
+
+                            return "";
                         }
                     }
                 }
@@ -572,7 +595,7 @@ namespace AasSecurity
                 _logger.LogDebug(ex.StackTrace);
             }
 
-            // TODO (jtikekar, 2023-09-04): refactor
+            user = "";
             return "";
         }
 
