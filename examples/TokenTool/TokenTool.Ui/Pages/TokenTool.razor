@@ -1,0 +1,126 @@
+﻿@page "/"
+
+<div class="input-bar shadow-sm">
+    <h5 class="mb-2">Eingabe</h5>
+
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <input class="form-control" style="min-width: 22rem"
+               placeholder="Zeile eingeben und Enter (z.B. 0, f, s ...)"
+               @bind="CurrentLine"
+               @bind:event="oninput"
+               @onkeydown="OnKeyDown" />
+
+        <button class="btn btn-primary" @onclick="Submit">Enter</button>
+        <button class="btn btn-outline-secondary" @onclick="Clear">Clear</button>
+
+        <InputFile OnChange="OnPfxSelected" />
+        <input type="password" class="form-control" style="max-width:16rem"
+               placeholder="PFX-Passwort (z.B. i40)"
+               @bind="MyApp.IOConsole.PfxPassword"
+        />
+
+        @if (!string.IsNullOrEmpty(SelectedPfxName))
+        {
+            <span class="badge bg-info text-dark ms-2">PFX: @SelectedPfxName</span>
+        }
+        @if (!string.IsNullOrEmpty(MyApp.IOConsole.PfxPassword))
+        {
+            <small class="text-muted">,PW: @MyApp.IOConsole.PfxPassword</small>
+        }
+    </div>
+</div>
+
+<div class="output-container">
+    <pre class="output">@string.Join("\n", Log)</pre>
+</div>
+
+@code {
+    private string CurrentLine = "";
+    private string SelectedPfxName = "";
+    private readonly List<string> Log = new();
+    private bool started = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        MyApp.IOConsole.WriteLineConsumer = s =>
+        {
+            Log.Add(s ?? "");
+            InvokeAsync(StateHasChanged);
+        };
+
+        StartLoop();
+    }
+
+    private void StartLoop()
+    {
+        started = true;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await MyApp.TokenTool.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Add($"ERROR: {ex.Message}");
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+    }
+
+    private async Task OnPfxSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        // Dateiname für die Anzeige merken
+        SelectedPfxName = file.Name;
+
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 3 * 1024 * 1024).CopyToAsync(ms); // 3 MB
+        MyApp.IOConsole.UploadedPfxBytes = ms.ToArray();
+
+        StateHasChanged();
+    }
+
+    private void Submit()
+    {
+        if (!string.IsNullOrWhiteSpace(CurrentLine))
+        {
+            // Echo der Eingabe im Output
+            Log.Add($"> {CurrentLine}");
+            StateHasChanged();
+        }
+
+        // Zeile an ReadLine() liefern
+        MyApp.IOConsole.SubmitLine(CurrentLine);
+
+        // Eingabefeld leeren
+        CurrentLine = "";
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            Submit();
+        }
+    }
+
+    private void Clear()
+    {
+        // Anzeige & Eingaben leeren
+        Log.Clear();
+        CurrentLine = "";
+        SelectedPfxName = "";                    // << Dateiname verstecken
+
+        // IOConsole komplett zurücksetzen (bricht evtl. wartende ReadLine ab, löscht PFX-Bytes & Passwort)
+        MyApp.IOConsole.Reset();
+
+        // Neue Eingabeschleife starten
+        StartLoop();
+
+        // Optional: an den Anfang scrollen (falls nötig)
+        // (ohne JS-Interop bleibt das hier eine einfache Re-Render-Strategie)
+        StateHasChanged();
+    }
+}
