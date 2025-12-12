@@ -16,41 +16,20 @@ namespace AasxServerDB;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Linq.Dynamic.Core.CustomTypeProviders;
-using System.Linq.Dynamic.Core.CustomTypeProviders;
-using System.Linq.Expressions;
-using System.Numerics;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.Intrinsics.X86;
-using System.Security.AccessControl;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using Contracts.QueryResult;
 using Contracts.Security;
 using Extensions;
 // using Newtonsoft.Json.Schema;
-using HotChocolate.Types.Relay;
-using IdentityModel.Client;
 using Irony.Parsing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using SQLitePCL;
-using static AasCore.Aas3_0.Reporting;
 using static AasxServerDB.CrudOperator;
-using static AasxServerDB.Query;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 public class CombinedValue
 {
@@ -1624,8 +1603,7 @@ public partial class Query
 
         var withPathSme = false;
         var withMatch = false;
-        var withRecursive = value.Contains("==");
-
+        var withRecursive = false;
         var pathSME = "";
         var pathAllCondition = "";
         var pathAllConditionRaw = "";
@@ -1635,6 +1613,11 @@ public partial class Query
             if (!conditionsExpression.TryGetValue("path-all", out pathAllCondition))
             {
                 withPathSme = false;
+            }
+            else
+            {
+                withRecursive = pathAllCondition.Contains("sme.") || pathAllCondition.Contains("svalue")
+                    || pathAllCondition.Contains("mvalue") || pathAllCondition.Contains("dtvalue");
             }
             if (conditionsExpression.TryGetValue("path-raw", out pathAllConditionRaw))
             {
@@ -1943,20 +1926,68 @@ public partial class Query
         var rawBase = "";
         if (pathConditions.Count != 0)
         {
-            var placeholderSQL = new string[pathConditions.Count];
-            var exists = new string[pathConditions.Count];
-            var pathConditionsSQL = new string[pathConditions.Count];
-            var pathAllConditionsSQL = new string[pathConditions.Count];
-            var smeSQL = new string[pathConditions.Count];
-            var valueSQL = new string[pathConditions.Count];
-            var pathAllExists = pathAllCondition.Copy();
-
-            if (!withRecursive)
+            if (!withRecursive && !withMatch)
             {
-                //ToDo
+                rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
+
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    var join = "";
+                    join += $"LEFT JOIN( \r\n SELECT DISTINCT sme.SMId AS SMId  \r\n";
+                    join += $"FROM ValueSets AS v \r\n";
+                    join += $"JOIN SMESets  AS sme ON sme.Id = v.SMEId \r\n";
+                    join += $" WHERE ";
+
+                    var splitted = pathConditions[i].Split("&&");
+
+                    for (var j = 0; j < splitted.Length; j++)
+                    {
+                        if (!splitted[j].StartsWith("sme.idShort "))
+                        {
+                            join += splitted[j];
+
+                            if (j != splitted.Length - 1)
+                            {
+                                join += " \r\n";
+                                join += " AND";
+                            }
+                            join += "  \r\n";
+                        }
+                    }
+
+                    join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
+
+                    rawBase += join;
+                }
+
+                rawBase += $" WHERE s.{conditionsExpression["sm"]} \r\n".Replace("(","").Replace(")","");
+
+                rawBase += "AND (";
+
+                for (var i = 1; i < pathConditions.Count + 1; i++)
+                {
+                    rawBase += $" p{i}.SMId IS NOT NULL";
+
+                    if (i != pathConditions.Count)
+                    {
+                        rawBase += " AND ";
+                    }
+                }
+
+                rawBase += ")";
+
+                rawBase = rawBase.Replace("==", "=").Replace("\"","\'");
             }
             else
             {
+                var placeholderSQL = new string[pathConditions.Count];
+                var exists = new string[pathConditions.Count];
+                var pathConditionsSQL = new string[pathConditions.Count];
+                var pathAllConditionsSQL = new string[pathConditions.Count];
+                var smeSQL = new string[pathConditions.Count];
+                var valueSQL = new string[pathConditions.Count];
+                var pathAllExists = pathAllCondition.Copy();
+
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
                     var ii = i + 1;
