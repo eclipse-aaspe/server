@@ -79,9 +79,9 @@ public static class TokenTool
 
         if (input == "s")
         {
-            Console.WriteLine("Client ID: ");
+            Console.WriteLine("Client ID (YourEmail or empty): ");
             var id = Console.ReadLine();
-            Console.WriteLine("Client Secret: ");
+            Console.WriteLine("Client Secret (YourEmail-secret or empty): ");
             var secret = Console.ReadLine();
             if (id == "" && secret == "")
             {
@@ -146,7 +146,7 @@ public static class TokenTool
                     break;
 
                 case "e":
-                    Console.WriteLine("Entra ID?");
+                    Console.WriteLine("Entra ID (from https://entraid.aas-voyager.com/)?");
                     entraid = Console.ReadLine() ?? "";
                     break;
 
@@ -325,13 +325,11 @@ public static class TokenTool
         }
     }
 
-    // --- Hilfsmethoden ---
-
     private static X509Certificate2? SelectCertificateWithUI(List<string> rootCertSubjects)
     {
         if (!OperatingSystem.IsWindows())
         {
-            Console.WriteLine("Certificate UI ist nur unter Windows verfügbar. Bitte Modus 'f' (PFX) verwenden.");
+            Console.WriteLine("Certificate UI is only available on Windows. Please use mode 'f' (PFX).");
             return null;
         }
 
@@ -422,7 +420,7 @@ public static class TokenTool
     {
         if (!OperatingSystem.IsWindows())
         {
-            Console.WriteLine("Interaktives EntraID ist unter Linux nicht praktikabel; bitte 'e' (Token kopieren) nutzen.");
+            Console.WriteLine("Interaktive EntraID is only available on Windows; please use mode 'e' and copy token.");
             return "";
         }
 
