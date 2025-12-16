@@ -1928,17 +1928,16 @@ public partial class Query
         var rawBase = "";
         if (pathConditions.Count != 0)
         {
+            bool withWhiteListing = conditionAll.Contains("[]") || conditionAll.Contains("[%]");
+
             if (!withRecursive && !withMatch)
             {
                 rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
 
-                //var placeholderSQL = new string[pathConditions.Count];
-                //var exists = new string[pathConditions.Count];
+                var placeholderSQL = new string[pathConditions.Count];
                 //var pathConditionsSQL = new string[pathConditions.Count];
                 //var pathAllConditionsSQL = new string[pathConditions.Count];
-                //var smeSQL = new string[pathConditions.Count];
-                //var valueSQL = new string[pathConditions.Count];
-                //var pathAllExists = pathAllCondition.Copy();
+                var pathAllExists = pathAllCondition.Copy();
 
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
@@ -1947,15 +1946,12 @@ public partial class Query
                     join += $"FROM ValueSets AS v \r\n";
                     join += $"JOIN SMESets  AS sme ON sme.Id = v.SMEId \r\n";
 
-
                     var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
                     var convertPathConditionSQL = convertPathCondition.ToQueryString();
                     var where = convertPathConditionSQL.Split("WHERE").Last();
                     where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
-                    ;
                     //pathConditionsSQL[i] = where;
                     var split = where.Split(" AND ");
-                    //smeSQL[i] = split[split.Length - 2];
                     var smeSQL = split[split.Length - 2];
                     if (smeSQL.Contains("[]"))
                     {
@@ -1966,45 +1962,35 @@ public partial class Query
                         smeSQL = smeSQL.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
                     }
                     var valueSQL = split[split.Length - 1];
-                    //valueSQL[i] = split[split.Length - 1];
 
-                    join += $"WHERE {valueSQL} and {smeSQL} \r\n";
+                    join += $"WHERE {valueSQL} AND {smeSQL} \r\n";
                     join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
 
-                    //for (var j = 0; j < splitted.Length; j++)
-                    //{
-                    //    if (!splitted[j].StartsWith("sme.idShort "))
-                    //    {
-                    //        join += splitted[j];
 
-                    //        if (j != splitted.Length - 1)
-                    //        {
-                    //            join += " \r\n";
-                    //            join += " AND";
-                    //        }
-                    //        join += "  \r\n";
-                    //    }
-                    //}
+                    pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
+                    placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
 
                     rawBase += join;
                 }
 
-                rawBase += $" WHERE {whereSm}";
-                rawBase += "AND (";
+                rawBase += "WHERE ";
 
-                for (var i = 1; i < pathConditions.Count + 1; i++)
+                // convert complete condition with placeholders
+                var convertCondition = result.Where(pathAllExists);
+                var convertConditionSQL = convertCondition.ToQueryString();
+                convertConditionSQL = convertConditionSQL.Split("WHERE").Last();
+
+                //rawBase += $" WHERE {whereSm}";
+                if (convertConditionSQL.StartsWith("SELECT"))
                 {
-                    rawBase += $" p{i}.SMId IS NOT NULL";
-
-                    if (i != pathConditions.Count)
-                    {
-                        rawBase += " AND ";
-                    }
+                    convertConditionSQL = "";
                 }
 
-                rawBase += ")";
-
-                //rawBase = rawBase.Replace("==", "=").Replace("\"", "\'");
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $" p{i+1}.SMId IS NOT NULL ");
+                }
+                rawBase += convertConditionSQL;
             }
             else
             {
@@ -2037,8 +2023,8 @@ public partial class Query
                     }
                     valueSQL[i] = split[split.Length - 1];
 
-                    //pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
-                    //placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
+                    pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
+                    placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
                 }
 
                 // convert complete condition with placeholders
