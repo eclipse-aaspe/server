@@ -100,8 +100,11 @@ namespace AasSecurity
                 var rules = _accessRules.Rules.Where(r =>
                     r.Acl != null &&
                     r.Acl.Access == "ALLOW" &&
-                    r.Acl.Rights.Contains(neededRightsClaim) &&
-                    r.Acl.Attributes[0].ItemType == "CLAIM" && r.Acl.Attributes[0].Value == accessRole &&
+                    r.Acl.Rights.Contains(neededRightsClaim) && r.Acl.Attributes[0].ItemType == "CLAIM" &&
+                    (
+                        (accessRole != null && r.Acl.Attributes[0].Value == accessRole) ||
+                        (accessRole == null && tokenClaims != null && tokenClaims.Any(t => t.ValueType == "token:" + r.Acl.Attributes[0].Value))
+                    ) &&
                     (
                         (httpRoute == null) ||
                         (httpRoute != null && r.Objects.Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, httpRoute)))
