@@ -2171,41 +2171,7 @@ public partial class Query
         }
         else
         {
-            // rawBase = result.Where(conditionAll).Select(r => r.SMId).Distinct().ToQueryString();
-            // if (false)
-            {
-                var rawComplete = result.Where(conditionAll).ToQueryString();
-                var whereComplete = rawComplete?.Split("WHERE").Last();
-                if (whereComplete.Contains("t0"))
-                {
-                    whereComplete = whereComplete?.Replace("\"t\".", "\"sme\".").Replace("\"t0\".", "\"v\".");
-                }
-                else
-                {
-                    whereComplete = whereComplete?.Replace("\"t\".", "\"v\".");
-                }
-
-                rawBase = "SELECT s.Id,\r\n" +
-                    $"CASE WHEN ({whereComplete}) THEN 1 ELSE 0 END AS PathAll\r\n" +
-                    "FROM SMSets AS s\r\n" +
-                    $"LEFT JOIN SMESets AS sme ON s.Id = sme.SMId";
-                if (!whereSme.StartsWith("SELECT"))
-                {
-                    rawBase += $" AND ({whereSme})";
-                }
-                rawBase += "\r\n";
-                rawBase += $"LEFT JOIN ValueSets AS v ON sme.Id = v.SMEId\r\n";
-                if (!whereSm.StartsWith("SELECT"))
-                {
-                    rawBase += $"WHERE ({whereSm})\r\n";
-                }
-
-                rawBase = "SELECT DISTINCT result.Id\r\n" + "" +
-                    "FROM (\r\n" +
-                    rawBase +
-                    ") AS result\r\n" +
-                    "WHERE PathAll = 1\r\n";
-            }
+            rawBase = result.Where(conditionAll).Select(r => r.SMId).Distinct().ToQueryString();
         }
 
         raw = rawBase;
