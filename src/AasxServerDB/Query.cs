@@ -1928,8 +1928,6 @@ public partial class Query
         var rawBase = "";
         if (pathConditions.Count != 0)
         {
-            bool withWhiteListing = conditionAll.Contains("[]") || conditionAll.Contains("[%]");
-
             if (!withRecursive && !withMatch)
             {
                 rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
@@ -1950,20 +1948,33 @@ public partial class Query
                     var convertPathConditionSQL = convertPathCondition.ToQueryString();
                     var where = convertPathConditionSQL.Split("WHERE").Last();
                     where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
-                    //pathConditionsSQL[i] = where;
-                    var split = where.Split(" AND ");
-                    var smeSQL = split[split.Length - 2];
-                    if (smeSQL.Contains("[]"))
-                    {
-                        smeSQL = smeSQL.Replace("[]", "[%]");
-                    }
-                    if (smeSQL.Contains("%"))
-                    {
-                        smeSQL = smeSQL.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
-                    }
-                    var valueSQL = split[split.Length - 1];
 
-                    join += $"WHERE {valueSQL} AND {smeSQL} \r\n";
+                    var split = where.Split(" AND ");
+
+                    var valueSQL = split[split.Length - 1];
+                    join += $"WHERE {valueSQL} ";
+
+                    var smeSQL = split[split.Length - 2];
+
+                    if (smeSQL.Contains("[]") || smeSQL.Contains("%"))
+                    {
+                        var smeSQLIdShort = split[split.Length - 3];
+                        if (smeSQL.Contains("[]"))
+                        {
+                            smeSQL = smeSQL.Replace("[]", "[%]");
+
+                        }
+                        if (smeSQL.Contains("%"))
+                        {
+                            smeSQL = smeSQL.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                        }
+                        join += $"AND {smeSQLIdShort} AND {smeSQL} \r\n";
+                    }
+                    else
+                    {
+                        join += $"AND {smeSQL} \r\n";
+                    }
+
                     join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
 
 
