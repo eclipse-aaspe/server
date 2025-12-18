@@ -1933,8 +1933,6 @@ public partial class Query
                 rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
 
                 var placeholderSQL = new string[pathConditions.Count];
-                //var pathConditionsSQL = new string[pathConditions.Count];
-                //var pathAllConditionsSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
 
                 for (var i = 0; i < pathConditions.Count; i++)
@@ -1952,28 +1950,23 @@ public partial class Query
                     var split = where.Split(" AND ");
 
                     var valueSQL = split[split.Length - 1];
+
                     join += $"WHERE {valueSQL} ";
 
-                    var smeSQL = split[split.Length - 2];
+                    var smeSQLPath = split[split.Length - 2];
 
-                    if (smeSQL.Contains("[]") || smeSQL.Contains("%"))
+                    var smeSQLIdShort = split[split.Length - 3];
+                    if (smeSQLPath.Contains("[]"))
                     {
-                        var smeSQLIdShort = split[split.Length - 3];
-                        if (smeSQL.Contains("[]"))
-                        {
-                            smeSQL = smeSQL.Replace("[]", "[%]");
+                        smeSQLPath = smeSQLPath.Replace("[]", "[%]");
 
-                        }
-                        if (smeSQL.Contains("%"))
-                        {
-                            smeSQL = smeSQL.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
-                        }
-                        join += $"AND {smeSQLIdShort} AND {smeSQL} \r\n";
                     }
-                    else
+                    if (smeSQLPath.Contains("%"))
                     {
-                        join += $"AND {smeSQL} \r\n";
+                        smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
                     }
+
+                    join += $"AND {smeSQLIdShort} AND {smeSQLPath} \r\n";
 
                     join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
 
@@ -1991,7 +1984,6 @@ public partial class Query
                 var convertConditionSQL = convertCondition.ToQueryString();
                 convertConditionSQL = convertConditionSQL.Split("WHERE").Last();
 
-                //rawBase += $" WHERE {whereSm}";
                 if (convertConditionSQL.StartsWith("SELECT"))
                 {
                     convertConditionSQL = "";
@@ -2009,7 +2001,8 @@ public partial class Query
                 var exists = new string[pathConditions.Count];
                 var pathConditionsSQL = new string[pathConditions.Count];
                 var pathAllConditionsSQL = new string[pathConditions.Count];
-                var smeSQL = new string[pathConditions.Count];
+                var smeSQLPath = new string[pathConditions.Count];
+                var smeSQLIdShort = new string[pathConditions.Count];
                 var valueSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
 
@@ -2023,14 +2016,15 @@ public partial class Query
                     where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
                     pathConditionsSQL[i] = where;
                     var split = where.Split(" AND ");
-                    smeSQL[i] = split[split.Length - 2];
-                    if (smeSQL[i].Contains("[]"))
+                    smeSQLPath[i] = split[split.Length - 2];
+                    smeSQLIdShort[i] = split[split.Length - 3];
+                    if (smeSQLPath[i].Contains("[]"))
                     {
-                        smeSQL[i] = smeSQL[i].Replace("[]", "[%]");
+                        smeSQLPath[i] = smeSQLPath[i].Replace("[]", "[%]");
                     }
-                    if (smeSQL[i].Contains("%"))
+                    if (smeSQLPath[i].Contains("%"))
                     {
-                        smeSQL[i] = smeSQL[i].Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                        smeSQLPath[i] = smeSQLPath[i].Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
                     }
                     valueSQL[i] = split[split.Length - 1];
 
@@ -2077,8 +2071,8 @@ public partial class Query
                     }
                     caseWhen += "\r\n";
 
-                    join += $"LEFT JOIN SMESets AS smePath{ii} ON s.Id = smePath{ii}.SMId AND {smeSQL[i]}\r\n";
-                    join += $"LEFT JOIN ValueSets AS vPath{ii} ON smePath{ii}.Id = vPath{ii}.SMEId \r\n";
+                    join += $"LEFT JOIN SMESets AS smePath{ii} ON s.Id = smePath{ii}.SMId AND {smeSQLIdShort[i]} AND {smeSQLPath[i]}\r\n";
+                    join += $"LEFT JOIN ValueSets AS vPath{ii} ON smePath{ii}.Id = vPath{ii}.SMEId AND {valueSQL[i]}\r\n";
 
                     wherePath = wherePath.Replace(placeholderSQL[i], $"path{ii} = 1");
                 }
