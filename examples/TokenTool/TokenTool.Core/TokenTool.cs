@@ -309,13 +309,13 @@ public class TokenTool
                 {
                     var result = handler2.ValidateToken(accessToken, validationParams);
                     if (!result.IsValid)
-                        Console.WriteLine($"Validation failed: {result.Exception?.Message}");
+                        ioConsole.WriteLine($"Validation failed: {result.Exception?.Message}");
                     else
-                        Console.WriteLine("Token is valid");
+                        ioConsole.WriteLine("Token is valid");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Validation failed: {ex.Message}");
+                    ioConsole.WriteLine($"Validation failed: {ex.Message}");
                 }
             }
         }
