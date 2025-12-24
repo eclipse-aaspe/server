@@ -16,16 +16,16 @@
         <InputFile OnChange="OnPfxSelected" />
         <input type="password" class="form-control" style="max-width:16rem"
                placeholder="PFX-Passwort (z.B. i40)"
-               @bind="MyApp.IOConsole.PfxPassword"
+               @bind="ioConsole.PfxPassword"
         />
 
         @if (!string.IsNullOrEmpty(SelectedPfxName))
         {
             <span class="badge bg-info text-dark ms-2">PFX: @SelectedPfxName</span>
         }
-        @if (!string.IsNullOrEmpty(MyApp.IOConsole.PfxPassword))
+        @if (!string.IsNullOrEmpty(ioConsole.PfxPassword))
         {
-            <small class="text-muted">,PW: @MyApp.IOConsole.PfxPassword</small>
+            <small class="text-muted">,PW: @ioConsole.PfxPassword</small>
         }
     </div>
 </div>
@@ -35,6 +35,9 @@
 </div>
 
 @code {
+    MyApp.TokenTool tokenTool = new MyApp.TokenTool();
+    MyApp.IOConsole ioConsole = new MyApp.IOConsole();
+
     private string CurrentLine = "";
     private string SelectedPfxName = "";
     private readonly List<string> Log = new();
@@ -42,7 +45,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        MyApp.IOConsole.WriteLineConsumer = s =>
+        ioConsole.WriteLineConsumer = s =>
         {
             Log.Add(s ?? "");
             InvokeAsync(StateHasChanged);
@@ -58,7 +61,7 @@
         {
             try
             {
-                await MyApp.TokenTool.RunAsync();
+                await tokenTool.RunAsync(ioConsole);
             }
             catch (Exception ex)
             {
@@ -77,7 +80,7 @@
 
         using var ms = new MemoryStream();
         await file.OpenReadStream(maxAllowedSize: 3 * 1024 * 1024).CopyToAsync(ms); // 3 MB
-        MyApp.IOConsole.UploadedPfxBytes = ms.ToArray();
+        ioConsole.UploadedPfxBytes = ms.ToArray();
 
         StateHasChanged();
     }
@@ -92,7 +95,7 @@
         }
 
         // Zeile an ReadLine() liefern
-        MyApp.IOConsole.SubmitLine(CurrentLine);
+        ioConsole.SubmitLine(CurrentLine);
 
         // Eingabefeld leeren
         CurrentLine = "";
@@ -114,7 +117,7 @@
         SelectedPfxName = "";                    // << Dateiname verstecken
 
         // IOConsole komplett zurücksetzen (bricht evtl. wartende ReadLine ab, löscht PFX-Bytes & Passwort)
-        MyApp.IOConsole.Reset();
+        ioConsole.Reset();
 
         // Neue Eingabeschleife starten
         StartLoop();

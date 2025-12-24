@@ -10,30 +10,30 @@ namespace MyApp;
 /// in Blazor Server. In der Console‑App zeigen die Delegates auf System.Console,
 /// in Blazor werden sie von der UI (Razor) neu verdrahtet.
 /// </summary>
-public static class IOConsole
+public class IOConsole
 {
     // ---------- OUTPUT (WriteLine) ----------
     /// <summary>
     /// Ziel für Ausgaben. In der Console-App: System.Console.WriteLine.
     /// In Blazor: UI fügt Zeilen in eine Liste ein und ruft StateHasChanged().
     /// </summary>
-    public static Action<string?> WriteLineConsumer { get; set; } = s => System.Console.WriteLine(s ?? "");
+    public Action<string?> WriteLineConsumer { get; set; } = s => System.Console.WriteLine(s ?? "");
 
     /// <summary>
     /// Entspricht Console.WriteLine(text).
     /// </summary>
-    public static void WriteLine(string? text) => WriteLineConsumer(text);
+    public void WriteLine(string? text) => WriteLineConsumer(text);
 
 
     // ---------- INPUT (ReadLine) ----------
-    private static TaskCompletionSource<string?>? _nextLineTcs;
-    private static readonly object _lock = new();
+    private TaskCompletionSource<string?>? _nextLineTcs;
+    private readonly object _lock = new();
 
     /// <summary>
     /// Blockiert so lange, bis die UI eine Zeile via SubmitLine(...) liefert.
     /// Wird synchron aufgerufen, um Console.ReadLine 1:1 zu emulieren.
     /// </summary>
-    public static string? ReadLine()
+    public string? ReadLine()
     {
         Task<string?> waitTask;
 
@@ -64,7 +64,7 @@ public static class IOConsole
     /// Wird von der Blazor‑UI (z. B. beim Enter‑Key oder Button) aufgerufen.
     /// Liefert die aktuelle Eingabezeile an das wartende ReadLine().
     /// </summary>
-    public static void SubmitLine(string? line)
+    public void SubmitLine(string? line)
     {
         TaskCompletionSource<string?>? tcs;
         lock (_lock)
@@ -78,7 +78,7 @@ public static class IOConsole
     /// <summary>
     /// Bricht das aktuelle ReadLine()-Warten ab (optional).
     /// </summary>
-    public static void CancelRead()
+    public void CancelRead()
     {
         TaskCompletionSource<string?>? tcs;
         lock (_lock)
@@ -92,17 +92,17 @@ public static class IOConsole
 
     // ---------- OPTIONALE HILFSWERTE FÜR DEINEN "f"-PFAD (PFX) ----------
     /// <summary>Von der UI hochgeladene .pfx-Bytes (für Modus 'f').</summary>
-    public static byte[]? UploadedPfxBytes { get; set; }
+    public byte[]? UploadedPfxBytes { get; set; }
 
     /// <summary>Optionales PFX‑Passwort (wenn nicht im Code fest verdrahtet).</summary>
-    public static string? PfxPassword { get; set; }
+    public string? PfxPassword { get; set; }
 
 
     // ---------- QUALITY-OF-LIFE: RESET ----------
     /// <summary>
     /// Setzt den Zustand zurück (z. B. beim Neustart des Tools).
     /// </summary>
-    public static void Reset()
+    public void Reset()
     {
         CancelRead();
         UploadedPfxBytes = null;

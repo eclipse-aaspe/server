@@ -24,9 +24,9 @@ using Console = MyApp.IOConsole;
 
 namespace MyApp;
 
-public static class TokenTool
+public class TokenTool
 {
-    public static async Task RunAsync()
+    public async Task RunAsync(MyApp.IOConsole ioConsole)
     {
         var tenant = "common"; // Damit auch externe Konten wie @live.de funktionieren
         var clientId = "865f6ac0-cdbc-44c6-98cc-3e35c39ecb6e"; // aus der App-Registrierung
@@ -41,13 +41,13 @@ public static class TokenTool
         ];
         for (var i = 0; i < configUrlList.Count; i++)
         {
-            Console.WriteLine(i + ": " + configUrlList[i]);
+            ioConsole.WriteLine(i + ": " + configUrlList[i]);
         }
         var input = "0";
         if (configUrlList.Count > 1)
         {
-            Console.WriteLine("Enter index: ");
-            input = Console.ReadLine();
+            ioConsole.WriteLine("Enter index: ");
+            input = ioConsole.ReadLine();
         }
         var configUrl = configUrlList[Convert.ToInt32(input ?? "0")];
 
@@ -56,10 +56,10 @@ public static class TokenTool
         {
             text = "Enter character: (C)ertificateStore or (F)ile or (E)ntraID or (I)nteractive Entra or (S)ecret + optional Token(X)Change + optional Double(2)XChange";
         }
-        Console.WriteLine(text);
+        ioConsole.WriteLine(text);
 
 
-        input = (Console.ReadLine() ?? "").ToLower();
+        input = (ioConsole.ReadLine() ?? "").ToLower();
 
         var exchange = "0";
         if (input.EndsWith("x") || input.EndsWith("1") || input.EndsWith("2"))
@@ -79,16 +79,16 @@ public static class TokenTool
 
         if (input == "s")
         {
-            Console.WriteLine("Client ID (YourEmail or empty): ");
-            var id = Console.ReadLine();
-            Console.WriteLine("Client Secret (YourEmail-secret or empty): ");
-            var secret = Console.ReadLine();
+            ioConsole.WriteLine("Client ID (YourEmail or empty): ");
+            var id = ioConsole.ReadLine();
+            ioConsole.WriteLine("Client Secret (YourEmail-secret or empty): ");
+            var secret = ioConsole.ReadLine();
             if (id == "" && secret == "")
             {
                 id = "aorzelski@phoenixcontact.com";
                 secret = "aorzelski@phoenixcontact.com-secret";
-                Console.WriteLine($"Client ID: {id}");
-                Console.WriteLine($"Client Secret: {secret}");
+                ioConsole.WriteLine($"Client ID: {id}");
+                ioConsole.WriteLine($"Client Secret: {secret}");
             }
 
             var request1 = new HttpRequestMessage(HttpMethod.Post, configUrl);
@@ -109,7 +109,7 @@ public static class TokenTool
             doc = JsonDocument.Parse(json);
             accessToken = doc.RootElement.GetProperty("access_token").GetString();
 
-            Console.WriteLine("Access Token : " + accessToken);
+            ioConsole.WriteLine("Access Token : " + accessToken);
         }
         else
         {
@@ -136,22 +136,22 @@ public static class TokenTool
             switch (input)
             {
                 case "c":
-                    certificate = SelectCertificateWithUI(rootCertSubjects);
+                    certificate = SelectCertificateWithUI(ioConsole, rootCertSubjects);
                     x5c = BuildChainX5C(certificate);
                     break;
 
                 case "f":
-                    certificate = LoadCertificateFromPfx(IOConsole.UploadedPfxBytes, IOConsole.PfxPassword);
+                    certificate = LoadCertificateFromPfx(ioConsole.UploadedPfxBytes, ioConsole.PfxPassword);
                     x5c = BuildChainX5C(certificate);
                     break;
 
                 case "e":
-                    Console.WriteLine("Entra ID (from https://entraid.aas-voyager.com/)?");
-                    entraid = Console.ReadLine() ?? "";
+                    ioConsole.WriteLine("Entra ID (from https://entraid.aas-voyager.com/)?");
+                    entraid = ioConsole.ReadLine() ?? "";
                     break;
 
                 case "i":
-                    entraid = await AcquireEntraIdInteractiveAsync(clientId, tenant, scopes);
+                    entraid = await AcquireEntraIdInteractiveAsync(ioConsole, clientId, tenant, scopes);
                     break;
             }
 
@@ -165,26 +165,26 @@ public static class TokenTool
             }
 
             // JWT erstellen und Access-Token anfordern
-            var (jwt, accessTok) = await BuildAndRequestTokenAsync(client, tokenEndpoint, entraid, x5c, certificate, email);
+            var (jwt, accessTok) = await BuildAndRequestTokenAsync(ioConsole, client, tokenEndpoint, entraid, x5c, certificate, email);
             accessToken = accessTok;
         }
 
         var target = "";
         if (exchange != "0")
         {
-            Console.WriteLine("Token Exchange");
+            ioConsole.WriteLine("Token Exchange");
             configUrlList = [
                 "https://iam-security-training.com/sts"
             ];
             for (var i = 0; i < configUrlList.Count; i++)
             {
-                Console.WriteLine(i + ": " + configUrlList[i]);
+                ioConsole.WriteLine(i + ": " + configUrlList[i]);
             }
             input = "0";
             if (configUrlList.Count > 1)
             {
-                Console.WriteLine("Enter index: ");
-                input = Console.ReadLine();
+                ioConsole.WriteLine("Enter index: ");
+                input = ioConsole.ReadLine();
             }
             configUrl = configUrlList[Convert.ToInt32(input ?? "0")];
 
@@ -196,13 +196,13 @@ public static class TokenTool
             ];
             for (var i = 0; i < configUrlList.Count; i++)
             {
-                Console.WriteLine(i + ": " + configUrlList[i]);
+                ioConsole.WriteLine(i + ": " + configUrlList[i]);
             }
             input = "0";
             if (configUrlList.Count > 1)
             {
-                Console.WriteLine("Enter index: ");
-                input = Console.ReadLine();
+                ioConsole.WriteLine("Enter index: ");
+                input = ioConsole.ReadLine();
             }
             target = configUrlList[Convert.ToInt32(input ?? "0")];
 
@@ -231,7 +231,7 @@ public static class TokenTool
             if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
             {
                 accessToken = tokenElement.GetString();
-                Console.WriteLine("Access Token: " + accessToken);
+                ioConsole.WriteLine("Access Token: " + accessToken);
 
                 using var httpClient = new HttpClient(handler);
                 var jwksJson = await httpClient.GetStringAsync($"{configUrl}/jwks");
@@ -264,11 +264,11 @@ public static class TokenTool
                 try
                 {
                     handler2.ValidateToken(accessToken, validationParams, out _);
-                    Console.WriteLine("Token is valid");
+                    ioConsole.WriteLine("Token is valid");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Validation failed: {ex.Message}");
+                    ioConsole.WriteLine($"Validation failed: {ex.Message}");
                 }
             }
         }
@@ -278,20 +278,20 @@ public static class TokenTool
             handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
             client = new HttpClient(handler);
 
-            Console.WriteLine("Token Exchange");
+            ioConsole.WriteLine("Token Exchange");
             configUrlList = [
                 "https://demo2.digital-twin.host/identity-management/realms/D4E/protocol/openid-connect",
                 "https://integration.assetfox.apps.siemens.cloud/auth/realms/assetfox/protocol/openid-connect"
             ];
             for (var i = 0; i < configUrlList.Count; i++)
             {
-                Console.WriteLine(i + ": " + configUrlList[i]);
+                ioConsole.WriteLine(i + ": " + configUrlList[i]);
             }
             input = "0";
             if (configUrlList.Count > 1)
             {
-                Console.WriteLine("Enter index: ");
-                input = Console.ReadLine();
+                ioConsole.WriteLine("Enter index: ");
+                input = ioConsole.ReadLine();
             }
             configUrl = configUrlList[Convert.ToInt32(input ?? "0")];
 
@@ -320,16 +320,16 @@ public static class TokenTool
             if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
             {
                 accessToken = tokenElement.GetString();
-                Console.WriteLine("Access Token: " + accessToken);
+                ioConsole.WriteLine("Access Token: " + accessToken);
             }
         }
     }
 
-    private static X509Certificate2? SelectCertificateWithUI(List<string> rootCertSubjects)
+    private X509Certificate2? SelectCertificateWithUI(MyApp.IOConsole ioConsole, List<string> rootCertSubjects)
     {
         if (!OperatingSystem.IsWindows())
         {
-            Console.WriteLine("Certificate UI is only available on Windows. Please use mode 'f' (PFX).");
+            ioConsole.WriteLine("Certificate UI is only available on Windows. Please use mode 'f' (PFX).");
             return null;
         }
 
@@ -371,7 +371,7 @@ public static class TokenTool
         return null;
     }
 
-    private static X509Certificate2? LoadCertificateFromPfx(byte[]? uploadedPfx, string? password)
+    private X509Certificate2? LoadCertificateFromPfx(byte[]? uploadedPfx, string? password)
     {
         if (uploadedPfx is { Length: > 0 } && password != "")
             return new X509Certificate2(uploadedPfx, password ?? "");
@@ -395,7 +395,7 @@ public static class TokenTool
         return xc;
     }
 
-    private static string[]? BuildChainX5C(X509Certificate2? certificate)
+    private string[]? BuildChainX5C(X509Certificate2? certificate)
     {
         if (certificate == null) return null;
 
@@ -416,11 +416,11 @@ public static class TokenTool
         return x5c.ToArray();
     }
 
-    private static async Task<string> AcquireEntraIdInteractiveAsync(string clientId, string tenant, string[] scopes)
+    private async Task<string> AcquireEntraIdInteractiveAsync(MyApp.IOConsole ioConsole, string clientId, string tenant, string[] scopes)
     {
         if (!OperatingSystem.IsWindows())
         {
-            Console.WriteLine("Interaktive EntraID is only available on Windows; please use mode 'e' and copy token.");
+            ioConsole.WriteLine("Interaktive EntraID is only available on Windows; please use mode 'e' and copy token.");
             return "";
         }
 
@@ -438,7 +438,7 @@ public static class TokenTool
         return result.IdToken;
     }
 
-    private static string? ExtractEmailFromCert(X509Certificate2 certificate)
+    private string? ExtractEmailFromCert(X509Certificate2 certificate)
     {
         var email = certificate.GetNameInfo(X509NameType.EmailName, false);
         if (!string.IsNullOrEmpty(email)) return email;
@@ -448,7 +448,8 @@ public static class TokenTool
         return match?.Split('=')[1];
     }
 
-    private static async Task<(string jwt, string accessToken)> BuildAndRequestTokenAsync(
+    private async Task<(string jwt, string accessToken)> BuildAndRequestTokenAsync(
+        MyApp.IOConsole ioConsole,
         HttpClient client,
         string? tokenEndpoint,
         string entraid,
@@ -518,8 +519,8 @@ public static class TokenTool
         if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
         {
             accessToken = tokenElement.GetString();
-            Console.WriteLine("Access Token: " + accessToken);
-            Console.WriteLine("");
+            ioConsole.WriteLine("Access Token: " + accessToken);
+            ioConsole.WriteLine("");
         }
 
         return (jwt, accessToken ?? "");
