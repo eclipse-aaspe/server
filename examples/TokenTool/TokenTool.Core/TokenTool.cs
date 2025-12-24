@@ -237,6 +237,7 @@ public class TokenTool
                 var jwksJson = await httpClient.GetStringAsync($"{configUrl}/jwks");
                 var jwks = JObject.Parse(jwksJson)["keys"];
 
+                /*
                 var handler2 = new JwtSecurityTokenHandler();
                 var jwt2 = handler2.ReadJwtToken(accessToken);
                 var kid = jwt2.Header["kid"].ToString();
@@ -269,6 +270,52 @@ public class TokenTool
                 catch (Exception ex)
                 {
                     ioConsole.WriteLine($"Validation failed: {ex.Message}");
+                }
+                */
+
+                // 1) Handler
+                var handler2 = new JsonWebTokenHandler();
+
+                // 2) JWK aus JWKS direkt verwenden (hier exemplarisch LINQ auf Dein jwks-Array)
+                var jwtHeaderKid = new JsonWebToken(accessToken).Kid; // liest 'kid' robust
+                var jwkJson = jwks.First(k => k["kid"].ToString() == jwtHeaderKid).ToString(); // k ist i. d. R. ein JObject
+                var jwk = new JsonWebKey(jwkJson);
+
+                // 3) Validierungsparameter
+                var validationParams = new TokenValidationParameters
+                {
+                    // Signaturprüfung
+                    IssuerSigningKey = jwk,            // kein manuelles RSAParameters nötig
+                    ValidateIssuerSigningKey = true,
+
+                    // Lebenszeit
+                    ValidateLifetime = true,
+                    RequireExpirationTime = true,
+                    ClockSkew = TimeSpan.FromMinutes(5),   // bei UTC+0 gut, ggf. 2–5 Minuten
+
+                    // Issuer/Audience je nach Bedarf (bei Tests oft aus)
+                    ValidateIssuer = false,                // später auf true + ValidIssuer setzen
+                    ValidateAudience = false,              // später auf true + ValidAudience setzen
+
+                    // Keine Legacy-Claim-Mappings
+                    // MapInboundClaims = false,
+
+                    // Optional: Name-/Rollen-Claims aus dem JWT
+                    NameClaimType = "name",
+                    RoleClaimType = "role"
+                };
+
+                try
+                {
+                    var result = handler2.ValidateToken(accessToken, validationParams);
+                    if (!result.IsValid)
+                        Console.WriteLine($"Validation failed: {result.Exception?.Message}");
+                    else
+                        Console.WriteLine("Token is valid");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Validation failed: {ex.Message}");
                 }
             }
         }
