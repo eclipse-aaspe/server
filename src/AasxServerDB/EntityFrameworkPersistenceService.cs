@@ -729,14 +729,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QueryGetSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.ResultType, queryRequest.Expression);
+                        var queryResult = query.GetQueryData(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.ResultType, queryRequest.Expression);
 
                         if (queryResult.Shells != null && queryResult.Shells.Count != 0)
                         {
                             result.ResultData = queryResult.Shells.ConvertAll(r => r as IClass);
                         }
-                        else
-                        if (queryResult.Submodels != null && queryResult.Submodels.Count != 0)
+                        else if (queryResult.Submodels != null && queryResult.Submodels.Count != 0)
                         {
                             result.ResultData = queryResult.Submodels.ConvertAll(r => r as IClass);
                         }

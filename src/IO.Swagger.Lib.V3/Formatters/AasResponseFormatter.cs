@@ -44,6 +44,7 @@ using Extensions;
 using Contracts.DbRequests;
 using System.Xml;
 using Contracts.LevelExtent;
+using Contracts.QueryResult;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {

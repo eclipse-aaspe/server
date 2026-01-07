@@ -39,7 +39,7 @@ public class CombinedValue
     public DateTime? DTValue { get; set; }
 }
 
-public class SubmodelsQueryResult
+public class QueryResult
 {
     public List<IAssetAdministrationShell> Shells { get; set; }
     public List<ISubmodel> Submodels { get; set; }
@@ -94,7 +94,7 @@ public partial class Query
         watch.Restart();
         Dictionary<string, string>? condition;
 
-        var query = GetSMs(false, securityCondition, out condition, "submodel", qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
+        var query = GetSMs(false, securityCondition, out condition, ResultType.Submodel, qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
 
         return query;
     }
@@ -277,8 +277,8 @@ public partial class Query
         return result;
     }
 
-    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition,
-        int pageFrom, int pageSize, string resultType, string expression)
+    internal QueryResult GetQueryData(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition,
+        int pageFrom, int pageSize, ResultType resultType, string expression)
     {
         var qResult = new QResult()
         {
@@ -313,7 +313,7 @@ public partial class Query
         }
         else
         {
-            var submodelsResult = new SubmodelsQueryResult
+            var submodelsResult = new QueryResult
             {
                 Ids = [],
                 Shells = [],
@@ -321,7 +321,7 @@ public partial class Query
                 SubmodelElements = []
             };
 
-            text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
+            text = "Query data in " + watch.ElapsedMilliseconds + " ms";
             Console.WriteLine(text);
 
             watch.Restart();
@@ -369,56 +369,55 @@ public partial class Query
             //}
             //else
             //{
-                //var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, resultType, false, out lastId);
-                //text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
-                //Console.WriteLine(text);
-                //text = "SMs found ";
-                //text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
-                //Console.WriteLine(text);
+            //var result = GetSMResult(qResult, (IQueryable<CombinedSMResultWithAas>)query, resultType, false, out lastId);
+            //text = "SMs found ";
+            //text += "/" + db.SMSets.Count() + ": " + result.Count + " queried";
+            //Console.WriteLine(text);
 
-                //if (resultType == "AssetAdministrationShell")
+            if (resultType == ResultType.AssetAdministrationShell)
+            {
+                var timeStamp = DateTime.UtcNow;
+                var shells = new List<IAssetAdministrationShell>();
+
+                var aasIdList = result;
+
+                //if (aasIdList.IsNullOrEmpty())
                 //{
-                //    var timeStamp = DateTime.UtcNow;
-                //    var shells = new List<IAssetAdministrationShell>();
+                //    var smIdentifierList = result.Select(r => r.smIdentifier).Distinct();
 
-                //    var aasIdList = result.Where(r => r.aasId != null).Select(r => r.aasId).Distinct();
-
-                //    if (aasIdList.IsNullOrEmpty())
-                //    {
-                //        var smIdentifierList = result.Select(r => r.smIdentifier).Distinct();
-
-                //        aasIdList = db.SMRefSets.Where(sm => smIdentifierList.Contains(sm.Identifier)).
-                //            Select(s => s.AASId);
-                //    }
-                //    if (!aasIdList.IsNullOrEmpty())
-                //    {
-                //        var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
-
-                //        for (var i = 0; i < aasList.Count; i++)
-                //        {
-                //            var aasDB = aasList[i];
-                //            var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
-                //            if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
-                //            {
-                //                if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
-                //                {
-                //                    if (filterAas.Contains("globalAssetId"))
-                //                    {
-                //                        aas.Submodels = null;
-                //                        aas.Description = null;
-                //                        aas.DisplayName = null;
-                //                    }
-                //                }
-                //            }
-                //            if (aas != null)
-                //            {
-                //                shells.Add(aas);
-                //            }
-                //        }
-                //    }
-                //    submodelsResult.Shells = shells;
+                //    aasIdList = db.SMRefSets.Where(sm => smIdentifierList.Contains(sm.Identifier)).
+                //        Select(s => s.AASId);
                 //}
-                //else
+                if (!aasIdList.IsNullOrEmpty())
+                {
+                    var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+
+                    for (var i = 0; i < aasList.Count; i++)
+                    {
+                        var aasDB = aasList[i];
+                        var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
+                        if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
+                        {
+                            if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
+                            {
+                                if (filterAas.Contains("globalAssetId"))
+                                {
+                                    aas.Submodels = null;
+                                    aas.Description = null;
+                                    aas.DisplayName = null;
+                                }
+                            }
+                        }
+                        if (aas != null)
+                        {
+                            shells.Add(aas);
+                        }
+                    }
+                }
+                submodelsResult.Shells = shells;
+            }
+            else
+            {
                 if (!qResult.WithSelectId && !qResult.WithSelectMatch)
                 {
                     var timeStamp = DateTime.UtcNow;
@@ -513,7 +512,11 @@ public partial class Query
                         }
                     }
                 }
-            //}
+            }
+
+            var collectResultText = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+            Console.WriteLine(collectResultText);
+
             return submodelsResult;
         }
     }
@@ -528,7 +531,7 @@ public partial class Query
     }
 
     private List<int>? GetSMs(bool noSecurity, Dictionary<string, string>? securityCondition, out Dictionary<string, string>? condition,
-        string resultType,
+        ResultType resultType,
         QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
         string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
@@ -664,7 +667,7 @@ public partial class Query
         // get data
         if (withExpression) // with expression
         {
-            comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize);
+            comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize, resultType);
         }
         //else // with parameters
         //{
@@ -1588,7 +1591,8 @@ public partial class Query
         AasContext db,
         Dictionary<string, string>? conditionsExpression,
         int pageFrom,
-        int pageSize
+        int pageSize,
+        ResultType resultType
         )
     {
         IQueryable<AASSet>? aasTable = null;
@@ -1994,7 +1998,7 @@ public partial class Query
 
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
-                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $" p{i+1}.SMId IS NOT NULL ");
+                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $" p{i + 1}.SMId IS NOT NULL ");
                 }
                 rawBase += convertConditionSQL;
             }
@@ -2188,7 +2192,25 @@ public partial class Query
         }
         else
         {
-            rawBase = result.Where(conditionAll).Select(r => r.SMId).Distinct().ToQueryString();
+            switch (resultType)
+            {
+                case ResultType.Identifier:
+                    break;
+                case ResultType.AssetAdministrationShell:
+                    rawBase = result.Where(conditionAll).Select(r => r.aas.Id).Distinct().ToQueryString();
+                    break;
+                case ResultType.Submodel:
+                    rawBase = result.Where(conditionAll).Select(r => r.SMId).Distinct().ToQueryString();
+                    break;
+                case ResultType.SubmodelValue:
+                case ResultType.SubmodelElement:
+                default:
+                    throw new NotImplementedException();
+            }
+
+            //if (resultType == ResultType.Submodel)
+            //{
+            //}
         }
 
         raw = rawBase;
