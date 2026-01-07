@@ -12,6 +12,9 @@
 ********************************************************************************/
 
 namespace Contracts.DbRequests;
+
+using Contracts.QueryResult;
+
 public class DbQueryRequest
 {
     public bool WithTotalCount { get; set; }
@@ -29,7 +32,7 @@ public class DbQueryRequest
 
     public string Expression { get; set; }
 
-    public string ResultType { get; set; }
+    public ResultType ResultType { get; set; }
     //Submodel Element Request
     public string Requested { get; set; }
     public string SmSemanticId { get; set; }

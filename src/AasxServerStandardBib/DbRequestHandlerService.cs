@@ -1335,7 +1335,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string resultType, string expression)
+    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression)
     {
         var parameters = new DbRequestParams()
         {
