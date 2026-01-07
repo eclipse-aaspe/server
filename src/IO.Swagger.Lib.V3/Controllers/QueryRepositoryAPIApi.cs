@@ -36,6 +36,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using AasxServerStandardBib.Exceptions;
+using Contracts.QueryResult;
 
 /// <summary>
 /// 
@@ -166,7 +167,7 @@ public class QueryRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, resultType.ToString(), expression);
+        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, resultType, expression);
 
         if (list.IsNullOrEmpty())
         {
