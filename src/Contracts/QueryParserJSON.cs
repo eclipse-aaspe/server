@@ -876,14 +876,16 @@ public class QueryGrammarJSON : Grammar
         var attributes = rule.Acl?.Attributes;
         if (attributes != null && attributes.Count != 0)
         {
+            var claimList = "";
             foreach (var a in attributes)
             {
                 if (a.ItemType == "CLAIM")
                 {
                     claim = a.Value;
-                    accessRuleExpression["claim"] = claim;
+                    claimList += claim + " ";
                 }
             }
+            accessRuleExpression["claim"] = claimList;
         }
         var routes = rule.Objects?.Where(o => o.ItemType == "ROUTE").ToList();
         var rightList = rule.Acl?.Rights?.ToList();

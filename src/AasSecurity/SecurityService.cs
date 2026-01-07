@@ -97,6 +97,7 @@ namespace AasSecurity
         {
             if (_accessRules != null)
             {
+                /*
                 var rules = _accessRules.Rules.Where(r =>
                     r.Acl != null &&
                     r.Acl.Access == "ALLOW" &&
@@ -110,6 +111,29 @@ namespace AasSecurity
                         (httpRoute != null && r.Objects.Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, httpRoute)))
                     )
                 ).ToList();
+                */
+
+                var rules = _accessRules.Rules
+                    .Where(r =>
+                        r.Acl != null &&
+                        r.Acl.Access == "ALLOW" &&
+                        r.Acl.Rights != null &&
+                        r.Acl.Rights.Contains(neededRightsClaim) &&
+                        r.Acl.Attributes != null &&
+                        r.Acl.Attributes.All(a =>
+                            a.ItemType == "CLAIM" &&
+                            (
+                                (accessRole != null && a.Value == accessRole) ||
+                                (tokenClaims != null && tokenClaims.Any(t => t.ValueType == "token:" + a.Value))
+                            )
+                        ) &&
+                        (
+                            httpRoute == null ||
+                            (r.Objects != null &&
+                             r.Objects.Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, httpRoute)))
+                        )
+                    )
+                    .ToList();
 
                 if (rules.Count == 0)
                 {
@@ -208,8 +232,13 @@ namespace AasSecurity
                     var claim = split[0];
                     if (claim.StartsWith("token:"))
                     {
-                        var value = tokenClaims.Where(tc => tc.Type == claim).FirstOrDefault().Value;
+                        var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
                         condition[c.Key] = c.Value.Replace($"CLAIM({claim})", $"\"{value}\"");
+                    }
+                    if (claim == accessRole)
+                    {
+                        var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
+                        condition[c.Key] = c.Value.Replace($"CLAIM({accessRole})", $"\"{value}\"");
                     }
                 }
             }
@@ -1054,7 +1083,7 @@ namespace AasSecurity
             {
                 var a = c["claim"];
                 var n = c["right"];
-                if (a == currentRole && n.Contains(neededRights.ToString()))
+                if (a.Contains(currentRole + " ") && n.Contains(neededRights.ToString()))
                 {
                     conditionSM = c["sm."];
                     conditionSME = c["sme."];

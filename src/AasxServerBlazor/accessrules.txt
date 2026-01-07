@@ -113,6 +113,83 @@
             }
           ]
         }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "isAuthenticated"
+            }
+          ],
+          "RIGHTS": [
+            "READ"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "/shells"
+          },
+          {
+            "ROUTE": "/submodels"
+          },
+          {
+            "ROUTE": "/query/submodels"
+          },
+          {
+            "ROUTE": "/packages"
+          },
+          {
+            "ROUTE": "/serialization"
+          },
+          {
+            "ROUTE": "/concept-descriptions"
+          }
+        ],
+        "FORMULA": {
+          "$or": [
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "Nameplate"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$ends-with": [
+                    {
+                      "$attribute": {
+                        "CLAIM": "token:sub"
+                      }
+                    },
+                    {
+                      "$strVal": "phoenixcontact.com"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "TechnicalData"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
       }
     ]
   }
