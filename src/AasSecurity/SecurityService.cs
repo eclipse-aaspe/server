@@ -376,14 +376,10 @@ namespace AasSecurity
                 {
                     foreach (var securityRight in securityRights)
                     {
-                        //Email
-                        if (securityRight.Name.Contains('@'))
+                        if (user.Equals(securityRight.Name))
                         {
-                            if (user.Contains('@') && user.Equals(securityRight.Name))
-                            {
-                                accessRole = securityRight.Role;
-                                return accessRole;
-                            }
+                            accessRole = securityRight.Role;
+                            return accessRole;
                         }
                     }
 
