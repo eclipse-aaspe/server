@@ -882,7 +882,10 @@ public class QueryGrammarJSON : Grammar
                 if (a.ItemType == "CLAIM")
                 {
                     claim = a.Value;
-                    claimList += claim + " ";
+                    if (!claimList.Contains(claim + " "))
+                    {
+                        claimList += claim + " ";
+                    }
                 }
             }
             accessRuleExpression["claim"] = claimList;

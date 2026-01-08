@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using System.Security.Claims;
 using AasSecurity.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +30,9 @@ namespace AasSecurity
                               out string? getPolicy,
                               string objPath = null,
                               string? aasResourceType = null,
-                              IClass? aasResource = null, string? policy = null);
+                              IClass? aasResource = null,
+                              string? policy = null,
+                              List<Claim> tokenClaims = null);
 
         string GetSecurityRules(out List<Dictionary<string, string>> condition);
     }

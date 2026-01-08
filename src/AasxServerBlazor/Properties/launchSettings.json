@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--with-db --start-index 1000 --secret-string-api 1234 --data-path \"C:\\Development\\newdb1\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--with-db --start-index 1000 --secret-string-api 1234 --data-path \"C:\\Development\\p5\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

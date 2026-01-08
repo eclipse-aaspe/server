@@ -18,6 +18,7 @@ using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Security.AccessControl;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -88,12 +89,14 @@ namespace AasSecurity
             }
         }
 
-        public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
+        public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null,
+            List<Claim>? tokenClaims = null)
         {
             return GetAccessRulesStatic(accessRole, neededRightsClaim, httpRoute, tokenClaims);
         }
 
-        public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
+        public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null,
+            List<Claim>? tokenClaims = null)
         {
             if (_accessRules != null)
             {
@@ -124,7 +127,7 @@ namespace AasSecurity
                             a.ItemType == "CLAIM" &&
                             (
                                 (accessRole != null && a.Value == accessRole) ||
-                                (tokenClaims != null && tokenClaims.Any(t => t.ValueType == "token:" + a.Value))
+                                (tokenClaims != null && tokenClaims.Any(t => t.Type == a.Value))
                             )
                         ) &&
                         (
@@ -147,7 +150,7 @@ namespace AasSecurity
         }
         public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
-            var rules = GetAccessRules(accessRole, neededRightsClaim);
+            var rules = GetAccessRules(accessRole, neededRightsClaim, tokenClaims: tokenClaims);
 
             if (rules == null)
             {
@@ -315,7 +318,7 @@ namespace AasSecurity
             }
 
             var accessRole = GetAccessRole(queries, headers, out var policy, out var policyRequestedResource, out var tokenClaims);
-            if (string.IsNullOrEmpty(accessRole))
+            if (string.IsNullOrEmpty(accessRole) && tokenClaims.Count == 0)
             {
                 _logger.LogDebug($"Access Role found null. Hence setting the access role as isNotAuthenticated.");
                 accessRole = "isNotAuthenticated";
@@ -807,22 +810,24 @@ namespace AasSecurity
 
         public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights,
                                      out string error, out bool withAllow, out string? getPolicy, string objPath = null, string? aasResourceType = null,
-                                     IClass? aasResource = null, string? policy = null)
+                                     IClass? aasResource = null, string? policy = null, List<Claim>? tokenClaims = null)
         {
-            return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy, objPath, aasResourceType, aasResource, policy: policy);
+            return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy,
+                objPath, aasResourceType, aasResource, policy: policy, tokenClaims: tokenClaims);
         }
 
         private static bool CheckAccessRights(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
-                                              string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false, string? policy = null)
+                                              string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false, string? policy = null,
+                                              List<Claim>? tokenClaims = null)
         {
             withAllow = false;
             return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out error, out withAllow, out getPolicy,
-                                              objPath, aasResourceType, aasResource, testOnly, policy);
+                                              objPath, aasResourceType, aasResource, testOnly, policy, tokenClaims);
         }
 
         private static bool CheckAccessRightsWithAllow(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
                                                        string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false,
-                                                       string? policy = null)
+                                                       string? policy = null, List<Claim>? tokenClaims = null)
         {
             error = "Access not allowed";
             withAllow = false;
@@ -837,7 +842,7 @@ namespace AasSecurity
                 // TODO (jtikekar, 2023-09-04): uncomment
                 if (CheckAccessLevelWithError(
                                               out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
-                                              objPath, aasResourceType, aasResource, policy))
+                                              objPath, aasResourceType, aasResource, policy, tokenClaims))
                     return true;
             }
 
@@ -852,7 +857,8 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, out string? getPolicy,
-                                                      string objPath, string? aasResourceType, IClass? aasResource, string? policy = null)
+                                                      string objPath, string? aasResourceType, IClass? aasResource, string? policy = null,
+                                                      List<Claim>? tokenClaims = null)
         {
             withAllow = false;
             getPolicy = "";
@@ -872,7 +878,7 @@ namespace AasSecurity
             if (aasResource == null)
             {
                 //API security check
-                return CheckAccessLevelApi(currentRole, operation, neededRights, out error, out getPolicy);
+                return CheckAccessLevelApi(currentRole, operation, neededRights, out error, out getPolicy, tokenClaims);
             }
 
             if (string.IsNullOrEmpty(objPath))
@@ -889,12 +895,13 @@ namespace AasSecurity
             return false;
         }
 
-        private static bool CheckAccessLevelApi(string currentRole, string operation, AccessRights neededRights, out string error, out string? getPolicy)
+        private static bool CheckAccessLevelApi(string currentRole, string operation, AccessRights neededRights, out string error,
+            out string? getPolicy, List<Claim>? tokenClaims = null)
         {
             error = string.Empty;
             getPolicy = string.Empty;
 
-            var rules = GetAccessRulesStatic(currentRole, neededRights.ToString(), operation);
+            var rules = GetAccessRulesStatic(currentRole, neededRights.ToString(), operation, tokenClaims);
 
             if (rules != null && rules.Count != 0)
             {

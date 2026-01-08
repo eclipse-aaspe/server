@@ -118,7 +118,7 @@
         "ACL": {
           "ATTRIBUTES": [
             {
-              "CLAIM": "isAuthenticated"
+              "CLAIM": "token:sub"
             }
           ],
           "RIGHTS": [
@@ -151,6 +151,18 @@
             {
               "$and": [
                 {
+                  "$ends-with": [
+                    {
+                      "$attribute": {
+                        "CLAIM": "token:sub"
+                      }
+                    },
+                    {
+                      "$strVal": "xx.com"
+                    }
+                  ]
+                },
+                {
                   "$eq": [
                     {
                       "$field": "$sm#idShort"
@@ -172,7 +184,7 @@
                       }
                     },
                     {
-                      "$strVal": "phoenixcontact.com"
+                      "$strVal": "xx.com"
                     }
                   ]
                 },

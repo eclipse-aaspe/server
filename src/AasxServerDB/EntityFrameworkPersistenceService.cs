@@ -2144,9 +2144,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
         accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
 
-        if (accessRole != null && httpRoute != null)
+        if (accessRules.Count != 0 && httpRoute != null)
         {
-            authResult = _contractSecurityRules.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _);
+            authResult = _contractSecurityRules.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _, tokenClaims: tokenClaims);
         }
 
         return authResult;

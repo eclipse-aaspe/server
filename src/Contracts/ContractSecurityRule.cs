@@ -31,7 +31,8 @@ namespace Contracts
                       out string? getPolicy,
                       string objPath = null,
                       string? aasResourceType = null,
-                      IClass? aasResource = null, string? policy = null);
+                      IClass? aasResource = null, string? policy = null,
+                      List<Claim>? tokenClaims = null);
 
         public void ClearSecurityRules();
         public void AddSecurityRule(string name, string acccess, string right, string objectType, string semanticId, string route);

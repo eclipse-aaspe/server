@@ -91,6 +91,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="accessrules - Kopieren.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Update="accessrules.txt">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
