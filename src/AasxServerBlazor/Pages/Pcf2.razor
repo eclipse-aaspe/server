@@ -141,24 +141,25 @@
                             }
                             else
                             {
-                                if (!Program.showWeight && node.cradleToGateModule != null)
+                                if (!Program.showWeight)
                                 {
-                                    value = node.cradleToGateModule.Value;
+                                    value = "0";
+                                    if (node.cradleToGateModule != null)
+                                    {
+                                        value = node.cradleToGateModule.Value;
+                                    }
                                     view  = true;
                                 }
 
-                                if (Program.showWeight && node.weightModule != null)
-                                {
-                                    value = node.weightModule.Value;
-                                    view  = true;
-                                }
-                                /*
-                                if (node.weightModule == null)
+                                if (Program.showWeight)
                                 {
                                     value = "0";
-                                    view = true;
+                                    if (node.weightModule != null)
+                                    {
+                                        value = node.weightModule.Value;
+                                    }
+                                    view  = true;
                                 }
-                                */
                             }
                         }
 
