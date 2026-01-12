@@ -207,7 +207,7 @@
                                                             StateHasChanged();
                                                             await Task.Delay(1); //hack to let frontend update
                                                             var watch = System.Diagnostics.Stopwatch.StartNew();
-                                                            AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
+                                                            await AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
                                                             watch.Stop();
                                                             Console.WriteLine(watch.ElapsedMilliseconds + " ms");
                                                             _watchText = $"in {((watch.ElapsedMilliseconds + 500) / 1000)}s";
