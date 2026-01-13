@@ -1838,7 +1838,7 @@ public partial class Query
         }
 
         aasTable = db.AASSets;
-        aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : null;
+        aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : resultType == ResultType.AssetAdministrationShell ? aasTable : null;
         smTable = db.SMSets;
         smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
         smeTable = db.SMESets;
@@ -1849,7 +1849,13 @@ public partial class Query
         valueTable = db.ValueSets;
         if (pathConditions.Count == 0)
         {
-            valueTable = restrictValue ? valueTable.Where(conditionsExpression["value"].Replace("DValue", "NValue")) : valueTable;
+            valueTable = restrictValue ? valueTable.Where(conditionsExpression["value"].Replace("DValue", "NValue")) : null;
+
+            if (valueTable == null
+                && restrictSME)
+            {
+                smeTable = null;
+            }
         }
 
         var conditionAll = "true";
@@ -1858,34 +1864,47 @@ public partial class Query
             conditionAll = conditionsExpression["all-aas"];
         }
 
-        var rawAas = aasTable?.ToQueryString();
-        var whereAas = rawAas?.Split("WHERE").Last();
+        //var rawAas = aasTable?.ToQueryString();
+        //var whereAas = rawAas?.Split("WHERE").Last();
         var rawSm = smTable?.ToQueryString();
         var whereSm = rawSm?.Split("WHERE").Last();
-        var rawSme = smeTable?.ToQueryString();
-        var whereSme = rawSme?.Split("WHERE").Last();
-        var rawValue = valueTable?.ToQueryString();
-        var whereValue = rawValue?.Split("WHERE").Last();
+        //var rawSme = smeTable?.ToQueryString();
+        //var whereSme = rawSme?.Split("WHERE").Last();
+        //var rawValue = valueTable?.ToQueryString();
+        //var whereValue = rawValue?.Split("WHERE").Last();
 
         IQueryable<joinAll>? result = null;
 
         if (aasTable != null)
         {
-            result = aasTable
-                .Join(db.SMRefSets,
-                      aas => aas.Id,
-                      r => r.AASId,
-                      (aas, r) => new { aas, r })
-                .Join(smTable,
-                      x => x.r.Identifier,
-                      sm => sm.Identifier,
-                      (x, sm) => new { x.aas, sm })
-                .Select(x => new joinAll
+            if (resultType == ResultType.AssetAdministrationShell
+                && smTable == null
+                && smeTable == null
+                && valueTable == null)
+            {
+                result = aasTable.Select(x => new joinAll
                 {
-                    aas = x.aas,
-                    sm = x.sm,
-                    SMId = x.sm.Id
+                    aas = x,
                 });
+            }
+            else
+            {
+                result = aasTable
+                    .Join(db.SMRefSets,
+                        aas => aas.Id,
+                        r => r.AASId,
+                        (aas, r) => new { aas, r })
+                        .Join(smTable,
+                              x => x.r.Identifier,
+                              sm => sm.Identifier,
+                              (x, sm) => new { x.aas, sm })
+                        .Select(x => new joinAll
+                        {
+                            aas = x.aas,
+                            sm = x.sm,
+                            SMId = x.sm.Id
+                        });
+            }
         }
         else
         {
@@ -1896,7 +1915,10 @@ public partial class Query
             });
         }
 
-        result = result.Join(smeTable,
+        if (valueTable != null
+            || smeTable != null)
+        {
+            result = result.Join(smeTable,
             r => r.sm.Id,
             sme => sme.SMId,
             (r, sme) => new joinAll
@@ -1906,6 +1928,7 @@ public partial class Query
                 sme = sme,
                 SMId = r.sm.Id
             });
+        }
 
         if (valueTable != null)
         {
@@ -1924,7 +1947,7 @@ public partial class Query
             });
         }
 
-        whereSme = whereSme?.Replace("\"s\".", "\"sme\".");
+        //whereSme = whereSme?.Replace("\"s\".", "\"sme\".");
         var raw = "";
 
         var rawBase = "";
@@ -1933,6 +1956,19 @@ public partial class Query
             if (!withRecursive && !withMatch)
             {
                 rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
+
+                if (resultType == ResultType.Submodel)
+                {
+                    var resultQueryString = result.Select(r => r.SMId).ToQueryString();
+                    var rawBaseSplit = resultQueryString.Split("INNER JOIN");
+                    rawBase = rawBaseSplit[0];
+                }
+                else if (resultType == ResultType.AssetAdministrationShell)
+                {
+                    throw new NotImplementedException();
+                    //ToDo: Find correct interpretation for aas
+                }
+
 
                 var placeholderSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
