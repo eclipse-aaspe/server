@@ -746,10 +746,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             {
                                 result.Ids = queryResult.Ids;
                             }
-                            //else
-                            //{
-                            //    result.ResultData = queryResult.SubmodelElements.ConvertAll(r => r as IClass);
-                            //}
+                            else
+                            {
+                                result.ResultData = queryResult.SubmodelElements.ConvertAll(r => r as IClass);
+                            }
                         }
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:

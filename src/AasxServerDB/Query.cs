@@ -313,7 +313,7 @@ public partial class Query
         }
         else
         {
-            var submodelsResult = new QueryResult
+            var queryDataResult = new QueryResult
             {
                 Ids = [],
                 Shells = [],
@@ -376,45 +376,47 @@ public partial class Query
 
             if (resultType == ResultType.AssetAdministrationShell)
             {
-                var timeStamp = DateTime.UtcNow;
-                var shells = new List<IAssetAdministrationShell>();
-
                 var aasIdList = result;
 
-                //if (aasIdList.IsNullOrEmpty())
-                //{
-                //    var smIdentifierList = result.Select(r => r.smIdentifier).Distinct();
-
-                //    aasIdList = db.SMRefSets.Where(sm => smIdentifierList.Contains(sm.Identifier)).
-                //        Select(s => s.AASId);
-                //}
-                if (!aasIdList.IsNullOrEmpty())
+                if (!qResult.WithSelectId)
                 {
-                    var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+                    var timeStamp = DateTime.UtcNow;
+                    var shells = new List<IAssetAdministrationShell>();
 
-                    for (var i = 0; i < aasList.Count; i++)
+                    if (!aasIdList.IsNullOrEmpty())
                     {
-                        var aasDB = aasList[i];
-                        var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
-                        if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
+                        var aasList = db.AASSets.Where(aas => aasIdList.Contains(aas.Id)).ToList();
+
+                        for (var i = 0; i < aasList.Count; i++)
                         {
-                            if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
+                            var aasDB = aasList[i];
+                            var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
+                            if (condition != null && condition.TryGetValue("filter-aas", out var filterAas))
                             {
-                                if (filterAas.Contains("globalAssetId"))
+                                if (filterAas != null && filterAas != "" && filterAas != "$SKIP")
                                 {
-                                    aas.Submodels = null;
-                                    aas.Description = null;
-                                    aas.DisplayName = null;
+                                    if (filterAas.Contains("globalAssetId"))
+                                    {
+                                        aas.Submodels = null;
+                                        aas.Description = null;
+                                        aas.DisplayName = null;
+                                    }
                                 }
                             }
-                        }
-                        if (aas != null)
-                        {
-                            shells.Add(aas);
+                            if (aas != null)
+                            {
+                                shells.Add(aas);
+                            }
                         }
                     }
+                    queryDataResult.Shells = shells;
                 }
-                submodelsResult.Shells = shells;
+                else
+                {
+                    var aasList = db.AASSets.Where(aas =>
+                            aasIdList.Contains(aas.Id));
+                    queryDataResult.Ids = [.. aasList.Select(aas => aas.Identifier)];
+                }
             }
             else
             {
@@ -458,7 +460,7 @@ public partial class Query
                             submodels.Add(sm);
                         }
                     }
-                    submodelsResult.Submodels = submodels;
+                    queryDataResult.Submodels = submodels;
                 }
                 else
                 {
@@ -468,7 +470,7 @@ public partial class Query
                     {
                         var smList = db.SMSets.Where(sm =>
                                 smIdList.Contains(sm.Id));
-                        submodelsResult.Ids = smList.Select(sm => sm.Identifier).ToList();
+                        queryDataResult.Ids = smList.Select(sm => sm.Identifier).ToList();
                     }
                     if (qResult.WithSelectMatch)
                     {
@@ -505,7 +507,7 @@ public partial class Query
                                         {
                                             readSme.Extensions.Add(new Extension("sme#IdShortPath", value: sme.IdShortPath));
                                         }
-                                        submodelsResult.SubmodelElements.Add(readSme);
+                                        queryDataResult.SubmodelElements.Add(readSme);
                                     }
                                 }
                             }
@@ -517,7 +519,7 @@ public partial class Query
             var collectResultText = "Collect results in " + watch.ElapsedMilliseconds + " ms";
             Console.WriteLine(collectResultText);
 
-            return submodelsResult;
+            return queryDataResult;
         }
     }
 
@@ -1581,6 +1583,7 @@ public partial class Query
     private class joinAll
     {
         public int SMId;
+        public int AASId;
         public AASSet? aas;
         public SMSet? sm;
         public SMESet? sme;
@@ -1887,6 +1890,7 @@ public partial class Query
                 result = aasTable.Select(x => new joinAll
                 {
                     aas = x,
+                    AASId = x.Id
                 });
             }
             else
@@ -1904,7 +1908,8 @@ public partial class Query
                         {
                             aas = x.aas,
                             sm = x.sm,
-                            SMId = x.sm.Id
+                            SMId = x.sm.Id,
+                            AASId = x.aas.Id
                         });
             }
         }
@@ -1928,7 +1933,8 @@ public partial class Query
                 aas = r.aas,
                 sm = r.sm,
                 sme = sme,
-                SMId = r.sm.Id
+                SMId = r.sm.Id,
+                AASId = r.aas.Id
             });
         }
 
@@ -1940,6 +1946,7 @@ public partial class Query
             (r, v) => new joinAll
             {
                 SMId = r.SMId,
+                AASId = r.aas.Id,
                 aas = r.aas,
                 sm = r.sm,
                 sme = r.sme,
@@ -1959,18 +1966,19 @@ public partial class Query
             {
                 rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
 
-                if (resultType == ResultType.Submodel)
+                var resultQueryString = "";
+
+                if (resultType == ResultType.AssetAdministrationShell)
                 {
-                    var resultQueryString = result.Select(r => r.SMId).ToQueryString();
-                    var rawBaseSplit = resultQueryString.Split("INNER JOIN");
-                    rawBase = rawBaseSplit[0];
+                    resultQueryString = result.Select(r => r.AASId).ToQueryString();
                 }
-                else if (resultType == ResultType.AssetAdministrationShell)
+                else if (resultType != ResultType.Submodel)
                 {
-                    throw new NotImplementedException();
-                    //ToDo: Find correct interpretation for aas
+                    resultQueryString = result.Select(r => r.SMId).ToQueryString();
                 }
 
+                var rawBaseSplit = resultQueryString.Split("INNER JOIN \"SMESets");
+                rawBase = rawBaseSplit[0];
 
                 var placeholderSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
@@ -1982,10 +1990,25 @@ public partial class Query
                     join += $"FROM ValueSets AS v \r\n";
                     join += $"JOIN SMESets  AS sme ON sme.Id = v.SMEId \r\n";
 
-                    var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
-                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                    var where = convertPathConditionSQL.Split("WHERE").Last();
-                    where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
+                    var where = "";
+
+                    if (resultType == ResultType.Submodel)
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        where = convertPathConditionSQL.Split("WHERE").Last();
+
+
+                        where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
+                    }
+                    else if (resultType == ResultType.AssetAdministrationShell)
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        where = convertPathConditionSQL.Split("WHERE").Last();
+
+                        where = where.Replace("\"s1\".", "sme.").Replace("\"v\".", "v.");
+                    }
 
                     var split = where.Split(" AND ");
 
@@ -2017,7 +2040,16 @@ public partial class Query
 
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
-                    placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
+
+                    if (resultType == ResultType.Submodel)
+                    {
+                        placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
+                    }
+                    else if (resultType == ResultType.AssetAdministrationShell)
+                    {
+                        placeholderSQL[i] = $"abs(\"t\".\"Id\") = 20{i}";
+                    }
+
 
                     rawBase += join;
                 }
@@ -2032,6 +2064,12 @@ public partial class Query
                 if (convertConditionSQL.StartsWith("SELECT"))
                 {
                     convertConditionSQL = "";
+                }
+
+                if (resultType == ResultType.AssetAdministrationShell)
+                {
+                    var restConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0])[1];
+                    convertConditionSQL = $"{placeholderSQL[0]} {restConvertConditionSQL}";
                 }
 
                 for (var i = 0; i < pathConditions.Count; i++)
@@ -2232,10 +2270,8 @@ public partial class Query
         {
             switch (resultType)
             {
-                case ResultType.Identifier:
-                    break;
                 case ResultType.AssetAdministrationShell:
-                    rawBase = result.Where(conditionAll).Select(r => r.aas.Id).Distinct().ToQueryString();
+                    rawBase = result.Where(conditionAll).Select(r => r.AASId).Distinct().ToQueryString();
                     break;
                 case ResultType.Submodel:
                     rawBase = result.Where(conditionAll).Select(r => r.SMId).Distinct().ToQueryString();
@@ -2245,10 +2281,6 @@ public partial class Query
                 default:
                     throw new NotImplementedException();
             }
-
-            //if (resultType == ResultType.Submodel)
-            //{
-            //}
         }
 
         raw = rawBase;

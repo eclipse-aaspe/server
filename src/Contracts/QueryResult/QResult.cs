@@ -26,6 +26,7 @@ namespace Contracts.QueryResult
         public List<SMEResult> SMEResults { get; set; }
         public List<string> SQL { get; set; }
         public bool WithSelectId { get; set; }
+        //ToDo: To be deleted
         public bool WithSelectMatch { get; set; }
         public List<string>? MatchPathList { get; set; }
     }
