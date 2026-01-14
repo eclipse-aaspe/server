@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 public enum ResultType
 {
-    Identifier,
     AssetAdministrationShell,
     Submodel,
     SubmodelValue,

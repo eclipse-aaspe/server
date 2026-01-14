@@ -67,8 +67,6 @@ namespace IO.Swagger.Lib.V3.Services
             //Creating pagination result
             var pagingMetadata = new QueryResultPagingMetadata();
 
-            pagingMetadata.resultType = ResultType.Identifier.ToString();
-
             if (paginatedList.Count != 0)
             {
                 if (paginatedList.First() is ISubmodel)
