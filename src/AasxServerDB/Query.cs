@@ -1964,15 +1964,13 @@ public partial class Query
         {
             if (!withRecursive && !withMatch)
             {
-                rawBase = "SELECT s.Id \r\n FROM SMSets AS s \r\n";
-
                 var resultQueryString = "";
 
                 if (resultType == ResultType.AssetAdministrationShell)
                 {
                     resultQueryString = result.Select(r => r.AASId).ToQueryString();
                 }
-                else if (resultType != ResultType.Submodel)
+                else if (resultType == ResultType.Submodel)
                 {
                     resultQueryString = result.Select(r => r.SMId).ToQueryString();
                 }
@@ -2041,15 +2039,11 @@ public partial class Query
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
 
-                    if (resultType == ResultType.Submodel)
-                    {
-                        placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
-                    }
-                    else if (resultType == ResultType.AssetAdministrationShell)
-                    {
-                        placeholderSQL[i] = $"abs(\"t\".\"Id\") = 20{i}";
-                    }
+                    var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                        .Split("\r\n").First().
+                        Split("SELECT ").Last();
 
+                    placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
 
                     rawBase += join;
                 }
@@ -2066,9 +2060,13 @@ public partial class Query
                     convertConditionSQL = "";
                 }
 
-                if (resultType == ResultType.AssetAdministrationShell)
+                var lastRow = resultQueryString.Split("\r\n").Last();
+
+
+                if (!lastRow.StartsWith("WHERE"))
                 {
-                    var restConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0])[1];
+                    var splittedConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0]);
+                    var restConvertConditionSQL = splittedConvertConditionSQL[1];
                     convertConditionSQL = $"{placeholderSQL[0]} {restConvertConditionSQL}";
                 }
 
