@@ -1993,8 +1993,6 @@ public partial class Query
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
                         where = convertPathConditionSQL.Split("WHERE").Last();
-
-
                         where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
                     }
                     else if (resultType == ResultType.AssetAdministrationShell)
@@ -2002,7 +2000,6 @@ public partial class Query
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
                         where = convertPathConditionSQL.Split("WHERE").Last();
-
                         where = where.Replace("\"s1\".", "sme.").Replace("\"v\".", "v.");
                     }
 
@@ -2017,7 +2014,6 @@ public partial class Query
                     if (smeSQLPath.Contains("[]"))
                     {
                         smeSQLPath = smeSQLPath.Replace("[]", "[%]");
-
                     }
                     if (smeSQLPath.Contains("%"))
                     {
@@ -2034,12 +2030,11 @@ public partial class Query
 
                     join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
 
-
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
 
                     var smIdVariable = result.Select(s => s.SMId).ToQueryString()
-                        .Split("\r\n").First().
-                        Split("SELECT ").Last();
+                        .Split("\r\n").First()
+                        .Split("SELECT ").Last();
 
                     placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
 
@@ -2059,8 +2054,6 @@ public partial class Query
                 }
 
                 var lastRow = resultQueryString.Split("\r\n").Last();
-
-
                 if (!lastRow.StartsWith("WHERE"))
                 {
                     var splittedConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0]);
@@ -2089,10 +2082,23 @@ public partial class Query
                 {
                     var ii = i + 1;
 
-                    var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
-                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                    var where = convertPathConditionSQL.Split("WHERE").Last();
-                    where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
+                    var where = "";
+
+                    if (resultType == ResultType.Submodel)
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        where = convertPathConditionSQL.Split("WHERE").Last();
+                        where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
+                    }
+                    else if (resultType == ResultType.AssetAdministrationShell)
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        where = convertPathConditionSQL.Split("WHERE").Last();
+                        where = where.Replace("\"s1\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
+                    }
+
                     pathConditionsSQL[i] = where;
                     var split = where.Split(" AND ");
                     smeSQLPathArray[i] = split[split.Length - 2];
@@ -2108,7 +2114,11 @@ public partial class Query
                     valueSQL[i] = split[split.Length - 1];
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
-                    placeholderSQL[i] = $"abs(\"s\".\"Id\") = 20{i}";
+                    var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                        .Split("\r\n").First()
+                        .Split("SELECT ").Last();
+
+                    placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
                 }
 
                 // convert complete condition with placeholders
@@ -2236,10 +2246,30 @@ public partial class Query
                     caseWhen += "," + selectMatch;
                 }
 
-                raw = "SELECT DISTINCT Id\r\n" +
-                    $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n" +
-                    caseWhen;
-                raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
+                raw = "SELECT DISTINCT ";
+
+                if (resultType == ResultType.Submodel)
+                {
+                    raw += "Id\r\n";
+                    //ToDo: is s.IdShort really needed?
+                    raw += $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n";
+                }
+                else if (resultType == ResultType.AssetAdministrationShell)
+                {
+                    raw += "AASIdentifier as Id\r\n";
+                    //ToDo: is s.Id really needed?
+                    raw += $"FROM (\r\nSELECT AASIdentifier, s.Id, s.IdShort, {smeSelect}\r\n";
+                }
+                raw += caseWhen;
+                if (resultType == ResultType.Submodel)
+                {
+                    raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
+                }
+                else if (resultType == ResultType.AssetAdministrationShell)
+                {
+                    raw += "FROM(\r\nSELECT s0.Id, s0.IdShort, a.Id AS AASIdentifier \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier";
+                }
+
                 if (!whereSm.StartsWith("SELECT"))
                 {
                     raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
