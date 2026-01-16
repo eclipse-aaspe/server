@@ -1980,6 +1980,9 @@ public partial class Query
 
                 var placeholderSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
+                var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                    .Split("\r\n").First()
+                    .Split("SELECT ").Last();
 
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
@@ -2034,9 +2037,6 @@ public partial class Query
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
 
-                    var smIdVariable = result.Select(s => s.SMId).ToQueryString()
-                        .Split("\r\n").First()
-                        .Split("SELECT ").Last();
 
                     placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
 
@@ -2079,6 +2079,9 @@ public partial class Query
                 var smeSQLIdShortArray = new string[pathConditions.Count];
                 var valueSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
+                var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                    .Split("\r\n").First()
+                    .Split("SELECT ").Last();
 
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
@@ -2116,9 +2119,6 @@ public partial class Query
                     valueSQL[i] = split[split.Length - 1];
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
-                    var smIdVariable = result.Select(s => s.SMId).ToQueryString()
-                        .Split("\r\n").First()
-                        .Split("SELECT ").Last();
 
                     placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
                 }
@@ -2260,7 +2260,7 @@ public partial class Query
                 {
                     raw += "AASIdentifier as Id\r\n";
                     //ToDo: is s.Id really needed?
-                    raw += $"FROM (\r\nSELECT AASIdentifier, s.Id, s.IdShort, {smeSelect}\r\n";
+                    raw += $"FROM (\r\nSELECT AASIdentifier, s.Id, s.IdShort,{smeSelect}\r\n";
                 }
                 raw += caseWhen;
                 if (resultType == ResultType.Submodel)
@@ -2269,12 +2269,19 @@ public partial class Query
                 }
                 else if (resultType == ResultType.AssetAdministrationShell)
                 {
-                    raw += "FROM(\r\nSELECT s0.Id, s0.IdShort, a.Id AS AASIdentifier \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier";
+                    raw += "FROM(\r\nSELECT s0.Id, s0.IdShort, a.Id AS AASIdentifier \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
                 }
 
                 if (!whereSm.StartsWith("SELECT"))
                 {
-                    raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                    if (resultType == ResultType.Submodel)
+                    {
+                        raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                    }
+                    else if (resultType == ResultType.AssetAdministrationShell)
+                    {
+                        raw += $"WHERE ({whereSm.Replace("\"s\".", "\"s0\".")})\r\n";
+                    }
                 }
                 raw += ") AS s\r\n";
                 raw += join;
@@ -2284,14 +2291,14 @@ public partial class Query
                 {
                     for (var i = 0; i < whereMatch.Count; i++)
                     {
-                        var smIdVariable = result.Select(s => s.SMId).ToQueryString()
-                          .Split("\r\n").First()
-                            .Split("SELECT ").Last();
 
                         wherePath = wherePath.Replace($"abs({smIdVariable}) = 10{i}", whereMatch[i]);
                     }
                 }
-                wherePath = wherePath.Replace("\"s\".", "\"base\".");
+
+                var smIdVariableShortened = smIdVariable.Split(".").First();
+
+                wherePath = wherePath.Replace(smIdVariableShortened, "\"base\"");
                 if (wherePath != "")
                 {
                     rawBase += $"WHERE {wherePath}\r\n";
