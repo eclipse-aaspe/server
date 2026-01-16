@@ -2284,7 +2284,11 @@ public partial class Query
                 {
                     for (var i = 0; i < whereMatch.Count; i++)
                     {
-                        wherePath = wherePath.Replace($"abs(\"s\".\"Id\") = 10{i}", whereMatch[i]);
+                        var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                          .Split("\r\n").First()
+                            .Split("SELECT ").Last();
+
+                        wherePath = wherePath.Replace($"abs({smIdVariable}) = 10{i}", whereMatch[i]);
                     }
                 }
                 wherePath = wherePath.Replace("\"s\".", "\"base\".");
