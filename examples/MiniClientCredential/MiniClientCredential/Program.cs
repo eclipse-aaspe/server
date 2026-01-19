@@ -71,8 +71,10 @@ app.MapPost("/token", async (HttpRequest req) =>
         new Claim(JwtRegisteredClaimNames.Iat,
                   new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
                   ClaimValueTypes.Integer64),
+        new Claim("client_id", clientId),
         new Claim("serverName", serverName),
-        new Claim("userName", userName)
+        new Claim("userName", userName),
+        new Claim("email", userName)
     };
 
     var jwt = new JwtSecurityToken(
