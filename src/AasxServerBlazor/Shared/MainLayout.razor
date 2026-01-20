@@ -154,39 +154,43 @@
                                                     Program.submodelAPIcount = 0;
                                                     break;
                                                 default:
-                                                {
-                                                    if (CurrentValue.Contains("FORCE-POLICY"))
                                                     {
-                                                        Program.withPolicy = CurrentValue.Contains("ON");
-                                                    }
-                                                    else
-                                                    {
-                                                        if (CurrentValue.Contains("get="))
+                                                        if (CurrentValue.Contains("FORCE-POLICY"))
                                                         {
-                                                            CurrentValue   = CurrentValue.Replace("get=", "");
-                                                            Program.getUrl = CurrentValue;
-                                                            Program.signalNewData(2);
-                                                        }
-                                                        else if (CurrentValue.Contains("secret="))
-                                                        {
-                                                            CurrentValue   = CurrentValue.Replace("secret=", "");
-                                                            Program.getUrl = CurrentValue;
-                                                            Program.signalNewData(2);
+                                                            Program.withPolicy = CurrentValue.Contains("ON");
                                                         }
                                                         else
                                                         {
-                                                            if (string.IsNullOrEmpty(_role))
-                                                                _role = roleList[ 0 ];
-                                                            if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
+                                                            if (CurrentValue.Contains("get="))
                                                             {
-                                                                CurrentValue = CurrentValue.Replace("Email=", "");
-                                                                AasxCredentials.initByEmail(cs.credentials, CurrentValue);
-                                                                _input = CurrentValue;
-                                                                _role  = string.Empty;
+                                                                CurrentValue   = CurrentValue.Replace("get=", "");
+                                                                Program.getUrl = CurrentValue;
+                                                                Program.signalNewData(2);
                                                             }
-                                                            else if (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT"))
+                                                            else if (CurrentValue.Contains("secret="))
                                                             {
-                                                                AasxCredentials.initByFile(cs.credentials, CurrentValue);
+                                                                CurrentValue   = CurrentValue.Replace("secret=", "");
+                                                                Program.getUrl = CurrentValue;
+                                                                Program.signalNewData(2);
+                                                            }
+                                                            else
+                                                            {
+                                                                if (string.IsNullOrEmpty(_role))
+                                                                    _role = roleList[ 0 ];
+                                                                if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
+                                                                {
+                                                                    CurrentValue = CurrentValue.Replace("Email=", "");
+                                                                    AasxCredentials.initByEmail(cs.credentials, CurrentValue);
+                                                                    _input = CurrentValue;
+                                                                    _role  = string.Empty;
+                                                                }
+                                                                else if (CurrentValue == "cb" || (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT")))
+                                                                {
+                                                                    if (CurrentValue == "cb")
+                                                                    {
+                                                                        CurrentValue = "CREDENTIALS-BEARER.DAT";
+                                                                    }
+                                                                    AasxCredentials.initByFile(cs.credentials, CurrentValue);
                                                                 _input = CurrentValue;
                                                                 _role  = string.Empty;
                                                             }
