@@ -156,7 +156,7 @@ namespace AasSecurity
                     }
                 }
             }
-            else if (System.IO.File.Exists("trustlist.xml"))
+            if (System.IO.File.Exists("trustlist.xml"))
             {
                 Console.WriteLine("Read trustlist.xml");
 
