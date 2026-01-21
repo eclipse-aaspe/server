@@ -174,7 +174,7 @@ public class TokenTool
         {
             ioConsole.WriteLine("Token Exchange");
             configUrlList = [
-                "https://iam-security-training.com/sts"
+                "https://iam-security-training.com/consumer/sts"
             ];
             for (var i = 0; i < configUrlList.Count; i++)
             {
