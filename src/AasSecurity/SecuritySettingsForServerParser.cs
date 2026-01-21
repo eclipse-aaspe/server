@@ -14,6 +14,8 @@
 using System;
 using System.Buffers.Text;
 using System.Security.Cryptography.X509Certificates;
+using System.Xml;
+using System.Xml.Linq;
 using AasSecurity.Models;
 using AasxServer;
 using AdminShellNS;
@@ -152,6 +154,89 @@ namespace AasSecurity
                             base64 += line;
                         }
                     }
+                }
+            }
+            else if (System.IO.File.Exists("trustlist.xml"))
+            {
+                Console.WriteLine("Read trustlist.xml");
+
+
+                // Load the XML
+                var doc = XDocument.Load("trustlist.xml");
+
+                // Default ETSI namespace present in the document
+                XNamespace ns = "http://uri.etsi.org/02231/v2#"; // <- critical
+                                                                 // (There's also an XMLDSIG signature later in a different ns; we can ignore it.)
+
+                XNamespace nsDs = "http://www.w3.org/2000/09/xmldsig#";   // XMLDSIG ns (for <Signature>)
+
+
+                // Navigate to <TrustServiceProviderList>
+                var tspList = doc
+                    .Root                             // <TrustServiceStatusList>
+                    ?.Element(ns + "TrustServiceProviderList"); // <TrustServiceProviderList>
+
+
+                // Enumerate <TrustServiceProvider>
+                var providers = tspList.Elements(ns + "TrustServiceProvider")
+                    .Select(tsp => new
+                    {
+                        TspName = tsp
+                            .Element(ns + "TSPInformation")
+                            ?.Element(ns + "TSPName")
+                            ?.Elements(ns + "Name")
+                            .Select(n => (string)n)
+                            .FirstOrDefault(),
+
+                        Domain = tsp
+                            .Element(ns + "TSPInformation")
+                            ?.Element(ns + "TSPInformationExtensions")
+                            ?.Elements(ns + "Extension")
+                            .Elements(ns + "TSPDomainName")
+                            .Select(x => (string)x)
+                            .FirstOrDefault(),
+
+                        // Grab one service’s basics (if available)
+                        Service = tsp
+                            .Element(ns + "TSPServices")
+                            ?.Elements(ns + "TSPService")
+                            .Select(svc => new
+                            {
+                                Type = (string)svc
+                                    .Element(ns + "ServiceInformation")
+                                    ?.Element(ns + "ServiceTypeIdentifier"),
+
+                                Name = svc
+                                    .Element(ns + "ServiceInformation")
+                                    ?.Element(ns + "ServiceName")
+                                    ?.Elements(ns + "Name")
+                                    .Select(n => (string)n)
+                                    .FirstOrDefault(),
+
+                                SupplyPoint = svc
+                                    .Element(ns + "ServiceInformation")
+                                    ?.Element(ns + "ServiceSupplyPoints")
+                                    ?.Elements(ns + "ServiceSupplyPoint")
+                                    .Select(sp => (string)sp)
+                                    .FirstOrDefault()
+                            })
+                            .FirstOrDefault()
+                    })
+                    .ToList();
+
+                foreach (var provider in providers)
+                {
+                    var serverName = provider?.Service?.Name;
+                    var domain = provider?.Domain;
+                    var jwks = provider?.Service?.SupplyPoint;
+                    var kid = "";
+
+                    GlobalSecurityVariables.ServerCertificates.Add(null);
+                    GlobalSecurityVariables.ServerCertFileNames.Add("");
+                    GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
+                    GlobalSecurityVariables.ServerDomain.Add(domain);
+                    GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
+                    GlobalSecurityVariables.ServerKid.Add(kid);
                 }
             }
             if (authServer == null || authServer.Value == null)
