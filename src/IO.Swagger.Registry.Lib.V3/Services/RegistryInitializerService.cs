@@ -450,6 +450,10 @@ public class RegistryInitializerService : IRegistryInitializerService
                         {
                             requestPathGetReg = replace;
                         }
+                        if (queryPara.StartsWith("bearerHead="))
+                        {
+                            accessToken = queryPara.Replace("bearerHead=", "");
+                        }
 
                         var handler = new HttpClientHandler {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
