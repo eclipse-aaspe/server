@@ -13,6 +13,7 @@
 
 using AasxServer;
 using Extensions;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography.X509Certificates;
 
 namespace AasSecurity
@@ -93,14 +94,16 @@ namespace AasSecurity
             return null;
         }
 
-        internal static string? FindServerJwksUrl(string kid, out string domain)
+        internal static string? FindServerJwksUrl(string kid, string iss, out string domain)
         {
             domain = "";
             if (GlobalSecurityVariables.ServerKid != null)
             {
                 for (var i = 0; i < GlobalSecurityVariables.ServerKid.Count; i++)
                 {
-                    if (GlobalSecurityVariables.ServerKid[i] == kid)
+                    if ((GlobalSecurityVariables.ServerKid[i] != "" &&
+                        GlobalSecurityVariables.ServerKid[i] == kid)
+                        || GlobalSecurityVariables.ServerJwksUrl[i] == iss)
                     {
                         domain = GlobalSecurityVariables.ServerDomain[i];
                         return GlobalSecurityVariables.ServerJwksUrl[i];

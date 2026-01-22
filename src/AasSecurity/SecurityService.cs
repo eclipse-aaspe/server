@@ -482,7 +482,7 @@ namespace AasSecurity
                             var kid = jwtSecurityToken.Header["kid"].ToString();
                             if (kid != null)
                             {
-                                jwksUrl = SecurityHelper.FindServerJwksUrl(kid, out domain);
+                                jwksUrl = SecurityHelper.FindServerJwksUrl(kid, iss, out domain);
                             }
                             if (!jwksUrl.IsNullOrEmpty())
                             {

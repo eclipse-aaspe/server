@@ -112,8 +112,3 @@ kooy8pxAjM5YUv+GDZdu3ojEdtDtTeZewiAXVCcDeUSLb+q2ogB2GTbYkuBSebhZ
 BmNbiHJ541E5aeIXKj1Ksdv6fUgYvzXgASKfjpq3l+bD7XSBbIAp9mMYl/pi0C8D
 ejiwt3d6N936huydhEwz
 -----END CERTIFICATE-----
-
-# Token exchange
-serverName: STS
-jwks: https://iam-security-training.com/sts
-kid: demo-key

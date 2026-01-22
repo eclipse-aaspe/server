@@ -168,9 +168,6 @@ namespace AasSecurity
                 XNamespace ns = "http://uri.etsi.org/02231/v2#"; // <- critical
                                                                  // (There's also an XMLDSIG signature later in a different ns; we can ignore it.)
 
-                XNamespace nsDs = "http://www.w3.org/2000/09/xmldsig#";   // XMLDSIG ns (for <Signature>)
-
-
                 // Navigate to <TrustServiceProviderList>
                 var tspList = doc
                     .Root                             // <TrustServiceStatusList>
@@ -227,8 +224,14 @@ namespace AasSecurity
                 foreach (var provider in providers)
                 {
                     var serverName = provider?.Service?.Name;
+                    Console.WriteLine(" serverName: " + serverName);
+
                     var domain = provider?.Domain;
+                    Console.WriteLine("  domain: " + domain);
+
                     var jwks = provider?.Service?.SupplyPoint;
+                    Console.WriteLine("  jwks: " + jwks);
+
                     var kid = "";
 
                     GlobalSecurityVariables.ServerCertificates.Add(null);
