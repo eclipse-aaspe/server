@@ -305,15 +305,30 @@ namespace AasxServer
             {
                 exchange1 = c.parameters[3];
             }
-            var target = "";
+            var target1 = "";
             if (c.parameters.Count > 4)
             {
-                target = c.parameters[4];
+                target1 = c.parameters[4];
             }
             var exchange2 = "";
             if (c.parameters.Count > 5)
             {
                 exchange2 = c.parameters[5];
+            }
+            var target2 = "";
+            if (c.parameters.Count > 6)
+            {
+                target2 = c.parameters[6];
+            }
+            var exchange3 = "";
+            if (c.parameters.Count > 7)
+            {
+                exchange3 = c.parameters[7];
+            }
+            var target3 = "";
+            if (c.parameters.Count > 8)
+            {
+                target3 = c.parameters[8];
             }
 
             if (!authServerEndPoint.EndsWith("/token"))
@@ -572,10 +587,9 @@ namespace AasxServer
                         { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
                         { "subject_token", c.bearer }
                     };
-                if (target != "")
+                if (target1 != "")
                 {
-                    parameters.Add("audience", target);
-
+                    parameters.Add("audience", target1);
                 }
                 var request = new HttpRequestMessage(HttpMethod.Post, exchange1)
                 {
@@ -586,11 +600,12 @@ namespace AasxServer
                 var response = client.SendAsync(request);
                 var content = response.GetAwaiter().GetResult().Content.ContentToString();
 
+                c.bearer = "";
                 doc = JsonDocument.Parse(content);
                 if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
                 {
                     c.bearer = tokenElement.GetString();
-                    Console.WriteLine("token exchange " + c.bearer);
+                    Console.WriteLine("token exchange1 " + c.bearer);
                 }
             }
 
@@ -599,13 +614,48 @@ namespace AasxServer
                 var handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                 var client = new HttpClient(handler);
 
+                JsonDocument doc;
+                var parameters = new Dictionary<string, string>
+                    {
+                        { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
+                        { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
+                        { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
+                        { "subject_token", c.bearer }
+                    };
+                if (target2 != "")
+                {
+                    parameters.Add("audience", target2);
+                }
+                var request = new HttpRequestMessage(HttpMethod.Post, exchange2)
+                {
+                    Content = new FormUrlEncodedContent(parameters)
+                };
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+                var response = client.SendAsync(request);
+                var content = response.GetAwaiter().GetResult().Content.ContentToString();
+
+                c.bearer = "";
+                doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+                {
+                    c.bearer = tokenElement.GetString();
+                    Console.WriteLine("token exchange2 " + c.bearer);
+                }
+            }
+
+            if (exchange3 != "" && c.bearer != null && c.bearer != "")
+            {
+                var handler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                var client = new HttpClient(handler);
+
                 var service = "service-user-basyx";
-                if (target == "assetfox")
+                if (target3 == "assetfox")
                 {
                     service = "sts-client";
                 }
                 JsonDocument doc;
-                var request = new HttpRequestMessage(HttpMethod.Post, exchange2)
+                var request = new HttpRequestMessage(HttpMethod.Post, exchange3)
                 {
                     Content = new FormUrlEncodedContent(new Dictionary<string, string>
                     {
@@ -620,11 +670,12 @@ namespace AasxServer
                 var response = client.SendAsync(request);
                 var content = response.GetAwaiter().GetResult().Content.ContentToString();
 
+                c.bearer = "";
                 doc = JsonDocument.Parse(content);
                 if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
                 {
                     c.bearer = tokenElement.GetString();
-                    Console.WriteLine("token exchange " + c.bearer);
+                    Console.WriteLine("token exchange3 " + c.bearer);
                 }
             }
         }
