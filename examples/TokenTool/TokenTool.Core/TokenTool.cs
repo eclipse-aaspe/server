@@ -345,7 +345,8 @@ public class TokenTool
                 "",
                 "basyx",
                 "assetfox",
-                "factory-x"
+                "factory-x",
+                "fa3st"
             ];
             for (var i = 0; i < configUrlList.Count; i++)
             {

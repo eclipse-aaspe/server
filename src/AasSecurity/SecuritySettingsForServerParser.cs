@@ -217,29 +217,32 @@ namespace AasSecurity
                                     .Select(sp => (string)sp)
                                     .FirstOrDefault()
                             })
-                            .FirstOrDefault()
+                            .ToList()
                     })
                     .ToList();
 
                 foreach (var provider in providers)
                 {
-                    var serverName = provider?.Service?.Name;
-                    Console.WriteLine(" serverName: " + serverName);
+                    foreach (var service in provider?.Service)
+                    {
+                        var serverName = service?.Name;
+                        Console.WriteLine(" serverName: " + serverName);
 
-                    var domain = provider?.Domain;
-                    Console.WriteLine("  domain: " + domain);
+                        var domain = provider?.Domain;
+                        Console.WriteLine("  domain: " + domain);
 
-                    var jwks = provider?.Service?.SupplyPoint;
-                    Console.WriteLine("  jwks: " + jwks);
+                        var jwks = service?.SupplyPoint;
+                        Console.WriteLine("  jwks: " + jwks);
 
-                    var kid = "";
+                        var kid = "";
 
-                    GlobalSecurityVariables.ServerCertificates.Add(null);
-                    GlobalSecurityVariables.ServerCertFileNames.Add("");
-                    GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
-                    GlobalSecurityVariables.ServerDomain.Add(domain);
-                    GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
-                    GlobalSecurityVariables.ServerKid.Add(kid);
+                        GlobalSecurityVariables.ServerCertificates.Add(null);
+                        GlobalSecurityVariables.ServerCertFileNames.Add("");
+                        GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
+                        GlobalSecurityVariables.ServerDomain.Add(domain);
+                        GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
+                        GlobalSecurityVariables.ServerKid.Add(kid);
+                    }
                 }
             }
             if (authServer == null || authServer.Value == null)
