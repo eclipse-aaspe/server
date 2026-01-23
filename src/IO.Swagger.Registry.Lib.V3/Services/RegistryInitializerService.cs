@@ -322,18 +322,41 @@ public class RegistryInitializerService : IRegistryInitializerService
                             var json = response.Content.ReadAsStringAsync().Result;
                             if (!string.IsNullOrEmpty(json))
                             {
-
-                                var urls = new List<string>();
-                                var jsonArray = JsonNode.Parse(json)?.AsArray();
-
-                                if (jsonArray != null)
+                                if (requestPath.EndsWith("/registry-descriptors"))
                                 {
-                                    foreach (var item in jsonArray)
+                                    var jsonArray = JsonNode.Parse(json)?.AsArray();
+
+                                    if (jsonArray != null)
                                     {
-                                        var url = item?["url"]?.ToString();
-                                        if (!string.IsNullOrEmpty(url) && !getRegistry.Contains(url))
+                                        foreach (var item in jsonArray)
                                         {
-                                            getRegistry.Add(url);
+                                            var url = item?["url"]?.ToString();
+                                            if (!string.IsNullOrEmpty(url) && !getRegistry.Contains(url))
+                                            {
+                                                getRegistry.Add(url);
+                                            }
+                                        }
+                                    }
+                                }
+                                if (requestPath.EndsWith("/company_endpoints"))
+                                {
+                                    var root = JsonNode.Parse(json);
+                                    var endpoints = root?["data"]?["endpoints"]?.AsArray();
+
+                                    if (endpoints is not null)
+                                    {
+                                        foreach (var ep in endpoints)
+                                        {
+                                            var type = ep?["type"]?.GetValue<string>();
+                                            if (string.Equals(type, "aas-registry", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                var url = ep?["url"]?.GetValue<string>();
+                                                if (!string.IsNullOrWhiteSpace(url) &&
+                                                    !getRegistry.Contains(url, StringComparer.OrdinalIgnoreCase))
+                                                {
+                                                    getRegistry.Add(url);
+                                                }
+                                            }
                                         }
                                     }
                                 }
