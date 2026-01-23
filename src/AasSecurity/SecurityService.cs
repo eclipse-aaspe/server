@@ -480,6 +480,8 @@ namespace AasSecurity
                         if (!string.IsNullOrEmpty(tokenExchange1) && !string.IsNullOrEmpty(tokenExchange2)
                             && iss == tokenExchange1)
                         {
+                            Console.WriteLine($"TOKENEXCHANGE1 = {tokenExchange1}");
+                            Console.WriteLine($"TOKENEXCHANGE2 = {tokenExchange2}");
                             var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                             var client = new HttpClient(handlerExchange);
 
