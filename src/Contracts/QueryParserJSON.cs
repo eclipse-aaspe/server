@@ -665,10 +665,6 @@ public class QueryGrammarJSON : Grammar
                         value = "dtvalue";
                     }
                 }
-                if (mode == "all" && value.StartsWith("aas."))
-                {
-                    value = "$SKIP";
-                }
                 break;
             case "sm.":
                 if (!value.StartsWith("sm."))

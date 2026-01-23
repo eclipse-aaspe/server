@@ -1843,7 +1843,10 @@ public partial class Query
         }
 
         aasTable = db.AASSets;
-        aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : resultType == ResultType.AssetAdministrationShell ? aasTable : null;
+        aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : aasTable;
+
+        bool isWithAASTable = true;
+
         smTable = db.SMSets;
         smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
         smeTable = db.SMESets;
@@ -1869,8 +1872,8 @@ public partial class Query
             conditionAll = conditionsExpression["all-aas"];
         }
 
-        //var rawAas = aasTable?.ToQueryString();
-        //var whereAas = rawAas?.Split("WHERE").Last();
+        var rawAas = aasTable?.ToQueryString();
+        var whereAas = rawAas?.Split("WHERE").Last();
         var rawSm = smTable?.ToQueryString();
         var whereSm = rawSm?.Split("WHERE").Last();
         //var rawSme = smeTable?.ToQueryString();
@@ -1966,11 +1969,11 @@ public partial class Query
             {
                 var resultQueryString = "";
 
-                if (resultType == ResultType.AssetAdministrationShell)
+                if (isWithAASTable)
                 {
                     resultQueryString = result.Select(r => r.AASId).ToQueryString();
                 }
-                else if (resultType == ResultType.Submodel)
+                else
                 {
                     resultQueryString = result.Select(r => r.SMId).ToQueryString();
                 }
@@ -1993,22 +1996,22 @@ public partial class Query
 
                     var where = "";
 
-                    if (resultType == ResultType.Submodel)
-                    {
-                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
-                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        where = convertPathConditionSQL.Split("WHERE").Last();
-                        where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
-                    }
-                    else if (resultType == ResultType.AssetAdministrationShell)
+                    if (isWithAASTable)
                     {
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
                         where = convertPathConditionSQL.Split("WHERE").Last();
                         where = where.Replace("\"s1\".", "sme.").Replace("\"v\".", "v.");
                     }
+                    else
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        where = convertPathConditionSQL.Split("WHERE").Last();
+                        where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
+                    }
 
-                    var split = where.Split(" AND ");
+                        var split = where.Split(" AND ");
 
                     var valueSQL = split[split.Length - 1];
 
@@ -2089,19 +2092,19 @@ public partial class Query
 
                     var where = "";
 
-                    if (resultType == ResultType.Submodel)
-                    {
-                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
-                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        where = convertPathConditionSQL.Split("WHERE").Last();
-                        where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
-                    }
-                    else if (resultType == ResultType.AssetAdministrationShell)
+                    if (isWithAASTable)
                     {
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
                         where = convertPathConditionSQL.Split("WHERE").Last();
                         where = where.Replace("\"s1\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
+                    }
+                    else
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        where = convertPathConditionSQL.Split("WHERE").Last();
+                        where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
                     }
 
                     pathConditionsSQL[i] = where;
@@ -2250,39 +2253,51 @@ public partial class Query
 
                 raw = "SELECT DISTINCT ";
 
-                if (resultType == ResultType.Submodel)
-                {
-                    raw += "Id\r\n";
-                    //ToDo: is s.IdShort really needed?
-                    raw += $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n";
-                }
-                else if (resultType == ResultType.AssetAdministrationShell)
+                if (resultType == ResultType.AssetAdministrationShell)
                 {
                     raw += "AASIdentifier as Id\r\n";
-                    //ToDo: is s.Id really needed?
                     raw += $"FROM (\r\nSELECT AASIdentifier, s.Id, s.IdShort,{smeSelect}\r\n";
                 }
-                raw += caseWhen;
-                if (resultType == ResultType.Submodel)
+                else
                 {
-                    raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
+                    raw += "Id\r\n";
+                    raw += $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n";
                 }
-                else if (resultType == ResultType.AssetAdministrationShell)
+
+                raw += caseWhen;
+                if (isWithAASTable)
                 {
                     raw += "FROM(\r\nSELECT s0.Id, s0.IdShort, a.Id AS AASIdentifier \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
+                }
+                else
+                {
+                    raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
                 }
 
                 if (!whereSm.StartsWith("SELECT"))
                 {
-                    if (resultType == ResultType.Submodel)
-                    {
-                        raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
-                    }
-                    else if (resultType == ResultType.AssetAdministrationShell)
+                    if (isWithAASTable)
                     {
                         raw += $"WHERE ({whereSm.Replace("\"s\".", "\"s0\".")})\r\n";
                     }
+                    else
+                    {
+                        raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                    }
                 }
+                if (whereAas != null && !whereAas.StartsWith("SELECT"))
+                {
+                    if (isWithAASTable)
+                    {
+                        raw += $"WHERE ({whereSm.Replace("\"s\".", "\"s0\".")})\r\n";
+                    }
+                    else
+                    {
+                        raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                    }
+                }
+
+
                 raw += ") AS s\r\n";
                 raw += join;
                 raw += ") AS base\r\n";
@@ -2291,7 +2306,6 @@ public partial class Query
                 {
                     for (var i = 0; i < whereMatch.Count; i++)
                     {
-
                         wherePath = wherePath.Replace($"abs({smIdVariable}) = 10{i}", whereMatch[i]);
                     }
                 }
@@ -2332,28 +2346,6 @@ public partial class Query
 
         var smRawSQL = resultSMId.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
-
-        //var combined = result.Select(r => new CombinedSMSMEV
-        //{
-        //    SM_Id = r.sm.Id,
-        //    SM_SemanticId = r.sm.SemanticId,
-        //    SM_IdShort = r.sm.IdShort,
-        //    SM_DisplayName = r.sm.DisplayName,
-        //    SM_Description = r.sm.Description,
-        //    SM_Identifier = r.sm.Identifier,
-        //    SM_TimeStampTree = r.sm.TimeStampTree,
-
-        //    SME_SemanticId = r.sme.SemanticId,
-        //    SME_IdShort = r.sme.IdShort,
-        //    SME_IdShortPath = r.sme.IdShortPath,
-        //    SME_DisplayName = r.sme.DisplayName,
-        //    SME_Description = r.sme.Description,
-        //    SME_Id = r.sme.Id,
-        //    SME_TimeStamp = r.sme.TimeStamp,
-
-        //    V_Value = r.svalue,
-        //    V_D_Value = r.mvalue
-        //});
 
         return resultSMId.Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
     }
