@@ -45,6 +45,7 @@ namespace AasxServer
         public string bearer = string.Empty;
         public DateTime bearerValidFrom = DateTime.MinValue;
         public DateTime bearerValidTo = DateTime.MinValue;
+        public List<string> bearerList = new List<string>();
 
         public string GetAsText()
         {
@@ -58,6 +59,11 @@ namespace AasxServer
                 text += p + ": " + parameters[p] + "\r\n";
             }
             text += $"bearer: {bearer}\r\n";
+            text += "bearerList:\r\n";
+            for (var b = 0; b < bearerList.Count; b++)
+            {
+                text += b + ": " + bearerList[b] + "\r\n";
+            }
             text += "\r\n";
 
             return text;
@@ -298,6 +304,9 @@ namespace AasxServer
                     return;
             }
 
+            c.bearer = string.Empty;
+            c.bearerList.Clear();
+
             string authServerEndPoint = c.parameters[0];
 
             var exchange1 = "";
@@ -354,18 +363,6 @@ namespace AasxServer
                         Console.WriteLine("clientCertificate " + clientCertificate);
                         Console.WriteLine("clientCertificatePW " + clientCertificatePW);
                     }
-
-                    /*
-                    if (c.bearer != string.Empty)
-                    {
-                        bool valid = true;
-                        var jwtToken = new JwtSecurityToken(c.bearer);
-                        if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
-                            valid = false;
-                        if (valid)
-                            return;
-                    }
-                    */
 
                     var handler = new HttpClientHandler()
                     {
@@ -600,6 +597,7 @@ namespace AasxServer
                 var response = client.SendAsync(request);
                 var content = response.GetAwaiter().GetResult().Content.ContentToString();
 
+                c.bearerList.Add(c.bearer);
                 c.bearer = "";
                 doc = JsonDocument.Parse(content);
                 if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
@@ -635,6 +633,7 @@ namespace AasxServer
                 var response = client.SendAsync(request);
                 var content = response.GetAwaiter().GetResult().Content.ContentToString();
 
+                c.bearerList.Add(c.bearer);
                 c.bearer = "";
                 doc = JsonDocument.Parse(content);
                 if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
@@ -670,6 +669,7 @@ namespace AasxServer
                 var response = client.SendAsync(request);
                 var content = response.GetAwaiter().GetResult().Content.ContentToString();
 
+                c.bearerList.Add(c.bearer);
                 c.bearer = "";
                 doc = JsonDocument.Parse(content);
                 if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
