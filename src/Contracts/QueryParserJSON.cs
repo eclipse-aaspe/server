@@ -407,13 +407,13 @@ public class QueryGrammarJSON : Grammar
                             {
                                 return "$SKIP";
                             }
-                            if (skipCount != 0)
-                            {
-                                if (type == "$or")
-                                {
-                                    return "true";
-                                }
-                            }
+                            //if (skipCount != 0)
+                            //{
+                            //    if (type == "$or")
+                            //    {
+                            //        return "true";
+                            //    }
+                            //}
                             if (op != "$match")
                             {
                                 var result = "";
