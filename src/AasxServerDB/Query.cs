@@ -1614,6 +1614,9 @@ public partial class Query
         var pathSME = "";
         var pathAllCondition = "";
         var pathAllConditionRaw = "";
+
+        bool isWithAASTable = restrictAAS || resultType == ResultType.AssetAdministrationShell;
+
         if (conditionsExpression.TryGetValue("path-sme", out pathSME))
         {
             withPathSme = true;
@@ -1843,7 +1846,6 @@ public partial class Query
         aasTable = db.AASSets;
         aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : aasTable;
 
-        bool isWithAASTable = true;
 
         smTable = db.SMSets;
         smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
@@ -1881,7 +1883,7 @@ public partial class Query
 
         IQueryable<joinAll>? result = null;
 
-        if (aasTable != null)
+        if (isWithAASTable)
         {
             if (resultType == ResultType.AssetAdministrationShell
                 && smTable == null
@@ -2009,7 +2011,7 @@ public partial class Query
                         where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
                     }
 
-                        var split = where.Split(" AND ");
+                    var split = where.Split(" AND ");
 
                     var valueSQL = split[split.Length - 1];
 
@@ -2034,7 +2036,14 @@ public partial class Query
 
                     join += $"AND {smeSQLPath}\r\n";
 
-                    join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
+                    if (isWithAASTable)
+                    {
+                        join += $") AS p{i + 1} ON p{i + 1}.SMId = s0.Id \r\n";
+                    }
+                    else
+                    {
+                        join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
+                    }
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
 
@@ -2163,7 +2172,7 @@ public partial class Query
                     }
                     caseWhen += "\r\n";
 
-                    join += $"LEFT JOIN SMESets AS smePath{ii} ON s.Id = smePath{ii}.SMId ";
+                    join += $"LEFT JOIN SMESets AS smePath{ii} ON aasSm.SmIdentifier = smePath{ii}.SMId ";
 
                     if (!smeSQLIdShortArray[i].Contains("[]") && !smeSQLIdShortArray[i].Contains("%"))
                     {
@@ -2196,7 +2205,7 @@ public partial class Query
                                 v = v.Replace(")", "").Replace($"\"v\".", "");
 
                                 caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
-                                join += $"LEFT JOIN SMESets AS sme{ii} ON s.Id = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+                                join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmIdentifier = sme{ii}.SMId AND sme{ii}.{s}\r\n";
 
                                 wherePath = wherePath.Replace($"\"s0\".{s} AND", "");
 
@@ -2210,7 +2219,7 @@ public partial class Query
                             else
                             {
                                 caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
-                                join += $"LEFT JOIN SMESets AS sme{ii} ON s.Id = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+                                join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmIdentifier = sme{ii}.SMId AND sme{ii}.{s}\r\n";
 
                                 wherePath = wherePath.Replace($"\"s0\".{s}", $"sme{ii} = 1");
 
@@ -2222,7 +2231,7 @@ public partial class Query
 
                 if (wherePath.Contains("\"v\"."))
                 {
-                    join += $"LEFT JOIN SMESets AS sme ON s.Id = sme.SMId\r\n";
+                    join += $"LEFT JOIN SMESets AS sme ON aasSM.smIdentifier = sme.SMId\r\n";
 
                     var ii = 1;
                     var split1 = wherePath.Split("\"v\".");
@@ -2253,23 +2262,29 @@ public partial class Query
 
                 if (resultType == ResultType.AssetAdministrationShell)
                 {
-                    raw += "AASIdentifier as Id\r\n";
-                    raw += $"FROM (\r\nSELECT AASIdentifier, s.Id, s.IdShort,{smeSelect}\r\n";
+                    raw += "AasIdentifier AS Id\r\n";
                 }
                 else
                 {
-                    raw += "Id\r\n";
-                    raw += $"FROM (\r\nSELECT s.Id, s.IdShort,{smeSelect}\r\n";
+                    raw += "SmIdentifier AS Id\r\n";
                 }
 
-                raw += caseWhen;
+                raw += $"FROM (\r\nSELECT aasSm.SmIdentifier, aasSm.SmIdShort,";
+
                 if (isWithAASTable)
                 {
-                    raw += "FROM(\r\nSELECT s0.Id, s0.IdShort, a.Id AS AASIdentifier \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
+                    raw += "aasSm.AasIdentifier, aasSm.AasIdShort,";
+                }
+                raw += $"{smeSelect}\r\n";
+                raw += caseWhen;
+
+                if (isWithAASTable)
+                {
+                    raw += "FROM(\r\nSELECT s0.Id AS SmIdentifier, s0.IdShort AS SmIdShort, a.Id AS AasIdentifier, a.IdShort AS AasIdShort \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
                 }
                 else
                 {
-                    raw += "FROM(\r\nSELECT Id, IdShort\r\nFROM SMSets\r\n";
+                    raw += "FROM(\r\nSELECT Id AS SmIdentifier, IdShort AS SmIdShort \r\nFROM SMSets\r\n";
                 }
 
                 if (!whereSm.StartsWith("SELECT"))
@@ -2287,16 +2302,16 @@ public partial class Query
                 {
                     if (isWithAASTable)
                     {
-                        raw += $"WHERE ({whereSm.Replace("\"s\".", "\"s0\".")})\r\n";
+                        raw += $"WHERE ({whereAas.Replace("\"s\".", "\"s0\".")})\r\n";
                     }
                     else
                     {
-                        raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                        raw += $"WHERE ({whereAas.Replace("\"s\".", "")})\r\n";
                     }
                 }
 
 
-                raw += ") AS s\r\n";
+                raw += ") AS aasSm\r\n";
                 raw += join;
                 raw += ") AS base\r\n";
                 rawBase = raw;
@@ -2310,7 +2325,13 @@ public partial class Query
 
                 var smIdVariableShortened = smIdVariable.Split(".").First();
 
-                wherePath = wherePath.Replace(smIdVariableShortened, "\"base\"");
+                wherePath = wherePath.Replace($"{smIdVariableShortened}.", "\"base\".");
+
+                if (restrictAAS)
+                {
+                    wherePath = wherePath.Replace($"\a\".", "\"base\".");
+                }
+
                 if (wherePath != "")
                 {
                     rawBase += $"WHERE {wherePath}\r\n";
