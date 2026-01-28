@@ -1617,7 +1617,9 @@ public partial class Query
         var pathAllCondition = "";
         var pathAllConditionRaw = "";
 
-        bool isWithAASTable = restrictAAS || resultType == ResultType.AssetAdministrationShell;
+        var aasExistInCondition = conditionsExpression.TryGetValue("all", out value) && value.Contains("aas.");
+
+        bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
         if (conditionsExpression.TryGetValue("path-sme", out pathSME))
         {
@@ -2289,29 +2291,59 @@ public partial class Query
                     raw += "FROM(\r\nSELECT Id AS SmIdentifier, IdShort AS SmIdShort \r\nFROM SMSets\r\n";
                 }
 
-                if (!whereSm.StartsWith("SELECT"))
+                if (whereSm != null && !whereSm.StartsWith("SELECT"))
                 {
                     if (isWithAASTable)
                     {
-                        raw += $"WHERE ({whereSm.Replace("\"s\".", "\"s0\".")})\r\n";
+                        whereSm = whereSm.Replace("\"s\".", "\"s0\".");
                     }
                     else
                     {
-                        raw += $"WHERE ({whereSm.Replace("\"s\".", "")})\r\n";
+                        whereSm = whereSm.Replace("\"s\".", "");
                     }
                 }
+                else
+                {
+                    whereSm = "";
+                }
+
                 if (whereAas != null && !whereAas.StartsWith("SELECT"))
                 {
                     if (isWithAASTable)
                     {
-                        raw += $"WHERE ({whereAas.Replace("\"s\".", "\"s0\".")})\r\n";
+                        whereAas = whereAas.Replace("\"s\".", "\"s0\".");
                     }
                     else
                     {
-                        raw += $"WHERE ({whereAas.Replace("\"s\".", "")})\r\n";
+                        whereAas = whereAas.Replace("\"s\".", "");
                     }
                 }
+                else
+                {
+                    whereAas = "";
+                }
 
+                var whereAasSm = "";
+                if (whereAas != "" || whereSm != "")
+                {
+                    if (whereAas != "")
+                    {
+                        whereAasSm = $"({whereAas})";
+                    }
+                    if (whereSm != "")
+                    {
+                        if (whereAasSm == "")
+                        {
+                            whereAasSm = $"({whereSm})";
+                        }
+                        else
+                        {
+                            whereAasSm += $" AND ({whereSm})";
+                        }
+                    }
+
+                    raw += $"WHERE ({whereAasSm})\r\n";
+                }
 
                 raw += ") AS aasSm\r\n";
                 raw += join;
@@ -2329,10 +2361,8 @@ public partial class Query
 
                 wherePath = wherePath.Replace($"{smIdVariableShortened}.", "\"base\".");
 
-                if (restrictAAS)
-                {
-                    wherePath = wherePath.Replace($"\a\".", "\"base\".");
-                }
+                wherePath = wherePath.Replace("\"base\".\"IdShort\"", "\"base\".\"SmIdShort\"");
+                wherePath = wherePath.Replace("\"a\".\"IdShort\"", "\"base\".\"AasIdShort\"");
 
                 if (wherePath != "")
                 {
