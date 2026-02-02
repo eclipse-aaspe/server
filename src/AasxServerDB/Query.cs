@@ -2174,7 +2174,7 @@ public partial class Query
                     }
                     caseWhen += "\r\n";
 
-                    join += $"LEFT JOIN SMESets AS smePath{ii} ON aasSm.SmIdentifier = smePath{ii}.SMId ";
+                    join += $"LEFT JOIN SMESets AS smePath{ii} ON aasSm.SmId = smePath{ii}.SMId ";
 
                     if (!smeSQLIdShortArray[i].Contains("[]") && !smeSQLIdShortArray[i].Contains("%"))
                     {
@@ -2207,7 +2207,7 @@ public partial class Query
                                 v = v.Replace(")", "").Replace($"\"v\".", "");
 
                                 caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
-                                join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmIdentifier = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+                                join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmId = sme{ii}.SMId AND sme{ii}.{s}\r\n";
 
                                 wherePath = wherePath.Replace($"\"s0\".{s} AND", "");
 
@@ -2221,7 +2221,7 @@ public partial class Query
                             else
                             {
                                 caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
-                                join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmIdentifier = sme{ii}.SMId AND sme{ii}.{s}\r\n";
+                                join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmId = sme{ii}.SMId AND sme{ii}.{s}\r\n";
 
                                 wherePath = wherePath.Replace($"\"s0\".{s}", $"sme{ii} = 1");
 
@@ -2233,7 +2233,7 @@ public partial class Query
 
                 if (wherePath.Contains("\"v\"."))
                 {
-                    join += $"LEFT JOIN SMESets AS sme ON aasSM.smIdentifier = sme.SMId\r\n";
+                    join += $"LEFT JOIN SMESets AS sme ON aasSM.SmId = sme.SMId\r\n";
 
                     var ii = 1;
                     var split1 = wherePath.Split("\"v\".");
@@ -2264,29 +2264,45 @@ public partial class Query
 
                 if (resultType == ResultType.AssetAdministrationShell)
                 {
-                    raw += "AasIdentifier AS Id\r\n";
+                    raw += "AasId AS Id\r\n";
                 }
                 else
                 {
-                    raw += "SmIdentifier AS Id\r\n";
+                    raw += "SmId AS Id\r\n";
                 }
 
-                raw += $"FROM (\r\nSELECT aasSm.SmIdentifier, aasSm.SmIdShort,";
+                raw += $"FROM (\r\nSELECT aasSm.SmId, aasSm.SmIdShort,";
 
                 if (isWithAASTable)
                 {
-                    raw += "aasSm.AasIdentifier, aasSm.AasIdShort,";
+                    raw += "aasSm.AasId, aasSm.AasIdShort,";
                 }
                 raw += $"{smeSelect}\r\n";
                 raw += caseWhen;
 
                 if (isWithAASTable)
                 {
-                    raw += "FROM(\r\nSELECT s0.Id AS SmIdentifier, s0.IdShort AS SmIdShort, a.Id AS AasIdentifier, a.IdShort AS AasIdShort \r\nFROM AASSets AS a \r\nINNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
+                    raw += "FROM(\r\nSELECT s0.Id AS SmId, s0.IdShort AS SmIdShort, a.Id AS AasId, a.IdShort AS AasIdShort\r\n";
+
+
+                    if (whereAas != null && !whereAas.StartsWith("SELECT"))
+                    {
+                        whereAas = whereAas.Replace("\"a\".", "");
+
+                        raw += "FROM (\r\n  SELECT Id, IdShort\r\n  FROM AASSets\r\n";
+                        raw +=  $"WHERE {whereAas} \r\n";
+                        raw += ") AS a \r\n";
+                    }
+                    else
+                    {
+                        raw += "FROM AASSets AS a \r\n";
+                    }
+
+                    raw += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\n INNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
                 }
                 else
                 {
-                    raw += "FROM(\r\nSELECT Id AS SmIdentifier, IdShort AS SmIdShort \r\nFROM SMSets\r\n";
+                    raw += "FROM(\r\nSELECT Id AS SmId, IdShort AS SmIdShort \r\nFROM SMSets\r\n";
                 }
 
                 if (!isWithAASTable)
