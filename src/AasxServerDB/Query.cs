@@ -1986,7 +1986,7 @@ public partial class Query
                 var placeholderSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
                 var smIdVariable = result.Select(s => s.SMId).ToQueryString()
-                    .Split("\r\n").First()
+                    .Replace("\r", "").Split("\n").First()
                     .Split("SELECT ").Last();
 
                 for (var i = 0; i < pathConditions.Count; i++)
@@ -2067,7 +2067,7 @@ public partial class Query
                     convertConditionSQL = "";
                 }
 
-                var lastRow = resultQueryString.Split("\r\n").Last();
+                var lastRow = resultQueryString.Replace("\r", "").Split("\n").Last();
                 if (!lastRow.StartsWith("WHERE"))
                 {
                     var splittedConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0]);
@@ -2092,7 +2092,7 @@ public partial class Query
                 var valueSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
                 var smIdVariable = result.Select(s => s.SMId).ToQueryString()
-                    .Split("\r\n").First()
+                    .Replace("\r", "").Split("\n").First()
                     .Split("SELECT ").Last();
 
                 for (var i = 0; i < pathConditions.Count; i++)
@@ -2289,59 +2289,55 @@ public partial class Query
                     raw += "FROM(\r\nSELECT Id AS SmIdentifier, IdShort AS SmIdShort \r\nFROM SMSets\r\n";
                 }
 
-                if (whereSm != null && !whereSm.StartsWith("SELECT"))
+                if (!isWithAASTable)
                 {
-                    if (isWithAASTable)
-                    {
-                        whereSm = whereSm.Replace("\"s\".", "\"s0\".");
-                    }
-                    else
+                    if (whereSm != null && !whereSm.StartsWith("SELECT"))
                     {
                         whereSm = whereSm.Replace("\"s\".", "");
                     }
-                }
-                else
-                {
-                    whereSm = "";
-                }
-
-                if (whereAas != null && !whereAas.StartsWith("SELECT"))
-                {
-                    if (isWithAASTable)
-                    {
-                        whereAas = whereAas.Replace("\"s\".", "\"s0\".");
-                    }
                     else
+                    {
+                        whereSm = "";
+                    }
+
+                    if (whereAas != null && !whereAas.StartsWith("SELECT"))
                     {
                         whereAas = whereAas.Replace("\"s\".", "");
                     }
-                }
-                else
-                {
-                    whereAas = "";
-                }
-
-                var whereAasSm = "";
-                if (whereAas != "" || whereSm != "")
-                {
-                    if (whereAas != "")
+                    else
                     {
-                        whereAasSm = $"({whereAas})";
-                    }
-                    if (whereSm != "")
-                    {
-                        if (whereAasSm == "")
-                        {
-                            whereAasSm = $"({whereSm})";
-                        }
-                        else
-                        {
-                            whereAasSm += $" AND ({whereSm})";
-                        }
+                        whereAas = "";
                     }
 
-                    raw += $"WHERE ({whereAasSm})\r\n";
+                    var whereAasSm = "";
+                    if (whereAas != "" || whereSm != "")
+                    {
+                        if (whereAas != "")
+                        {
+                            whereAasSm = $"({whereAas})";
+                        }
+                        if (whereSm != "")
+                        {
+                            if (whereAasSm == "")
+                            {
+                                whereAasSm = $"({whereSm})";
+                            }
+                            else
+                            {
+                                whereAasSm += $" AND ({whereSm})";
+                            }
+                        }
+
+                        raw += $"WHERE ({whereAasSm})\r\n";
+                    }
                 }
+                else if (whereSm != null && !whereSm.StartsWith("SELECT"))
+                {
+                    whereSm = whereSm.Replace("\"s\".", "\"s0\".");
+
+                    raw += $"AND ({whereSm})\r\n";
+                }
+
 
                 raw += ") AS aasSm\r\n";
                 raw += join;
