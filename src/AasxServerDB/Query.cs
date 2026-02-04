@@ -1973,7 +1973,7 @@ public partial class Query
             {
                 var resultQueryString = "";
 
-                if (isWithAASTable)
+                if (resultType == ResultType.AssetAdministrationShell)
                 {
                     resultQueryString = result.Select(r => r.AASId).ToQueryString();
                 }
