@@ -2042,7 +2042,7 @@ public partial class Query
 
                     if (isWithAASTable)
                     {
-                        if (restrictAAS)
+                        if (restrictSM)
                         {
                             join += $") AS p{i + 1} ON p{i + 1}.SMId = t.Id \r\n";
                         }
@@ -2093,8 +2093,7 @@ public partial class Query
 
                 if (isWithAASTable)
                 {
-                    var withSm = ands.Where(a => a.Contains("\\\"t\\\".\\"));
-                    withSm = ands.Where(a => a.Contains("\"t\"."));
+                    var withSm = ands.Where(a => a.Contains("\"t\"."));
                     ands = ands.Except(withSm);
                 }
                 convertConditionSQL = String.Empty;
@@ -2105,7 +2104,7 @@ public partial class Query
 
                     if (i != ands.Count()-1)
                     {
-                        convertConditionSQL += " AND";
+                        convertConditionSQL += "AND";
                     }
                 }
 
