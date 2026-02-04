@@ -1908,8 +1908,8 @@ public partial class Query
                         r => r.AASId,
                         (aas, r) => new { aas, r })
                         .Join(smTable,
-                              x => x.r.Identifier,
-                              sm => sm.Identifier,
+                              x => x.r.Id,
+                              sm => sm.Id,
                               (x, sm) => new { x.aas, sm })
                         .Select(x => new joinAll
                         {
@@ -2042,7 +2042,14 @@ public partial class Query
 
                     if (isWithAASTable)
                     {
-                        join += $") AS p{i + 1} ON p{i + 1}.SMId = s0.Id \r\n";
+                        if (restrictAAS)
+                        {
+                            join += $") AS p{i + 1} ON p{i + 1}.SMId = t.Id \r\n";
+                        }
+                        else
+                        {
+                            join += $") AS p{i + 1} ON p{i + 1}.SMId = s0.Id \r\n";
+                        }
                     }
                     else
                     {
@@ -2081,6 +2088,27 @@ public partial class Query
                 {
                     convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $" p{i + 1}.SMId IS NOT NULL ");
                 }
+
+                var ands = convertConditionSQL.Split("AND").Distinct();
+
+                if (isWithAASTable)
+                {
+                    var withSm = ands.Where(a => a.Contains("\\\"t\\\".\\"));
+                    withSm = ands.Where(a => a.Contains("\"t\"."));
+                    ands = ands.Except(withSm);
+                }
+                convertConditionSQL = String.Empty;
+
+                for (int i = 0; i < ands.Count(); i++)
+                {
+                    convertConditionSQL += ands.ElementAt(i);
+
+                    if (i != ands.Count()-1)
+                    {
+                        convertConditionSQL += " AND";
+                    }
+                }
+
                 rawBase += convertConditionSQL;
             }
             else
