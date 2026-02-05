@@ -635,11 +635,8 @@ public class QueryGrammarJSON : Grammar
         value = value.Replace("$aas#", "aas.");
         value = value.Replace("$sm#", "sm.");
         value = value.Replace("$sme#", "sme.");
-        if (value == "sm.Id")
-        {
-            value = value.Replace("sm.Id", "sm.Identifier");
-        }
         value = value.Replace("sm.id", "sm.Identifier");
+        value = value.Replace("aas.Id", "aas.Identifier");
         switch (mode)
         {
             case "all":
