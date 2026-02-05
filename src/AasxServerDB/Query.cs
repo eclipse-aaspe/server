@@ -1580,6 +1580,25 @@ public partial class Query
         return result;
     }
 
+    private static List<string> GetFields(string prefix, string? expression)
+    {
+        var fields = new List<string>();
+
+        if (expression != null)
+        {
+            var split1 = expression.Split(prefix);
+            foreach (var s1 in split1)
+            {
+                var field = s1.Split([' ', ')']).First();
+                if (!field.StartsWith('(') && !fields.Contains(field))
+                {
+                    fields.Add(field);
+                }
+            }
+        }
+
+        return fields;
+    }
     private class joinAll
     {
         public int SMId;
@@ -1605,10 +1624,30 @@ public partial class Query
         IQueryable<SMESet>? smeTable = null;
         IQueryable<ValueSet>? valueTable = null;
 
+        var aasFields = new List<string>();
+        var smFields = new List<string>();
+        var smeFields = new List<string>();
+
         var restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value != "true";
         var restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value != "true";
         var restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value != "true";
         var restrictValue = conditionsExpression.TryGetValue("value", out value) && value != "" && value != "true";
+
+        if (conditionsExpression.TryGetValue("all", out value) && value != "" && value != "true")
+        {
+            if (restrictAAS)
+            {
+                aasFields = GetFields("aas.", value);
+            }
+            if (restrictSM)
+            {
+                smFields = GetFields("sm.", value);
+            }
+            if (restrictSME)
+            {
+                smeFields = GetFields("sme.", value);
+            }
+        }
 
         var withPathSme = false;
         var withMatch = false;
