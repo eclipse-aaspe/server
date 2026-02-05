@@ -2038,6 +2038,8 @@ public partial class Query
 
                     join += $"AND {smeSQLPath}\r\n";
 
+
+                    //ToDo: Temporary workaround, better would be to identify t, s0 oder s in string
                     if (isWithAASTable)
                     {
                         if (restrictSM)
@@ -2087,25 +2089,8 @@ public partial class Query
                     convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $" p{i + 1}.SMId IS NOT NULL ");
                 }
 
-                var ands = convertConditionSQL.Split("AND").Distinct();
 
-                if (isWithAASTable)
-                {
-                    var withSm = ands.Where(a => a.Contains("\"t\"."));
-                    ands = ands.Except(withSm);
-                }
-                convertConditionSQL = String.Empty;
-
-                for (int i = 0; i < ands.Count(); i++)
-                {
-                    convertConditionSQL += ands.ElementAt(i);
-
-                    if (i != ands.Count()-1)
-                    {
-                        convertConditionSQL += "AND";
-                    }
-                }
-
+                //ToDo: Will not work, if t. is part of the condition (happens when submodel when restrictSM == true)
                 rawBase += convertConditionSQL;
             }
             else
