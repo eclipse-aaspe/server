@@ -1591,7 +1591,6 @@ public partial class Query
             foreach (var s1 in split1)
             {
                 var field = s1.Split([' ', ')']).First();
-                field = char.ToUpper(field[0]) + field.Substring(1);
                 if (!field.StartsWith('(') && !fields.Contains(field))
                 {
                     fields.Add(field);
@@ -1626,20 +1625,29 @@ public partial class Query
         IQueryable<SMESet>? smeTable = null;
         IQueryable<ValueSet>? valueTable = null;
 
+        var aasFields = new List<string>();
+        var smFields = new List<string>();
+        var smeFields = new List<string>();
+
         var restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value != "true";
         var restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value != "true";
         var restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value != "true";
         var restrictValue = conditionsExpression.TryGetValue("value", out value) && value != "" && value != "true";
 
-        var aasFields = new List<string>();
-        var smFields = new List<string>();
-        var smeFields = new List<string>();
-
         if (conditionsExpression.TryGetValue("all", out value) && value != "" && value != "true")
         {
-            aasFields = GetFields("aas.", value);
-            smFields = GetFields("sm.", value);
-            smeFields = GetFields("sme.", value);
+            if (restrictAAS)
+            {
+                aasFields = GetFields("aas.", value);
+            }
+            if (restrictSM)
+            {
+                smFields = GetFields("sm.", value);
+            }
+            if (restrictSME)
+            {
+                smeFields = GetFields("sme.", value);
+            }
         }
 
         var withPathSme = false;
@@ -1735,7 +1743,7 @@ public partial class Query
 
                         var c = split2[1] + split2[2];
                         var v = db.ValueSets.Where(c).ToQueryString();
-                        var sql = v.Split("WHERE ").Last();
+                        var sql = v.Split("WHERE").Last();
                         field.Add(sql);
                     }
                     order = order.OrderBy(x => count[x]).ToList();
@@ -1909,9 +1917,9 @@ public partial class Query
         }
 
         var rawAas = aasTable?.ToQueryString();
-        var whereAas = rawAas?.Split("WHERE ").Last();
+        var whereAas = rawAas?.Split("WHERE").Last();
         var rawSm = smTable?.ToQueryString();
-        var whereSm = rawSm?.Split("WHERE ").Last();
+        var whereSm = rawSm?.Split("WHERE").Last();
         //var rawSme = smeTable?.ToQueryString();
         //var whereSme = rawSme?.Split("WHERE").Last();
         //var rawValue = valueTable?.ToQueryString();
