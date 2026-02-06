@@ -632,10 +632,19 @@ public class QueryGrammarJSON : Grammar
 
     public static string ReplaceField(string mode, string value, string smeValue)
     {
+        if (value == "$aas#id")
+        {
+            value = "$aas#identifier";
+        }
+        if (value == "$sm#id")
+        {
+            value = "$sm#identifier";
+        }
+
         value = value.Replace("$aas#", "aas.");
         value = value.Replace("$sm#", "sm.");
         value = value.Replace("$sme#", "sme.");
-        value = value.Replace("sm.Id", "sm.Identifier");
+
         switch (mode)
         {
             case "all":
