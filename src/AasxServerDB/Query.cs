@@ -2024,9 +2024,9 @@ public partial class Query
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
                     var join = "";
-                    join += $"LEFT JOIN( \r\n SELECT DISTINCT sme.SMId AS SMId  \r\n";
-                    join += $"FROM ValueSets AS v \r\n";
-                    join += $"JOIN SMESets AS sme ON sme.Id = v.SMEId \r\n";
+                    join += $"LEFT JOIN(\r\nSELECT DISTINCT sme.SMId AS SMId\r\n";
+                    join += $"FROM ValueSets AS v\r\n";
+                    join += $"JOIN SMESets AS sme ON sme.Id = v.SMEId\r\n";
 
                     var where = "";
 
@@ -2074,16 +2074,16 @@ public partial class Query
                     {
                         if (restrictSM)
                         {
-                            join += $") AS p{i + 1} ON p{i + 1}.SMId = t.Id \r\n";
+                            join += $") AS p{i + 1} ON p{i + 1}.SMId = t.Id\r\n";
                         }
                         else
                         {
-                            join += $") AS p{i + 1} ON p{i + 1}.SMId = s0.Id \r\n";
+                            join += $") AS p{i + 1} ON p{i + 1}.SMId = s0.Id\r\n";
                         }
                     }
                     else
                     {
-                        join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id \r\n";
+                        join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id\r\n";
                     }
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
@@ -2109,12 +2109,12 @@ public partial class Query
                 {
                     var splittedConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0]);
                     var restConvertConditionSQL = splittedConvertConditionSQL[1];
-                    convertConditionSQL = $"{placeholderSQL[0]} {restConvertConditionSQL}";
+                    convertConditionSQL = $"{placeholderSQL[0]}{restConvertConditionSQL}";
                 }
 
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
-                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $" p{i + 1}.SMId IS NOT NULL ");
+                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $"p{i + 1}.SMId IS NOT NULL");
                 }
 
                 var ands = convertConditionSQL.Split("AND").Distinct();
@@ -2367,15 +2367,15 @@ public partial class Query
                             raw += $", {aasField}";
                         }
                         raw += "\r\n  FROM AASSets\r\n";
-                        raw += $"WHERE {whereAas} \r\n";
-                        raw += ") AS a \r\n";
+                        raw += $"WHERE {whereAas}\r\n";
+                        raw += ") AS a\r\n";
                     }
                     else
                     {
-                        raw += "FROM AASSets AS a \r\n";
+                        raw += "FROM AASSets AS a\r\n";
                     }
 
-                    raw += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId \r\nINNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
+                    raw += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\nINNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
                 }
                 else
                 {
@@ -2384,7 +2384,7 @@ public partial class Query
                     {
                         raw += $", {smField}";
                     }
-                    raw += " \r\nFROM SMSets\r\n";
+                    raw += "\r\nFROM SMSets\r\n";
                 }
 
                 if (!isWithAASTable)
