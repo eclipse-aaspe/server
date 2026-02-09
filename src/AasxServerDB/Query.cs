@@ -1997,6 +1997,37 @@ public partial class Query
         var rawBase = "";
         if (pathConditions.Count != 0)
         {
+            var selectAas = "(\r\n  SELECT Id";
+            foreach (var aasField in aasFields)
+            {
+                selectAas += $", {aasField}";
+            }
+            selectAas += "\r\n  FROM AASSets\r\n";
+            if (whereAas != null && !whereAas.StartsWith("SELECT"))
+            {
+                var whereAas2 = whereAas.Replace("\"a\".", "");
+                selectAas += $"WHERE {whereAas2}\r\n";
+            }
+            selectAas += ")";
+
+            var selectSm = "(\r\n  SELECT Id, Identifier";
+            foreach (var smField in smFields)
+            {
+                if (smField != "Identifier")
+                {
+                    selectSm += $", {smField}";
+                }
+            }
+            selectSm += "\r\n  FROM SMSets\r\n";
+            if (whereSm != null && !whereSm.StartsWith("SELECT"))
+            {
+                var whereSm2 = whereSm.Replace("\"s\".", "");
+                whereSm2 = whereSm2.Replace("\"s0\".", "");
+
+                selectSm += $"WHERE {whereSm2}\r\n";
+            }
+            selectSm += ")";
+
             if (!withRecursive && !withMatch)
             {
                 rawBase = "SELECT ";
@@ -2009,37 +2040,6 @@ public partial class Query
                 {
                     rawBase += "t.Id\r\n";
                 }
-
-                var selectAas = "(\r\n  SELECT Id";
-                foreach (var aasField in aasFields)
-                {
-                    selectAas += $", {aasField}";
-                }
-                selectAas += "\r\n  FROM AASSets\r\n";
-                if (whereAas != null && !whereAas.StartsWith("SELECT"))
-                {
-                    whereAas = whereAas.Replace("\"a\".", "");
-                    selectAas += $"WHERE {whereAas}\r\n";
-                }
-                selectAas += ")";
-
-                var selectSm = "(\r\n  SELECT Id, Identifier";
-                foreach (var smField in smFields)
-                {
-                    if (smField != "Identifier")
-                    {
-                        selectSm += $", {smField}";
-                    }
-                }
-                selectSm += "\r\n  FROM SMSets\r\n";
-                if (whereSm != null && !whereSm.StartsWith("SELECT"))
-                {
-                    whereSm = whereSm.Replace("\"s\".", "");
-                    whereSm = whereSm.Replace("\"s0\".", "");
-
-                    selectSm += $"WHERE {whereSm}\r\n";
-                }
-                selectSm += ")";
 
                 if (isWithAASTable)
                 {
@@ -2361,6 +2361,7 @@ public partial class Query
                     }
                     raw += "\r\n";
 
+                    /*
                     if (whereAas != null && !whereAas.StartsWith("SELECT"))
                     {
                         whereAas = whereAas.Replace("\"a\".", "");
@@ -2378,19 +2379,26 @@ public partial class Query
                     {
                         raw += "FROM AASSets AS a\r\n";
                     }
+                    */
+                    raw += $"FROM {selectAas} as a\r\n";
 
-                    raw += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\nINNER JOIN SMSets AS s0 ON sx.Identifier = s0.Identifier\r\n";
+                    raw += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\n";
+                    raw += $"INNER JOIN {selectSm} AS s0 ON sx.Identifier = s0.Identifier\r\n";
                 }
                 else
                 {
+                    /*
                     raw += "FROM(\r\nSELECT Id AS SmId";
                     foreach (var smField in smFields)
                     {
                         raw += $", {smField}";
                     }
                     raw += "\r\nFROM SMSets\r\n";
+                    */
+                    raw += $"FROM {selectSm} AS s0\r\n";
                 }
 
+                /*
                 if (!isWithAASTable)
                 {
                     if (whereSm != null && !whereSm.StartsWith("SELECT"))
@@ -2439,6 +2447,7 @@ public partial class Query
 
                     raw += $"AND ({whereSm})\r\n";
                 }
+                */
 
                 raw += ") AS aasSm\r\n";
                 raw += join;
