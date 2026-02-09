@@ -1993,27 +1993,64 @@ public partial class Query
             });
         }
 
-        //whereSme = whereSme?.Replace("\"s\".", "\"sme\".");
         var raw = "";
-
         var rawBase = "";
         if (pathConditions.Count != 0)
         {
             if (!withRecursive && !withMatch)
             {
-                var resultQueryString = "";
+                rawBase = "SELECT ";
 
                 if (resultType == ResultType.AssetAdministrationShell)
                 {
-                    resultQueryString = result.Select(r => r.AASId).ToQueryString();
+                    rawBase += "a.Id\r\n";
                 }
                 else
                 {
-                    resultQueryString = result.Select(r => r.SMId).ToQueryString();
+                    rawBase += "t.Id\r\n";
                 }
 
-                var rawBaseSplit = resultQueryString.Split("INNER JOIN \"SMESets");
-                rawBase = rawBaseSplit[0];
+                var selectAas = "(\r\n  SELECT Id";
+                foreach (var aasField in aasFields)
+                {
+                    selectAas += $", {aasField}";
+                }
+                selectAas += "\r\n  FROM AASSets\r\n";
+                if (whereAas != null && !whereAas.StartsWith("SELECT"))
+                {
+                    whereAas = whereAas.Replace("\"a\".", "");
+                    selectAas += $"WHERE {whereAas}\r\n";
+                }
+                selectAas += ")";
+
+                var selectSm = "(\r\n  SELECT Id, Identifier";
+                foreach (var smField in smFields)
+                {
+                    if (smField != "Identifier")
+                    {
+                        selectSm += $", {smField}";
+                    }
+                }
+                selectSm += "\r\n  FROM SMSets\r\n";
+                if (whereSm != null && !whereSm.StartsWith("SELECT"))
+                {
+                    whereSm = whereSm.Replace("\"s\".", "");
+                    whereSm = whereSm.Replace("\"s0\".", "");
+
+                    selectSm += $"WHERE {whereSm}\r\n";
+                }
+                selectSm += ")";
+
+                if (isWithAASTable)
+                {
+                    rawBase += $"FROM {selectAas} AS a\r\n";
+                    rawBase += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\n";
+                    rawBase += $"INNER JOIN {selectSm} AS t ON sx.Identifier = t.Identifier\r\n";
+                }
+                else
+                {
+                    rawBase += $"FROM {selectSm} AS t\r\n";
+                }
 
                 var placeholderSQL = new string[pathConditions.Count];
                 var pathAllExists = pathAllCondition.Copy();
@@ -2069,24 +2106,7 @@ public partial class Query
                     }
 
                     join += $"AND {smeSQLPath}\r\n";
-
-
-                    //ToDo: Temporary workaround, better would be to identify t, s0 oder s in string
-                    if (isWithAASTable)
-                    {
-                        if (restrictSM)
-                        {
-                            join += $") AS p{i + 1} ON p{i + 1}.SMId = t.Id\r\n";
-                        }
-                        else
-                        {
-                            join += $") AS p{i + 1} ON p{i + 1}.SMId = s0.Id\r\n";
-                        }
-                    }
-                    else
-                    {
-                        join += $") AS p{i + 1} ON p{i + 1}.SMId = s.Id\r\n";
-                    }
+                    join += $") AS p{i + 1} ON p{i + 1}.SMId = t.Id\r\n";
 
                     pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
                     placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
@@ -2101,27 +2121,15 @@ public partial class Query
                 var convertConditionSQL = convertCondition.ToQueryString();
                 convertConditionSQL = convertConditionSQL.Split("WHERE ").Last();
 
-                if (convertConditionSQL.StartsWith("SELECT"))
+                if (!convertConditionSQL.StartsWith("SELECT"))
                 {
-                    convertConditionSQL = "";
+                    for (var i = 0; i < pathConditions.Count; i++)
+                    {
+                        convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $"p{i + 1}.SMId IS NOT NULL");
+                    }
+
+                    rawBase += convertConditionSQL;
                 }
-
-                var lastRow = resultQueryString.Replace("\r", "").Split("\n").Last();
-                if (!lastRow.StartsWith("WHERE"))
-                {
-                    var splittedConvertConditionSQL = convertConditionSQL.Split(placeholderSQL[0]);
-                    var restConvertConditionSQL = splittedConvertConditionSQL[1];
-                    convertConditionSQL = $"{placeholderSQL[0]}{restConvertConditionSQL}";
-                }
-
-                for (var i = 0; i < pathConditions.Count; i++)
-                {
-                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $"p{i + 1}.SMId IS NOT NULL");
-                }
-
-
-                //ToDo: Will not work, if t. is part of the condition (happens when submodel when restrictSM == true)
-                rawBase += convertConditionSQL;
             }
             else
             {
