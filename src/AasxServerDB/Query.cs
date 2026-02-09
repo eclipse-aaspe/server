@@ -2239,15 +2239,26 @@ public partial class Query
                 }
 
                 var smeSelect = "";
+                var smePrefix = "";
                 if (wherePath.Contains("\"s0\"."))
                 {
+                    smePrefix = "\"s0\".";
+                }
+                if (wherePath.Contains("\"s1\"."))
+                {
+                    smePrefix = "\"s1\".";
+                }
+
+                if (smePrefix != "")
+                {
                     var ii = 1;
-                    var split1 = wherePath.Split("\"s0\".");
+                    var split1 = wherePath.Split(smePrefix);
                     foreach (var s1 in split1)
                     {
                         var split2 = s1.Split(" ");
 
-                        if (split2[0] == "\"IdShort\"" || split2[0] == "\"SemanticId\"")
+                        // if (split2[0] == "\"IdShort\"" || split2[0] == "\"SemanticId\"")
+                        if (smeFields.Contains($"{split2[0].Replace("\"", "")}"))
                         {
                             var s = split2[0] + " " + split2[1] + " " + split2[2];
                             s = s.Replace(")", "");
@@ -2260,7 +2271,7 @@ public partial class Query
                                 caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
                                 join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmId = sme{ii}.SMId AND sme{ii}.{s}\r\n";
 
-                                wherePath = wherePath.Replace($"\"s0\".{s} AND", "");
+                                wherePath = wherePath.Replace($"{smePrefix}{s} AND", "");
 
                                 caseWhen += $", CASE WHEN valueSme{ii}.{v} THEN 1 ELSE 0 END AS valueSme{ii}\r\n";
                                 join += $"LEFT JOIN ValueSets AS valueSme{ii} ON sme{ii}.Id = valueSme{ii}.SMEId AND valueSme{ii}.{v}\r\n";
@@ -2274,7 +2285,7 @@ public partial class Query
                                 caseWhen += $", CASE WHEN sme{ii}.{s} THEN 1 ELSE 0 END AS sme{ii}\r\n";
                                 join += $"LEFT JOIN SMESets AS sme{ii} ON aasSm.SmId = sme{ii}.SMId AND sme{ii}.{s}\r\n";
 
-                                wherePath = wherePath.Replace($"\"s0\".{s}", $"sme{ii} = 1");
+                                wherePath = wherePath.Replace($"{smePrefix}{s}", $"sme{ii} = 1");
 
                                 ii++;
                             }
