@@ -2130,6 +2130,8 @@ public partial class Query
                         convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $"p{i + 1}.SMId IS NOT NULL");
                     }
 
+                    convertConditionSQL = convertConditionSQL.Replace("\"s\".", "\"t\".");
+                    convertConditionSQL = convertConditionSQL.Replace("\"s0\".", "\"t\".");
                     rawBase += convertConditionSQL;
                 }
             }
