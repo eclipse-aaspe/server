@@ -2391,15 +2391,13 @@ public partial class Query
                 }
                 else
                 {
-                    /*
                     raw += "FROM(\r\nSELECT Id AS SmId";
                     foreach (var smField in smFields)
                     {
                         raw += $", {smField}";
                     }
                     raw += "\r\nFROM SMSets\r\n";
-                    */
-                    raw += $"FROM {selectSm} AS s0\r\n";
+                    // raw += $"FROM {selectSm} AS s0\r\n";
                 }
 
                 /*
