@@ -2366,7 +2366,7 @@ public partial class Query
             }
             selectSm += ")";
 
-            if (!withRecursive && !withMatch)
+            if (false && !withRecursive && !withMatch)
             {
                 rawBase = "SELECT ";
 
@@ -2434,7 +2434,9 @@ public partial class Query
                     }
                     if (smeSQLPath.Contains("%"))
                     {
-                        smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                        // smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                        smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" GLOB ");
+                        smeSQLPath = smeSQLPath.Replace("%", "*");
                     }
 
                     var smeSQLIdShort = split[split.Length - 3];
@@ -3469,6 +3471,12 @@ public partial class Query
 
         raw = rawBase;
         var qpRaw = GetQueryPlan(db, raw);
+
+        if (raw.Contains(" LIKE "))
+        {
+            raw = raw.Replace(" LIKE ", " GLOB ");
+            raw = raw.Replace("%", "*");
+        }
 
         IQueryable<SMSetIdResult> resultSMId = null;
         resultSMId = db.Set<SMSetIdResult>()
