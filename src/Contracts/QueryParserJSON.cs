@@ -269,6 +269,34 @@ public class QueryGrammarJSON : Grammar
 
     public string idShortPath = "";
 
+    public static string optimizeTrueFalse(string expression)
+    {
+        while (
+            expression.Contains("(True)") ||
+            expression.Contains("True || True") ||
+            expression.Contains("True && True") ||
+            expression.Contains("(False)") ||
+            expression.Contains("False || False") ||
+            expression.Contains("False && False") ||
+            expression.Contains("True || False") ||
+            expression.Contains("True && False") ||
+            expression.Contains("False || True") ||
+            expression.Contains("False && True")
+            )
+        {
+            expression = expression.Replace("(True)", "True");
+            expression = expression.Replace("True || True", "True");
+            expression = expression.Replace("True && True", "True");
+            expression = expression.Replace("(False)", "False");
+            expression = expression.Replace("False || False", "False");
+            expression = expression.Replace("False && False", "False");
+            expression = expression.Replace("True || False", "True");
+            expression = expression.Replace("True && False", "False");
+            expression = expression.Replace("False || True", "True");
+            expression = expression.Replace("False && True", "False");
+        }
+        return expression;
+    }
     public static string createExpression(string mode, object? obj, string type = "", string smeValue = "")
     {
         if (obj == null)
