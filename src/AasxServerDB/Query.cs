@@ -576,7 +576,7 @@ public partial class Query
         expression = expression.Replace("$BOTTOMUP", string.Empty);
         expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
-        var consolidate = true;
+        var consolidate = false;
         if (expression.Contains("$CONSOLIDATE"))
         {
             messages.Add("$CONSOLIDATE");
@@ -672,7 +672,7 @@ public partial class Query
         // get data
         if (withExpression) // with expression
         {
-            comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize, resultType);
+            comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize, resultType,consolidate);
         }
         //else // with parameters
         //{
@@ -1667,6 +1667,11 @@ public partial class Query
             .Replace("\"a\".\"IdShort\"", "a.AasIdShort")
             .Replace("\"a\".\"Id\"", "a.AasId");
 
+        expr = expr
+            .Replace("\"s\".\"Identifier\"", "a.SmIdentifier")
+            .Replace("\"s\".\"IdShort\"", "a.SmIdShort")
+            .Replace("\"s\".\"Id\"", "a.SmId");
+
         // Falls du in pathConditions schon vPath/smePath verwendest
         if (ii > 0)
         {
@@ -1853,7 +1858,8 @@ public partial class Query
         Dictionary<string, string>? conditionsExpression,
         int pageFrom,
         int pageSize,
-        ResultType resultType
+        ResultType resultType,
+        bool consolidate
         )
     {
         IQueryable<AASSet>? aasTable = null;
@@ -1861,16 +1867,16 @@ public partial class Query
         IQueryable<SMESet>? smeTable = null;
         IQueryable<ValueSet>? valueTable = null;
 
-        var restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value != "true";
-        var restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value != "true";
-        var restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value != "true";
-        var restrictValue = conditionsExpression.TryGetValue("value", out value) && value != "" && value != "true";
+        var restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value.ToLower() != "true";
+        var restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value.ToLower() != "true";
+        var restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value.ToLower() != "true";
+        var restrictValue = conditionsExpression.TryGetValue("value", out value) && value != "" && value.ToLower() != "true";
 
         var aasFields = new List<string>();
         var smFields = new List<string>();
         var smeFields = new List<string>();
 
-        if (conditionsExpression.TryGetValue("all", out value) && value != "" && value != "true")
+        if (conditionsExpression.TryGetValue("all", out value) && value != "" && value.ToLower() != "true")
         {
             aasFields = GetFields("aas.", value);
             smFields = GetFields("sm.", value);
@@ -1917,7 +1923,7 @@ public partial class Query
 
         var selectMatch = "";
         List<string> whereMatch = [];
-        if (false && withMatch)
+        if (!consolidate && withMatch)
         {
             var splitMatch = pathAllConditionRaw.Split("$$match$$");
             var matchCount = 0;
@@ -2063,7 +2069,7 @@ public partial class Query
 
         var matchSpecs = new List<MatchSpec>();
 
-        if (withMatch)
+        if (consolidate && withMatch)
         {
             var splitMatch = pathAllConditionRaw.Split("$$match$$");
             var matchCount = 0;
@@ -2366,7 +2372,7 @@ public partial class Query
             }
             selectSm += ")";
 
-            if (false && !withRecursive && !withMatch)
+            if (!consolidate && !withRecursive && !withMatch)
             {
                 rawBase = "SELECT ";
 
@@ -2473,7 +2479,7 @@ public partial class Query
                     rawBase += convertConditionSQL;
                 }
             }
-            else if (false)
+            else if (!consolidate)
             {
                 var placeholderSQL = new string[pathConditions.Count];
                 var exists = new string[pathConditions.Count];
@@ -2732,7 +2738,7 @@ public partial class Query
                     raw += "FROM(\r\nSELECT Id AS SmId";
                     foreach (var smField in smFields)
                     {
-                        raw += $", {smField}";
+                        raw += $", {smField} AS Sm{smField}";
                     }
                     raw += "\r\nFROM SMSets\r\n";
                     // raw += $"FROM {selectSm} AS s0\r\n";
@@ -3074,7 +3080,7 @@ public partial class Query
                 raw = rawBase;
                 rawBase = raw; // falls du rawBase später nochmal brauchst
             }
-            else if (true)
+            else if (consolidate)
             {
                 // =======================
                 // NEW BUILDER (CTE FLAGS)
@@ -3469,14 +3475,14 @@ public partial class Query
             }
         }
 
-        raw = rawBase;
-        var qpRaw = GetQueryPlan(db, raw);
-
         if (raw.Contains(" LIKE "))
         {
             raw = raw.Replace(" LIKE ", " GLOB ");
             raw = raw.Replace("%", "*");
         }
+
+        raw = rawBase;
+        var qpRaw = GetQueryPlan(db, raw);
 
         IQueryable<SMSetIdResult> resultSMId = null;
         resultSMId = db.Set<SMSetIdResult>()
@@ -3648,14 +3654,19 @@ public partial class Query
                                         if (le != null)
                                         {
                                             QueryGrammarJSON.createExpression("all", le);
+                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
                                             conditions[i].Add("all", le._expression);
                                             QueryGrammarJSON.createExpression("all-aas", le);
+                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
                                             conditions[i].Add("all-aas", le._expression);
                                             QueryGrammarJSON.createExpression("aas.", le);
+                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
                                             conditions[i].Add("aas.", le._expression);
                                             QueryGrammarJSON.createExpression("sm.", le);
+                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
                                             conditions[i].Add("sm.", le._expression);
                                             QueryGrammarJSON.createExpression("sme.", le);
+                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
                                             conditions[i].Add("sme.", le._expression);
                                             /*
                                             QueryGrammarJSON.createExpression("svalue", le);
@@ -3664,6 +3675,7 @@ public partial class Query
                                             conditions[i].Add("mvalue", le._expression);
                                             */
                                             QueryGrammarJSON.createExpression("value", le);
+                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
                                             conditions[i].Add("value", le._expression);
                                         }
                                     }
