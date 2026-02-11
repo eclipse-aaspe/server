@@ -30,6 +30,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 {
     using System.Text.Json;
     using System.Text.Json.Serialization;
+    using JetBrains.Annotations;
 
     /// <summary>
     /// 
@@ -63,26 +64,26 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         [Required]
         [DataMember(Name = "type")]
-        public TypeEnum? Type { get; set; }
+        public TypeEnum Type { get; set; }
 
         /// <summary>
         /// Gets or Sets Key
         /// </summary>
-        [Required]
+        [Required(AllowEmptyStrings = true)]
         [DataMember(Name = "key")]
-        public string? Key { get; set; }
+        public string Key { get; set; }
 
         /// <summary>
         /// Gets or Sets Value
         /// </summary>
-        [Required]
+        [Required(AllowEmptyStrings = true)]
         [DataMember(Name = "value")]
         public string Value { get; set; }
 
-        public ProtocolInformationSecurityAttributes(TypeEnum type, string? key, string value)
+        public ProtocolInformationSecurityAttributes(TypeEnum type, string key, string value)
         {
-            Type  = type;
-            Key   = key;
+            Type = type;
+            Key = key;
             Value = value;
         }
 

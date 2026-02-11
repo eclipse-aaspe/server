@@ -820,8 +820,31 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     case "type":
                     {
-                        //Enum.TryParse(typeof(ProtocolInformationSecurityAttributes.TypeEnum), out type);
-                        break;
+                        var stringValue = StringFrom(
+                            keyValue.Value,
+                                out error);
+
+                        if (error != null)
+                        {
+                            error.PrependSegment(
+                                                 new Reporting.NameSegment(
+                                                                           "type"));
+                            return null;
+                        }
+
+                        ProtocolInformationSecurityAttributes.TypeEnum parsedTypeEnum;
+
+                        var typeParseError = Enum.TryParse<ProtocolInformationSecurityAttributes.TypeEnum>(stringValue, out parsedTypeEnum);
+
+                        if (error != null)
+                        {
+                            error.PrependSegment(
+                                                 new Reporting.NameSegment(
+                                                                           "type"));
+                            return null;
+                        }
+                        type = parsedTypeEnum;
+                            break;
                     }
                     case "key":
                     {
@@ -840,7 +863,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     }
                     case "value":
                     {
-                        key = StringFrom(
+                        value = StringFrom(
                                          keyValue.Value,
                                          out error);
                         if (error != null)
