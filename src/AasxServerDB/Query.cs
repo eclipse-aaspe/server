@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Text;
+using System.Text.RegularExpressions;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using Contracts.QueryResult;
@@ -1601,6 +1603,239 @@ public partial class Query
 
         return fields;
     }
+
+    private static string ExtractWhereClause(string sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            return "";
+
+        // last occurrence of "WHERE " (case-insensitive)
+        var idx = sql.LastIndexOf("WHERE ", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+            return "";
+
+        var where = sql[(idx + 6)..].Trim();
+
+        // Optional: falls EF hinten noch ORDER BY / LIMIT etc. anhängt
+        // (kommt bei ToQueryString meist nicht, aber sicher ist sicher)
+        var cutKeywords = new[] { " ORDER BY ", " GROUP BY ", " LIMIT ", " OFFSET " };
+        foreach (var kw in cutKeywords)
+        {
+            var k = where.IndexOf(kw, StringComparison.OrdinalIgnoreCase);
+            if (k >= 0)
+            {
+                where = where[..k].Trim();
+                break;
+            }
+        }
+
+        return where;
+    }
+
+    private static IEnumerable<string> ExtractQuotedValuePredicates(string wherePath)
+    {
+        if (string.IsNullOrWhiteSpace(wherePath))
+            yield break;
+
+        // Matcht z.B.:
+        // "v"."NValue" = 4063151.0
+        // "v"."SValue" = '2500'
+        // "v"."SValue" LIKE 'Phoenix%'
+        var rx = new Regex(
+            @"(""v""\.""(SValue|NValue|DTValue)""\s*(=|LIKE|GLOB|>=|<=|<|>)\s*('[^']*'|[0-9]+(?:\.[0-9]+)?))",
+            RegexOptions.IgnoreCase);
+
+        foreach (Match m in rx.Matches(wherePath))
+            yield return m.Groups[1].Value;
+    }
+
+    private static string NormalizeForFlagPredicate(string expr, int ii = 0)
+    {
+        if (string.IsNullOrWhiteSpace(expr))
+            return expr;
+
+        // ValueSets/SMESets auf stabile Aliase
+        expr = expr
+            .Replace("\"v\".", "v.")
+            .Replace("\"s0\".", "sme.")
+            .Replace("\"s1\".", "sme.");
+
+        // AAS-Felder innerhalb von Flag-CTE: wir joinen "aasSm a"
+        // -> a hat KEIN a.Identifier, sondern a.AasIdentifier / a.AasIdShort / a.AasId
+        expr = expr
+            .Replace("\"a\".\"Identifier\"", "a.AasIdentifier")
+            .Replace("\"a\".\"IdShort\"", "a.AasIdShort")
+            .Replace("\"a\".\"Id\"", "a.AasId");
+
+        // Falls du in pathConditions schon vPath/smePath verwendest
+        if (ii > 0)
+        {
+            expr = expr
+                .Replace($"vPath{ii}.", "v.")
+                .Replace($"smePath{ii}.", "sme.");
+        }
+
+        return expr;
+    }
+
+    private static string NormalizeForFinalWhere(string expr, IReadOnlyList<string> smFields, IReadOnlyList<string> aasFields)
+    {
+        if (string.IsNullOrWhiteSpace(expr))
+            return expr;
+
+        // abs(...) zuerst
+        expr = expr
+            .Replace("abs(\"t\".\"Id\")", "abs(a.SmId)")
+            .Replace("abs(\"s\".\"Id\")", "abs(a.SmId)")
+            .Replace("abs(\"a\".\"Id\")", "abs(a.AasId)")
+            .Replace("abs(a.\"Id\")", "abs(a.SmId)")
+            .Replace("abs(a.Id)", "abs(a.SmId)");
+
+        // Pflichtfelder
+        expr = expr
+            .Replace("\"a\".\"Id\"", "a.AasId")
+            .Replace("\"a\".\"Identifier\"", "a.AasIdentifier")
+            .Replace("\"a\".\"IdShort\"", "a.AasIdShort")
+            .Replace("\"t\".\"Id\"", "a.SmId")
+            .Replace("\"t\".\"Identifier\"", "a.SmIdentifier")
+            .Replace("\"t\".\"IdShort\"", "a.SmIdShort")
+            .Replace("\"s\".\"Id\"", "a.SmId")
+            .Replace("\"s\".\"Identifier\"", "a.SmIdentifier")
+            .Replace("\"s\".\"IdShort\"", "a.SmIdShort");
+
+        // ✅ SM-Felder generisch: "t"."<field>" und "s"."<field>" -> a.Sm<Field>
+        foreach (var f in smFields)
+        {
+            // Id/Identifier/IdShort haben wir oben schon, doppelt wäre ok aber unnötig
+            if (f is "Id" or "Identifier" or "IdShort")
+                continue;
+
+            expr = expr
+                .Replace($"\"t\".\"{f}\"", $"a.Sm{f}")
+                .Replace($"\"s\".\"{f}\"", $"a.Sm{f}");
+        }
+
+        // ✅ AAS-Felder generisch: "a"."<field>" -> a.Aas<Field>
+        foreach (var f in aasFields)
+        {
+            if (f is "Id" or "Identifier")
+                continue; // Id/Identifier oben schon
+            expr = expr.Replace($"\"a\".\"{f}\"", $"a.Aas{f}");
+        }
+
+        return expr;
+    }
+
+    private static string RemovePlaceholderCondition(string whereSql, string placeholder)
+    {
+        if (string.IsNullOrWhiteSpace(whereSql))
+            return "";
+
+        var ph = Regex.Escape(placeholder);
+
+        // Entfernt placeholder als einzelnes Glied in AND/OR-Kette
+        var pattern =
+            $@"(^\s*{ph}\s*(AND|OR)\s*)|(\s*(AND|OR)\s*{ph}\s*$)|(\s*{ph}\s*)";
+
+        var cleaned = Regex.Replace(whereSql, pattern, " ", RegexOptions.IgnoreCase);
+        cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim();
+        cleaned = Regex.Replace(cleaned, @"^(AND|OR)\s+", "", RegexOptions.IgnoreCase);
+        cleaned = Regex.Replace(cleaned, @"\s+(AND|OR)$", "", RegexOptions.IgnoreCase);
+
+        return cleaned.Trim();
+    }
+
+    private static bool PredicateUsesValueSets(string predicate)
+    {
+        if (string.IsNullOrWhiteSpace(predicate))
+            return false;
+        // Wenn ein Value-Feld vorkommt, wollen wir ValueSets-first
+        // typischerweise: v."SValue", v."NValue", v."DTValue"
+        return predicate.Contains("v.\"SValue\"", StringComparison.OrdinalIgnoreCase)
+            || predicate.Contains("v.\"NValue\"", StringComparison.OrdinalIgnoreCase)
+            || predicate.Contains("v.\"DTValue\"", StringComparison.OrdinalIgnoreCase)
+            || predicate.Contains("\"SValue\"", StringComparison.OrdinalIgnoreCase) && predicate.Contains("v.", StringComparison.OrdinalIgnoreCase)
+            || predicate.Contains("\"NValue\"", StringComparison.OrdinalIgnoreCase) && predicate.Contains("v.", StringComparison.OrdinalIgnoreCase)
+            || predicate.Contains("\"DTValue\"", StringComparison.OrdinalIgnoreCase) && predicate.Contains("v.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ReplaceAbsPlaceholderWithFlagCase(string wherePath, string placeholder, string flagCteName, string flagCol)
+    {
+        // abs(...) placeholder wird exakt ersetzt (keine Regex nötig, du hast den String ja exakt)
+        return wherePath.Replace(
+            placeholder,
+            $"(CASE WHEN {flagCteName}.{flagCol} = 1 THEN 1 ELSE 0 END) = 1"
+        );
+    }
+
+    /// <summary>
+    /// Sucht im großen wherePath nach verbleibenden v.* Prädikaten (aus convertConditionSQL),
+    /// baut dafür Flag-CTEs und ersetzt sie durch CASE WHEN.
+    /// 
+    /// Achtung: Das ist bewusst simpel (für SValue/NValue/DTValue in der Form: v."SValue" = ...).
+    /// Wenn du komplexere Ausdrücke hast, erweitern wir das später.
+    /// </summary>
+    private static IEnumerable<(string OriginalExpr, string NormalizedExpr)> ExtractSimpleValuePredicates(string wherePathNormalized)
+    {
+        // Matcht z.B.:
+        // v."SValue" = 'x'
+        // v."SValue" LIKE 'x%'
+        // v."NValue" = 123.0
+        // v."DTValue" = '...'
+        //
+        // Erlaubt auch Klammern drum herum.
+        var rx = new Regex(
+            @"(v\.""(SValue|NValue|DTValue)""\s*(=|LIKE|GLOB|>=|<=|<|>)\s*('[^']*'|[0-9]+(?:\.[0-9]+)?))",
+            RegexOptions.IgnoreCase);
+
+        foreach (Match m in rx.Matches(wherePathNormalized))
+        {
+            var expr = m.Groups[1].Value;
+            yield return (expr, expr);
+        }
+    }
+
+    private sealed class MatchSpec
+    {
+        public int MatchIndex { get; init; }                 // 0,1,2,... für abs(...)=10{MatchIndex}
+        public int[] GlobalPathIndices { get; init; } = [];  // z.B. [1,2] -> path1, path2
+        public string Mode { get; init; } = "";              // "%" oder "[]"
+        public string[] Segments { get; init; } = [];        // für "%" Mode: start/end Segmente
+        public int[] Order { get; init; } = [];              // für "[]" Mode: sortierte path-indizes nach count
+        public int[] Counts { get; init; } = [];             // count der Platzhalter je Pfad (wie vorher)
+        public string[] IdShortPathRaw { get; init; } = [];  // original patterns je Pfad
+    }
+
+    /// <summary>
+    /// Baut den substr/instr Ausdruck für eine IdShortPath-Quelle.
+    /// </summary>
+    private static string SubstrBetween(string idShortPathExpr, string start, string end)
+    {
+        // identisch zu deinem bisherigen substr/instr Pattern
+        return
+    $@"substr({idShortPathExpr},
+        instr({idShortPathExpr}, '{start}') + length('{start}'),
+        instr({idShortPathExpr}, '{end}') - (instr({idShortPathExpr}, '{start}') + length('{start}')))";
+    }
+
+    private static IEnumerable<string> ExtractQuotedSmePredicates(string wherePath)
+    {
+        if (string.IsNullOrWhiteSpace(wherePath))
+            yield break;
+
+        // Matcht z.B.:
+        // "s1"."SemanticId" = '...'
+        // "s0"."IdShort" = '...'
+        // "s1"."IdShortPath" LIKE '...'
+        // auch Vergleichsoperatoren etc.
+        var rx = new Regex(
+            @"((""s[01]""\.""[A-Za-z0-9_]+""\s*(=|LIKE|GLOB|>=|<=|<|>)\s*('[^']*'|[0-9]+(?:\.[0-9]+)?)))",
+            RegexOptions.IgnoreCase);
+
+        foreach (Match m in rx.Matches(wherePath))
+            yield return m.Groups[1].Value;
+    }
+
     private class joinAll
     {
         public int SMId;
@@ -1682,7 +1917,7 @@ public partial class Query
 
         var selectMatch = "";
         List<string> whereMatch = [];
-        if (withMatch)
+        if (false && withMatch)
         {
             var splitMatch = pathAllConditionRaw.Split("$$match$$");
             var matchCount = 0;
@@ -1821,6 +2056,104 @@ public partial class Query
                     whereMatch.Add($"({where})");
                     matchOffset += idShortPath.Count;
                 }
+            }
+
+            pathAllAas = pathAllAas.Replace("$$match$$", "");
+        }
+
+        var matchSpecs = new List<MatchSpec>();
+
+        if (withMatch)
+        {
+            var splitMatch = pathAllConditionRaw.Split("$$match$$");
+            var matchCount = 0;
+            var matchOffset = 0;
+            pathAllCondition = "";
+
+            for (var iMatch = 0; iMatch < splitMatch.Length; iMatch++)
+            {
+                var chunk = splitMatch[iMatch];
+
+                if (!chunk.Contains("$$$$tag$$path$$"))
+                {
+                    pathAllCondition += chunk;
+                    continue;
+                }
+
+                // placeholder in der großen Logik: abs(SmId) = 10{matchCount}
+                pathAllCondition += $"Math.Abs(SmId) == 10{matchCount}";
+
+                // parse match paths
+                List<int> order = [];
+                List<int> count = [];
+                List<string> idShortPath = [];
+
+                var split = chunk.Split("$$tag$$path$$");
+
+                string with = "";
+                for (var i = 1; i < split.Length; i++)
+                {
+                    var firstTag = split[i];
+                    var split2 = firstTag.Split("$$");
+
+                    // split2[0] ist IdShortPath pattern
+                    idShortPath.Add(split2[0]);
+
+                    with = "";
+                    if (split2[0].Contains("[]"))
+                        with = "[]";
+                    if (split2[0].Contains("%"))
+                        with = "%";
+
+                    // count placeholder occurrences (wie vorher)
+                    count.Add(split2[0].Count(c => c == (with == "[]" ? '[' : '%')));
+                    order.Add(i - 1);
+                }
+
+                // sortiere order wie vorher (kurzeste zuerst)
+                order = order.OrderBy(x => count[x]).ToList();
+
+                // match mode bestimmen
+                var mode = "";
+                if (idShortPath.Count > 0 && idShortPath[0].Contains("[]"))
+                    mode = "[]";
+                if (idShortPath.Count > 0 && idShortPath[0].Contains("%"))
+                    mode = "%";
+
+                // Global path indices (matchOffset + p + 1) wie im alten whereMatch
+                var globalPaths = Enumerable.Range(0, idShortPath.Count)
+                                            .Select(p => matchOffset + p + 1)
+                                            .ToArray();
+
+                // Segmente nur für "%" Mode vorbereiten
+                string[] segments = Array.Empty<string>();
+                if (mode == "%")
+                {
+                    // Nimm "shortestPath" wie vorher: bis letztem '.' inkl.
+                    var shortestPath = idShortPath[order[0]];
+                    var lastDotIndex = shortestPath.LastIndexOf('.');
+                    shortestPath = (lastDotIndex >= 0) ? shortestPath.Substring(0, lastDotIndex + 1) : shortestPath;
+
+                    // split by '%' -> segments
+                    segments = shortestPath.Split('%').ToArray();
+                }
+
+                matchSpecs.Add(new MatchSpec
+                {
+                    MatchIndex = matchCount,
+                    GlobalPathIndices = globalPaths,
+                    Mode = mode,
+                    Segments = segments,
+                    Order = order.ToArray(),
+                    Counts = count.ToArray(),
+                    IdShortPathRaw = idShortPath.ToArray(),
+                });
+
+                // whereMatch Eintrag ist jetzt nur noch: flag_match{matchCount} = 1
+                whereMatch.Add($"((CASE WHEN flag_match{matchCount}.match{matchCount} = 1 THEN 1 ELSE 0 END) = 1)");
+
+                matchOffset += idShortPath.Count;
+                matchCount++;
             }
 
             pathAllAas = pathAllAas.Replace("$$match$$", "");
@@ -1999,10 +2332,13 @@ public partial class Query
         var rawBase = "";
         if (pathConditions.Count != 0)
         {
-            var selectAas = "(\r\n  SELECT Id";
+            var selectAas = "(\r\n  SELECT Id, Identifier";
             foreach (var aasField in aasFields)
             {
-                selectAas += $", {aasField}";
+                if (aasField != "Identifier")
+                {
+                    selectAas += $", {aasField}";
+                }
             }
             selectAas += "\r\n  FROM AASSets\r\n";
             if (whereAas != null && !whereAas.StartsWith("SELECT"))
@@ -2012,10 +2348,10 @@ public partial class Query
             }
             selectAas += ")";
 
-            var selectSm = "(\r\n  SELECT Id, Identifier";
+            var selectSm = "(\r\n  SELECT Id, IdShort, Identifier";
             foreach (var smField in smFields)
             {
-                if (smField != "Identifier")
+                if (smField != "IdShort" && smField != "Identifier")
                 {
                     selectSm += $", {smField}";
                 }
@@ -2135,7 +2471,7 @@ public partial class Query
                     rawBase += convertConditionSQL;
                 }
             }
-            else
+            else if (false)
             {
                 var placeholderSQL = new string[pathConditions.Count];
                 var exists = new string[pathConditions.Count];
@@ -2480,6 +2816,638 @@ public partial class Query
                 {
                     rawBase += $"WHERE {wherePath}\r\n";
                 }
+            }
+            else if (false)
+            {
+                // =======================
+                // NEW BUILDER (CTE FLAGS)
+                // =======================
+
+                // 1) convert complete condition with placeholders (wie bisher)
+                var pathAllExists = pathAllCondition.Copy();
+                var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                    .Replace("\r", "").Split("\n").First()
+                    .Split("SELECT ").Last();
+
+                var placeholderSQL = new string[pathConditions.Count];
+                var pathConditionsSQL = new string[pathConditions.Count];
+
+                // Für das Entfernen des placeholders pro Pfad brauchen wir den konkreten placeholder-String.
+                // Den baust du wie bisher über abs(<smIdVariable>) = 20{i}
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    // Wichtig: abs()-Mechanik bleibt 1:1
+                    pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
+                    placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
+                }
+
+                // convert complete condition with placeholders
+                var convertCondition = result.Where(pathAllExists);
+                var convertConditionSQL = convertCondition.ToQueryString();
+                var convertConditionWhere = ExtractWhereClause(convertConditionSQL);
+
+                // Wenn EF "SELECT ..." ohne WHERE liefert:
+                if (convertConditionWhere.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+                    convertConditionWhere = "";
+
+                // 2) Für jedes pathCondition: hole WHERE, entferne placeholder, erzeuge Flag-CTE
+                var withCtes = new StringBuilder();
+                var flags = new List<(string Name, string Col)>();   // (CTE name, flag column)
+                var wherePath = convertConditionWhere.Copy();
+
+                // 2.1) Base CTE aasSm (Struktur mit AASSets+SMSets bleibt)
+                withCtes.AppendLine("WITH");
+                withCtes.AppendLine("aasSm AS (");
+                if (isWithAASTable)
+                {
+                    withCtes.AppendLine("  SELECT");
+                    withCtes.AppendLine("    s0.Id AS SmId,");
+                    withCtes.AppendLine("    a.Id AS AasId,");
+                    withCtes.AppendLine("    s0.IdShort AS SmIdShort,");
+                    withCtes.AppendLine("    a.Identifier AS AasIdentifier");
+
+                    foreach (var smField in smFields.Where(f => f != "IdShort" && f != "Identifier"))
+                        withCtes.AppendLine($"  , s0.{smField} AS Sm{smField}");
+
+                    foreach (var aasField in aasFields.Where(f => f != "Identifier"))
+                        withCtes.AppendLine($"  , a.{aasField} AS Aas{aasField}");
+
+                    withCtes.AppendLine($"  FROM {selectAas} AS a");
+                    withCtes.AppendLine("  JOIN SMRefSets AS sx ON a.Id = sx.AASId");
+                    withCtes.AppendLine($"  JOIN {selectSm} AS s0 ON sx.Identifier = s0.Identifier");
+                }
+                else
+                {
+                    // Ohne AAS: aasSm ist nur SMSets
+                    withCtes.AppendLine("  SELECT");
+                    withCtes.AppendLine("    s0.Id AS SmId,");
+                    withCtes.AppendLine("    s0.IdShort AS SmIdShort,");
+                    withCtes.AppendLine("    s0.Identifier AS SmIdentifier");
+
+                    foreach (var smField in smFields.Where(f => f != "IdShort" && f != "Identifier"))
+                        withCtes.AppendLine($"  , s0.{smField} AS Sm{smField}");
+
+                    withCtes.AppendLine($"  FROM {selectSm} AS s0");
+                }
+                withCtes.AppendLine(")");
+
+                // 2.2) Path Flags bauen
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    var ii = i + 1;
+
+                    string pathWhere;
+
+                    if (isWithAASTable)
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        pathWhere = ExtractWhereClause(convertPathConditionSQL);
+                        // Alias normalisieren: EF kann "s1"/"v" verwenden
+                        pathWhere = pathWhere.Replace("\"s1\".", "\"sme\".").Replace("\"v\".", "\"v\".");
+                    }
+                    else
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        pathWhere = ExtractWhereClause(convertPathConditionSQL);
+                        pathWhere = pathWhere.Replace("\"s0\".", "\"sme\".").Replace("\"v\".", "\"v\".");
+                    }
+
+                    if (pathWhere.Contains('%'))
+                    {
+                        // pathWhere = pathWhere.Replace("\"sme\".\"IdShort\" = ", "\"sme\".\"IdShort\" LIKE ");
+                        // pathWhere = pathWhere.Replace("\"sme\".\"IdShortPath\" = ", "\"sme\".\"IdShortPath\" LIKE ");
+                        pathWhere = pathWhere.Replace("\"sme\".\"IdShort\" = ", "\"sme\".\"IdShort\" GLOB ");
+                        pathWhere = pathWhere.Replace("\"sme\".\"IdShortPath\" = ", "\"sme\".\"IdShortPath\" GLOB ");
+                        pathWhere = pathWhere.Replace(" LIKE ", " GLOB ");
+                        pathWhere = pathWhere.Replace("%", "*");
+                    }
+
+                    pathConditionsSQL[i] = pathWhere;
+
+                    // Entferne genau diesen placeholder (abs(smIdVariable)=20i) aus dem Pfad-WHERE
+                    var predicate = RemovePlaceholderCondition(pathWhere, placeholderSQL[i]);
+                    predicate = NormalizeForFlagPredicate(predicate, ii);
+                    if (string.IsNullOrWhiteSpace(predicate))
+                        predicate = "1=1";
+
+                    var cteName = $"flag_path{ii}";
+                    var flagCol = $"path{ii}";
+                    flags.Add((cteName, flagCol));
+
+                    withCtes.AppendLine(",");
+                    withCtes.AppendLine($"{cteName} AS (");
+                    withCtes.AppendLine($"  SELECT sme.SMId, 1 AS {flagCol}");
+
+                    // ValueSets-first oder SME-only
+                    if (PredicateUsesValueSets(predicate))
+                    {
+                        withCtes.AppendLine("  FROM ValueSets v");
+                        withCtes.AppendLine("  JOIN SMESets sme ON sme.Id = v.SMEId");
+                    }
+                    else
+                    {
+                        withCtes.AppendLine("  FROM SMESets sme");
+                    }
+
+                    withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                    withCtes.AppendLine($"  WHERE {predicate}");
+                    withCtes.AppendLine("  GROUP BY sme.SMId");
+                    withCtes.AppendLine(")");
+
+                    // Im großen wherePath placeholder -> CASE WHEN Flag
+                    wherePath = ReplaceAbsPlaceholderWithFlagCase(wherePath, placeholderSQL[i], cteName, flagCol);
+                }
+
+                // 3) Optional: verbleibende v.* Prädikate im großen wherePath als eigene Flags (ValueSets-first)
+                //    (z.B. OR-Fall mit v.NValue=4063151.0 ohne abs()-placeholder)
+
+                var extraPreds = ExtractQuotedValuePredicates(wherePath).Distinct().ToList();
+                int extraIdx = 1;
+
+                foreach (var pred in extraPreds)
+                {
+                    // pred z.B.:  "v"."NValue" = 4063151.0
+                    var normalizedPred = pred.Replace("\"v\".", "v.");  // für die CTE
+
+                    var cteName = $"flag_value_extra{extraIdx}";
+                    var col = $"value_extra{extraIdx}";
+                    flags.Add((cteName, col));
+
+                    withCtes.AppendLine(",");
+                    withCtes.AppendLine($"{cteName} AS (");
+                    withCtes.AppendLine($"  SELECT sme.SMId, 1 AS {col}");
+                    withCtes.AppendLine("  FROM ValueSets v");
+                    withCtes.AppendLine("  JOIN SMESets sme ON sme.Id = v.SMEId");
+                    withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                    withCtes.AppendLine($"  WHERE {normalizedPred}");
+                    withCtes.AppendLine("  GROUP BY sme.SMId");
+                    withCtes.AppendLine(")");
+
+                    // Replace in final WHERE (mit Quotes, exakt)
+                    wherePath = wherePath.Replace(
+                        pred,
+                        $"(CASE WHEN {cteName}.{col} = 1 THEN 1 ELSE 0 END) = 1"
+                    );
+
+                    extraIdx++;
+                }
+
+                wherePath = NormalizeForFinalWhere(wherePath, smFields, aasFields); // damit ExtractSimpleValuePredicates "v." sicher findet
+
+                var extraValuePreds = ExtractSimpleValuePredicates(wherePath).Distinct().ToList();
+                int extraValueIdx = 1;
+
+                foreach (var (orig, norm) in extraValuePreds)
+                {
+                    var cteName = $"flag_value_extra{extraValueIdx}";
+                    var flagCol = $"value_extra{extraValueIdx}";
+                    flags.Add((cteName, flagCol));
+
+                    withCtes.AppendLine(",");
+                    withCtes.AppendLine($"{cteName} AS (");
+                    withCtes.AppendLine($"  SELECT sme.SMId, 1 AS {flagCol}");
+                    withCtes.AppendLine("  FROM ValueSets v");
+                    withCtes.AppendLine("  JOIN SMESets sme ON sme.Id = v.SMEId");
+                    withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                    withCtes.AppendLine($"  WHERE {norm}");
+                    withCtes.AppendLine("  GROUP BY sme.SMId");
+                    withCtes.AppendLine(")");
+
+                    // Ersetze das direkte v.* Prädikat im wherePath durch CASE WHEN Flag
+                    wherePath = wherePath.Replace(
+                        norm,
+                        $"(CASE WHEN {cteName}.{flagCol} = 1 THEN 1 ELSE 0 END) = 1"
+                    );
+
+                    extraValueIdx++;
+                }
+
+                // 4) whereMatch-Replacements (wie bisher)
+                if (whereMatch.Count != 0)
+                {
+                    for (var i = 0; i < whereMatch.Count; i++)
+                    {
+                        wherePath = wherePath.Replace($"abs({smIdVariable}) = 10{i}", whereMatch[i]);
+                    }
+                }
+
+                // 5) Final SQL zusammensetzen
+                var sql = new StringBuilder();
+                sql.AppendLine(withCtes.ToString());
+                sql.AppendLine();
+
+                sql.AppendLine("SELECT DISTINCT");
+                if (resultType == ResultType.AssetAdministrationShell)
+                    sql.AppendLine("  a.AasId AS Id");
+                else
+                    sql.AppendLine("  a.SmId AS Id");
+
+                sql.AppendLine("FROM aasSm a");
+
+                foreach (var (name, _) in flags)
+                {
+                    sql.AppendLine($"LEFT JOIN {name} ON {name}.SMId = a.SmId");
+                }
+
+                // 6) Feld-Mappings (ersetzt dein altes "aasAll" Mapping)
+                foreach (var smField in smFields)
+                {
+                    // wenn im EF-SQL "t"."IdShort" etc. vorkommt, wurde in NormalizeEfAliases schon "a." gesetzt.
+                    // Wir mappen auf die von aasSm selektierten Spalten:
+                    wherePath = wherePath.Replace($"a.\"{smField}\"", $"a.Sm{smField}");
+                }
+                foreach (var aasField in aasFields)
+                {
+                    wherePath = wherePath.Replace($"a.\"{aasField}\"", $"a.Aas{aasField}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(wherePath))
+                {
+                    sql.AppendLine("WHERE " + wherePath);
+                }
+
+                rawBase = sql.ToString();
+                raw = rawBase;
+                rawBase = raw; // falls du rawBase später nochmal brauchst
+            }
+            else if (true)
+            {
+                // =======================
+                // NEW BUILDER (CTE FLAGS)
+                // =======================
+
+                // 1) convert complete condition with placeholders (wie bisher)
+                var pathAllExists = pathAllCondition.Copy();
+                var smIdVariable = result.Select(s => s.SMId).ToQueryString()
+                    .Replace("\r", "").Split("\n").First()
+                    .Split("SELECT ").Last();
+
+                var placeholderSQL = new string[pathConditions.Count];
+                var pathConditionsSQL = new string[pathConditions.Count];
+
+                // abs()-Mechanik bleibt 1:1
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    pathAllExists = pathAllExists.Replace($"$$path{i}$$", $"Math.Abs(SMId) == 20{i}");
+                    placeholderSQL[i] = $"abs({smIdVariable}) = 20{i}";
+                }
+
+                // convert complete condition with placeholders
+                var convertCondition = result.Where(pathAllExists);
+                var convertConditionSQL = convertCondition.ToQueryString();
+
+                // WICHTIG: letztes WHERE nehmen (EF hat WHERE auch in Subqueries)
+                var convertConditionWhere = ExtractWhereClause(convertConditionSQL);
+
+                if (convertConditionWhere.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+                    convertConditionWhere = "";
+
+                // 2) Für jedes pathCondition: hole WHERE, entferne placeholder, erzeuge Flag-CTE
+                var withCtes = new StringBuilder();
+                var flags = new List<(string Name, string Col)>();     // (CTE name, flag column)
+                var wherePath = convertConditionWhere.Copy();
+
+                // Für Match-CTEs: Predicate pro path{ii} merken
+                var flagPredicates = new Dictionary<int, string>();    // key: ii (1..N), value: normalized predicate
+                var matchSrcEmitted = new HashSet<int>();              // match_src_path{g} nur einmal
+
+                // 2.1) Base CTE aasSm (Struktur mit AASSets+SMSets bleibt)
+                withCtes.AppendLine("WITH");
+                withCtes.AppendLine("aasSm AS (");
+                if (isWithAASTable)
+                {
+                    withCtes.AppendLine("  SELECT");
+                    withCtes.AppendLine("    s0.Id AS SmId,");
+                    withCtes.AppendLine("    a.Id AS AasId,");
+                    withCtes.AppendLine("    s0.IdShort AS SmIdShort,");
+                    withCtes.AppendLine("    a.Identifier AS AasIdentifier");
+
+                    foreach (var smField in smFields.Where(f => f != "IdShort" && f != "Identifier"))
+                        withCtes.AppendLine($"  , s0.{smField} AS Sm{smField}");
+
+                    foreach (var aasField in aasFields.Where(f => f != "Identifier"))
+                        withCtes.AppendLine($"  , a.{aasField} AS Aas{aasField}");
+
+                    withCtes.AppendLine($"  FROM {selectAas} AS a");
+                    withCtes.AppendLine("  JOIN SMRefSets AS sx ON a.Id = sx.AASId");
+                    withCtes.AppendLine($"  JOIN {selectSm} AS s0 ON sx.Identifier = s0.Identifier");
+                }
+                else
+                {
+                    withCtes.AppendLine("  SELECT");
+                    withCtes.AppendLine("    s0.Id AS SmId,");
+                    withCtes.AppendLine("    s0.IdShort AS SmIdShort,");
+                    withCtes.AppendLine("    s0.Identifier AS SmIdentifier");
+
+                    foreach (var smField in smFields.Where(f => f != "IdShort" && f != "Identifier"))
+                        withCtes.AppendLine($"  , s0.{smField} AS Sm{smField}");
+
+                    withCtes.AppendLine($"  FROM {selectSm} AS s0");
+                }
+                withCtes.AppendLine(")");
+
+                // 2.2) Path Flags bauen
+                for (var i = 0; i < pathConditions.Count; i++)
+                {
+                    var ii = i + 1;
+                    string pathWhere;
+
+                    if (isWithAASTable)
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        pathWhere = ExtractWhereClause(convertPathConditionSQL);
+                        pathWhere = pathWhere.Replace("\"s1\".", "\"sme\".").Replace("\"v\".", "\"v\".");
+                    }
+                    else
+                    {
+                        var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        pathWhere = ExtractWhereClause(convertPathConditionSQL);
+                        pathWhere = pathWhere.Replace("\"s0\".", "\"sme\".").Replace("\"v\".", "\"v\".");
+                    }
+
+                    // LIKE/% -> GLOB/* (dein Wunsch)
+                    if (pathWhere.Contains('%'))
+                    {
+                        pathWhere = pathWhere.Replace("\"sme\".\"IdShort\" = ", "\"sme\".\"IdShort\" GLOB ");
+                        pathWhere = pathWhere.Replace("\"sme\".\"IdShortPath\" = ", "\"sme\".\"IdShortPath\" GLOB ");
+                        pathWhere = pathWhere.Replace(" LIKE ", " GLOB ");
+                        pathWhere = pathWhere.Replace("%", "*");
+                    }
+
+                    pathConditionsSQL[i] = pathWhere;
+
+                    // placeholder entfernen
+                    var predicate = RemovePlaceholderCondition(pathWhere, placeholderSQL[i]);
+                    predicate = NormalizeForFlagPredicate(predicate, ii);
+                    if (string.IsNullOrWhiteSpace(predicate))
+                        predicate = "1=1";
+
+                    // predicate merken (für match_src_path{ii})
+                    flagPredicates[ii] = predicate;
+
+                    var cteName = $"flag_path{ii}";
+                    var flagCol = $"path{ii}";
+                    flags.Add((cteName, flagCol));
+
+                    withCtes.AppendLine(",");
+                    withCtes.AppendLine($"{cteName} AS (");
+                    withCtes.AppendLine($"  SELECT sme.SMId, 1 AS {flagCol}");
+
+                    if (PredicateUsesValueSets(predicate))
+                    {
+                        withCtes.AppendLine("  FROM ValueSets v");
+                        withCtes.AppendLine("  JOIN SMESets sme ON sme.Id = v.SMEId");
+                    }
+                    else
+                    {
+                        withCtes.AppendLine("  FROM SMESets sme");
+                    }
+
+                    withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                    withCtes.AppendLine($"  WHERE {predicate}");
+                    withCtes.AppendLine("  GROUP BY sme.SMId");
+                    withCtes.AppendLine(")");
+
+                    // placeholder -> Flag Case
+                    wherePath = ReplaceAbsPlaceholderWithFlagCase(wherePath, placeholderSQL[i], cteName, flagCol);
+                }
+
+                // 2.3) MATCH-CTEs bauen (falls vorhanden)
+                // matchSpecs kommt aus deinem oberen Block
+                if (withMatch && matchSpecs.Count > 0)
+                {
+                    foreach (var ms in matchSpecs)
+                    {
+                        // 2.3.1) match_src_path{g} für alle beteiligten Pfade erzeugen
+                        foreach (var g in ms.GlobalPathIndices)
+                        {
+                            if (!matchSrcEmitted.Add(g))
+                                continue;
+
+                            if (!flagPredicates.TryGetValue(g, out var pred))
+                                throw new InvalidOperationException($"Missing predicate for path{g}. Needed for match.");
+
+                            withCtes.AppendLine(",");
+                            withCtes.AppendLine($"match_src_path{g} AS (");
+                            withCtes.AppendLine("  SELECT DISTINCT sme.SMId, sme.IdShortPath");
+                            withCtes.AppendLine("  FROM ValueSets v");
+                            withCtes.AppendLine("  JOIN SMESets sme ON sme.Id = v.SMEId");
+                            withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                            withCtes.AppendLine($"  WHERE {pred}");
+                            withCtes.AppendLine(")");
+                        }
+
+                        // 2.3.2) flag_match{m} erzeugen
+                        var m = ms.MatchIndex;
+                        flags.Add(($"flag_match{m}", $"match{m}"));
+
+                        withCtes.AppendLine(",");
+                        withCtes.AppendLine($"flag_match{m} AS (");
+
+                        if (ms.Mode == "%")
+                        {
+                            // Join alle match_src_path auf SMId
+                            withCtes.AppendLine($"  SELECT p0.SMId, 1 AS match{m}");
+                            withCtes.AppendLine($"  FROM match_src_path{ms.GlobalPathIndices[0]} p0");
+
+                            for (int i = 1; i < ms.GlobalPathIndices.Length; i++)
+                            {
+                                withCtes.AppendLine($"  JOIN match_src_path{ms.GlobalPathIndices[i]} p{i} ON p{i}.SMId = p0.SMId");
+                            }
+
+                            // Segment-Vergleiche: zwischen p{p} und p{p+1}
+                            var whereParts = new StringBuilder();
+                            for (int s = 0; s < ms.Segments.Length - 1; s++)
+                            {
+                                var start = ms.Segments[s];
+                                var end = ms.Segments[s + 1];
+
+                                for (int p = 0; p < ms.GlobalPathIndices.Length - 1; p++)
+                                {
+                                    if (whereParts.Length > 0)
+                                        whereParts.Append(" AND ");
+
+                                    var left = SubstrBetween($"p{p}.IdShortPath", start, end);
+                                    var right = SubstrBetween($"p{p + 1}.IdShortPath", start, end);
+                                    whereParts.Append($"{left} = {right}");
+                                }
+                            }
+
+                            if (whereParts.Length > 0)
+                                withCtes.AppendLine("  WHERE " + whereParts);
+
+                            withCtes.AppendLine("  GROUP BY p0.SMId");
+                        }
+                        else if (ms.Mode == "[]")
+                        {
+                            // Join alle match_src_path auf SMId
+                            withCtes.AppendLine($"  SELECT p0.SMId, 1 AS match{m}");
+                            withCtes.AppendLine($"  FROM match_src_path{ms.GlobalPathIndices[0]} p0");
+
+                            for (int i = 1; i < ms.GlobalPathIndices.Length; i++)
+                            {
+                                withCtes.AppendLine($"  JOIN match_src_path{ms.GlobalPathIndices[i]} p{i} ON p{i}.SMId = p0.SMId");
+                            }
+
+                            var whereParts = new StringBuilder();
+
+                            // Vergleiche nach sortierter order-Liste
+                            for (int i = 0; i < ms.Order.Length - 1; i++)
+                            {
+                                var firstIdx = ms.Order[i];
+                                var secondIdx = ms.Order[i + 1];
+
+                                var c = ms.Counts[firstIdx];
+
+                                var firstSplit = ms.IdShortPathRaw[firstIdx].Split(new[] { "[]" }, StringSplitOptions.None);
+                                var secondSplit = ms.IdShortPathRaw[secondIdx].Split(new[] { "[]" }, StringSplitOptions.None);
+
+                                var firstStart = firstSplit[c - 1];
+                                var firstEnd = firstSplit[c];
+                                var secondStart = secondSplit[c - 1];
+                                var secondEnd = secondSplit[c];
+
+                                if (whereParts.Length > 0)
+                                    whereParts.Append(" AND ");
+
+                                var left = SubstrBetween($"p{firstIdx}.IdShortPath", firstStart, firstEnd);
+                                var right = SubstrBetween($"p{secondIdx}.IdShortPath", secondStart, secondEnd);
+                                whereParts.Append($"{left} = {right}");
+                            }
+
+                            if (whereParts.Length > 0)
+                                withCtes.AppendLine("  WHERE " + whereParts);
+
+                            withCtes.AppendLine("  GROUP BY p0.SMId");
+                        }
+                        else
+                        {
+                            // Fallback (sollte praktisch nie)
+                            withCtes.AppendLine($"  SELECT a.SmId AS SMId, 1 AS match{m}");
+                            withCtes.AppendLine("  FROM aasSm a");
+                            withCtes.AppendLine("  GROUP BY a.SmId");
+                        }
+
+                        withCtes.AppendLine(")");
+                    }
+                }
+
+                // 3) Verbleibende "v".* Prädikate im großen wherePath als eigene Flags (ValueSets-first)
+                //    WICHTIG: Das muss VOR NormalizeForFinalWhere passieren.
+                var extraPreds = ExtractQuotedValuePredicates(wherePath).Distinct().ToList();
+                int extraIdx = 1;
+
+                foreach (var pred in extraPreds)
+                {
+                    var normalizedPred = pred.Replace("\"v\".", "v.");
+
+                    var cteName = $"flag_value_extra{extraIdx}";
+                    var col = $"value_extra{extraIdx}";
+                    flags.Add((cteName, col));
+
+                    withCtes.AppendLine(",");
+                    withCtes.AppendLine($"{cteName} AS (");
+                    withCtes.AppendLine($"  SELECT sme.SMId, 1 AS {col}");
+                    withCtes.AppendLine("  FROM ValueSets v");
+                    withCtes.AppendLine("  JOIN SMESets sme ON sme.Id = v.SMEId");
+                    withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                    withCtes.AppendLine($"  WHERE {normalizedPred}");
+                    withCtes.AppendLine("  GROUP BY sme.SMId");
+                    withCtes.AppendLine(")");
+
+                    wherePath = wherePath.Replace(
+                        pred,
+                        $"(CASE WHEN {cteName}.{col} = 1 THEN 1 ELSE 0 END) = 1"
+                    );
+
+                    extraIdx++;
+                }
+
+                var extraSmePreds = ExtractQuotedSmePredicates(wherePath).Distinct().ToList();
+                int extraSmeIdx = 1;
+
+                foreach (var pred in extraSmePreds)
+                {
+                    // Normalisieren: "s0"/"s1" -> sme, Quotes entfernen nur für Alias
+                    var normalizedPred = pred
+                        .Replace("\"s0\".", "sme.")
+                        .Replace("\"s1\".", "sme.");
+
+                    // LIKE/% -> optional GLOB/* wie bei dir
+                    if (normalizedPred.Contains('%'))
+                    {
+                        normalizedPred = normalizedPred
+                            .Replace(" LIKE ", " GLOB ")
+                            .Replace("%", "*");
+                    }
+
+                    var cteName = $"flag_sme_extra{extraSmeIdx}";
+                    var col = $"sme_extra{extraSmeIdx}";
+                    flags.Add((cteName, col));
+
+                    withCtes.AppendLine(",");
+                    withCtes.AppendLine($"{cteName} AS (");
+                    withCtes.AppendLine($"  SELECT sme.SMId, 1 AS {col}");
+                    withCtes.AppendLine("  FROM SMESets sme");
+                    withCtes.AppendLine("  JOIN aasSm a ON a.SmId = sme.SMId");
+                    withCtes.AppendLine($"  WHERE {normalizedPred}");
+                    withCtes.AppendLine("  GROUP BY sme.SMId");
+                    withCtes.AppendLine(")");
+
+                    // Ersetze im final WHERE
+                    wherePath = wherePath.Replace(
+                        pred,
+                        $"(CASE WHEN {cteName}.{col} = 1 THEN 1 ELSE 0 END) = 1"
+                    );
+
+                    extraSmeIdx++;
+                }
+
+                // 4) whereMatch-Replacements (wie bisher) – abs()-Platzhalter bleiben!
+                if (whereMatch.Count != 0)
+                {
+                    for (var i = 0; i < whereMatch.Count; i++)
+                    {
+                        wherePath = wherePath.Replace($"abs({smIdVariable}) = 10{i}", whereMatch[i]);
+                    }
+                }
+
+                // 5) Final WHERE normalisieren (AAS vs SM, abs(...) mapping etc.)
+                wherePath = NormalizeForFinalWhere(wherePath, smFields, aasFields);
+
+                // 6) Final SQL zusammensetzen
+                var sql = new StringBuilder();
+                sql.AppendLine(withCtes.ToString());
+                sql.AppendLine();
+
+                sql.AppendLine("SELECT DISTINCT");
+                if (resultType == ResultType.AssetAdministrationShell)
+                    sql.AppendLine("  a.AasId AS Id");
+                else
+                    sql.AppendLine("  a.SmId AS Id");
+
+                sql.AppendLine("FROM aasSm a");
+
+                foreach (var (name, _) in flags)
+                {
+                    sql.AppendLine($"LEFT JOIN {name} ON {name}.SMId = a.SmId");
+                }
+
+                // KEIN zusätzliches "smFields/aasFields" Mapping mehr hier!
+                // NormalizeForFinalWhere macht das alias-sensitiv korrekt.
+
+                if (!string.IsNullOrWhiteSpace(wherePath))
+                {
+                    sql.AppendLine("WHERE " + wherePath);
+                }
+
+                rawBase = sql.ToString();
+                raw = rawBase;
+                rawBase = raw;
             }
         }
         else
