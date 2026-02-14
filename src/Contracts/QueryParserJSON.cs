@@ -451,6 +451,20 @@ public class QueryGrammarJSON : Grammar
                                     if (par[i] != null && par[i] != "$SKIP")
                                     {
                                         count++;
+                                        if (type == "$or")
+                                        {
+                                            if (par[i] == "True")
+                                            {
+                                                return "True";
+                                            }
+                                        }
+                                        if (type == "$and")
+                                        {
+                                            if (par[i] == "False")
+                                            {
+                                                return "False";
+                                            }
+                                        }
                                         if (result == "")
                                         {
                                             result = par[i];
