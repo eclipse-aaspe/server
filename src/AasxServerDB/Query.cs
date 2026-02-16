@@ -4134,23 +4134,26 @@ public partial class Query
                                 }
                                 while (!split2[j].EndsWith(')'));
                             }
+                            v = v.Replace("(", "").Replace(")", "");
                             var vReplace = v;
-                            v = v.Replace("(", "").Replace(")", "").Replace($"\"v\".", "");
+                            v = v.Replace($"\"v\".", "");
 
-                            rawBase += "LEFT JOIN (\r\n";
+                            rawBase += "LEFT JOIN(\r\n";
                             rawBase += "SELECT sme.SMId\r\n";
                             rawBase += "FROM ValueSets v\r\n";
                             rawBase += $"LEFT JOIN SMESets sme ON sme.Id = v.SMEId AND sme.{s}\r\n";
                             rawBase += $"WHERE \"v\".{v}\r\n";
                             rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
 
-                            convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s} AND {vReplace}", $"(sme{ii}.SMId IS NOT NULL))");
+                            convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s} AND {vReplace}", $"(sme{ii}.SMId IS NOT NULL)");
+
+                            pathPrefix.Add($"sme{ii}");
 
                             ii++;
                         }
                         else
                         {
-                            rawBase += "LEFT JOIN (\r\n";
+                            rawBase += "LEFT JOIN(\r\n";
                             rawBase += "SELECT sme.SMId\r\n";
                             rawBase += "FROM SMESets sme\r\n";
                             rawBase += "LEFT JOIN ValueSets v ON sme.Id = v.SMEId\r\n";
@@ -4159,10 +4162,10 @@ public partial class Query
 
                             convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s}", $"(sme{ii}.SMId IS NOT NULL)");
 
+                            pathPrefix.Add($"sme{ii}");
+
                             ii++;
                         }
-
-                        pathPrefix.Add($"sme{ii}");
                     }
                 }
             }
