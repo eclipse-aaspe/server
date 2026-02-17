@@ -30,6 +30,8 @@ using Extensions;
 using Irony.Parsing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using static System.Net.Mime.MediaTypeNames;
@@ -4174,6 +4176,7 @@ public partial class Query
             {
                 var ii = 1;
                 var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".");
+
                 for (var i = 0; i < split1.Length; i++)
                 {
                     var s1 = split1[i];
@@ -4221,11 +4224,7 @@ public partial class Query
 
             var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
 
-            if (false && splitConvertConditionSQL.Count == 1)
-            {
-                rawBase += "WHERE " + convertConditionSQL + "\r\n";
-            }
-            else
+            if (false)
             {
                 // rawBase = rawBase.Replace("SELECT DISTINCT ", "SELECT ");
                 var smBase = "SELECT DISTINCT t.Id\r\n" + $"FROM {selectSm} AS t\r\n";
@@ -4312,6 +4311,7 @@ public partial class Query
                 rawBase = rawBaseTopLevel;
 
                 // add dummy query, so that optimizer will create covering index
+                /*
                 rawBase += @"
                 UNION
                 SELECT DISTINCT t.Id
@@ -4328,6 +4328,122 @@ public partial class Query
                 ) AS value1 ON value1.SMId = t.Id
                 WHERE(""t"".""IdShort"" = 'dummy' AND(value1.SMId IS NOT NULL))
                 ";
+                */
+            }
+            if (true)
+            {
+                raw += "DROP TABLE IF EXISTS union_ids;\r\n";
+                raw += "CREATE TEMP TABLE union_ids (\r\n";
+                raw += "Id INTEGER PRIMARY KEY\r\n";
+                raw += ") WITHOUT ROWID;\r\n";
+                raw += "\r\n";
+
+                var smBase = "SELECT DISTINCT t.Id\r\n" + $"FROM {selectSm} AS t\r\n";
+
+                var splitLeftJoin = rawBase.Split("LEFT JOIN(\r\n");
+
+                var rawBaseTopLevel = "";
+                for (var s = 0; s < splitConvertConditionSQL.Count; s++)
+                {
+                    var rawBaseUnionStart = splitLeftJoin[0];
+                    if (!splitConvertConditionSQL[s].Contains($"\"{aasPrefix}\"."))
+                    {
+                        rawBaseUnionStart = smBase;
+                    }
+                    var rawBaseUnion = "";
+
+                    var substrList = "";
+                    for (var i = 1; i < splitLeftJoin.Length; i++)
+                    {
+                        if (splitConvertConditionSQL[s].Contains($"({pathPrefix[i - 1]}.SMId IS NOT NULL)"))
+                        {
+                            rawBaseUnion += "LEFT JOIN(\r\n";
+                            if (!splitLeftJoin[i].Contains("substr(sme.IdShortPath, "))
+                            {
+                                rawBaseUnion += splitLeftJoin[i];
+                            }
+                            else
+                            {
+                                var posSubstr = splitLeftJoin[i].IndexOf("substr(sme.IdShortPath, ");
+                                var posFrom = splitLeftJoin[i].IndexOf("FROM SMESets sme");
+                                rawBaseUnion += "SELECT sme.SMId AS SMId, sme.IdShortPath AS IdShortPath\r\n";
+                                rawBaseUnion += splitLeftJoin[i].Substring(posFrom);
+                                var substr = splitLeftJoin[i].Substring(posSubstr, posFrom - posSubstr);
+                                substr = substr.Replace("sme.IdShortPath,", $"{pathPrefix[i - 1]}.IdShortPath,");
+                                if (substrList != "")
+                                {
+                                    substrList += ",";
+                                }
+                                substrList += substr;
+                            }
+                        }
+                    }
+                    if (substrList != "")
+                    {
+                        var partList = "";
+                        while (splitConvertConditionSQL[s].Contains(" AND Part"))
+                        {
+                            var part = splitConvertConditionSQL[s].Split(" AND Part")[1];
+                            var index = part.IndexOf(')');
+                            part = "Part" + part.Substring(0, index);
+                            if (partList == "")
+                            {
+                                partList = part;
+                            }
+                            else
+                            {
+                                partList += " AND part";
+                            }
+                            splitConvertConditionSQL[s] = splitConvertConditionSQL[s].Replace(" AND " + part, "");
+                        }
+
+                        rawBaseUnionStart = rawBaseUnionStart.Replace("SELECT DISTINCT t.Id\r\n", "");
+                        rawBaseUnionStart = "SELECT DISTINCT tt.Id\r\n" + "FROM (\r\n" + "SELECT t.Id,\r\n" + substrList + rawBaseUnionStart;
+
+                        partList = partList.Replace("Part", "tt.Part");
+                        rawBaseTopLevel += rawBaseUnionStart + rawBaseUnion
+                            + "WHERE " + splitConvertConditionSQL[s] + "\r\n"
+                            + ") AS tt\r\n" + $"WHERE ({partList})\r\n";
+                    }
+                    else
+                    {
+                        rawBaseTopLevel += rawBaseUnionStart + rawBaseUnion + "WHERE " + splitConvertConditionSQL[s] + "\r\n";
+                    }
+                    if (s < splitConvertConditionSQL.Count - 1)
+                    {
+                        // rawBaseTopLevel += "\r\nUNION\r\n\r\n";
+                    }
+                    // rawBaseTopLevel = rawBaseTopLevel.Replace("SELECT DISTINCT t.Id", "SELECT t.Id");
+                    raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
+                    rawBaseTopLevel = "";
+                }
+
+                rawBase = raw;
+
+                raw = rawBase;
+                if (raw.Contains(" LIKE "))
+                {
+                    raw = raw.Replace(" LIKE ", " GLOB ");
+                    raw = raw.Replace("%", "*");
+                }
+
+                using var tx = db.Database.BeginTransaction();
+
+                db.Database.ExecuteSqlRaw(raw);
+
+                var page = db.Set<SMSetIdResult>()
+                    .FromSqlRaw(@"
+                        SELECT Id
+                        FROM union_ids
+                        ORDER BY Id
+                        LIMIT {0} OFFSET {1}", pageSize, pageFrom)
+                    .AsNoTracking()
+                    .Select(x => x.Id)
+                    .ToList();
+
+                tx.Commit();
+
+                return page;
             }
         }
 
