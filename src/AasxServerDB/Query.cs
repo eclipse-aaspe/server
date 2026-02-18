@@ -3314,7 +3314,7 @@ public partial class Query
                 for (var s = 0; s < splitConvertConditionSQL.Count; s++)
                 {
                     var rawBaseUnionStart = splitLeftJoin[0];
-                    if (!splitConvertConditionSQL[s].Contains($"\"{aasPrefix}\"."))
+                    if (false && !splitConvertConditionSQL[s].Contains($"\"{aasPrefix}\"."))
                     {
                         rawBaseUnionStart = smBase;
                     }
@@ -3365,13 +3365,19 @@ public partial class Query
                             splitConvertConditionSQL[s] = splitConvertConditionSQL[s].Replace(" AND " + part, "");
                         }
 
+                        var select = "t.Id";
+                        if (rawBaseUnionStart.Contains("SELECT DISTINCT a.Id\r\n"))
+                        {
+                            select = "a.Id";
+                        }
                         rawBaseUnionStart = rawBaseUnionStart.Replace("SELECT DISTINCT t.Id\r\n", "");
-                        rawBaseUnionStart = "SELECT DISTINCT tt.Id\r\n" + "FROM (\r\n" + "SELECT t.Id,\r\n" + substrList + rawBaseUnionStart;
+                        rawBaseUnionStart = rawBaseUnionStart.Replace("SELECT DISTINCT a.Id\r\n", "");
+                        rawBaseUnionStart = "SELECT DISTINCT q.Id\r\n" + "FROM (\r\n" + $"SELECT {select},\r\n" + substrList + rawBaseUnionStart;
 
-                        partList = partList.Replace("Part", "tt.Part");
+                        partList = partList.Replace("Part", "q.Part");
                         rawBaseTopLevel += rawBaseUnionStart + rawBaseUnion
                             + "WHERE " + splitConvertConditionSQL[s] + "\r\n"
-                            + ") AS tt\r\n" + $"WHERE ({partList})\r\n";
+                            + ") AS q\r\n" + $"WHERE ({partList})\r\n";
                     }
                     else
                     {
