@@ -2552,7 +2552,7 @@ public partial class Query
         return resultSMId.Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
     }
 
-    private static List<int> CombineTablesLEFT(
+    private static List<int> CombineTablesLEFT1(
         AasContext db,
         Dictionary<string, string>? conditionsExpression,
         int pageFrom,
@@ -3347,6 +3347,874 @@ public partial class Query
                         }
                     }
                     if (substrList != "")
+                    {
+                        var partList = "";
+                        while (splitConvertConditionSQL[s].Contains(" AND Part"))
+                        {
+                            var part = splitConvertConditionSQL[s].Split(" AND Part")[1];
+                            var index = part.IndexOf(')');
+                            part = "Part" + part.Substring(0, index);
+                            if (partList == "")
+                            {
+                                partList = part;
+                            }
+                            else
+                            {
+                                partList += " AND part";
+                            }
+                            splitConvertConditionSQL[s] = splitConvertConditionSQL[s].Replace(" AND " + part, "");
+                        }
+
+                        var select = "t.Id";
+                        if (rawBaseUnionStart.Contains("SELECT DISTINCT a.Id\r\n"))
+                        {
+                            select = "a.Id";
+                        }
+                        rawBaseUnionStart = rawBaseUnionStart.Replace("SELECT DISTINCT t.Id\r\n", "");
+                        rawBaseUnionStart = rawBaseUnionStart.Replace("SELECT DISTINCT a.Id\r\n", "");
+                        rawBaseUnionStart = "SELECT DISTINCT q.Id\r\n" + "FROM (\r\n" + $"SELECT {select},\r\n" + substrList + rawBaseUnionStart;
+
+                        partList = partList.Replace("Part", "q.Part");
+                        rawBaseTopLevel += rawBaseUnionStart + rawBaseUnion
+                            + "WHERE " + splitConvertConditionSQL[s] + "\r\n"
+                            + ") AS q\r\n" + $"WHERE ({partList})\r\n";
+                    }
+                    else
+                    {
+                        rawBaseTopLevel += rawBaseUnionStart + rawBaseUnion + "WHERE " + splitConvertConditionSQL[s] + "\r\n";
+                    }
+                    if (s < splitConvertConditionSQL.Count - 1)
+                    {
+                        // rawBaseTopLevel += "\r\nUNION\r\n\r\n";
+                    }
+                    // rawBaseTopLevel = rawBaseTopLevel.Replace("SELECT DISTINCT t.Id", "SELECT t.Id");
+                    raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
+                    rawBaseTopLevel = "";
+                }
+
+                rawBase = raw;
+
+                raw = rawBase;
+                if (raw.Contains(" LIKE "))
+                {
+                    raw = raw.Replace(" LIKE ", " GLOB ");
+                    raw = raw.Replace("%", "*");
+                }
+
+                using var tx = db.Database.BeginTransaction();
+
+                db.Database.ExecuteSqlRaw(raw);
+
+                var page = db.Set<SMSetIdResult>()
+                    .FromSqlRaw(@"
+                        SELECT Id
+                        FROM union_ids
+                        ORDER BY Id
+                        LIMIT {0} OFFSET {1}", pageSize, pageFrom)
+                    .AsNoTracking()
+                    .Select(x => x.Id)
+                    .ToList();
+
+                tx.Commit();
+
+                return page;
+            }
+        }
+
+        raw = rawBase;
+        if (raw.Contains(" LIKE "))
+        {
+            raw = raw.Replace(" LIKE ", " GLOB ");
+            raw = raw.Replace("%", "*");
+        }
+
+        var qpRaw = GetQueryPlan(db, raw);
+
+        IQueryable<SMSetIdResult> resultSMId = null;
+        resultSMId = db.Set<SMSetIdResult>()
+               .FromSqlRaw(raw)
+               .AsQueryable();
+
+        var smRawSQL = resultSMId.ToQueryString();
+        var qp = GetQueryPlan(db, smRawSQL);
+
+        return resultSMId.Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
+    }
+
+    private static List<int> CombineTablesLEFT(
+        AasContext db,
+        Dictionary<string, string>? conditionsExpression,
+        int pageFrom,
+        int pageSize,
+        ResultType resultType,
+        bool consolidate
+        )
+    {
+        IQueryable<AASSet>? aasTable = null;
+        IQueryable<SMSet>? smTable = null;
+        IQueryable<SMESet>? smeTable = null;
+        IQueryable<ValueSet>? valueTable = null;
+
+        var restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value.ToLower() != "true";
+        var restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value.ToLower() != "true";
+        var restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value.ToLower() != "true";
+        var restrictValue = conditionsExpression.TryGetValue("value", out value) && value != "" && value.ToLower() != "true";
+
+        var aasFields = new List<string>();
+        var smFields = new List<string>();
+        var smeFields = new List<string>();
+
+        if (conditionsExpression.TryGetValue("all", out value) && value != "" && value.ToLower() != "true")
+        {
+            aasFields = GetFields("aas.", value);
+            smFields = GetFields("sm.", value);
+            smeFields = GetFields("sme.", value);
+        }
+
+        var withPathSme = false;
+        var withMatch = false;
+        var withRecursive = false;
+        var pathSME = "";
+        var pathAllCondition = "";
+        var pathAllConditionRaw = "";
+
+        var aasExistInCondition = conditionsExpression.TryGetValue("all", out value) && value.Contains("aas.");
+
+        bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
+
+        if (conditionsExpression.TryGetValue("path-sme", out pathSME))
+        {
+            withPathSme = true;
+            if (!conditionsExpression.TryGetValue("path-all", out pathAllCondition))
+            {
+                withPathSme = false;
+            }
+            else
+            {
+                withRecursive = pathAllCondition.Contains("sme.") || pathAllCondition.Contains("svalue")
+                    || pathAllCondition.Contains("mvalue") || pathAllCondition.Contains("dtvalue");
+            }
+            if (conditionsExpression.TryGetValue("path-raw", out pathAllConditionRaw))
+            {
+                if (pathAllConditionRaw.Contains("$$match"))
+                {
+                    withMatch = true;
+                }
+            }
+        }
+
+        if (!conditionsExpression.TryGetValue("path-raw", out var pathAllAas))
+        {
+            pathAllAas = "";
+        }
+        List<string> pathConditions = [];
+
+        var selectMatch = "";
+        List<string> whereMatch = [];
+        List<string> conditionMatch = [];
+        if (withMatch)
+        {
+            var splitMatch = pathAllConditionRaw.Split("$$match$$");
+            var matchCount = 0;
+            var matchOffset = 0;
+            pathAllCondition = "";
+            List<string> matchPathList = [];
+            for (var iMatch = 0; iMatch < splitMatch.Count(); iMatch++)
+            {
+                var match = splitMatch[iMatch];
+
+                if (!match.Contains("$$$$tag$$path$$"))
+                {
+                    pathAllCondition += match;
+                }
+                else
+                {
+                    pathAllCondition += $"Math.Abs(SmId) == 10{matchCount}";
+                    matchCount++;
+                    if (selectMatch != "")
+                    {
+                        selectMatch += ",";
+                    }
+
+                    List<int> order = [];
+                    List<int> count = [];
+                    List<string> idShortPath = [];
+                    List<string> idShortPathLast = [];
+                    List<string> idShort = [];
+                    List<string> field = [];
+                    var split = match.Split("$$tag$$path$$");
+                    var with = "";
+                    for (var i = 1; i < split.Length; i++)
+                    {
+                        var firstTag = split[i];
+                        var split2 = firstTag.Split("$$");
+                        order.Add(i - 1);
+                        idShortPath.Add(split2[0]);
+                        with = "";
+                        if (split2[0].Contains("[]"))
+                        {
+                            with = "[]";
+                        }
+                        if (split2[0].Contains("%"))
+                        {
+                            with = "%";
+                        }
+                        idShortPathLast.Add(split2[0].Split(with).Last());
+                        count.Add(split2[0].Count(c => c == (with == "[]" ? '[' : '%')));
+                        idShort.Add(split2[0].Split(".").Last());
+
+                        var c = split2[1] + split2[2];
+                        var v = db.ValueSets.Where(c).ToQueryString();
+                        var sql = v.Split("WHERE ").Last();
+                        field.Add(sql);
+                    }
+                    order = order.OrderBy(x => count[x]).ToList();
+
+                    with = "";
+                    var where = "";
+                    if (idShortPath[0].Contains("[]"))
+                    {
+                        with = "[]";
+                        var selectSegment = "";
+                        for (var i = 0; i < order.Count - 1; i++)
+                        {
+                            var firstSplit = idShortPath[order[i]].Split("[]").ToList();
+                            var secondSplit = idShortPath[order[i + 1]].Split("[]").ToList();
+                            var c = count[order[i]];
+                            var firstStartSegment = firstSplit[c - 1];
+                            var firstEndSegment = firstSplit[c];
+                            var firstIndex = $"Part{matchCount}_{i + 1}_1";
+                            selectSegment += $"substr(smePath{order[i] + 1}.IdShortPath, instr(smePath{order[i] + 1}.IdShortPath, '{firstStartSegment}') + length('{firstStartSegment}'),\r\n" +
+                               $"instr(smePath{order[i] + 1}.IdShortPath, '{firstEndSegment}') - (instr(smePath{order[i] + 1}.IdShortPath, '{firstStartSegment}') + length('{firstStartSegment}'))) AS {firstIndex},\r\n";
+                            var secondStartSegment = secondSplit[c - 1];
+                            var secondEndSegment = secondSplit[c];
+                            var secondIndex = $"Part{matchCount}_{i + 1}_2";
+                            selectSegment += $"substr(smePath{order[i + 1] + 1}.IdShortPath, instr(smePath{order[i + 1] + 1}.IdShortPath, '{secondStartSegment}') + length('{secondStartSegment}'),\r\n" +
+                               $"instr(smePath{order[i + 1] + 1}.IdShortPath, '{secondEndSegment}') - (instr(smePath{order[i + 1] + 1}.IdShortPath, '{secondStartSegment}') + length('{secondStartSegment}'))) AS {secondIndex}";
+                            if (where != "")
+                            {
+                                where += " AND ";
+                            }
+                            where += $"{firstIndex} = {secondIndex}";
+                            if (i != order.Count - 2)
+                            {
+                                selectSegment += ",\r\n";
+                            }
+                        }
+                        selectMatch += $"{selectSegment}\r\n";
+                        conditionMatch.Add(selectSegment.TrimEnd(','));
+                    }
+                    if (idShortPath[0].Contains('%'))
+                    {
+                        with = "%";
+                        var shortestPath = idShortPath[order[0]];
+                        var lastDotIndex = shortestPath.LastIndexOf('.');
+                        shortestPath = (lastDotIndex >= 0) ? shortestPath.Substring(0, lastDotIndex + 1) : shortestPath;
+                        var shortestPathSplit = shortestPath.Split(with).ToList();
+                        var segments = shortestPathSplit;
+
+                        for (var p = 0; p < idShortPath.Count; p++)
+                        {
+                            var selectSegment = "";
+                            for (var s = 0; s < segments.Count - 1; s++)
+                            {
+                                var startSegment = segments[s];
+                                var endSegment = segments[s + 1];
+                                var alias = $"Part{matchCount}_{p + 1}_{s + 1}";
+                                var sql = $"substr(smePath{p + 1}.IdShortPath, instr(smePath{p + 1}.IdShortPath, '{startSegment}') + length('{startSegment}'),\r\n" +
+                                   $"instr(smePath{p + 1}.IdShortPath, '{endSegment}') - (instr(smePath{p + 1}.IdShortPath, '{startSegment}') + length('{startSegment}'))) AS {alias}";
+                                selectSegment += sql;
+                                if (s != segments.Count - 2 || p != idShortPath.Count - 1)
+                                {
+                                    selectSegment += ",";
+                                }
+                            }
+                            selectMatch += $"{selectSegment}\r\n";
+                            conditionMatch.Add(selectSegment.TrimEnd(','));
+                        }
+                        for (var p = 0; p < idShortPath.Count - 1; p++)
+                        {
+                            for (var s = 0; s < segments.Count - 1; s++)
+                            {
+                                if (where != "")
+                                {
+                                    where += " AND ";
+                                }
+                                where += $"Part{matchCount}_{p + 1}_{s + 1} = Part{matchCount}_{p + 2}_{s + 1}";
+                            }
+                        }
+                    }
+                    for (var i = 0; i < order.Count; i++)
+                    {
+                        if (where != "")
+                        {
+                            where = " AND " + where;
+                        }
+                        where = $"path{matchOffset + order[i] + 1} = 1" + where;
+                    }
+                    whereMatch.Add($"({where})");
+                    matchOffset += idShortPath.Count;
+                }
+            }
+
+            pathAllAas = pathAllAas.Replace("$$match$$", "");
+        }
+
+        if (withPathSme)
+        {
+            var split = pathAllAas.Split("$$");
+            List<string> pathList = [];
+            List<string> fieldList = [];
+            List<string> opList = [];
+            var path = false;
+            var field = false;
+            var op = false;
+            foreach (var s in split)
+            {
+                if (op)
+                {
+                    opList.Add(s);
+                    op = false;
+                }
+                if (field)
+                {
+                    fieldList.Add(s);
+                    field = false;
+                    op = true;
+                }
+                if (path)
+                {
+                    pathList.Add(s);
+                    path = false;
+                    field = true;
+                }
+                if (s == "path")
+                {
+                    path = true;
+                }
+            }
+            var pathAll = pathAllCondition.Copy();
+            for (var i = 0; i < pathList.Count; i++)
+            {
+                var splitField = fieldList[i].Split("#");
+                var idShort = pathList[i].Split(".").Last();
+                var allCondition = $"sme.idShort == \"{idShort}\" && sme.idShortPath == \"{pathList[i]}\"";
+                if (splitField.Length > 1 && splitField[1] != "value")
+                {
+                    allCondition += $" && sme.{splitField[1]}{opList[i]}";
+                }
+                else
+                {
+                    allCondition = $"{allCondition} && {splitField[0]}{opList[i]}";
+                }
+                var replace = $"$$tag$$path$${pathList[i]}$${fieldList[i]}$${opList[i]}$$";
+                pathAllCondition = pathAllCondition.Replace(replace, $"$$path{i}$$");
+                pathConditions.Add(allCondition);
+            }
+        }
+
+        aasTable = db.AASSets;
+        aasTable = restrictAAS ? aasTable.Where(conditionsExpression["aas"]) : aasTable;
+
+        smTable = db.SMSets;
+        smTable = restrictSM ? smTable.Where(conditionsExpression["sm"]) : smTable;
+
+        smeTable = db.SMESets;
+        if (pathConditions.Count == 0)
+        {
+            smeTable = restrictSME ? smeTable.Where(conditionsExpression["sme"]) : smeTable;
+        }
+        valueTable = db.ValueSets;
+        if (pathConditions.Count == 0)
+        {
+            valueTable = restrictValue ? valueTable.Where(conditionsExpression["value"].Replace("DValue", "NValue")) : null;
+
+            if (valueTable == null
+                && restrictSME)
+            {
+                smeTable = null;
+            }
+        }
+
+        var conditionAll = "true";
+        if (!withMatch && conditionsExpression.TryGetValue("all-aas", out _))
+        {
+            conditionAll = conditionsExpression["all-aas"];
+        }
+        if (pathAllCondition == "")
+        {
+            pathAllCondition = conditionAll;
+        }
+
+        var rawAas = aasTable?.ToQueryString();
+        var whereAas = rawAas?.Split("WHERE ").Last();
+        var rawSm = smTable?.ToQueryString();
+        var whereSm = rawSm?.Split("WHERE ").Last();
+
+        IQueryable<joinAll>? convert = null;
+
+        convert = db.AASSets
+            .Join(db.SMRefSets,
+                aas => aas.Id,
+                r => r.AASId,
+                (aas, r) => new { aas, r })
+            .Join(db.SMSets,
+                x => x.r.Identifier,
+                sm => sm.Identifier,
+                (x, sm) => new { x.aas, sm })
+            .Join(db.SMESets,
+                x => x.sm.Id,
+                sme => sme.SMId,
+                (x, sme) => new { x.aas, x.sm, sme })
+            .Join(db.ValueSets,
+                x => x.sme.Id,
+                v => v.SMEId,
+                (x, v) => new joinAll
+                {
+                    aas = x.aas,
+                    sm = x.sm,
+                    SMId = x.sm.Id,
+                    AASId = x.aas.Id,
+                    sme = x.sme,
+                    svalue = v.SValue,
+                    mvalue = v.NValue,
+                    dtvalue = v.DTValue
+                });
+
+        var convertSQL = convert.ToQueryString();
+        var regex = new Regex("\"(?<table>[^\"]+)\"\\s+AS\\s+\"(?<sql>[^\"]+)\"", RegexOptions.IgnoreCase);
+        var convertMap = new Dictionary<string, string>();
+        foreach (Match match in regex.Matches(convertSQL))
+        {
+            var table = match.Groups["table"].Value;
+            var sql = match.Groups["sql"].Value;
+
+            convertMap[table] = sql;
+        }
+        var aasPrefix = convertMap["AASSets"];
+        var smPrefix = convertMap["SMSets"];
+        var smePrefix = convertMap["SMESets"];
+        var valuePrefix = convertMap["ValueSets"];
+
+        var raw = "";
+        var rawBase = "";
+        var pathPrefix = new List<string>();
+
+        var selectAas = "(\r\n  SELECT Id, Identifier";
+        foreach (var aasField in aasFields)
+        {
+            if (aasField != "Identifier")
+            {
+                selectAas += $", {aasField}";
+            }
+        }
+        selectAas += "\r\n  FROM AASSets\r\n";
+        if (whereAas != null && !whereAas.StartsWith("SELECT"))
+        {
+            var whereAas2 = whereAas.Replace("\"a\".", "");
+            selectAas += $"WHERE {whereAas2}\r\n";
+        }
+        selectAas += ")";
+
+        var selectSm = "(\r\n  SELECT Id, IdShort, Identifier";
+        foreach (var smField in smFields)
+        {
+            if (smField != "IdShort" && smField != "Identifier")
+            {
+                selectSm += $", {smField}";
+            }
+        }
+        selectSm += "\r\n  FROM SMSets\r\n";
+        if (whereSm != null && !whereSm.StartsWith("SELECT"))
+        {
+            var whereSm2 = whereSm.Replace("\"s\".", "");
+            whereSm2 = whereSm2.Replace("\"s0\".", "");
+
+            selectSm += $"WHERE {whereSm2}\r\n";
+        }
+        selectSm += ")";
+
+        rawBase = "SELECT DISTINCT ";
+
+        if (resultType == ResultType.AssetAdministrationShell)
+        {
+            rawBase += "a.Id\r\n";
+        }
+        else
+        {
+            rawBase += "t.Id\r\n";
+        }
+
+        if (isWithAASTable)
+        {
+            rawBase += $"FROM {selectAas} AS a\r\n";
+            rawBase += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\n";
+            rawBase += $"INNER JOIN {selectSm} AS t ON sx.Identifier = t.Identifier\r\n";
+        }
+        else
+        {
+            rawBase += $"FROM {selectSm} AS t\r\n";
+        }
+
+        // rawBase += "INNER JOIN \"SMESets\" AS \"s0\" ON \"t\".\"Id\" = \"s0\".\"SMId\"\r\n";
+        // rawBase += "INNER JOIN \"ValueSets\" AS \"v\" ON \"s0\".\"Id\" = \"v\".\"SMEId\"\r\n";
+
+        var placeholderSQL = new string[pathConditions.Count];
+        var pathAllExists = pathAllCondition.Copy();
+        //var smIdVariable = convert.Select(s => s.SMId).ToQueryString()
+        //    .Replace("\r", "").Split("\n").First()
+        //    .Split("SELECT ").Last();
+        var smIdVariable = $"\"{convertMap["SMSets"]}\".\"Id\"";
+
+        for (var i = 0; i < pathConditions.Count; i++)
+        {
+            var j = i;
+            var join = "";
+
+            if (i < conditionMatch.Count)
+            {
+                var pi = 0;
+
+                join += $"LEFT JOIN(\r\n";
+                join += $"SELECT Path1.SMId AS SMId\r\n";
+
+                while (pi < 2)
+                {
+                    var c = conditionMatch[i];
+                    c = c.Replace($"smePath{i + 1}", "sme");
+                    var split = c.Split(" AS ");
+                    c = split[0] + " AS Path";
+
+                    if (pi == 0)
+                    {
+                        join += "FROM (\r\n";
+                    }
+                    else
+                    {
+                        join += "JOIN (\r\n";
+                    }
+
+                    join += "SELECT sme.SMId AS SMId,\r\n";
+                    join += c;
+                    join += "\r\n";
+
+                    join += $"FROM SMESets sme\r\n";
+                    join += $"JOIN ValueSets v ON v.SMEId = sme.Id ";
+
+                    var where = "";
+
+                    var convertPathCondition = convert.Where(pathConditions[i]);
+                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                    where = convertPathConditionSQL.Split("WHERE ").Last();
+                    where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
+
+                    split = where.Split(" AND ");
+
+                    var valueSQL = split[split.Length - 1];
+
+                    join += $"AND {valueSQL}\r\n";
+                    join += $"WHERE {valueSQL} ";
+
+                    var smeSQLPath = split[split.Length - 2];
+                    smeSQLPath = smeSQLPath.Replace($"\"{smePrefix}\".", "sme.");
+                    if (smeSQLPath.Contains("[]"))
+                    {
+                        smeSQLPath = smeSQLPath.Replace("[]", "[%]");
+                    }
+                    if (smeSQLPath.Contains("%"))
+                    {
+                        // smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                        smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" GLOB ");
+                        smeSQLPath = smeSQLPath.Replace("%", "*");
+                    }
+
+                    var smeSQLIdShort = split[split.Length - 3];
+                    smeSQLIdShort = smeSQLIdShort.Replace($"\"{smePrefix}\".", "sme.");
+                    if (!smeSQLIdShort.Contains("[]") && !smeSQLIdShort.Contains("%"))
+                    {
+                        join += $"AND {smeSQLIdShort} ";
+                    }
+
+                    join += $"AND {smeSQLPath}\r\n";
+                    join += $") AS Path{pi + 1}\r\n";
+                    if (pi == 0)
+                    {
+                        i++;
+                    }
+                    pi++;
+                }
+                join += "ON Path1.SMId = Path2.SMId AND Path1.Path = Path2.Path\r\n";
+            }
+            else
+            {
+                join += $"LEFT JOIN(\r\n";
+                join += $"SELECT sme.SMId AS SMId";
+                join += "\r\n";
+                // join += $"FROM ValueSets AS v\r\n";
+                // join += $"JOIN SMESets AS sme ON sme.Id = v.SMEId\r\n";
+                join += $"FROM SMESets sme\r\n";
+                join += $"LEFT JOIN ValueSets v ON v.SMEId = sme.Id ";
+
+                var where = "";
+
+                if (isWithAASTable)
+                {
+                    var convertPathCondition = convert.Where(pathConditions[i]).Select(r => r.AASId);
+                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                    where = convertPathConditionSQL.Split("WHERE ").Last();
+                    where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
+                }
+                else
+                {
+                    var convertPathCondition = convert.Where(pathConditions[i]).Select(r => r.SMId);
+                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                    where = convertPathConditionSQL.Split("WHERE ").Last();
+                    where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
+                }
+
+                var split = where.Split(" AND ");
+
+                var valueSQL = split[split.Length - 1];
+
+                join += $"AND {valueSQL}\r\n";
+                join += $"WHERE {valueSQL} ";
+                // join += "WHERE True ";
+
+                var smeSQLPath = split[split.Length - 2];
+                smeSQLPath = smeSQLPath.Replace($"\"{smePrefix}\".", "sme.");
+                if (smeSQLPath.Contains("[]"))
+                {
+                    smeSQLPath = smeSQLPath.Replace("[]", "[%]");
+                }
+                if (smeSQLPath.Contains("%"))
+                {
+                    // smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" LIKE ");
+                    smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" GLOB ");
+                    smeSQLPath = smeSQLPath.Replace("%", "*");
+                }
+
+                var smeSQLIdShort = split[split.Length - 3];
+                smeSQLIdShort = smeSQLIdShort.Replace($"\"{smePrefix}\".", "sme.");
+                if (!smeSQLIdShort.Contains("[]") && !smeSQLIdShort.Contains("%"))
+                {
+                    join += $"AND {smeSQLIdShort} ";
+                }
+
+                join += $"AND {smeSQLPath}\r\n";
+            }
+
+            join += $") AS p{j + 1} ON p{j + 1}.SMId = t.Id\r\n";
+
+            pathPrefix.Add($"p{j + 1}");
+
+            pathAllExists = pathAllExists.Replace($"$$path{j}$$", $"Math.Abs(SMId) == 20{j}");
+            placeholderSQL[j] = $"abs({smIdVariable}) = 20{j}";
+
+            if (j < conditionMatch.Count)
+            {
+                whereMatch[j] = $"(p{j + 1}.SMId IS NOT NULL)";
+            }
+            // placeholderSQL[i] = $"(p{i + 1} IS NOT NULL)";
+
+            rawBase += join;
+        }
+
+        // convert complete condition with placeholders
+        var convertCondition = convert.Where(pathAllExists);
+        var convertConditionSQL = convertCondition.ToQueryString();
+        convertConditionSQL = convertConditionSQL.Split("WHERE ").Last();
+
+        if (!convertConditionSQL.StartsWith("SELECT"))
+        {
+            for (var i = 0; i < pathConditions.Count; i++)
+            {
+                if (placeholderSQL[i] != null)
+                {
+                    convertConditionSQL = convertConditionSQL.Copy().Replace(placeholderSQL[i], $"(p{i + 1}.SMId IS NOT NULL)");
+                }
+            }
+
+            if (whereMatch.Count != 0)
+            {
+                for (var i = 0; i < whereMatch.Count; i++)
+                {
+                    convertConditionSQL = convertConditionSQL.Replace($"abs({smIdVariable}) = 10{i}", whereMatch[i]);
+                }
+
+                for (var i = 0; i < conditionMatch.Count; i++)
+                {
+                    convertConditionSQL = convertConditionSQL.Replace($"path{i + 1} = 1", $"(p{i + 1}.SMId IS NOT NULL)");
+                }
+            }
+
+            convertConditionSQL = convertConditionSQL.Replace($"\"{smPrefix}\".", "\"t\".");
+
+            if (convertConditionSQL.Contains($"\"{smePrefix}\"."))
+            {
+                var ii = 1;
+                var split1 = convertConditionSQL.Split($"\"{smePrefix}\".");
+                foreach (var s1 in split1)
+                {
+                    var split2 = s1.Split(" ");
+
+                    if (smeFields.Contains($"{split2[0].Replace("\"", "")}"))
+                    {
+                        var s = split2[0] + " " + split2[1] + " " + split2[2];
+                        s = s.Replace(")", "");
+
+                        if (split2.Length >= 7 && split2[3] == "AND")
+                        {
+                            var v = split2[4] + " " + split2[5] + " " + split2[6];
+                            if (v.StartsWith('('))
+                            {
+                                var j = 6;
+                                do
+                                {
+                                    j++;
+                                    v += " " + split2[j];
+                                }
+                                while (!split2[j].EndsWith(')'));
+                            }
+                            v = v.Replace("(", "").Replace(")", "");
+                            var vReplace = v;
+                            v = v.Replace($"\"v\".", "");
+
+                            rawBase += "LEFT JOIN(\r\n";
+                            rawBase += "SELECT sme.SMId\r\n";
+                            rawBase += "FROM ValueSets v\r\n";
+                            rawBase += $"LEFT JOIN SMESets sme ON sme.Id = v.SMEId AND sme.{s}\r\n";
+                            rawBase += $"WHERE \"v\".{v}\r\n";
+                            rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
+
+                            convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s} AND {vReplace}", $"(sme{ii}.SMId IS NOT NULL)");
+
+                            pathPrefix.Add($"sme{ii}");
+
+                            ii++;
+                        }
+                        else
+                        {
+                            rawBase += "LEFT JOIN(\r\n";
+                            rawBase += "SELECT sme.SMId\r\n";
+                            rawBase += "FROM SMESets sme\r\n";
+                            rawBase += "LEFT JOIN ValueSets v ON sme.Id = v.SMEId\r\n";
+                            rawBase += $"WHERE \"sme\".{s}\r\n";
+                            rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
+
+                            convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s}", $"(sme{ii}.SMId IS NOT NULL)");
+
+                            pathPrefix.Add($"sme{ii}");
+
+                            ii++;
+                        }
+                    }
+                }
+            }
+
+            if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
+            {
+                var ii = 1;
+                var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".");
+
+                for (var i = 0; i < split1.Length; i++)
+                {
+                    var s1 = split1[i];
+                    var split2 = s1.Split(" ");
+                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\"" || split2[0] == "\"DTValue\"")
+                    {
+                        var v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                        var vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                        if (split2[0] == "\"DTValue\"")
+                        {
+                            v += " " + split2[3];
+                            vReplace += " " + split2[3];
+                        }
+                        v = v.Replace(")", "");
+                        vReplace = vReplace.Replace(")", "");
+
+                        if (split2.Length >= 4 && split2[4] == "AND")
+                        {
+                            var split3 = split1[i + 1].Split(')');
+                            v = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
+                            vReplace = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
+                            for (var j = 0; j < split3.Length - 1; j++)
+                            {
+                                v += split3[j] + ")";
+                                vReplace += split3[j] + ")";
+                            }
+                            i++;
+                        }
+
+                        rawBase += "LEFT JOIN(\r\n";
+                        rawBase += "SELECT sme.SMId\r\n";
+                        rawBase += "FROM ValueSets v\r\n";
+                        rawBase += "LEFT JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
+                        rawBase += $"WHERE {v}\r\n";
+                        rawBase += $") AS value{ii} ON value{ii}.SMId = t.Id\r\n";
+
+                        pathPrefix.Add($"value{ii}");
+
+                        convertConditionSQL = convertConditionSQL.Replace(vReplace, $"(value{ii}.SMId IS NOT NULL)");
+
+                        ii++;
+                    }
+                }
+            }
+
+            var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
+
+            if (true)
+            {
+                raw += "DROP TABLE IF EXISTS union_ids;\r\n";
+                raw += "CREATE TEMP TABLE union_ids (\r\n";
+                raw += "Id INTEGER PRIMARY KEY\r\n";
+                raw += ") WITHOUT ROWID;\r\n";
+                raw += "\r\n";
+
+                var smBase = "SELECT DISTINCT t.Id\r\n" + $"FROM {selectSm} AS t\r\n";
+
+                var splitLeftJoin = rawBase.Split("LEFT JOIN(\r\n");
+
+                var rawBaseTopLevel = "";
+                for (var s = 0; s < splitConvertConditionSQL.Count; s++)
+                {
+                    var rawBaseUnionStart = splitLeftJoin[0];
+                    if (false && !splitConvertConditionSQL[s].Contains($"\"{aasPrefix}\"."))
+                    {
+                        rawBaseUnionStart = smBase;
+                    }
+                    var rawBaseUnion = "";
+
+                    var substrList = "";
+                    for (var i = 1; i < splitLeftJoin.Length; i++)
+                    {
+                        if (splitConvertConditionSQL[s].Contains($"({pathPrefix[i - 1]}.SMId IS NOT NULL)"))
+                        {
+                            rawBaseUnion += "LEFT JOIN(\r\n" + splitLeftJoin[i];
+                            /*
+                            rawBaseUnion += "LEFT JOIN(\r\n";
+                            if (!splitLeftJoin[i].Contains("substr(sme.IdShortPath, "))
+                            {
+                                rawBaseUnion += splitLeftJoin[i];
+                            }
+                            else
+                            {
+                                var posSubstr = splitLeftJoin[i].IndexOf("substr(sme.IdShortPath, ");
+                                var posFrom = splitLeftJoin[i].IndexOf("FROM SMESets sme");
+                                rawBaseUnion += "SELECT sme.SMId AS SMId, sme.IdShortPath AS IdShortPath\r\n";
+                                rawBaseUnion += splitLeftJoin[i].Substring(posFrom);
+                                var substr = splitLeftJoin[i].Substring(posSubstr, posFrom - posSubstr);
+                                substr = substr.Replace("sme.IdShortPath,", $"{pathPrefix[i - 1]}.IdShortPath,");
+                                if (substrList != "")
+                                {
+                                    substrList += ",";
+                                }
+                                substrList += substr;
+                            }
+                            */
+                        }
+                    }
+                    if (false && substrList != "")
                     {
                         var partList = "";
                         while (splitConvertConditionSQL[s].Contains(" AND Part"))
