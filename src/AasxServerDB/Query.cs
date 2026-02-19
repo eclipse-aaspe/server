@@ -3298,7 +3298,7 @@ public partial class Query
                 ";
                 */
             }
-            if (true)
+            if (false)
             {
                 raw += "DROP TABLE IF EXISTS union_ids;\r\n";
                 raw += "CREATE TEMP TABLE union_ids (\r\n";
@@ -4161,10 +4161,10 @@ public partial class Query
                 }
             }
 
-            var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
-
-            if (true)
+            if (false)
             {
+                var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
+
                 raw += "DROP TABLE IF EXISTS union_ids;\r\n";
                 raw += "CREATE TEMP TABLE union_ids (\r\n";
                 raw += "Id INTEGER PRIMARY KEY\r\n";
@@ -4289,7 +4289,8 @@ public partial class Query
             }
         }
 
-        raw = rawBase;
+        raw = rawBase + $"WHERE {convertConditionSQL}\r\n";
+
         if (raw.Contains(" LIKE "))
         {
             raw = raw.Replace(" LIKE ", " GLOB ");
