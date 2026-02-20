@@ -3192,6 +3192,66 @@ public partial class Query
                     }
                 }
             }
+
+            if (true)
+            {
+                var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
+
+                raw += "DROP TABLE IF EXISTS union_ids;\r\n";
+                raw += "CREATE TEMP TABLE union_ids (\r\n";
+                raw += "Id INTEGER PRIMARY KEY\r\n";
+                raw += ") WITHOUT ROWID;\r\n";
+                raw += "\r\n";
+
+                var smBase = "SELECT DISTINCT t.Id\r\n" + $"FROM {selectSm} AS t\r\n";
+
+                var splitLeftJoin = rawBase.Split("LEFT JOIN(\r\n");
+
+                for (var s = 0; s < splitConvertConditionSQL.Count; s++)
+                {
+                    var rawBaseUnionStart = splitLeftJoin[0];
+
+                    var rawBaseUnion = "";
+                    for (var i = 1; i < splitLeftJoin.Length; i++)
+                    {
+                        if (splitConvertConditionSQL[s].Contains($"({pathPrefix[i - 1]}.SMId IS NOT NULL)"))
+                        {
+                            rawBaseUnion += "LEFT JOIN(\r\n";
+                            rawBaseUnion += splitLeftJoin[i];
+                        }
+                    }
+
+                    var rawBaseTopLevel = rawBaseUnionStart + rawBaseUnion + "WHERE " + splitConvertConditionSQL[s] + "\r\n";
+                    raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
+                }
+
+                rawBase = raw;
+
+                raw = rawBase;
+                if (raw.Contains(" LIKE "))
+                {
+                    raw = raw.Replace(" LIKE ", " GLOB ");
+                    raw = raw.Replace("%", "*");
+                }
+
+                using var tx = db.Database.BeginTransaction();
+
+                db.Database.ExecuteSqlRaw(raw);
+
+                var page = db.Set<SMSetIdResult>()
+                    .FromSqlRaw(@"
+                        SELECT Id
+                        FROM union_ids
+                        ORDER BY Id
+                        LIMIT {0} OFFSET {1}", pageSize, pageFrom)
+                    .AsNoTracking()
+                    .Select(x => x.Id)
+                    .ToList();
+
+                tx.Commit();
+
+                return page;
+            }
         }
 
         raw = rawBase + $"WHERE {convertConditionSQL}\r\n";
