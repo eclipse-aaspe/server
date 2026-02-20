@@ -3055,6 +3055,9 @@ public partial class Query
         var convertCondition = convert.Where(pathAllExists);
         var convertConditionSQL = convertCondition.ToQueryString();
         convertConditionSQL = convertConditionSQL.Split("WHERE ").Last();
+        convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"SValue\" IS NULL", "");
+        convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"NValue\" IS NULL", "");
+        convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"DTValue\" IS NULL", "");
 
         if (!convertConditionSQL.StartsWith("SELECT"))
         {
@@ -3146,9 +3149,33 @@ public partial class Query
             if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
             {
                 var ii = 1;
-                var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".");
+                var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
 
-                for (var i = 0; i < split1.Length; i++)
+                /* continue further optimization
+                var isValue = false;
+                List<string> combineSplit = [];
+                for (var i = 0; i < split1.Count; i++)
+                {
+                    if (split1[i].StartsWith("\"SValue\"") || split1[i].StartsWith("\"NValue\"") || split1[i].StartsWith("\"DTValue\""))
+                    {
+                        if (!isValue)
+                        {
+                            combineSplit.Add(split1[i]);
+                        }
+                        else
+                        {
+                            combineSplit[combineSplit.Count - 1] += split1[i];
+                        }
+                        isValue = true;
+                    }
+                    else
+                    {
+                        isValue = false;
+                    }
+                }
+                */
+
+                for (var i = 0; i < split1.Count; i++)
                 {
                     var s1 = split1[i];
                     var split2 = s1.Split(" ");
@@ -3202,8 +3229,6 @@ public partial class Query
                 raw += "Id INTEGER PRIMARY KEY\r\n";
                 raw += ") WITHOUT ROWID;\r\n";
                 raw += "\r\n";
-
-                var smBase = "SELECT DISTINCT t.Id\r\n" + $"FROM {selectSm} AS t\r\n";
 
                 var splitLeftJoin = rawBase.Split("LEFT JOIN(\r\n");
 
