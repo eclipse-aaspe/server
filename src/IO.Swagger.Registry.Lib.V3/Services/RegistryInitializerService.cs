@@ -291,6 +291,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                 if (getRegistryOfRegistry.Count != 0)
                 {
                     var requestPath = "";
+                    Console.WriteLine("GET RegistryOfRegistry");
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
                     foreach (var regOfReg in getRegistryOfRegistry)
                     {
                         requestPath = regOfReg;
@@ -350,7 +352,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                             var type = ep?["type"]?.GetValue<string>();
                                             if (string.Equals(type, "aas-registry", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                var url = ep?["url"]?.GetValue<string>();
+                                                var url = ep?["url"]?.GetValue<string>()?.Trim();
                                                 if (!string.IsNullOrWhiteSpace(url) &&
                                                     !getRegistry.Contains(url, StringComparer.OrdinalIgnoreCase))
                                                 {
@@ -369,6 +371,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                             error = true;
                         }
                     }
+                    watch.Stop();
+                    Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
                 }
 
                 if (getRegistry.Count != 0)
@@ -461,6 +465,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                     aasDescriptorsForSubmodelView = [];
                     foreach (var greg in getRegistry)
                     {
+                        Console.WriteLine("GET Registry");
+                        var watch = System.Diagnostics.Stopwatch.StartNew();
                         var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
                         string? json        = null;
                         string? accessToken = null;
@@ -570,6 +576,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                         {
                             error = true;
                         }
+                        Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
+                        watch.Stop();
 
                         if (error)
                         {
@@ -586,7 +594,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                     continue;
                                 }
 
-                                var watch = System.Diagnostics.Stopwatch.StartNew();
+                                var watch1 = System.Diagnostics.Stopwatch.StartNew();
 
                                 // check, if AAS is existing and must be replaced
                                 var extensions = new List<IExtension>();
@@ -850,8 +858,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                                     }
                                 }
 
-                                watch.Stop();
-                                Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
+                                watch1.Stop();
+                                Console.WriteLine($"{watch1.ElapsedMilliseconds} ms");
 
                                 Program.env[i] = newEnv;
                                 i++;

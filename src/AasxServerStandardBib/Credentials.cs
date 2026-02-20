@@ -301,8 +301,14 @@ namespace AasxServer
                 if (c.bearerValidFrom > DateTime.UtcNow || c.bearerValidTo < DateTime.UtcNow)
                     valid = false;
                 if (valid)
+                {
+                    // Console.WriteLine("bearer token still valid");
                     return;
+                }
             }
+
+            Console.WriteLine("GET bearer token");
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
             c.bearer = string.Empty;
             c.bearerList.Clear();
@@ -570,6 +576,7 @@ namespace AasxServer
                     }
                 }
             }
+            Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
 
             if (exchange1 != "" && c.bearer != null && c.bearer != "")
             {
@@ -604,6 +611,7 @@ namespace AasxServer
                 {
                     c.bearer = tokenElement.GetString();
                     Console.WriteLine("token exchange1 " + c.bearer);
+                    Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
                 }
             }
 
@@ -640,6 +648,7 @@ namespace AasxServer
                 {
                     c.bearer = tokenElement.GetString();
                     Console.WriteLine("token exchange2 " + c.bearer);
+                    Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
                 }
             }
 
@@ -676,6 +685,7 @@ namespace AasxServer
                 {
                     c.bearer = tokenElement.GetString();
                     Console.WriteLine("token exchange3 " + c.bearer);
+                    Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
                 }
             }
         }
