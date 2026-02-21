@@ -3220,15 +3220,21 @@ public partial class Query
                 }
             }
 
-            if (true)
+            var withUnion = true;
+            var withTempTable = false;
+
+            if (withUnion || withTempTable)
             {
                 var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
 
-                raw += "DROP TABLE IF EXISTS union_ids;\r\n";
-                raw += "CREATE TEMP TABLE union_ids (\r\n";
-                raw += "Id INTEGER PRIMARY KEY\r\n";
-                raw += ") WITHOUT ROWID;\r\n";
-                raw += "\r\n";
+                if (withTempTable)
+                {
+                    raw += "DROP TABLE IF EXISTS union_ids;\r\n";
+                    raw += "CREATE TEMP TABLE union_ids (\r\n";
+                    raw += "Id INTEGER PRIMARY KEY\r\n";
+                    raw += ") WITHOUT ROWID;\r\n";
+                    raw += "\r\n";
+                }
 
                 var splitLeftJoin = rawBase.Split("LEFT JOIN(\r\n");
 
@@ -3247,7 +3253,19 @@ public partial class Query
                     }
 
                     var rawBaseTopLevel = rawBaseUnionStart + rawBaseUnion + "WHERE " + splitConvertConditionSQL[s] + "\r\n";
-                    raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
+                    if (withTempTable)
+                    {
+                        rawBaseTopLevel += "ORDER BY ID\r\n";
+                        raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
+                    }
+                    if (withUnion)
+                    {
+                        raw += rawBaseTopLevel;
+                        if (s != splitConvertConditionSQL.Count -1)
+                        {
+                            raw += "\r\n" + "UNION\r\n\r\n";
+                        }
+                    }
                 }
 
                 rawBase = raw;
@@ -3259,21 +3277,37 @@ public partial class Query
                     raw = raw.Replace("%", "*");
                 }
 
-                using var tx = db.Database.BeginTransaction();
+                List<int> page = [];
+                if (withUnion)
+                {
+                    raw = "SELECT DISTINCT Id\r\nFROM(\r\n\r\n" + raw;
+                    raw += "\r\n)\r\nORDER BY 1\r\n";
+                    raw += $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
 
-                db.Database.ExecuteSqlRaw(raw);
+                    page = db.Set<SMSetIdResult>()
+                        .FromSqlRaw(raw)
+                        .AsNoTracking()
+                        .Select(x => x.Id)
+                        .ToList();
+                }
+                if (withTempTable)
+                {
+                    using var tx = db.Database.BeginTransaction();
 
-                var page = db.Set<SMSetIdResult>()
-                    .FromSqlRaw(@"
+                    db.Database.ExecuteSqlRaw(raw);
+
+                    page = db.Set<SMSetIdResult>()
+                        .FromSqlRaw(@"
                         SELECT Id
                         FROM union_ids
                         ORDER BY Id
                         LIMIT {0} OFFSET {1}", pageSize, pageFrom)
-                    .AsNoTracking()
-                    .Select(x => x.Id)
-                    .ToList();
+                        .AsNoTracking()
+                        .Select(x => x.Id)
+                        .ToList();
 
-                tx.Commit();
+                    tx.Commit();
+                }
 
                 return page;
             }
