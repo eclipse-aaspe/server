@@ -587,6 +587,17 @@ public partial class Query
             expression = expression.Replace("$CONSOLIDATE", string.Empty);
         }
 
+        List<string> possibleFlags = ["$CASEWHEN", "$LEFTJOIN", "$UNION", "$TEMPTABLE"];
+        List<string> flags = [];
+        foreach (var flag in possibleFlags)
+        {
+            if (expression.Contains(flag))
+            {
+                flags.Add(flag);
+                expression = expression.Replace(flag, string.Empty);
+            }
+        }
+
         var lastID = -1;
         var orderBy = false;
         if (expression.Contains("$LASTID="))
@@ -625,13 +636,13 @@ public partial class Query
         // get data
         if (withExpression) // with expression
         {
-            if (!consolidate)
+            if (flags.Count != 0 && flags.Contains("$CASEWHEN"))
             {
-                comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize, resultType, consolidate);
+                comTable = CombineTablesCASE(db, conditionsExpression, pageFrom, pageSize, resultType, flags);
             }
             else
             {
-                comTable = CombineTablesLEFT(db, conditionsExpression, pageFrom, pageSize, resultType, consolidate);
+                comTable = CombineTablesLEFT(db, conditionsExpression, pageFrom, pageSize, resultType, flags);
             }
         }
 
@@ -1653,7 +1664,7 @@ public partial class Query
         int pageFrom,
         int pageSize,
         ResultType resultType,
-        bool consolidaté
+        List<string> flags
         )
     {
         IQueryable<AASSet>? aasTable = null;
@@ -2485,7 +2496,7 @@ public partial class Query
         int pageFrom,
         int pageSize,
         ResultType resultType,
-        bool consolidate
+        List<string> flags
         )
     {
         IQueryable<AASSet>? aasTable = null;
@@ -3103,15 +3114,22 @@ public partial class Query
                             if (v.StartsWith('('))
                             {
                                 var j = 6;
-                                do
+                                while (!split2[j].EndsWith(')'))
                                 {
                                     j++;
                                     v += " " + split2[j];
                                 }
-                                while (!split2[j].EndsWith(')'));
                             }
-                            v = v.Replace("(", "").Replace(")", "");
+                            if (v.EndsWith("))"))
+                            {
+                                v = v.Replace("))", ")");
+                            }
+                            else
+                            {
+                                v = v.Replace("(", "").Replace(")", "");
+                            }
                             var vReplace = v;
+                            v = v.Replace("(", "").Replace(")", "");
                             v = v.Replace($"\"v\".", "");
 
                             rawBase += "LEFT JOIN(\r\n";
@@ -3220,8 +3238,16 @@ public partial class Query
                 }
             }
 
-            var withUnion = true;
+            var withUnion = false;
             var withTempTable = false;
+            if (flags.Contains("$UNION"))
+            {
+                withUnion = true;
+            }
+            if (flags.Contains("$TEMPTABLE"))
+            {
+                withTempTable = true;
+            }
 
             if (withUnion || withTempTable)
             {
@@ -3255,7 +3281,7 @@ public partial class Query
                     var rawBaseTopLevel = rawBaseUnionStart + rawBaseUnion + "WHERE " + splitConvertConditionSQL[s] + "\r\n";
                     if (withTempTable)
                     {
-                        rawBaseTopLevel += "ORDER BY ID\r\n";
+                        rawBaseTopLevel += "ORDER BY 1\r\n";
                         raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
                     }
                     if (withUnion)
@@ -3281,7 +3307,7 @@ public partial class Query
                 if (withUnion)
                 {
                     raw = "SELECT DISTINCT Id\r\nFROM(\r\n\r\n" + raw;
-                    raw += "\r\n)\r\nORDER BY 1\r\n";
+                    raw += "\r\n)\r\nORDER BY Id\r\n";
                     raw += $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
 
                     page = db.Set<SMSetIdResult>()
@@ -3300,7 +3326,7 @@ public partial class Query
                         .FromSqlRaw(@"
                         SELECT Id
                         FROM union_ids
-                        ORDER BY Id
+                        ORDER BY 1
                         LIMIT {0} OFFSET {1}", pageSize, pageFrom)
                         .AsNoTracking()
                         .Select(x => x.Id)
@@ -3331,7 +3357,7 @@ public partial class Query
         var smRawSQL = resultSMId.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
 
-        return resultSMId.Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
+        return resultSMId.OrderBy(r => r.Id).Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
