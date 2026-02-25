@@ -106,12 +106,16 @@ namespace AasSecurity
             {
                 for (var i = 0; i < GlobalSecurityVariables.ServerKid.Count; i++)
                 {
-                    if ((GlobalSecurityVariables.ServerKid[i] != "" &&
-                        GlobalSecurityVariables.ServerKid[i] == kid)
-                        || GlobalSecurityVariables.ServerJwksUrl[i] == iss)
+                    if (GlobalSecurityVariables.ServerKid[i] != "" &&
+                        GlobalSecurityVariables.ServerKid[i] == kid)                       
                     {
                         domain = GlobalSecurityVariables.ServerDomain[i];
                         return GlobalSecurityVariables.ServerJwksUrl[i];
+                    }
+                    else if (GlobalSecurityVariables.ServerIssuerUrl[i] == iss)
+                    {
+                        //ToDo request well-known endpoint to get JWKS properly
+                        return $"{GlobalSecurityVariables.ServerIssuerUrl[i]}/jwks";
                     }
                 }
             }

@@ -231,8 +231,8 @@ namespace AasSecurity
                         var domain = provider?.Domain;
                         Console.WriteLine("  domain: " + domain);
 
-                        var jwks = service?.SupplyPoint;
-                        Console.WriteLine("  jwks: " + jwks);
+                        var issuer = service?.SupplyPoint;
+                        Console.WriteLine("  issuer url: " + issuer);
 
                         var kid = "";
 
@@ -240,7 +240,7 @@ namespace AasSecurity
                         GlobalSecurityVariables.ServerCertFileNames.Add("");
                         GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
                         GlobalSecurityVariables.ServerDomain.Add(domain);
-                        GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
+                        GlobalSecurityVariables.ServerIssuerUrl.Add(issuer);
                         GlobalSecurityVariables.ServerKid.Add(kid);
                     }
                 }
