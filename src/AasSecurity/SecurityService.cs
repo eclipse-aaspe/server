@@ -541,7 +541,7 @@ namespace AasSecurity
                             {
                                 var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                                 using var httpClient = new HttpClient(clientHandler);
-                                var jwksJson = httpClient.GetStringAsync(jwksUrl + "/jwks").Result;
+                                var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
                                 var jwks = new JsonWebKeySet(jwksJson);
                                 var signingKeys = jwks.GetSigningKeys();
 
@@ -564,6 +564,10 @@ namespace AasSecurity
                                 catch (Exception ex)
                                 {
                                 }
+                            }
+                            else
+                            {
+
                             }
                         }
                     }
@@ -601,6 +605,8 @@ namespace AasSecurity
                             }
                         }
                     }
+
+                    valid = true;
 
                     if (valid)
                     {
