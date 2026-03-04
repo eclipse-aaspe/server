@@ -230,18 +230,20 @@ namespace AasSecurity
 
                 while (condition[c.Key].Contains("CLAIM("))
                 {
-                    var split = c.Value.Split("CLAIM(");
+                    var conditionValue = condition[c.Key];
+
+                    var split = conditionValue.Split("CLAIM(");
                     split = split[1].Split(")");
                     var claim = split[0];
                     if (claim.StartsWith("token:"))
                     {
                         var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        condition[c.Key] = c.Value.Replace($"CLAIM({claim})", $"\"{value}\"");
+                        condition[c.Key] = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
                     }
                     if (claim == accessRole)
                     {
                         var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        condition[c.Key] = c.Value.Replace($"CLAIM({accessRole})", $"\"{value}\"");
+                        condition[c.Key] = conditionValue.Replace($"CLAIM({accessRole})", $"\"{value}\"");
                     }
                 }
             }
