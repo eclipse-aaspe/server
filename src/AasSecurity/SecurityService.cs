@@ -482,6 +482,14 @@ namespace AasSecurity
                         if (!string.IsNullOrEmpty(tokenExchange1) && !string.IsNullOrEmpty(tokenExchange2)
                             && iss == tokenExchange1)
                         {
+                            var audience = "fa3st";
+                            var audienceEnvVar = System.Environment.GetEnvironmentVariable("TOKENEXCHANGE_AUDIENCE");
+
+                            if (!string.IsNullOrEmpty(audienceEnvVar))
+                            {
+                                audience = audienceEnvVar;
+                            }
+
                             Console.WriteLine($"TOKENEXCHANGE1 = {tokenExchange1}");
                             Console.WriteLine($"TOKENEXCHANGE2 = {tokenExchange2}");
                             var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
@@ -494,7 +502,7 @@ namespace AasSecurity
                                 { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
                                 { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
                                 { "subject_token", bearerToken },
-                                { "audience", "fa3st" }
+                                { "audience", audience }
                             };
                             var request = new HttpRequestMessage(HttpMethod.Post, $"{tokenExchange2}/token")
                             {
