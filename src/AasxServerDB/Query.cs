@@ -1448,6 +1448,7 @@ public partial class Query
             foreach (var s1 in split1)
             {
                 var field = s1.Split([' ', ')']).First();
+                field = field.Split('.').First();
                 field = char.ToUpper(field[0]) + field.Substring(1);
                 if (!field.StartsWith('(') && !fields.Contains(field))
                 {
@@ -3097,23 +3098,40 @@ public partial class Query
 
             if (convertConditionSQL.Contains($"\"{smePrefix}\"."))
             {
+                var withInstr = false;
                 var ii = 1;
                 var split1 = convertConditionSQL.Split($"\"{smePrefix}\".");
                 foreach (var s1 in split1)
                 {
-                    var split2 = s1.Split(" ");
+                    if (s1.EndsWith(" IS NOT NULL AND instr("))
+                    {
+                        withInstr = true;
+                        continue;
+                    }
 
-                    if (smeFields.Contains($"{split2[0].Replace("\"", "")}"))
+                    var split2 = s1.Split(" ");
+                    var field = split2[0].Replace("\"", "").Replace(",", "");
+                    var offsetvalue = 3;
+
+                    if (smeFields.Contains(field))
                     {
                         var s = split2[0] + " " + split2[1] + " " + split2[2];
                         s = s.Replace(")", "");
 
-                        if (split2.Length >= 7 && split2[3] == "AND")
+                        var sInstr = "";
+                        if (withInstr)
                         {
-                            var v = split2[4] + " " + split2[5] + " " + split2[6];
+                            withInstr = false;
+                            offsetvalue = 4;
+                            s = $"\"{field}\" IS NOT NULL";
+                            sInstr = split2[0] + " " + split2[1] + " > 0";
+                        }
+                        if (split2.Length >= offsetvalue + 4 && split2[offsetvalue] == "AND")
+                        {
+                            var v = split2[offsetvalue + 1] + " " + split2[offsetvalue + 2] + " " + split2[offsetvalue + 3];
                             if (v.StartsWith('('))
                             {
-                                var j = 6;
+                                var j = offsetvalue + 3;
                                 while (!split2[j].EndsWith(')'))
                                 {
                                     j++;
@@ -3135,11 +3153,23 @@ public partial class Query
                             rawBase += "LEFT JOIN(\r\n";
                             rawBase += "SELECT sme.SMId\r\n";
                             rawBase += "FROM ValueSets v\r\n";
-                            rawBase += $"LEFT JOIN SMESets sme ON sme.Id = v.SMEId AND sme.{s}\r\n";
+                            rawBase += $"LEFT JOIN SMESets sme ON sme.Id = v.SMEId AND sme.{s}";
+                            if (sInstr != "")
+                            {
+                                rawBase += $" AND instr(sme.{sInstr}";
+                            }
+                            rawBase += "\r\n";
                             rawBase += $"WHERE \"v\".{v}\r\n";
                             rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
 
-                            convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s} AND {vReplace}", $"(sme{ii}.SMId IS NOT NULL)");
+                            var replace = $"\"{smePrefix}\".{s}";
+                            if (sInstr != "")
+                            {
+                                replace += $" AND instr(\"{smePrefix}\".{sInstr}";
+                            }
+                            replace += $" AND {vReplace}";
+
+                            convertConditionSQL = convertConditionSQL.Replace(replace, $"(sme{ii}.SMId IS NOT NULL)");
 
                             pathPrefix.Add($"sme{ii}");
 
@@ -3151,10 +3181,21 @@ public partial class Query
                             rawBase += "SELECT sme.SMId\r\n";
                             rawBase += "FROM SMESets sme\r\n";
                             rawBase += "LEFT JOIN ValueSets v ON sme.Id = v.SMEId\r\n";
-                            rawBase += $"WHERE \"sme\".{s}\r\n";
+                            rawBase += $"WHERE \"sme\".{s}";
+                            if (sInstr != "")
+                            {
+                                rawBase += $" AND instr(sme.{sInstr}";
+                            }
+                            rawBase += "\r\n";
                             rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
 
-                            convertConditionSQL = convertConditionSQL.Replace($"\"{smePrefix}\".{s}", $"(sme{ii}.SMId IS NOT NULL)");
+                            var replace = $"\"{smePrefix}\".{s}";
+                            if (sInstr != "")
+                            {
+                                replace += $" AND instr(\"{smePrefix}\".{sInstr}";
+                            }
+
+                            convertConditionSQL = convertConditionSQL.Replace(replace, $"(sme{ii}.SMId IS NOT NULL)");
 
                             pathPrefix.Add($"sme{ii}");
 
