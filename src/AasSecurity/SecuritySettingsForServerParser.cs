@@ -13,19 +13,39 @@
 
 using System;
 using System.Buffers.Text;
+using System.Net;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
 using AasSecurity.Models;
 using AasxServer;
 using AdminShellNS;
 using IdentityModel;
+using Namotion.Reflection;
 
 namespace AasSecurity
 {
     internal static class SecuritySettingsForServerParser
     {
         //private static ILogger _logger = ApplicationLogging.CreateLogger("SecuritySettingsForServerParser");
+
+        /// <summary>
+        /// Import the RSA key from a pem file
+        /// </summary>
+        /// <param name="pemFile">public key provided as pem file</param>
+        /// <returns>RSA key object instance</returns>
+        private static RSA ReadPemFile(string pemFile)
+        {
+            string privateKeyPem = System.IO.File.ReadAllText(pemFile);
+
+            RSA rsa = RSA.Create();
+            rsa.ImportFromPem(privateKeyPem.AsSpan());
+
+
+            return rsa;
+        }
 
         internal static void ParseSecuritySettingsForServer(AdminShellPackageEnv env, ISubmodel submodel)
         {
@@ -36,34 +56,34 @@ namespace AasSecurity
                     switch (submodelElement.IdShort!.ToLower())
                     {
                         case "authenticationserver":
+                        {
+                            if (submodelElement is SubmodelElementCollection authServer)
                             {
-                                if (submodelElement is SubmodelElementCollection authServer)
-                                {
-                                    ParseAuthenticationServer(env, authServer);
-                                }
+                                ParseAuthenticationServer(env, authServer);
                             }
-                            break;
+                        }
+                        break;
                         case "rolemapping":
+                        {
+                            if (submodelElement is SubmodelElementCollection roleMappings)
                             {
-                                if (submodelElement is SubmodelElementCollection roleMappings)
-                                {
-                                    ParseRoleMappings(roleMappings);
-                                }
+                                ParseRoleMappings(roleMappings);
+                            }
+                        }
+                        break;
+                        case "basicauth":
+                        {
+                            if (submodelElement is SubmodelElementCollection basicAuth)
+                            {
+                                ParseBasicAuth(basicAuth);
                             }
                             break;
-                        case "basicauth":
-                            {
-                                if (submodelElement is SubmodelElementCollection basicAuth)
-                                {
-                                    ParseBasicAuth(basicAuth);
-                                }
-                                break;
-                            }
+                        }
                         default:
-                            {
-                                //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing SecuritySettingsForServer.");
-                                break;
-                            }
+                        {
+                            //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing SecuritySettingsForServer.");
+                            break;
+                        }
                     }
                 }
             }
@@ -83,8 +103,10 @@ namespace AasSecurity
             }
         }
 
-        private static void ParseAuthenticationServer(AdminShellPackageEnv env, SubmodelElementCollection? authServer)
+        private async static void ParseAuthenticationServer(AdminShellPackageEnv env, SubmodelElementCollection? authServer)
         {
+            var trustListOnServer = System.Environment.GetEnvironmentVariable("TRUST_LIST");
+
             if (System.IO.File.Exists("trustlist.txt"))
             {
                 Console.WriteLine("Read trustlist.txt");
@@ -156,13 +178,69 @@ namespace AasSecurity
                     }
                 }
             }
-            if (System.IO.File.Exists("trustlist.xml"))
+
+            XDocument doc = null;
+
+            // Create a new XML document.
+            XmlDocument xmlDoc = new()
             {
-                Console.WriteLine("Read trustlist.xml");
+                // Load an XML file into the XmlDocument object.
+                PreserveWhitespace = true
+            };
 
+            if (!string.IsNullOrEmpty(trustListOnServer))
+            {
+                var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                using var client = new HttpClient(handlerExchange);
 
+                try
+                {
+                    var response = await client.GetAsync(trustListOnServer);
+                    response.EnsureSuccessStatusCode();
+
+                    var content = await response.Content.ReadAsStreamAsync();
+
+                    xmlDoc.Load(content);
+
+                    content.Position = 0;
+
+                    doc = XDocument.Load(content);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+            }
+
+            var localTrustListPath = "trustlist.xml";
+
+            if (doc == null && System.IO.File.Exists(localTrustListPath))
+            {
                 // Load the XML
-                var doc = XDocument.Load("trustlist.xml");
+                doc = XDocument.Load(localTrustListPath);
+                xmlDoc.Load(localTrustListPath);
+            }
+
+            var localPemFilePath = "publickey.pem";
+
+            if (doc != null)
+            {
+                if (System.IO.File.Exists(localPemFilePath))
+                {
+                    RSA rsa = ReadPemFile(localPemFilePath);
+
+                    bool sigValidation = TrustListVerifier.VerifyXmlSignature(xmlDoc, rsa);
+
+                    if (sigValidation)
+                    {
+                        Console.WriteLine("Signature could get validated");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Signature validation failed");
+                        return;
+                    }
+                }
 
                 // Default ETSI namespace present in the document
                 XNamespace ns = "http://uri.etsi.org/02231/v2#"; // <- critical
@@ -245,6 +323,7 @@ namespace AasSecurity
                     }
                 }
             }
+
             if (authServer == null || authServer.Value == null)
             {
                 return;

@@ -21,7 +21,8 @@
         "AASX_MQTT": "1",
         "TOKENEXCHANGE1": "https://iam-security-training.com/consumer/sts",
         "TOKENEXCHANGE2": "https://iam-security-training.com/provider/sts",
-        "TOKENEXCHANGE_AUDIENCE": "fa3st"
+        "TOKENEXCHANGE_AUDIENCE": "fa3st",
+        "TRUST_LIST": "https://iam-security-training.com/trustlist/trustlist.xml"
       },
       "applicationUrl": "http://localhost:5001",
       "jsWebView2Debugging": true
