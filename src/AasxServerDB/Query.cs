@@ -426,7 +426,7 @@ public partial class Query
             }
             else
             {
-                if (!qResult.WithSelectId && !qResult.WithSelectMatch)
+                if (!qResult.WithSelectId && !(qResult.WithSelectMatch && qResult.MatchPathList != null))
                 {
                     var timeStamp = DateTime.UtcNow;
                     var submodels = new List<ISubmodel>();
@@ -2672,9 +2672,9 @@ public partial class Query
                         var shortestPathSplit = shortestPath.Split(with).ToList();
                         var segments = shortestPathSplit;
 
+                        var selectSegment = "";
                         for (var p = 0; p < idShortPath.Count; p++)
                         {
-                            var selectSegment = "";
                             for (var s = 0; s < segments.Count - 1; s++)
                             {
                                 var startSegment = segments[s];
@@ -2685,12 +2685,12 @@ public partial class Query
                                 selectSegment += sql;
                                 if (s != segments.Count - 2 || p != idShortPath.Count - 1)
                                 {
-                                    selectSegment += ",";
+                                    selectSegment += ",\r\n";
                                 }
                             }
-                            selectMatch += $"{selectSegment}\r\n";
-                            conditionMatch.Add(selectSegment.TrimEnd(','));
                         }
+                        selectMatch += $"{selectSegment}\r\n";
+                        conditionMatch.Add(selectSegment.TrimEnd(','));
                         for (var p = 0; p < idShortPath.Count - 1; p++)
                         {
                             for (var s = 0; s < segments.Count - 1; s++)
