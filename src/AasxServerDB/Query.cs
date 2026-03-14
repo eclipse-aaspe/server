@@ -2516,9 +2516,18 @@ public partial class Query
 
         if (conditionsExpression.TryGetValue("all", out value) && value != "" && value.ToLower() != "true")
         {
-            aasFields = GetFields("aas.", value);
-            smFields = GetFields("sm.", value);
-            smeFields = GetFields("sme.", value);
+            while (value.Contains("$$match$$$$true") || value.Contains("$$match$$$$match$$"))
+            {
+                value = value.Replace("$$match$$$$true", "$$match$$");
+                value = value.Replace("$$match$$$$match$$", "");
+            }
+
+            if (value != "")
+            {
+                aasFields = GetFields("aas.", value);
+                smFields = GetFields("sm.", value);
+                smeFields = GetFields("sme.", value);
+            }
         }
 
         var withPathSme = false;
@@ -2910,12 +2919,99 @@ public partial class Query
         var pathAllExists = pathAllCondition.Copy();
         var smIdVariable = $"\"{convertMap["SMSets"]}\".\"Id\"";
 
-        for (var i = 0; i < pathConditions.Count; i++)
+        for (var i = 0; i < pathConditions.Count;)
         {
             var j = i;
             var join = "";
 
             if (i < conditionMatch.Count)
+            {
+                List<string> smePathList = [];
+                for (var iMatch = 0; iMatch < conditionMatch.Count; iMatch++)
+                {
+                    join += $"LEFT JOIN(\r\n";
+                    join += $"SELECT Path1.SMId AS SMId\r\n";
+
+                    // var whereJoin = $"Part{iMatch + 1}_1_1" + whereMatch[iMatch].Split($"AND Part{iMatch + 1}_1_1").Last().Replace(")", "");
+
+                    var conditionMatchList = conditionMatch[iMatch].Split(",\r\nsubstr(");
+                    conditionMatchList[0] = conditionMatchList[0].Substring("substr(".Length);
+
+                    for (var k = 0; k < conditionMatchList.Length; k++)
+                    {
+                        var smePath = conditionMatchList[k].Split('.').First();
+                        if (!smePathList.Contains(smePath))
+                        {
+                            smePathList.Add(smePath);
+                        }
+                        var smeOffset = Convert.ToInt32(smePath.Replace("smePath", "")) - 1;
+
+                        conditionMatchList[k] = "substr(" + conditionMatchList[k];
+
+                        if (k == 0)
+                        {
+                            join += "FROM (\r\n";
+                        }
+                        else
+                        {
+                            join += "JOIN (\r\n";
+                        }
+
+                        join += $"SELECT {smePath}.SMId AS SMId,\r\n";
+                        join += conditionMatchList[k];
+                        join += "\r\n";
+
+                        join += $"FROM SMESets {smePath}\r\n";
+                        join += $"JOIN ValueSets v ON v.SMEId = {smePath}.Id ";
+
+                        var convertPathCondition = convert.Where(pathConditions[i + smeOffset]);
+                        var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                        var where = convertPathConditionSQL.Split("WHERE ").Last();
+
+                        var split = where.Split(" AND ");
+
+                        var valueSQL = split[split.Length - 1];
+
+                        join += $"AND {valueSQL}\r\n";
+                        join += $"WHERE {valueSQL} ";
+
+                        var smeSQLPath = split[split.Length - 2];
+                        smeSQLPath = smeSQLPath.Replace($"\"{smePrefix}\".", $"\"{smePath}\".");
+                        if (smeSQLPath.Contains("[]"))
+                        {
+                            smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" GLOB ");
+                            smeSQLPath = smeSQLPath.Replace("[]", "[[]*[]]");
+                        }
+                        if (smeSQLPath.Contains("%"))
+                        {
+                            smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" GLOB ");
+                            smeSQLPath = smeSQLPath.Replace("%", "*");
+                        }
+
+                        var smeSQLIdShort = split[split.Length - 3];
+                        smeSQLIdShort = smeSQLIdShort.Replace($"\"{smePrefix}\".", $"\"{smePath}\".");
+                        if (!smeSQLIdShort.Contains("[]") && !smeSQLIdShort.Contains("%"))
+                        {
+                            join += $"AND {smeSQLIdShort} ";
+                        }
+
+                        join += $"AND {smeSQLPath}\r\n";
+                        join += $") AS Path{k + 1}\r\n";
+
+                        whereMatch[iMatch] = whereMatch[iMatch].Replace($"path{k + 1} = 1", $"(Path{k + 1}.SMId is not null)");
+                    }
+
+                    var extraWhere = "";
+                    for (var k = 1; k < conditionMatchList.Length; k++)
+                    {
+                        extraWhere += $" AND Path1.SMId = Path{k + 1}.SMId";
+                    }
+
+                    join += "WHERE " + whereMatch[iMatch] + extraWhere;
+                    i += smePathList.Count;
+                }
+            }
+            else if (false && i < conditionMatch.Count)
             {
                 var iMatch = 0;
 
@@ -3045,9 +3141,10 @@ public partial class Query
                 }
 
                 join += $"AND {smeSQLPath}\r\n";
+                i++;
             }
 
-            join += $") AS p{j + 1} ON p{j + 1}.SMId = t.Id\r\n";
+            join += $"\r\n) AS p{j + 1} ON p{j + 1}.SMId = t.Id\r\n";
 
             pathPrefix.Add($"p{j + 1}");
 
