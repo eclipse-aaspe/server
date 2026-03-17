@@ -242,25 +242,7 @@ namespace AasSecurity
                         var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
                         if (value.StartsWith("{"))
                         {
-                            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
-
-                            var key = dict.Keys.First();
-
-                            if (dict != null && dict.TryGetValue(key, out var roles))
-                            {
-                                var valueBuildString = new StringBuilder("");
-
-                                foreach (var role in roles)
-                                {
-                                    valueBuildString = valueBuildString.Append($"{key}:{role}");
-
-                                    if (roles.IndexOf(role) < roles.Count - 1)
-                                    {
-                                        valueBuildString.Append(" ");
-                                    }
-                                }
-                                value = valueBuildString.ToString();
-                            }
+                            value = HandleJsonFormatedTokenClaim(value);
                         }
                         var replaced = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
                         condition[c.Key] = replaced;
@@ -270,25 +252,7 @@ namespace AasSecurity
                         var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
                         if (value.StartsWith("{"))
                         {
-                            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
-
-                            var key = dict.Keys.First();
-
-                            if (dict != null && dict.TryGetValue(key, out var roles))
-                            {
-                                var valueBuildString = new StringBuilder("");
-
-                                foreach (var role in roles)
-                                {
-                                    valueBuildString = valueBuildString.Append($"{role}");
-
-                                    if (roles.IndexOf(role) < roles.Count - 1)
-                                    {
-                                        valueBuildString.Append(" ");
-                                    }
-                                }
-                                value = valueBuildString.ToString();
-                            }
+                            value = HandleJsonFormatedTokenClaim(value);
                         }
                         var replaced = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
                         condition[c.Key] = replaced;
@@ -297,6 +261,32 @@ namespace AasSecurity
             }
 
             return condition;
+        }
+
+        private string HandleJsonFormatedTokenClaim(string value)
+        {
+            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
+
+            var key = dict.Keys.First();
+
+            if (dict != null && dict.TryGetValue(key, out var tokenClaims))
+            {
+                var valueBuildString = new StringBuilder("");
+
+                foreach (var tokenClaim in tokenClaims)
+                {
+                    valueBuildString = valueBuildString.Append($"{tokenClaim}");
+
+                    if (tokenClaims.IndexOf(tokenClaim) < tokenClaims.Count - 1)
+                    {
+                        var seperator = " ";
+                        valueBuildString.Append(seperator);
+                    }
+                }
+                value = valueBuildString.ToString();
+            }
+
+            return value;
         }
 
         public void ClearSecurityRules()
