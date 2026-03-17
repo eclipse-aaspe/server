@@ -1966,7 +1966,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (securityCondition != null)
         {
-            smDBQuery = smDBQuery.Where(securityCondition["sm."]);
+            var securityConditionSM = securityCondition["sm."];
+            smDBQuery = smDBQuery.Where(securityConditionSM);
 
             if (!string.IsNullOrEmpty(aasIdentifier))
             {

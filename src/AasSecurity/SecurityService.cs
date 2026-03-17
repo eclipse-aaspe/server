@@ -24,6 +24,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Web;
 using AasSecurity.Exceptions;
 using AasSecurity.Models;
@@ -40,6 +41,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Namotion.Reflection;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static QRCoder.PayloadGenerator;
 using File = AasCore.Aas3_0.File;
@@ -238,12 +240,58 @@ namespace AasSecurity
                     if (claim.StartsWith("token:"))
                     {
                         var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        condition[c.Key] = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
+                        if (value.StartsWith("{"))
+                        {
+                            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
+
+                            var key = dict.Keys.First();
+
+                            if (dict != null && dict.TryGetValue(key, out var roles))
+                            {
+                                var valueBuildString = new StringBuilder("");
+
+                                foreach (var role in roles)
+                                {
+                                    valueBuildString = valueBuildString.Append($"{key}:{role}");
+
+                                    if (roles.IndexOf(role) < roles.Count - 1)
+                                    {
+                                        valueBuildString.Append(" ");
+                                    }
+                                }
+                                value = valueBuildString.ToString();
+                            }
+                        }
+                        var replaced = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
+                        condition[c.Key] = replaced;
                     }
                     if (claim == accessRole)
                     {
                         var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        condition[c.Key] = conditionValue.Replace($"CLAIM({accessRole})", $"\"{value}\"");
+                        if (value.StartsWith("{"))
+                        {
+                            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
+
+                            var key = dict.Keys.First();
+
+                            if (dict != null && dict.TryGetValue(key, out var roles))
+                            {
+                                var valueBuildString = new StringBuilder("");
+
+                                foreach (var role in roles)
+                                {
+                                    valueBuildString = valueBuildString.Append($"{role}");
+
+                                    if (roles.IndexOf(role) < roles.Count - 1)
+                                    {
+                                        valueBuildString.Append(" ");
+                                    }
+                                }
+                                value = valueBuildString.ToString();
+                            }
+                        }
+                        var replaced = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
+                        condition[c.Key] = replaced;
                     }
                 }
             }
