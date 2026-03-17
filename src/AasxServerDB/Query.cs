@@ -3256,7 +3256,7 @@ public partial class Query
                                 rawBase += $" AND instr(sme.{sInstr}";
                             }
                             rawBase += "\r\n";
-                            rawBase += $"WHERE \"v\".{v}\r\n";
+                            rawBase += $"WHERE \"v\".{v} AND sme.{s}\r\n";
                             rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
 
                             var replace = $"\"{smePrefix}\".{s}";
@@ -3304,39 +3304,62 @@ public partial class Query
 
             if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
             {
-                var ii = 1;
+                List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\""];
                 var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
 
-                /* continue further optimization
-                var isValue = false;
+                var ii = 0;
                 List<string> combineSplit = [];
+                var withValue = false;
                 for (var i = 0; i < split1.Count; i++)
                 {
                     if (split1[i].StartsWith("\"SValue\"") || split1[i].StartsWith("\"NValue\"") || split1[i].StartsWith("\"DTValue\""))
                     {
-                        if (!isValue)
-                        {
-                            combineSplit.Add(split1[i]);
-                        }
-                        else
+                        if (withValue)
                         {
                             combineSplit[combineSplit.Count - 1] += split1[i];
                         }
-                        isValue = true;
+                        else
+                        {
+                            combineSplit.Add(split1[i]);
+                        }
+                        withValue = true;
                     }
                     else
                     {
-                        isValue = false;
+                        combineSplit.Add(split1[i]);
+                        withValue = false;
                     }
                 }
-                */
+                split1 = combineSplit;
 
+                var vPrefix = "";
+                ii = 1;
                 for (var i = 0; i < split1.Count; i++)
                 {
                     var s1 = split1[i];
                     var split2 = s1.Split(" ");
-                    if (split2[0] == "\"SValue\"" || split2[0] == "\"NValue\"" || split2[0] == "\"DTValue\"")
+                    if (fields.Contains(split2[0]))
                     {
+                        var v = s1;
+                        var vReplace = s1;
+                        foreach (var f in fields)
+                        {
+                            if (v.Contains(f))
+                            {
+                                if (vPrefix == "")
+                                {
+                                    vPrefix = $"\"v\".{f} is not null";
+                                }
+                                else
+                                {
+                                    vPrefix += $" OR \"v\".{f} is not null";
+                                }
+                                v = v.Replace(f, $"\"v\".{f}");
+                                vReplace = vReplace.Replace(f, $"\"{valuePrefix}\".{f}");
+                            }
+                        }
+                        vPrefix = $"({vPrefix}) AND ";
+                        /*
                         var v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
                         var vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
                         if (split2[0] == "\"DTValue\"")
@@ -3359,12 +3382,13 @@ public partial class Query
                             }
                             i++;
                         }
+                        */
 
                         rawBase += "LEFT JOIN(\r\n";
                         rawBase += "SELECT sme.SMId\r\n";
                         rawBase += "FROM ValueSets v\r\n";
                         rawBase += "LEFT JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
-                        rawBase += $"WHERE {v}\r\n";
+                        rawBase += $"WHERE {vPrefix}({v})\r\n";
                         rawBase += $") AS value{ii} ON value{ii}.SMId = t.Id\r\n";
 
                         pathPrefix.Add($"value{ii}");
@@ -3485,17 +3509,21 @@ public partial class Query
             raw = raw.Replace("%", "*");
         }
 
+        raw += $"ORDER BY t.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+
         var qpRaw = GetQueryPlan(db, raw);
 
         IQueryable<SMSetIdResult> resultSMId = null;
         resultSMId = db.Set<SMSetIdResult>()
                .FromSqlRaw(raw)
+               .AsNoTracking()
                .AsQueryable();
 
         var smRawSQL = resultSMId.ToQueryString();
         var qp = GetQueryPlan(db, smRawSQL);
 
-        return resultSMId.OrderBy(r => r.Id).Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
+        // return resultSMId.OrderBy(r => r.Id).Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
+        return resultSMId.Select(r => r.Id).ToList();
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
