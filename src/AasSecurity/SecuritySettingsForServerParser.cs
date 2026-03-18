@@ -36,13 +36,10 @@ namespace AasSecurity
         /// </summary>
         /// <param name="pemFile">public key provided as pem file</param>
         /// <returns>RSA key object instance</returns>
-        private static RSA ReadPemFile(string pemFile)
+        private static RSA ReadPem(string privateKeyPemContent)
         {
-            string privateKeyPem = System.IO.File.ReadAllText(pemFile);
-
             RSA rsa = RSA.Create();
-            rsa.ImportFromPem(privateKeyPem.AsSpan());
-
+            rsa.ImportFromPem(privateKeyPemContent.AsSpan());
 
             return rsa;
         }
@@ -106,6 +103,7 @@ namespace AasSecurity
         private async static void ParseAuthenticationServer(AdminShellPackageEnv env, SubmodelElementCollection? authServer)
         {
             var trustListOnServer = System.Environment.GetEnvironmentVariable("TRUST_LIST");
+            var trustListPubKeyOnServer = System.Environment.GetEnvironmentVariable("TRUST_LIIST_PUBLIC_KEY");
 
             if (System.IO.File.Exists("trustlist.txt"))
             {
@@ -188,11 +186,11 @@ namespace AasSecurity
                 PreserveWhitespace = true
             };
 
+            var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+            using var client = new HttpClient(handlerExchange);
+
             if (!string.IsNullOrEmpty(trustListOnServer))
             {
-                var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
-                using var client = new HttpClient(handlerExchange);
-
                 try
                 {
                     var response = await client.GetAsync(trustListOnServer);
@@ -221,13 +219,32 @@ namespace AasSecurity
                 xmlDoc.Load(localTrustListPath);
             }
 
-            var localPemFilePath = "publickey.pem";
-
             if (doc != null)
             {
-                if (System.IO.File.Exists(localPemFilePath))
+                string pemContent = null;
+
+                if (!string.IsNullOrEmpty(trustListPubKeyOnServer))
                 {
-                    RSA rsa = ReadPemFile(localPemFilePath);
+                    var response = await client.GetAsync(trustListPubKeyOnServer);
+                    response.EnsureSuccessStatusCode();
+                    var content = await response.Content.ReadAsStringAsync();
+
+                    pemContent = content;
+                }
+
+                if (pemContent == null)
+                {
+                    var localPemFilePath = "publickey.pem";
+
+                    if (System.IO.File.Exists(localPemFilePath))
+                    {
+                        pemContent = System.IO.File.ReadAllText(localPemFilePath);
+                    }
+                }
+
+                if (pemContent != null)
+                {
+                    RSA rsa = ReadPem(pemContent);
 
                     bool sigValidation = TrustListVerifier.VerifyXmlSignature(xmlDoc, rsa);
 
