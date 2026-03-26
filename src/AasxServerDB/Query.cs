@@ -43,6 +43,8 @@ public class CombinedValue
     public String? SValue { get; set; }
     public Double? MValue { get; set; }
     public DateTime? DTValue { get; set; }
+    /// <summary>Serialized <see cref="AasCore.Aas3_0.DataTypeDefXsd"/> (property) or language (MLP), same as DB <c>ValueSet.Annotation</c>.</summary>
+    public String? Annotation { get; set; }
 }
 
 public class QueryResult
@@ -990,7 +992,7 @@ public partial class Query
         }
 
         var smSelect = smTable.Select("new { Id, Identifier, IdShort }");
-        var smeSelect = smeTable.Select("new { Id, SMId, IdShort, TimeStamp, IdShortPath }");
+        var smeSelect = smeTable.Select("new { Id, SMId, IdShort, TimeStamp, IdShortPath, TValue }");
         var x1 = smeSelect.Take(100).ToDynamicList();
 
         var smSmeSelect = smSelect.AsQueryable().Join(
@@ -1001,7 +1003,7 @@ public partial class Query
         )
         .Select("new {" +
             "SM.Id as SM_Id, SM.Identifier as SM_Identifier, SM.IdShort as SM_IdShort, " +
-            "SME.Id as SME_Id, SME.IdShort as SME_IdShort, SME.TimeStamp as SME_TimeStamp, SME.IdShortPath as SME_IdShortPath" +
+            "SME.Id as SME_Id, SME.IdShort as SME_IdShort, SME.TimeStamp as SME_TimeStamp, SME.IdShortPath as SME_IdShortPath, SME.TValue as SME_TValue" +
             " }");
         var x2 = smSmeSelect.Take(100).ToDynamicList();
 
@@ -1014,7 +1016,8 @@ public partial class Query
             {
                 SMEId = sv.SMEId,
                 SValue = sv.SValue,
-                MValue = sv.NValue
+                MValue = sv.NValue,
+                Annotation = sv.Annotation,
             });
             combinedValues = sValueSelect;
         }
@@ -1066,6 +1069,7 @@ public partial class Query
         .Select("new (" +
             "SMSME.SM_Id as SM_Id, SMSME.SM_Identifier as SM_Identifier, SMSME.SM_IdShort as SM_IdShort, " +
             "SMSME.SME_Id as SME_Id, SMSME.SME_IdShort as SME_IdShort, SMSME.SME_TimeStamp as SME_TimeStamp, SMSME.SME_IdShortPath as SME_IdShortPath, " +
+            "SMSME.SME_TValue as SME_TValue, VALUE.Annotation as ValueAnnotation, " +
             "VALUE.SValue as SValue, VALUE.MValue as MValue" +
             ")");
         var x3 = smSmeValue.Take(100).ToDynamicList();
@@ -1438,6 +1442,44 @@ public partial class Query
         return result;
     }
 
+    /// <summary>
+    /// EF Core SQLite translates <see cref="string.Contains"/> on joined <c>ValueSet.Annotation</c> to
+    /// <c>instr("v"."Annotation", 'needle') &gt; 0</c>. <see cref="CombineTablesLEFT"/> post-processes SQL using
+    /// naive space splits that corrupt <c>instr(...)</c> with quoted identifiers. Replacing those fragments with
+    /// equivalent <c>LIKE</c> keeps semantics and avoids broken generated subqueries.
+    /// </summary>
+    private static string NormalizeValueAnnotationInstrForCombineSql(string? sql)
+    {
+        if (string.IsNullOrEmpty(sql) || !sql.Contains("instr(\"", StringComparison.Ordinal))
+            return sql ?? "";
+
+        // Contains → instr(..., 'x') > 0
+        sql = Regex.Replace(
+            sql,
+            @"instr\(""([^""]+)""\.""Annotation"",\s*'([^']*)'\)\s*>\s*0",
+            m =>
+            {
+                var alias = m.Groups[1].Value;
+                var literal = m.Groups[2].Value.Replace("''", "'");
+                var esc = literal.Replace("'", "''");
+                return $"(\"{alias}\".\"Annotation\" LIKE '%' || '{esc}' || '%')";
+            });
+
+        // StartsWith → instr(..., 'x') = 1 (common SQLite translation)
+        sql = Regex.Replace(
+            sql,
+            @"instr\(""([^""]+)""\.""Annotation"",\s*'([^']*)'\)\s*=\s*1",
+            m =>
+            {
+                var alias = m.Groups[1].Value;
+                var literal = m.Groups[2].Value.Replace("''", "'");
+                var esc = literal.Replace("'", "''");
+                return $"(\"{alias}\".\"Annotation\" LIKE '{esc}' || '%')";
+            });
+
+        return sql;
+    }
+
     private static List<string> GetFields(string prefix, string? expression)
     {
         var fields = new List<string>();
@@ -1657,6 +1699,8 @@ public partial class Query
         public string? svalue;
         public double? mvalue;
         public DateTime? dtvalue;
+        /// <summary>Maps to <see cref="Entities.ValueSet.Annotation"/> for query predicates (e.g. value type).</summary>
+        public string? valueAnnotation;
     }
 
     private static List<int> CombineTablesCASE(
@@ -1710,7 +1754,8 @@ public partial class Query
             else
             {
                 withRecursive = pathAllCondition.Contains("sme.") || pathAllCondition.Contains("svalue")
-                    || pathAllCondition.Contains("mvalue") || pathAllCondition.Contains("dtvalue");
+                    || pathAllCondition.Contains("mvalue") || pathAllCondition.Contains("dtvalue")
+                    || pathAllCondition.Contains("valueAnnotation");
             }
             if (conditionsExpression.TryGetValue("path-raw", out pathAllConditionRaw))
             {
@@ -1782,7 +1827,7 @@ public partial class Query
 
                         var c = split2[1] + split2[2];
                         var v = db.ValueSets.Where(c).ToQueryString();
-                        var sql = v.Split("WHERE ").Last();
+                        var sql = SafeExtractWherePredicate(v);
                         field.Add(sql);
                     }
                     order = order.OrderBy(x => count[x]).ToList();
@@ -1912,7 +1957,15 @@ public partial class Query
                 var splitField = fieldList[i].Split("#");
                 var idShort = pathList[i].Split(".").Last();
                 var allCondition = $"sme.idShort == \"{idShort}\" && sme.idShortPath == \"{pathList[i]}\"";
-                if (splitField.Length > 1 && splitField[1] != "value")
+                if (splitField.Length == 1 && (splitField[0] == "sme.valueType" || splitField[0] == "vtvalue") && QueryValueTypeExpression.TryBuildPathValueTypeExpression(opList[i], out var vtPred))
+                {
+                    allCondition += $" && {vtPred}";
+                }
+                else if (splitField.Length == 1 && (splitField[0] == "sme.language" || splitField[0] == "langvalue") && QueryLanguageExpression.TryBuildPathLanguageExpression(opList[i], out var langPred))
+                {
+                    allCondition += $" && {langPred}";
+                }
+                else if (splitField.Length > 1 && splitField[1] != "value")
                 {
                     allCondition += $" && sme.{splitField[1]}{opList[i]}";
                 }
@@ -1956,9 +2009,9 @@ public partial class Query
         }
 
         var rawAas = aasTable?.ToQueryString();
-        var whereAas = rawAas?.Split("WHERE ").Last();
+        var whereAas = SafeExtractWherePredicate(rawAas);
         var rawSm = smTable?.ToQueryString();
-        var whereSm = rawSm?.Split("WHERE ").Last();
+        var whereSm = SafeExtractWherePredicate(rawSm);
 
         IQueryable<joinAll>? result = null;
 
@@ -2035,6 +2088,7 @@ public partial class Query
                 svalue = v.SValue,
                 mvalue = v.NValue,
                 dtvalue = v.DTValue,
+                valueAnnotation = v.Annotation,
             });
         }
 
@@ -2048,7 +2102,7 @@ public partial class Query
                 selectAas += $", {aasField}";
             }
             selectAas += "\r\n  FROM AASSets\r\n";
-            if (whereAas != null && !whereAas.StartsWith("SELECT"))
+            if (!string.IsNullOrWhiteSpace(whereAas))
             {
                 var whereAas2 = whereAas.Replace("\"a\".", "");
                 selectAas += $"WHERE {whereAas2}\r\n";
@@ -2064,7 +2118,7 @@ public partial class Query
                 }
             }
             selectSm += "\r\n  FROM SMSets\r\n";
-            if (whereSm != null && !whereSm.StartsWith("SELECT"))
+            if (!string.IsNullOrWhiteSpace(whereSm))
             {
                 var whereSm2 = whereSm.Replace("\"s\".", "");
                 whereSm2 = whereSm2.Replace("\"s0\".", "");
@@ -2116,14 +2170,14 @@ public partial class Query
                     {
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        where = convertPathConditionSQL.Split("WHERE ").Last();
+                        where = SafeExtractWherePredicate(convertPathConditionSQL);
                         where = where.Replace("\"s1\".", "sme.").Replace("\"v\".", "v.");
                     }
                     else
                     {
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        where = convertPathConditionSQL.Split("WHERE ").Last();
+                        where = SafeExtractWherePredicate(convertPathConditionSQL);
                         where = where.Replace("\"s0\".", "sme.").Replace("\"v\".", "v.");
                     }
 
@@ -2159,14 +2213,11 @@ public partial class Query
                     rawBase += join;
                 }
 
-                rawBase += "WHERE ";
-
                 // convert complete condition with placeholders
                 var convertCondition = result.Where(pathAllExists);
-                var convertConditionSQL = convertCondition.ToQueryString();
-                convertConditionSQL = convertConditionSQL.Split("WHERE ").Last();
+                var convertConditionSQL = SafeExtractWherePredicate(convertCondition.ToQueryString());
 
-                if (!convertConditionSQL.StartsWith("SELECT"))
+                if (!string.IsNullOrEmpty(convertConditionSQL))
                 {
                     for (var i = 0; i < pathConditions.Count; i++)
                     {
@@ -2175,7 +2226,7 @@ public partial class Query
 
                     convertConditionSQL = convertConditionSQL.Replace("\"s\".", "\"t\".");
                     convertConditionSQL = convertConditionSQL.Replace("\"s0\".", "\"t\".");
-                    rawBase += convertConditionSQL;
+                    rawBase += "WHERE " + convertConditionSQL;
                 }
             }
             else
@@ -2202,14 +2253,14 @@ public partial class Query
                     {
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.AASId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        where = convertPathConditionSQL.Split("WHERE ").Last();
+                        where = SafeExtractWherePredicate(convertPathConditionSQL);
                         where = where.Replace("\"s1\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
                     }
                     else
                     {
                         var convertPathCondition = result.Where(pathConditions[i]).Select(r => r.SMId);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        where = convertPathConditionSQL.Split("WHERE ").Last();
+                        where = SafeExtractWherePredicate(convertPathConditionSQL);
                         where = where.Replace("\"s0\".", $"smePath{ii}.").Replace("\"v\".", $"vPath{ii}.");
                     }
 
@@ -2233,12 +2284,7 @@ public partial class Query
 
                 // convert complete condition with placeholders
                 var convertCondition = result.Where(pathAllExists);
-                var convertConditionSQL = convertCondition.ToQueryString();
-                convertConditionSQL = convertConditionSQL.Split("WHERE ").Last();
-                if (convertConditionSQL.StartsWith("SELECT"))
-                {
-                    convertConditionSQL = "";
-                }
+                var convertConditionSQL = SafeExtractWherePredicate(convertCondition.ToQueryString());
 
                 for (var i = 0; i < pathConditions.Count; i++)
                 {
@@ -2551,7 +2597,8 @@ public partial class Query
             else
             {
                 withRecursive = pathAllCondition.Contains("sme.") || pathAllCondition.Contains("svalue")
-                    || pathAllCondition.Contains("mvalue") || pathAllCondition.Contains("dtvalue");
+                    || pathAllCondition.Contains("mvalue") || pathAllCondition.Contains("dtvalue")
+                    || pathAllCondition.Contains("valueAnnotation");
             }
             if (conditionsExpression.TryGetValue("path-raw", out pathAllConditionRaw))
             {
@@ -2624,7 +2671,7 @@ public partial class Query
 
                         var c = split2[1] + split2[2];
                         var v = db.ValueSets.Where(c).ToQueryString();
-                        var sql = v.Split("WHERE ").Last();
+                        var sql = SafeExtractWherePredicate(v);
                         field.Add(sql);
                     }
                     order = order.OrderBy(x => count[x]).ToList();
@@ -2758,7 +2805,15 @@ public partial class Query
                 var splitField = fieldList[i].Split("#");
                 var idShort = pathList[i].Split(".").Last();
                 var allCondition = $"sme.idShort == \"{idShort}\" && sme.idShortPath == \"{pathList[i]}\"";
-                if (splitField.Length > 1 && splitField[1] != "value")
+                if (splitField.Length == 1 && (splitField[0] == "sme.valueType" || splitField[0] == "vtvalue") && QueryValueTypeExpression.TryBuildPathValueTypeExpression(opList[i], out var vtPred))
+                {
+                    allCondition += $" && {vtPred}";
+                }
+                else if (splitField.Length == 1 && (splitField[0] == "sme.language" || splitField[0] == "langvalue") && QueryLanguageExpression.TryBuildPathLanguageExpression(opList[i], out var langPred))
+                {
+                    allCondition += $" && {langPred}";
+                }
+                else if (splitField.Length > 1 && splitField[1] != "value")
                 {
                     allCondition += $" && sme.{splitField[1]}{opList[i]}";
                 }
@@ -2806,9 +2861,9 @@ public partial class Query
         }
 
         var rawAas = aasTable?.ToQueryString();
-        var whereAas = rawAas?.Split("WHERE ").Last();
+        var whereAas = SafeExtractWherePredicate(rawAas);
         var rawSm = smTable?.ToQueryString();
-        var whereSm = rawSm?.Split("WHERE ").Last();
+        var whereSm = SafeExtractWherePredicate(rawSm);
 
         IQueryable<joinAll>? convert = null;
 
@@ -2837,7 +2892,8 @@ public partial class Query
                     sme = x.sme,
                     svalue = v.SValue,
                     mvalue = v.NValue,
-                    dtvalue = v.DTValue
+                    dtvalue = v.DTValue,
+                    valueAnnotation = v.Annotation,
                 });
 
         var convertSQL = convert.ToQueryString();
@@ -2868,7 +2924,7 @@ public partial class Query
             }
         }
         selectAas += "\r\n  FROM AASSets\r\n";
-        if (whereAas != null && !whereAas.StartsWith("SELECT"))
+        if (!string.IsNullOrWhiteSpace(whereAas))
         {
             var whereAas2 = whereAas.Replace("\"a\".", "");
             selectAas += $"WHERE {whereAas2}\r\n";
@@ -2884,7 +2940,7 @@ public partial class Query
             }
         }
         selectSm += "\r\n  FROM SMSets\r\n";
-        if (whereSm != null && !whereSm.StartsWith("SELECT"))
+        if (!string.IsNullOrWhiteSpace(whereSm))
         {
             var whereSm2 = whereSm.Replace("\"s\".", "");
             whereSm2 = whereSm2.Replace("\"s0\".", "");
@@ -2966,7 +3022,7 @@ public partial class Query
 
                         var convertPathCondition = convert.Where(pathConditions[i + smeOffset]);
                         var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                        var where = convertPathConditionSQL.Split("WHERE ").Last();
+                        var where = SafeExtractWherePredicate(convertPathConditionSQL);
 
                         var split = where.Split(" AND ");
 
@@ -3045,7 +3101,7 @@ public partial class Query
 
                     var convertPathCondition = convert.Where(pathConditions[i]);
                     var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                    where = convertPathConditionSQL.Split("WHERE ").Last();
+                    where = SafeExtractWherePredicate(convertPathConditionSQL);
                     where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
 
                     split = where.Split(" AND ");
@@ -3101,14 +3157,14 @@ public partial class Query
                 {
                     var convertPathCondition = convert.Where(pathConditions[i]).Select(r => r.AASId);
                     var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                    where = convertPathConditionSQL.Split("WHERE ").Last();
+                    where = SafeExtractWherePredicate(convertPathConditionSQL);
                     where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
                 }
                 else
                 {
                     var convertPathCondition = convert.Where(pathConditions[i]).Select(r => r.SMId);
                     var convertPathConditionSQL = convertPathCondition.ToQueryString();
-                    where = convertPathConditionSQL.Split("WHERE ").Last();
+                    where = SafeExtractWherePredicate(convertPathConditionSQL);
                     where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
                 }
 
@@ -3162,14 +3218,18 @@ public partial class Query
 
         // convert complete condition with placeholders
         var convertCondition = convert.Where(pathAllExists);
-        var convertConditionSQL = convertCondition.ToQueryString();
-        convertConditionSQL = convertConditionSQL.Split("WHERE ").Last();
-        convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"SValue\" IS NULL", "");
-        convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"NValue\" IS NULL", "");
-        convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"DTValue\" IS NULL", "");
-
-        if (!convertConditionSQL.StartsWith("SELECT"))
+        var convertConditionSQL = SafeExtractWherePredicate(convertCondition.ToQueryString());
+        if (!string.IsNullOrEmpty(convertConditionSQL))
         {
+            convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"SValue\" IS NULL", "");
+            convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"NValue\" IS NULL", "");
+            convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"DTValue\" IS NULL", "");
+        }
+
+        if (!string.IsNullOrEmpty(convertConditionSQL))
+        {
+            convertConditionSQL = NormalizeValueAnnotationInstrForCombineSql(convertConditionSQL);
+
             for (var i = 0; i < pathConditions.Count; i++)
             {
                 if (placeholderSQL[i] != null)
@@ -3400,6 +3460,21 @@ public partial class Query
                 }
             }
 
+            // The outer SQL is "FROM (SMSets AS t) ..."; EF's WHERE still references join aliases from the
+            // IQueryable (e.g. "s1" for SMESets, valuePrefix for ValueSets). Those aliases are not in scope
+            // on t. The LEFT JOIN subqueries (sme1, value1, ...) already encode the filters; the fragment
+            // Replace above often only substitutes part of the predicate, leaving invalid "s1"/"v" in WHERE.
+            if (pathPrefix.Count > 0 && !string.IsNullOrEmpty(convertConditionSQL))
+            {
+                var stillHasSmeAlias = convertConditionSQL.Contains($"\"{smePrefix}\".", StringComparison.Ordinal);
+                var stillHasValueAlias = !string.IsNullOrEmpty(valuePrefix)
+                    && convertConditionSQL.Contains($"\"{valuePrefix}\".", StringComparison.Ordinal);
+                if (stillHasSmeAlias || stillHasValueAlias)
+                {
+                    convertConditionSQL = string.Join(" AND ", pathPrefix.Distinct().Select(p => $"({p}.SMId IS NOT NULL)"));
+                }
+            }
+
             var withUnion = false;
             var withTempTable = false;
             if (flags.Contains("$UNION"))
@@ -3501,7 +3576,9 @@ public partial class Query
             }
         }
 
-        raw = rawBase + $"WHERE {convertConditionSQL}\r\n";
+        raw = string.IsNullOrWhiteSpace(convertConditionSQL)
+            ? rawBase + "\r\n"
+            : rawBase + $"WHERE {convertConditionSQL}\r\n";
 
         if (raw.Contains(" LIKE "))
         {
@@ -3779,6 +3856,7 @@ public partial class Query
                         }
                     }
                 }
+
                 messages.Add("");
 
                 text = "combinedCondition: " + condition["all"];
@@ -3828,6 +3906,8 @@ public partial class Query
                 }
                 else
                 {
+                    condition["sme"] = QueryValueTypeExpression.RewriteSmeValueTypeForSmeEntityExpression(condition["sme"]);
+                    condition["sme"] = QueryLanguageExpression.RewriteSmeLanguageForSmeEntityExpression(condition["sme"]);
                     condition["sme"] = condition["sme"].Replace("sme.", "");
                 }
                 if (securityCondition != null && securityCondition.TryGetValue("sme.", out value) && value != "")
@@ -3841,6 +3921,8 @@ public partial class Query
                         condition["sme"] = value;
                     }
                 }
+                condition["sme"] = QueryValueTypeExpression.RewriteSmeValueTypeForSmeEntityExpression(condition["sme"]);
+                condition["sme"] = QueryLanguageExpression.RewriteSmeLanguageForSmeEntityExpression(condition["sme"]);
                 if (!condition["all"].Contains("$$path$$"))
                 {
                     text = "conditionSME: " + condition["sme"];
@@ -3941,8 +4023,18 @@ public partial class Query
                     var s = idShort.Split(".");
                     idShort = s.Last();
                 }
-                // nextPathExpression = $"({field}{exp} && sme.idShort == \"{idShort}\" && sme.idShortPath == \"{idShortPath}\" )";
-                nextPathExpression = $"({field}{exp} && sme.idShortPath == \"{idShortPath}\")";
+                if ((field == "sme.valueType" || field == "vtvalue") && QueryValueTypeExpression.TryBuildPathValueTypeExpression(exp, out var vtPred))
+                {
+                    nextPathExpression = $"({vtPred} && sme.idShortPath == \"{idShortPath}\")";
+                }
+                else if ((field == "sme.language" || field == "langvalue") && QueryLanguageExpression.TryBuildPathLanguageExpression(exp, out var langPred))
+                {
+                    nextPathExpression = $"({langPred} && sme.idShortPath == \"{idShortPath}\")";
+                }
+                else
+                {
+                    nextPathExpression = $"({field}{exp} && sme.idShortPath == \"{idShortPath}\")";
+                }
                 if (c.Key == "all")
                 {
                     if (allPathExpressions == "")
@@ -3967,7 +4059,38 @@ public partial class Query
             condition["path-raw"] = pathAllConditionRaw;
         }
 
+        foreach (var key in condition.Keys.ToList())
+        {
+            var v = condition[key];
+            if (v != null)
+            {
+                if (v.Contains("sme.valueType", StringComparison.Ordinal))
+                    v = QueryValueTypeExpression.ExpandValueTypeComparisonsForSmeValueProjection(v);
+                if (v.Contains("sme.language", StringComparison.Ordinal))
+                    v = QueryLanguageExpression.ExpandLanguageComparisonsForSmeValueProjection(v);
+                condition[key] = v;
+            }
+        }
+
         return condition;
+    }
+
+    /// <summary>
+    /// Returns the predicate after the last "WHERE " in an EF-generated SQL string.
+    /// If the query has no WHERE clause, splitting by "WHERE " would yield the full SELECT;
+    /// in that case returns empty so callers do not append a full SELECT as a WHERE predicate.
+    /// </summary>
+    private static string SafeExtractWherePredicate(string? fullSql)
+    {
+        if (string.IsNullOrEmpty(fullSql))
+            return "";
+        var parts = fullSql.Split("WHERE ", StringSplitOptions.None);
+        if (parts.Length < 2)
+            return "";
+        var predicate = parts[^1].Trim();
+        if (predicate.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+            return "";
+        return predicate;
     }
 
     private static string ModifiyRawSQL(string? rawSQL)

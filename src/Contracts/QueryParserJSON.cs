@@ -27,9 +27,14 @@ using System.Xml.Linq;
 using System.Text.Json;
 using NJsonSchema.Validation;
 using System.Text.Json.Nodes;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public class QueryGrammarJSON : Grammar
 {
+    /// <summary>While evaluating the RHS of a comparison in <c>value</c> mode, indicates Annotation is valueType vs language.</summary>
+    private static readonly Stack<SmeSemanticKind> _pendingValueStrSemantic = new();
+
     public QueryGrammarJSON(IContractSecurityRules contractSecurityRules) : base(caseSensitive: true)
     {
         mySecurityRules = contractSecurityRules;
@@ -297,6 +302,44 @@ public class QueryGrammarJSON : Grammar
         }
         return expression;
     }
+
+    private static bool IsSmeValueTypeField(string fv)
+    {
+        if (string.IsNullOrEmpty(fv))
+            return false;
+        if (fv.Contains("$sme.", StringComparison.Ordinal))
+        {
+            var without = fv.Replace("$sme.", "", StringComparison.Ordinal);
+            var parts = without.Split('#');
+            return parts.Length >= 2 && parts[1] == "valueType";
+        }
+        return fv.Replace("$sme#", "sme.", StringComparison.Ordinal) == "sme.valueType";
+    }
+
+    private static bool IsSmeLanguageField(string fv)
+    {
+        if (string.IsNullOrEmpty(fv))
+            return false;
+        if (fv.Contains("$sme.", StringComparison.Ordinal))
+        {
+            var without = fv.Replace("$sme.", "", StringComparison.Ordinal);
+            var parts = without.Split('#');
+            return parts.Length >= 2 && parts[1] == "language";
+        }
+        return fv.Replace("$sme#", "sme.", StringComparison.Ordinal) == "sme.language";
+    }
+
+    private static SmeSemanticKind GetSemanticKindFromFieldExpr(LogicalExpression? e)
+    {
+        if (e?.ExpressionType != "$field" || e.ExpressionValue is not string s)
+            return SmeSemanticKind.None;
+        if (IsSmeValueTypeField(s))
+            return SmeSemanticKind.ValueType;
+        if (IsSmeLanguageField(s))
+            return SmeSemanticKind.Language;
+        return SmeSemanticKind.None;
+    }
+
     public static string createExpression(string mode, object? obj, string type = "", string smeValue = "")
     {
         if (obj == null)
@@ -525,25 +568,38 @@ public class QueryGrammarJSON : Grammar
                         {
                             smeValue = "mvalue";
                         }
+                        var sem = GetSemanticKindFromFieldExpr(eList[0]);
                         string left = createExpression(mode, eList[0], smeValue: smeValue);
-                        string right = createExpression(mode, eList[1], smeValue: smeValue);
-                        if (left != "$SKIP" && right != "$SKIP")
+                        if (mode == "value" && sem != SmeSemanticKind.None)
+                            _pendingValueStrSemantic.Push(sem);
+                        string right;
+                        try
                         {
-                            if (right.StartsWith("$$tag$$"))
-                            {
-                                return "$ERROR";
-                            }
-                            if (left.StartsWith("$$tag$$"))
-                            {
-                                return $"{left} {op} {right}$$";
-                            }
+                            right = createExpression(mode, eList[1], smeValue: smeValue);
+                        }
+                        finally
+                        {
+                            if (mode == "value" && sem != SmeSemanticKind.None)
+                                _pendingValueStrSemantic.Pop();
+                        }
 
-                            return "(" + left + " " + op + " " + right + ")";
-                        }
-                        else
-                        {
+                        // Platzhalter / vtvalue-langvalue-Auflösung erst nach $SKIP: sonst wird z. B. mit "$SKIP" unquotet.
+                        if (left == "$SKIP" || right == "$SKIP")
                             return "$SKIP";
+
+                        if (TryResolveSmeValueTypeLanguage(mode, type, left, right, out var resolvedVtLang))
+                            return resolvedVtLang;
+
+                        if (right.StartsWith("$$tag$$"))
+                        {
+                            return "$ERROR";
                         }
+                        if (left.StartsWith("$$tag$$"))
+                        {
+                            return $"{left} {op} {right}$$";
+                        }
+
+                        return "(" + left + " " + op + " " + right + ")";
                     }
                     break;
                 case "$starts-with":
@@ -553,23 +609,22 @@ public class QueryGrammarJSON : Grammar
                     {
                         var left = createExpression(mode, eList[0], smeValue: "svalue");
                         var right = createExpression(mode, eList[1], smeValue: "svalue");
-                        if (left != "$SKIP" && right != "$SKIP")
-                        {
-                            if (right.StartsWith("$$tag$$"))
-                            {
-                                return "$ERROR";
-                            }
-                            if (left.StartsWith("$$tag$$"))
-                            {
-                                return $"{left}.{op}({right})$$";
-                            }
-
-                            return left + "." + op + "(" + right + ")";
-                        }
-                        else
-                        {
+                        if (left == "$SKIP" || right == "$SKIP")
                             return "$SKIP";
+
+                        if (TryResolveSmeValueTypeLanguage(mode, type, left, right, out var resolvedVtLangStr))
+                            return resolvedVtLangStr;
+
+                        if (right.StartsWith("$$tag$$"))
+                        {
+                            return "$ERROR";
                         }
+                        if (left.StartsWith("$$tag$$"))
+                        {
+                            return $"{left}.{op}({right})$$";
+                        }
+
+                        return left + "." + op + "(" + right + ")";
                     }
                     break;
                 case "$boolean":
@@ -625,10 +680,25 @@ public class QueryGrammarJSON : Grammar
                         {
                             return "null";
                         }
-                        else
+                        if (mode == "value" && _pendingValueStrSemantic.Count > 0)
                         {
-                            return "\"" + v + "\"";
+                            var k = _pendingValueStrSemantic.Peek();
+                            if (k == SmeSemanticKind.ValueType)
+                            {
+                                if (!SmeQueryPrefilter.TrySerializeDataTypeAnnotation(v, out var ann))
+                                    return "$ERROR";
+                                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(ann);
+                                return "\"" + esc + "\"";
+                            }
+                            if (k == SmeSemanticKind.Language)
+                            {
+                                if (!LanguageQueryPrefilter.TryValidateLanguageLiteral(v, out var lang))
+                                    return "$ERROR";
+                                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(lang);
+                                return "\"" + esc + "\"";
+                            }
                         }
+                        return "\"" + v + "\"";
                     }
                     break;
                 case "$numVal":
@@ -674,6 +744,23 @@ public class QueryGrammarJSON : Grammar
 
     public static string ReplaceField(string mode, string value, string smeValue)
     {
+        // Semantic SME fields: map before $aas# / $sm# / $sme# rewrites (same layer as sme.value in the switch below).
+        var vNorm = value.Contains("$sme#", StringComparison.Ordinal) ? value.Replace("$sme#", "sme.") : value;
+        if (vNorm == "sme.valueType")
+        {
+            if (mode == "all" || mode == "all-aas" || mode == "sme.")
+                return "vtvalue";
+            if (mode == "value")
+                return "Annotation";
+        }
+        else if (vNorm == "sme.language")
+        {
+            if (mode == "all" || mode == "all-aas" || mode == "sme.")
+                return "langvalue";
+            if (mode == "value")
+                return "Annotation";
+        }
+
         if (value == "$aas#id")
         {
             value = "$aas#identifier";
@@ -770,6 +857,145 @@ public class QueryGrammarJSON : Grammar
                 break;
         }
         return value;
+    }
+
+    private static bool TryUnquoteDynamicStrVal(string quoted, out string inner)
+    {
+        inner = "";
+        quoted = quoted.Trim();
+        if (quoted.Length < 2 || !quoted.StartsWith('"') || !quoted.EndsWith('"'))
+            return false;
+        inner = Regex.Unescape(quoted.Substring(1, quoted.Length - 2));
+        return true;
+    }
+
+    /// <summary>
+    /// Resolves SME valueType/language field placeholders using
+    /// grammar <paramref name="queryType"/> (e.g. <c>$eq</c>, <c>$contains</c>), not Dynamic LINQ operators.
+    /// </summary>
+    private static bool TryResolveSmeValueTypeLanguage(
+        string mode, string queryType, string left, string right, out string result)
+    {
+        result = "";
+        switch (queryType)
+        {
+            case "$eq":
+            case "$ne":
+                if (!TryUnquoteDynamicStrVal(right, out var strLit))
+                    return false;
+                return TryResolveSmeVtLangComparison(mode, queryType, left, strLit, out result);
+
+            case "$contains":
+            case "$starts-with":
+            case "$ends-with":
+                if (!TryUnquoteDynamicStrVal(right, out var needle))
+                    return false;
+                return TryResolveSmeVtLangStringMethod(mode, queryType, left, needle, out result);
+
+            default:
+                return false;
+        }
+    }
+
+    private static bool TryResolveSmeVtLangComparison(
+        string mode, string queryType, string left, string strLit, out string result)
+    {
+        result = "";
+        var isEq = queryType == "$eq";
+
+        if (left == "vtvalue")
+        {
+            if (mode == "all" || mode == "all-aas")
+            {
+                if (!SmeQueryPrefilter.TryGetTValueForValueTypeLiteral(strLit, out var disc))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                if (!SmeQueryPrefilter.TrySerializeDataTypeAnnotation(strLit, out var ann))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(ann);
+                result = isEq
+                    ? $"(sme.TValue == \"{disc}\" && valueAnnotation == \"{esc}\")"
+                    : $"(sme.TValue != \"{disc}\" || valueAnnotation != \"{esc}\")";
+                return true;
+            }
+            if (mode == "sme.")
+            {
+                if (!SmeQueryPrefilter.TryGetTValueForValueTypeLiteral(strLit, out var disc))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                result = isEq ? $"(TValue == \"{disc}\")" : $"(TValue != \"{disc}\")";
+                return true;
+            }
+            return false;
+        }
+
+        if (left == "langvalue")
+        {
+            if (mode == "all" || mode == "all-aas")
+            {
+                if (!LanguageQueryPrefilter.TryValidateLanguageLiteral(strLit, out var lang))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(lang);
+                result = isEq
+                    ? $"(sme.TValue == \"S\" && valueAnnotation == \"{esc}\")"
+                    : $"(sme.TValue != \"S\" || valueAnnotation != \"{esc}\")";
+                return true;
+            }
+            if (mode == "sme.")
+            {
+                result = isEq ? "(TValue == \"S\")" : "(TValue != \"S\")";
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    private static bool TryResolveSmeVtLangStringMethod(
+        string mode, string queryType, string left, string needle, out string result)
+    {
+        result = "";
+        var esc = SmeQueryPrefilter.EscapeForDynamicLinq(needle);
+
+        if (left == "vtvalue")
+        {
+            result = "$ERROR";
+            return true;
+        }
+
+        if (left == "langvalue")
+        {
+            if (mode == "all" || mode == "all-aas")
+            {
+                result = queryType switch
+                {
+                    "$contains" => $"(sme.TValue == \"S\" && valueAnnotation.Contains(\"{esc}\"))",
+                    "$starts-with" => $"(sme.TValue == \"S\" && valueAnnotation.StartsWith(\"{esc}\"))",
+                    "$ends-with" => $"(sme.TValue == \"S\" && valueAnnotation.EndsWith(\"{esc}\"))",
+                    _ => ""
+                };
+                return result != "";
+            }
+            if (mode == "sme.")
+            {
+                result = "(TValue == \"S\")";
+                return true;
+            }
+            return false;
+        }
+
+        return false;
     }
 
     public static AllAccessPermissionRules _accessRules = null;
