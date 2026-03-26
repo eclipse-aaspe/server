@@ -3390,8 +3390,9 @@ public partial class Query
                         withValue = false;
                     }
                 }
-                split1 = combineSplit;
+                // split1 = combineSplit;
 
+                var prefix = "";
                 var vPrefix = "";
                 ii = 1;
                 for (var i = 0; i < split1.Count; i++)
@@ -3402,6 +3403,7 @@ public partial class Query
                     {
                         var v = s1;
                         var vReplace = s1;
+                        prefix = "";
                         foreach (var f in fields)
                         {
                             if (v.Contains(f))
@@ -3419,9 +3421,10 @@ public partial class Query
                             }
                         }
                         vPrefix = $"({vPrefix}) AND ";
-                        /*
-                        var v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
-                        var vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                        vPrefix = "";
+                        //
+                        v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                        vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
                         if (split2[0] == "\"DTValue\"")
                         {
                             v += " " + split2[3];
@@ -3442,7 +3445,7 @@ public partial class Query
                             }
                             i++;
                         }
-                        */
+                        //
 
                         rawBase += "LEFT JOIN(\r\n";
                         rawBase += "SELECT sme.SMId\r\n";
@@ -3456,6 +3459,10 @@ public partial class Query
                         convertConditionSQL = convertConditionSQL.Replace(vReplace, $"(value{ii}.SMId IS NOT NULL)");
 
                         ii++;
+                    }
+                    else
+                    {
+                        prefix += s1;
                     }
                 }
             }
