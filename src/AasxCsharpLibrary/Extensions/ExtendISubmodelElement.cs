@@ -1086,17 +1086,17 @@ namespace Extensions
                         SubmodelElementCollection opVariableCollection = new SubmodelElementCollection();
                         foreach (var inputVariable in operation.InputVariables)
                         {
-                            opVariableCollection.Value.Add(inputVariable.Value);
+                            opVariableCollection.AddChild(inputVariable.Value);
                         }
 
                         foreach (var outputVariable in operation.OutputVariables)
                         {
-                            opVariableCollection.Value.Add(outputVariable.Value);
+                            opVariableCollection.AddChild(outputVariable.Value);
                         }
 
                         foreach (var inOutVariable in operation.InoutputVariables)
                         {
-                            opVariableCollection.Value.Add(inOutVariable.Value);
+                            opVariableCollection.AddChild(inOutVariable.Value);
                         }
 
                         opVariableCollection.Value.RecurseOnReferables(state, parents, lambda);
