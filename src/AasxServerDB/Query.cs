@@ -1689,6 +1689,158 @@ public partial class Query
         return char.IsLetterOrDigit(ch) || ch == '_' || ch == '.';
     }
 
+    /// <summary>
+    /// True iff every <c>"valuePrefix".</c> table qualifier appears at parenthesis depth 0 (not nested).
+    /// Used to gate the combined ValueSets LEFT JOIN optimization; complex predicates fall back to the legacy path.
+    /// </summary>
+    private static bool ValueSetAliasOnlyAtTopLevel(string sql, string valuePrefix)
+    {
+        var delimiter = $"\"{valuePrefix}\".";
+        var delLen = delimiter.Length;
+        var depth = 0;
+        var inSingle = false;
+        var inDouble = false;
+        var inLineComment = false;
+        var inBlockComment = false;
+
+        for (var i = 0; i < sql.Length; i++)
+        {
+            var c = sql[i];
+            var next = i + 1 < sql.Length ? sql[i + 1] : '\0';
+
+            if (inLineComment)
+            {
+                if (c == '\n')
+                    inLineComment = false;
+                continue;
+            }
+            if (inBlockComment)
+            {
+                if (c == '*' && next == '/')
+                {
+                    i++;
+                    inBlockComment = false;
+                }
+                continue;
+            }
+            if (!inSingle && !inDouble)
+            {
+                if (c == '-' && next == '-')
+                {
+                    i++;
+                    inLineComment = true;
+                    continue;
+                }
+                if (c == '/' && next == '*')
+                {
+                    i++;
+                    inBlockComment = true;
+                    continue;
+                }
+            }
+
+            // Table alias must be matched as a whole ("alias".) before generic " handling: otherwise the first
+            // `"` of `"v"."SValue"` toggles inDouble and the delimiter is never detected (false positives).
+            if (!inSingle && !inDouble
+                && i + delLen <= sql.Length
+                && string.CompareOrdinal(sql, i, delimiter, 0, delLen) == 0)
+            {
+                if (depth != 0)
+                    return false;
+                i += delLen - 1;
+                continue;
+            }
+
+            if (!inDouble && c == '\'')
+            {
+                if (inSingle)
+                {
+                    if (next == '\'')
+                        i++;
+                    else
+                        inSingle = false;
+                }
+                else
+                    inSingle = true;
+                continue;
+            }
+            if (!inSingle && c == '"')
+            {
+                if (inDouble)
+                {
+                    if (next == '"')
+                        i++;
+                    else
+                        inDouble = false;
+                }
+                else
+                    inDouble = true;
+                continue;
+            }
+
+            if (!inSingle && !inDouble)
+            {
+                if (c == '(')
+                {
+                    depth++;
+                    continue;
+                }
+                if (c == ')')
+                {
+                    depth = Math.Max(0, depth - 1);
+                    continue;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static string TrimLeadingGroupingParensForValueSql(string s)
+    {
+        var t = s;
+        while (true)
+        {
+            var u = t.TrimStart();
+            if (u.Length == 0)
+                return t;
+            if (u[0] == '(')
+            {
+                t = u.Substring(1);
+                continue;
+            }
+            return u;
+        }
+    }
+
+    /// <summary>
+    /// Qualifies bare <c>"SValue"</c> / <c>"NValue"</c> / <c>"DTValue"</c> with <c>"alias".</c> only when not already qualified.
+    /// </summary>
+    private static string ReplaceBareValueFieldTokens(string sql, IReadOnlyList<string> quotedFields, string aliasName)
+    {
+        var tablePrefix = $"\"{aliasName}\".";
+        foreach (var f in quotedFields)
+        {
+            var replacement = tablePrefix + f;
+            var searchStart = 0;
+            while (searchStart < sql.Length)
+            {
+                var idx = sql.IndexOf(f, searchStart, StringComparison.Ordinal);
+                if (idx < 0)
+                    break;
+                if (idx >= tablePrefix.Length
+                    && string.CompareOrdinal(sql, idx - tablePrefix.Length, tablePrefix, 0, tablePrefix.Length) == 0)
+                {
+                    searchStart = idx + f.Length;
+                    continue;
+                }
+                sql = sql.Substring(0, idx) + replacement + sql.Substring(idx + f.Length);
+                searchStart = idx + replacement.Length;
+            }
+        }
+        return sql;
+    }
+
     private class joinAll
     {
         public int SMId;
@@ -3366,86 +3518,106 @@ public partial class Query
             {
                 List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\""];
                 var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
+                var useValueFastPath = ValueSetAliasOnlyAtTopLevel(convertConditionSQL, valuePrefix);
 
-                var ii = 0;
-                List<string> combineSplit = [];
-                var withValue = false;
-                for (var i = 0; i < split1.Count; i++)
+                if (useValueFastPath)
                 {
-                    if (split1[i].StartsWith("\"SValue\"") || split1[i].StartsWith("\"NValue\"") || split1[i].StartsWith("\"DTValue\""))
+                    List<string> combineSplit = [];
+                    var withValue = false;
+                    for (var i = 0; i < split1.Count; i++)
                     {
-                        if (withValue)
+                        var head = TrimLeadingGroupingParensForValueSql(split1[i]);
+                        if (head.StartsWith("\"SValue\"", StringComparison.Ordinal)
+                            || head.StartsWith("\"NValue\"", StringComparison.Ordinal)
+                            || head.StartsWith("\"DTValue\"", StringComparison.Ordinal))
                         {
-                            combineSplit[combineSplit.Count - 1] += split1[i];
+                            if (withValue)
+                            {
+                                combineSplit[^1] += $"\"{valuePrefix}\"." + split1[i];
+                            }
+                            else
+                            {
+                                combineSplit.Add(split1[i]);
+                            }
+                            withValue = true;
                         }
                         else
                         {
                             combineSplit.Add(split1[i]);
+                            withValue = false;
                         }
-                        withValue = true;
                     }
-                    else
-                    {
-                        combineSplit.Add(split1[i]);
-                        withValue = false;
-                    }
+                    split1 = combineSplit;
                 }
-                // split1 = combineSplit;
 
+                var ii = 0;
                 var prefix = "";
-                var vPrefix = "";
                 ii = 1;
                 for (var i = 0; i < split1.Count; i++)
                 {
                     var s1 = split1[i];
-                    var split2 = s1.Split(" ");
+                    var s1Head = TrimLeadingGroupingParensForValueSql(s1);
+                    var split2 = s1Head.Split(" ");
                     if (fields.Contains(split2[0]))
                     {
-                        var v = s1;
-                        var vReplace = s1;
+                        var fullSegment = prefix + s1;
                         prefix = "";
-                        foreach (var f in fields)
+
+                        string v;
+                        string vReplace;
+                        string vPrefix;
+
+                        if (useValueFastPath)
                         {
-                            if (v.Contains(f))
+                            var vPrefixParts = "";
+                            foreach (var f in fields)
                             {
-                                if (vPrefix == "")
-                                {
-                                    vPrefix = $"\"v\".{f} is not null";
-                                }
+                                if (!fullSegment.Contains(f, StringComparison.Ordinal))
+                                    continue;
+                                if (vPrefixParts == "")
+                                    vPrefixParts = $"\"v\".{f} is not null";
                                 else
-                                {
-                                    vPrefix += $" OR \"v\".{f} is not null";
-                                }
+                                    vPrefixParts += $" OR \"v\".{f} is not null";
+                            }
+                            vPrefix = string.IsNullOrEmpty(vPrefixParts) ? "" : $"({vPrefixParts}) AND ";
+                            v = ReplaceBareValueFieldTokens(fullSegment, fields, "v");
+                            vReplace = ReplaceBareValueFieldTokens(fullSegment, fields, valuePrefix);
+                        }
+                        else
+                        {
+                            vPrefix = "";
+                            v = s1;
+                            vReplace = s1;
+                            foreach (var f in fields)
+                            {
+                                if (!v.Contains(f, StringComparison.Ordinal))
+                                    continue;
                                 v = v.Replace(f, $"\"v\".{f}");
                                 vReplace = vReplace.Replace(f, $"\"{valuePrefix}\".{f}");
                             }
-                        }
-                        vPrefix = $"({vPrefix}) AND ";
-                        vPrefix = "";
-                        //
-                        v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
-                        vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
-                        if (split2[0] == "\"DTValue\"")
-                        {
-                            v += " " + split2[3];
-                            vReplace += " " + split2[3];
-                        }
-                        v = v.Replace(")", "");
-                        vReplace = vReplace.Replace(")", "");
-
-                        if (split2.Length >= 4 && split2[4] == "AND")
-                        {
-                            var split3 = split1[i + 1].Split(')');
-                            v = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
-                            vReplace = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
-                            for (var j = 0; j < split3.Length - 1; j++)
+                            v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                            vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                            if (split2[0] == "\"DTValue\"")
                             {
-                                v += split3[j] + ")";
-                                vReplace += split3[j] + ")";
+                                v += " " + split2[3];
+                                vReplace += " " + split2[3];
                             }
-                            i++;
+                            v = v.Replace(")", "");
+                            vReplace = vReplace.Replace(")", "");
+
+                            if (split2.Length >= 4 && split2[4] == "AND")
+                            {
+                                var split3 = split1[i + 1].Split(')');
+                                v = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
+                                vReplace = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
+                                for (var j = 0; j < split3.Length - 1; j++)
+                                {
+                                    v += split3[j] + ")";
+                                    vReplace += split3[j] + ")";
+                                }
+                                i++;
+                            }
                         }
-                        //
 
                         rawBase += "LEFT JOIN(\r\n";
                         rawBase += "SELECT sme.SMId\r\n";
