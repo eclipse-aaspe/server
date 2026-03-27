@@ -351,6 +351,18 @@ namespace AasxServerDB
                 db.SMRefSets.RemoveRange(aasDB.SMRefSets);
 
                 CrudOperator.SetAas(aasDB, newAas);
+
+                if (newAas.Submodels != null)
+                {
+                    foreach (var refSm in newAas.Submodels)
+                    {
+                        if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+                        {
+                            aasDB.SMRefSets.Add(new SMRefSet { Identifier = refSm.Keys[0].Value });
+                        }
+                    }
+                }
+
                 db.SaveChanges();
             }
         }
