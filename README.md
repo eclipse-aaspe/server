@@ -23,15 +23,12 @@
 > We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-8.0-blue)
 
 
-AASX Server is a companion app for the [AASX Package Explorer](). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core version
-exposes endpoints for REST, OPC UA, and MQTT protocols. The GUI version offers the same functionality and additionally uses the Blazor Framework to provide a
-browser-based GUI for exploring AASX packages.
+AASX Server is a companion app for the [AASX Package Explorer](https://github.com/eclipse-aaspe/package-explorer). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core variant exposes endpoints for REST, OPC UA, and MQTT protocols. The **Blazor** variant offers the same functionality and uses Blazor for a browser-based UI.
 
 > **IMPORTANT**
 >
-> AASX Server is now in V3, and the `main` branch includes the first release:  
-> [AASX Server v2023-09-13.alpha](https://github.com/admin-shell-io/aasx-server/releases/tag/v2023-09-13.alpha)  
-> The latest work takes place in the `policy3` branch, which will be merged into `main` soon.
+> AASX Server is in **V3**; see [Releases](https://github.com/eclipse-aaspe/server/releases).  
+> Ongoing development is also tracked on branches such as [`newdb2-main`](https://github.com/eclipse-aaspe/server/tree/newdb2-main) (see Docker tag `develop` below).
 
 > **TIP**
 >
@@ -40,84 +37,120 @@ browser-based GUI for exploring AASX packages.
 
 An AASX Server with security enabled can be found here: https://v3security.admin-shell-io.com/.
 
+## Quick reference (V3)
+
+| Topic | Detail |
+|--------|--------|
+| **Repository** | [eclipse-aaspe/server](https://github.com/eclipse-aaspe/server) |
+| **Default HTTP port** | **5001** (Kestrel; configure with `Kestrel__Endpoints__Http__Url` or `ASPNETCORE_URLS`) |
+| **API exploration** | Open **`/swagger`** on the same base URL as the UI (e.g. `http://localhost:5001/swagger`) |
+| **AASX files** | Place packages under **`./aasxs`** (or the path you pass to `--data-path`) |
+
+The legacy **V2** REST surface (`--rest`, `--host`, `--port`, fixed port **51310**) is **no longer** the primary API. Ignore the “**Connect to REST by:**” message in old tooling.
+
 ## How-to
 
-Currently, **AasxServerBlazor** is primarily used, but **AasxServerCore** is also supported. **AasxServerWindows** will no longer be developed, as .NET 6 works
-well on Windows. The `--rest`, `--host`, and `--port` options are no longer supported and will be removed soon, as they pertain to the old V2 API.
+Currently, **AasxServerBlazor** is the primary entry point; **AasxServerCore** may still be used in some deployments. **AasxServerWindows** is not actively developed; use **.NET 8** on Windows with the Blazor variant.
 
-Please ignore the "**Connect to REST by:**" message.
+### Running from source (development)
 
-You can place your AASXs into the `./aasxs` directory. In the examples below, replace **YOURPORT** and **YOURURL** with your actual port and URL.
-
-### Running AASX Server with .NET
-
-You can run the AASX server directly using the `dotnet` command:
+Solution file: [`src/AasxServer.sln`](src/AasxServer.sln). Typical local run (from repository root):
 
 ```sh
-export DOTNET_gcServer=1  
-export Kestrel__Endpoints__Http__Url=http://*:YOURPORT  
-dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL  
+dotnet restore src/AasxServer.sln
+dotnet run --project src/AasxServerBlazor/AasxServerBlazor.csproj -- --no-security --data-path ./aasxs --external-blazor http://localhost:5001
 ```
 
-> Note: ASP.NET Core Runtime 8.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+Arguments after `--` are passed to the server. Adjust `--data-path` and `--external-blazor` to match your environment. See also [`src/AasxServerBlazor/Properties/launchSettings.json`](src/AasxServerBlazor/Properties/launchSettings.json) for examples.
 
-### Running AASX Server with Docker
+### Remote debugging over SSH (Linux)
 
-You can use the Docker image available at:  
-[`docker.io/adminshellio/aasx-server-blazor-for-demo`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
+For a **non-Docker** run on a remote machine (bind `http://*:PORT`, optional Kestrel debug), start from an example script:
 
-This image includes several tags for different purposes:
-- `latest`: Latest stable release version.
-- `main`: Nightly build from the main branch (unstable).
-- `develop`: Build from any development state (highly unstable and potentially broken).
-- Version-specific tags: You can pull a specific version of the container.
+- Copy [`scripts/run-dev-ssh.sh.example`](scripts/run-dev-ssh.sh.example) to `run.sh`, set `APP_DIR` to your **publish** folder containing `AasxServerBlazor.dll`, then `chmod +x run.sh`.
 
-Place your AASXs into the `./aasxs` directory and run the Docker container with:
+From your laptop, forward the port, e.g.:
+
+```sh
+ssh -L 50010:127.0.0.1:50010 user@remote-host
+```
+
+### Running with .NET (published build)
+
+After publishing `AasxServerBlazor`, run the DLL (replace **YOURPORT** / **YOURURL**):
+
+```sh
+export DOTNET_gcServer=1
+export Kestrel__Endpoints__Http__Url=http://*:YOURPORT
+dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL
+```
+
+Default port in many configs is **5001**. [ASP.NET Core Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) is required.
+
+### Running with Docker
+
+Image: [`docker.io/adminshellio/aasx-server-blazor-for-demo`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
+
+**Tags** (there is **no** `latest` tag; always specify a tag):
+
+| Tag | Meaning |
+|-----|---------|
+| `main` | Built automatically by the GitHub pipeline on each push to **`main`** |
+| `develop` | Built **manually** when needed from the current development branch (e.g. [`newdb2-main`](https://github.com/eclipse-aaspe/server/tree/newdb2-main)) |
+| Version tags | Use when you need a fixed release build |
+
+Example:
 
 ```sh
 docker run \
--p 5001:5001 \
---restart unless-stopped \
--v ./aasxs:/AasxServerBlazor/aasxs \
-docker.io/adminshellio/aasx-server-blazor-for-demo:main
+  -p 5001:5001 \
+  --restart unless-stopped \
+  -v ./aasxs:/AasxServerBlazor/aasxs \
+  docker.io/adminshellio/aasx-server-blazor-for-demo:main
 ```
 
-### Using Docker Compose
+### Docker Compose (repository file)
 
-If you prefer to use Docker Compose, see the `docker-compose.yaml` configuration below:
+The repository includes a Compose file you can use or adapt:
 
-```yaml
-services:
-  aasx-server:
-    container_name: aasx-server
-    image: docker.io/adminshellio/aasx-server-blazor-for-demo:main
-    restart: unless-stopped
-    ports:
-      - YOURPORT:5001
-    environment:
-      - Kestrel__Endpoints__Http__Url=http://*:5001
-    volumes:
-      - ./aasxs:/usr/share/aasxs
-    command: --no-security --data-path /usr/share/aasxs --external-blazor YOURURL  
+```sh
+docker compose -f src/docker/docker-compose.yaml up --build
 ```
 
-### Persistence
+See [`src/docker/docker-compose.yaml`](src/docker/docker-compose.yaml) for ports, volumes (`./aasxs`), and default `command` line. There is also [`src/docker/docker-compose-demo.yaml`](src/docker/docker-compose-demo.yaml) for demo variants.
 
-The V3 version of the server includes a basic implementation of persistence using a database. We use Entity Framework, which has been tested with SQLite and
-PostgreSQL. SQLite is part of the standard deployment. (PostgreSQL details will be explained in the README in the future.)
+### Docker Hub variants (architectures)
 
-Add `--with-db` to turn on database storage.
-For the first start please add "`--start-index 0`" to get the AASX files in `--data-path` imported into the database.
-For further starts add "`--start-index number`" with number greater than you number of AASX files, e.g. 1000.
-If you change content by the API, you may add "`--save-temp number_of_seconds`" and the changes will be written to the database after the **number_of_seconds**.
-With "`--aasx-in-memory number`" you can specify how many AAS shall be shown in the blazor tree. Only the latest changed AAS will be shown.
+| Variant | linux/amd64 |
+|---------|----------------|
+| Blazor | [aasx-server-blazor-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo) |
+| Blazor arm32 | [aasx-server-blazor-for-demo-arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32) |
+| Blazor arm64 | [aasx-server-blazor-for-demo-arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64) |
+| Core | [aasx-server-core-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo) |
 
-Click on the links on the right.
-You can find an example server with database running here: [Example Server](https://cloudrepo.h2894164.stratoserver.net).
-The database content can be seen here: [Database Content](https://cloudrepo.h2894164.stratoserver.net/db).
-You may also do GraphQL queries to the database here: [GraphQL Queries](https://cloudrepo.h2894164.stratoserver.net/graphql/). On the GraphQL page, enter `{`
-followed by a space, and the wizard will guide you further.
-An example GraphQL query is:
+### Multi-architecture
+
+If you want to help with multi-arch images or Raspberry Pi, [open an issue](https://github.com/eclipse-aaspe/server/issues/new).
+
+### Build Docker images locally
+
+Use [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1) on Windows/PowerShell (see script for prerequisites).
+
+### Persistence (database)
+
+V3 can persist data with **Entity Framework** (SQLite is common; PostgreSQL has been used in tests).
+
+| Flag | Purpose |
+|------|---------|
+| `--with-db` | Enable database storage |
+| `--start-index 0` | First import: load AASX from `--data-path` into the DB |
+| `--start-index N` | Later starts: use **N** greater than the number of AASX files (e.g. 1000) so files are not re-imported |
+| `--save-temp SEC` | Periodically write API changes to the DB every **SEC** seconds |
+| `--aasx-in-memory N` | Limit how many AAS appear in the Blazor tree (only the most recently changed may be shown when limited) |
+
+Example server with DB (third-party): [Example Server](https://cloudrepo.h2894164.stratoserver.net) · [DB view](https://cloudrepo.h2894164.stratoserver.net/db) · [GraphQL](https://cloudrepo.h2894164.stratoserver.net/graphql/) (type `{` then space for the wizard).
+
+Example GraphQL query:
 
 ```graphql
 {
@@ -129,8 +162,14 @@ An example GraphQL query is:
 }
 ```
 
-If you want to create a registry and also automatically POST to it, please take a look at
-our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues) page.
+Registry / auto-POST topics: see [issue tracker](https://github.com/eclipse-aaspe/server/issues).
+
+## REST API (V3)
+
+- Prefer **OpenAPI**: **`GET /swagger`** (or `/swagger/index.html`) on your server base URL.
+- The implementation follows the **Asset Administration Shell REST API** (Part 2) for V3; path layout differs from the old **V2** tables that used port **51310**.
+
+**Legacy documentation** (V2 paths, `AasxServerCore`, Mono, port 51310, long path tables) is kept in [`docs/legacy-readme.md`](docs/legacy-readme.md) for reference only.
 
 ## CREATE NEW RELEASES
 
@@ -182,378 +221,12 @@ You can manually trigger this process using the workflow [here](https://github.c
 - `v1.0.0.2-aasV3-alpha-stable`: Stable release.
 - `v1.0.0.3-aasV3-alpha-latest`: Latest build on the main branch.
 
----
-
-## OLD DOCUMENTATION
-
-This documentation will be updated to V3 soon.
-
-AASX Server serves Industrie 4.0 AASX packages accessible by REST, OPC UA and
-MQTT protocols.
-
-The AASX Server is based on code of [AASX Package Explorer](https://github.com/admin-shell-io/aasx-package-explorer).
-
-There are three variants of the server:
-
-* **blazor**. This variant uses Blazor framework to provide a graphical user
-  interface in the browser for exploring the AASX packages. The other APIs
-  are the same as in the *core* variant.
-
-* **core**. This is a server based on .NET Core 3.1.
-
-* **windows**. This variant uses .NET Framework 4.7.2, which is the only way
-  how you can start a server on your Windows machine without administrator privileges.
-  If you run on windows start with this variant first and try *blazor* later.
-
-* Mind that *blazor* and *core* variants require administrator privileges, so they
-  can not be used for demonstration purposes on tightly-administered machines
-  (which are wide-spread in larger organizations and enterprises).
-
-A blazor demo server is running on https://admin-shell-io.com/5001/.
-Please click on an AAS and use the DOWNLOAD button on the right or
-use "https://admin-shell-io.com/51411/server/getaasx/0" etc. by browser
-or CURL on the command line.
-You can connect to this AASX Server by AASX Package Explorer by
-"File / AASX File Repository / Connect HTTP/REST repository" with
-REST endpoint "https://admin-shell-io.com/51411".
-
-## Binaries
-
-The binaries are available in the [Releases section](
-https://github.com/admin-shell-io/aasx-server/releases
-). We provide portable dotnet assemblies.
-
-### Installation
-
-AASX Server depends on .NET Core 3.1 runtime (`blazor` and `core` variants)
-and .NET Framework (`windows` variant), respectively. You need to install the
-respective runtimes before you start the server. .NET framework is part of windows.
-See https://dotnet.microsoft.com/download/dotnet-core/3.1
-
-To deploy the binaries, simply extract the release bundle (*e.g.*,
-`AasxServerWindows.zip` or `AasxServerCore.zip`) somewhere on your system.
-
-### Running for Demonstration
-
-We include an example AASX and various extra files (*e.g.*, certificates) in
-the release bundle so that you can readily start the server for demonstration
-purposes. The scripts `startForDemo.sh` and `startForDemo.bat` will start the
-server with these pre-packaged files.
-
-For example, if you run on Linux, change to the directory where you extracted
-the release bundle and invoke:
-
-```bash
-./startForDemo.sh
-```
-
-On Windows please start ```startForDemo.bat```.
-
-We provide a couple of sample admin shells (packaged as .aasx) for you to test
-and play with the software at: http://www.admin-shell-io.com/samples/.
-Please copy these to the ```aasxs``` subdirectory as needed.
-
-### Running on Windows
-
-1. Change to the directory where you extracted the release bundle.
-
-2. Start the server by running `startForDemo.bat` or by invoking the executable directly with the appropriate server variant. For example:
-
-   ```sh
-   AasxServerWindows.exe --opc --rest --data-path /path/to/aasxs
-   ```
-
-You can see the AAS on the server with: http://localhost:51310/server/listaas.
-To show the JSON of the exampleMotor AAS please use: http://localhost:51310/aas/ExampleMotor.
-To show submodel "Identification" please use: http://localhost:51310/aas/ExampleMotor/submodels/Identification/complete.
-
-<!--- Help starts. -->
-
-### Options
-
-To obtain help on individual flags and options, supply the argument `--help`:
-
-```sh
-AasxServerWindows.exe --help
-```
-
-or
-
-```sh
-AasxServerCore.exe --help
-```
-
-```sh
-AasxServerCore:
-  Serve AASX packages over different interfaces
-
-Usage:
-  AasxServerCore [options]
-
-Options:
-  -h, --host <host>                      Host which the server listens on [default: localhost]
-  -p, --port <port>                      Port which the server listens on [default: 51310]
-  --https                                If set, opens SSL connections. Make sure you bind a certificate to the port before.
-  --data-path <data-path>                Path to where the AASXs reside
-  --rest                                 If set, starts the REST server
-  --opc                                  If set, starts the OPC server
-  --mqtt                                 If set, starts a MQTT publisher
-  --debug-wait                           If set, waits for Debugger to attach
-  --opc-client-rate <opc-client-rate>    If set, starts an OPC client and refreshes on the given period (in milliseconds)
-  --connect <connect>                    If set, connects to AAS connect server. Given as a comma-separated values (server, node name, period in milliseconds) or as a flag (in which case it connects to a default server).
-  --proxy-file <proxy-file>              If set, parses the proxy information from the given proxy file
-  --no-security                          If set, no authentication is required
-  --edit                                 If set, allows edits in the user interface
-  --name <name>                          Name of the server
-  --version                              Show version information
-  -?, -h, --help                         Show help and usage information
-```
-
-<!--- Help ends. -->
-
-### Running on Linux
-
-Change to the directory where you extracted the release bundle.
-
-Start ```startForDemo.bat``` or use `dotnet` to execute the DLL with the same name
-as the server variant. For example:
-
-```sh
-dotnet AasxServerCore.dll --opc --rest --data-path /path/to/aasxs
-```
-
-### Mono
-
-You can use AasxServerWindows with Mono. Change to the directory where you extracted the release bundle.
-Use `mono` to execute the EXE:
-
-```
-mono AasxServerWindows.exe --rest --data-path /path/to/aasxs
-```
-
-If you want to also use "--opc" with Mono you need to change Opc.Ua.SampleServer.Config.xml:
-change `<StoreType>X509Store</StoreType>` to `<StoreType>Directory</StoreType>`.
-
-Mono gives you the possibility to run AasxServer on platforms like x86, PowerPC or MIPS.
-
-See supported Mono platforms on: https://www.mono-project.com/docs/about-mono/supported-platforms/
-
-Find Mono downloads on: https://www.mono-project.com/download/stable/
-
-### Build and Package Binaries
-
-To build the binaries from the source code, run the powershell script
-[`src/BuildForRelease.ps1`](src/BuildForRelease.ps1).
-
-To package the binaries for release, call [`src/PackageRelease.ps1`](
-src/PackageRelease.ps1).
-
-For more information on continuous integration, see
-[.github/workflows/build-and-package-release.yml](
-.github/workflows/build-and-package-release.yml
-) for a workflow executed on each release and
-[.github/workflows/check-release.yml](.github/workflows/check-release.yml) for
-a workflow which is executed on each push to master branch.
-
-
-# Docker Containers for Demonstration
-
-We provide pre-built Docker images for demonstration purposes at the following DockerHub repositories:
-
-### Blazor Variants
-* `blazor` [linux/amd64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
-* `blazor` [linux/arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)
-* `blazor` [linux/arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)
-
-### Core Variants
-* `core` [linux/amd64](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo)
-* `core` [linux/arm32](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo-arm32)
-* `core` [linux/arm64](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo-arm64)
-
-### Tags Information
-Each Docker image includes the following tags:
-- `latest`: Latest stable release version.
-- `main`: Nightly build from the main branch (unstable).
-- `develop`: Build from any development state (highly unstable and potentially broken).
-- Version-specific tags: You can pull a specific version of the container.
-
-### Multi-Architecture Support
-To facilitate deployment on Raspberry Pi or other architectures, we aim to create multi-arch Docker containers. If you have experience or would like to contribute, please let us know by [creating an issue](https://github.com/admin-shell-io/aasx-server/issues/new).
-
-### Example Usage
-For instance, to pull the latest `core` variant of the server for demonstration on an x86 64-bit machine (linux/amd64), use:
-
-```shell
-docker pull adminshellio/aasx-server-core-for-demo
-```
-
-Run the container with:
-
-```shell
-docker run \
-    --detach \
-    --network host \
-    adminshellio/aasx-server-core-for-demo
-```
-
-After running, you can access the server locally. For example, using curl:
-
-```shell
-curl http://localhost:51310/server/listaas
-```
-
-You should receive a response similar to this JSON:
-
-```json
-{
-  "aaslist": [
-    "0 : ExampleMotor : [IRI] http://customer.com/aas/9175_7013_7091_9168 : ./aasxs/Example_AAS_ServoDCMotor_21.aasx"
-  ]
-}
-```
-
-As you can see, we already provide an example AASX in the container.
-For a more thorough demo, you might want to copy additional AASX packages
-(*e.g.*, from the [samples][samples]) into the container. Find the container
-ID of your running container with:
-
-```shell
-docker ps
-```
-
-Then use `docker cp` to copy the AASX packages into the `aasxs` directory
-(assuming your docker container ID is `70fe45f1f102`):
-
-```shell
-docker cp /path/to/aasx/samples/  70fe45f1f102:/AasxServerCore/aasxs/
-```
-
-If you demo with `blazor` variant, change the destination path analogously to
-`AasxServerBlazor`.
-
-For example a docker with blazor may be started by
-
-```shell
-docker run -p 51000:51310 -p 51001:5001 -v ~/samples:/AasxServerBlazor/aasxs adminshellio/aasx-server-blazor-for-demo
-/AasxServerBlazor
-```
-
-connecting host port 51000 to REST port 51310 and host port 51001 to blazor
-view port 5001. In addition, the host directory ~/samples is used to load
-.AASX files from inside the docker.
-
-Mind that there are many other options for managing containers for custom demos
-such as [Docker multi-stage builds][multi-stage]
-(using one of our demo images as base), [bind mounts][bind-mounts] *etc*.
-
-[samples]: http://admin-shell-io.com/samples/
-
-[multi-stage]: https://docs.docker.com/develop/develop-images/multistage-build/
-
-[bind-mounts]: https://docs.docker.com/storage/bind-mounts/
-
-### Build Docker Containers for Demonstration on Linux/macOS
-
-We provide a powershell script to build the docker containers meant for
-demonstrations at [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1).
-
-## Basic API
-
-Please find a short description of the REST API below.
-
-{aas-identifier} = idShort of AAS <br />
-{submodel-identifier} = idShort of Submodel <br />
-{se-identifier} = idShort of SubmodelElement <br />
-{sec-identifier} = idShort of SubmodelElementCollection <br />
-
-### Asset Administration Shell Repository Interface
-
-| Cmd | String            | Example                                                                        |
-|-----|-------------------|--------------------------------------------------------------------------------|
-| GET | `/server/profile` | [http://localhost:51310/server/profile](http://localhost:51310/server/profile) |
-| GET | `/server/listaas` | [http://localhost:51310/server/listaas](http://localhost:51310/server/listaas) |
-
-### Asset Administration Shell Interface
-
-| Cmd | String                                                                                                                                                                     | Example                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|-----|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GET | `/aas/{aas-identifier}`<br />`/aas/{aas-identifier}/core`<br />`/aas/{aas-identifier}/complete`<br />`/aas/{aas-identifier}/thumbnail`<br />`/aas/{aas-identifier}/aasenv` | [http://localhost:51310/aas/ExampleMotor](http://localhost:51310/aas/ExampleMotor)<br />[http://localhost:51310/aas/ExampleMotor/core](http://localhost:51310/aas/ExampleMotor/core)<br />[http://localhost:51310/aas/ExampleMotor/complete](http://localhost:51310/aas/ExampleMotor/complete)<br />[http://localhost:51310/aas/ExampleMotor/thumbnail](http://localhost:51310/aas/ExampleMotor/thumbnail)<br />[http://localhost:51310/aas/ExampleMotor/aasenv](http://localhost:51310/aas/ExampleMotor/aasenv) |
-
-### Submodel Interface
-
-| Cmd | String                                                                                                                                                                                                                                                                                                                               |
-|-----|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GET | `/aas/{aas-identifier}/submodels/{submodel-identifier}`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/core`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/deep`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/complete`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/table` |
-
->
-*Example:* [http://localhost:51310/aas/ExampleMotor/submodels/Documentation/complete](http://localhost:51310/aas/ExampleMotor/submodels/Documentation/complete)
-
-### Submodel Element Interface
-
-| Cmd    | String                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GET    | `/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/core`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/complete`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/deep`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/value` |
-| PUT    | `/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/` *+ Payload*<br />*Payload = content of "elem"-part of a SubmodelElement (see example below)*                                                                                                                                                                                                                                                                                                    |
-| DELETE | `/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}`                                                                                                                                                                                                                                                                                                                                                                                  |
-
->
-*Example:* [http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements/RotationSpeed/complete](http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements/RotationSpeed/complete)
-
-### Submodel Element Collection Interface
-
-| Cmd    | String                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GET    | `/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/core`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/complete`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/deep`<br />`/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/value` |
-| PUT    | `/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}` *+ Payload*<br />*Payload = content of "elem"-part of a SubmodelElement (see example below)*                                                                                                                                                                                                                                                                                                                                                                         |
-| DELETE | `/aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}`                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-
-> *Example:* <http://localhost:51310/aas/ExampleMotor/submodels/Documentation/elements/OperatingManual/DocumentId/complete>
-
-### Example: PUT SubmodelElement
-
-`PUT` <http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements>   
-Payload:
-
-```json
-{
-  "value": "1234",
-  "valueId": null,
-  "semanticId": {
-    "keys": [
-      {
-        "type": "ConceptDescription",
-        "local": true,
-        "value": "http://customer.com/cd//1/1/18EBD56F6B43D895",
-        "index": 0,
-        "idType": "IRI"
-      }
-    ]
-  },
-  "constraints": [],
-  "hasDataSpecification": [],
-  "idShort": "RotationSpeedNEW",
-  "category": "VARIABLE",
-  "modelType": {
-    "name": "Property"
-  },
-  "valueType": {
-    "dataObjectType": {
-      "name": "integer"
-    }
-  }
-}
-```
-
-Test with: `GET` <http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements/RotationSpeedNEW>
-
 ## Issues
 
 If you want to request new features or report bugs, please
-[create an issue](
-https://github.com/admin-shell-io/aasx-server/issues/new).
+[create an issue](https://github.com/eclipse-aaspe/server/issues/new).
 
 ## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for instructions on joining the development and general contribution guidelines.
 For a complete list of all contributing individuals and companies, please visit our [CONTRIBUTORS](CONTRIBUTORS.md) page.
-
