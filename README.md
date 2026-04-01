@@ -1,9 +1,3 @@
-> [!IMPORTANT]
-> This repository has been moved alongside Eclipse AASX Package Explorer to [eclipse-aaspe](https://github.com/eclipse-aaspe) organisation.  
-> Branches and issues will be unaffected.
-> All links to the previous repository location are automatically redirected to the new location, e.g. when using `git clone`, `git push` etc.
-> It is, however, recommended to update the `origin` of any clones to avoid confusion.
-
 # Eclipse AASX Server
 
 > ### Status
@@ -99,7 +93,7 @@ Image: [`docker.io/adminshellio/aasx-server-blazor-for-demo`](https://hub.docker
 | `develop` | Built **manually** when needed from the current development branch (e.g. [`newdb2-main`](https://github.com/eclipse-aaspe/server/tree/newdb2-main)) |
 | Version tags | Use when you need a fixed release build |
 
-Example:
+**Example (`main` — CI build from branch `main`):**
 
 ```sh
 docker run \
@@ -108,6 +102,20 @@ docker run \
   -v ./aasxs:/AasxServerBlazor/aasxs \
   docker.io/adminshellio/aasx-server-blazor-for-demo:main
 ```
+
+**Example (`develop` — manual build from the active dev branch, e.g. `newdb2-main`):**
+
+```sh
+docker pull docker.io/adminshellio/aasx-server-blazor-for-demo:develop
+
+docker run \
+  -p 5001:5001 \
+  --restart unless-stopped \
+  -v ./aasxs:/AasxServerBlazor/aasxs \
+  docker.io/adminshellio/aasx-server-blazor-for-demo:develop
+```
+
+The same `:main` / `:develop` tags apply to the other **adminshellio/aasx-server-…-for-demo** images (Core, arm32, arm64) when published.
 
 ### Docker Compose (repository file)
 
@@ -121,12 +129,12 @@ See [`src/docker/docker-compose.yaml`](src/docker/docker-compose.yaml) for ports
 
 ### Docker Hub variants (architectures)
 
-| Variant | linux/amd64 |
-|---------|----------------|
-| Blazor | [aasx-server-blazor-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo) |
-| Blazor arm32 | [aasx-server-blazor-for-demo-arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32) |
-| Blazor arm64 | [aasx-server-blazor-for-demo-arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64) |
-| Core | [aasx-server-core-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo) |
+| Variant | linux/amd64 | Tags (examples) |
+|---------|-------------|-----------------|
+| Blazor | [aasx-server-blazor-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo) | `:main`, `:develop`, version tags |
+| Blazor arm32 | [aasx-server-blazor-for-demo-arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32) | `:main`, `:develop`, … |
+| Blazor arm64 | [aasx-server-blazor-for-demo-arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64) | `:main`, `:develop`, … |
+| Core | [aasx-server-core-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo) | `:main`, `:develop`, … |
 
 ### Multi-architecture
 

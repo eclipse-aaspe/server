@@ -1796,6 +1796,19 @@ public partial class Query
         return true;
     }
 
+    /// <summary>
+    /// True when <paramref name="sql"/> references outer-scope join aliases (SM subquery <c>t</c>, SME/path
+    /// joins <c>smeN</c>, <c>pN</c>, <c>PathN</c>) that are not in scope inside the standalone ValueSets
+    /// LEFT JOIN subquery. Mixed predicates must use the legacy value path.
+    /// </summary>
+    private static bool ValueSetFastPathHasForeignJoinRefs(string sql)
+    {
+        if (sql.Contains("\"t\".", StringComparison.Ordinal))
+            return true;
+        // Unquoted join result aliases emitted by CombineTablesLEFT (before value-block substitution).
+        return Regex.IsMatch(sql, @"\bsme\d+\.|\bp\d+\.|\bPath\d+\.", RegexOptions.CultureInvariant);
+    }
+
     private static string TrimLeadingGroupingParensForValueSql(string s)
     {
         var t = s;
@@ -2689,6 +2702,309 @@ public partial class Query
         return resultSMId.Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
     }
 
+    static void AddDistinct(List<string> list, string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !list.Contains(value))
+        {
+            list.Add(value);
+        }
+    }
+
+    static string NormalizeOuterFieldExpression(string expr, string oldAlias, string newAlias)
+    {
+        return expr.Replace($"\"{oldAlias}\".", $"\"{newAlias}\".");
+    }
+
+    private static List<string> CollectValueInstrPredicates(
+        ref string convertConditionSQL,
+        List<string> combinedSelectFields,
+        List<string> combinedWhereParts,
+        string valuePrefix)
+    {
+        List<string> handledOuterExpressions = [];
+
+        var valueFields = new[] { "SValue", "NValue", "DTValue" };
+
+        foreach (var field in valueFields)
+        {
+            var fullPattern = $"\"{valuePrefix}\".\"{field}\" IS NOT NULL AND instr(\"{valuePrefix}\".\"{field}\", ";
+            var shortPattern = $"instr(\"{valuePrefix}\".\"{field}\", ";
+
+            handledOuterExpressions.AddRange(CollectInstrMatches(
+                ref convertConditionSQL,
+                combinedSelectFields,
+                combinedWhereParts,
+                valuePrefix,
+                field,
+                fullPattern,
+                skipIfPrefixedWithIsNotNullAnd: false));
+
+            handledOuterExpressions.AddRange(CollectInstrMatches(
+                ref convertConditionSQL,
+                combinedSelectFields,
+                combinedWhereParts,
+                valuePrefix,
+                field,
+                shortPattern,
+                skipIfPrefixedWithIsNotNullAnd: true));
+        }
+
+        return handledOuterExpressions;
+    }
+
+    private static List<string> CollectInstrMatches(
+        ref string convertConditionSQL,
+        List<string> combinedSelectFields,
+        List<string> combinedWhereParts,
+        string valuePrefix,
+        string field,
+        string pattern,
+        bool skipIfPrefixedWithIsNotNullAnd)
+    {
+        List<string> handledOuterExpressions = [];
+        var startIndex = 0;
+
+        while (true)
+        {
+            var idx = convertConditionSQL.IndexOf(pattern, startIndex, StringComparison.Ordinal);
+            if (idx < 0)
+                break;
+
+            if (skipIfPrefixedWithIsNotNullAnd)
+            {
+                var prefixStart = Math.Max(0, idx - 30);
+                var prefixText = convertConditionSQL.Substring(prefixStart, idx - prefixStart);
+                if (prefixText.EndsWith("IS NOT NULL AND ", StringComparison.Ordinal))
+                {
+                    startIndex = idx + pattern.Length;
+                    continue;
+                }
+            }
+
+            var endIdx = FindInstrExpressionEnd(convertConditionSQL, idx);
+            if (endIdx < 0)
+                break;
+
+            var originalExpr = convertConditionSQL.Substring(idx, endIdx - idx);
+            var sqlExpr = originalExpr.Replace($"\"{valuePrefix}\".", "\"v\".", StringComparison.Ordinal);
+            var outerExpr = originalExpr.Replace($"\"{valuePrefix}\".", "\"value\".", StringComparison.Ordinal);
+
+            var selectField = $"    v.\"{field}\" AS \"{field}\"";
+            if (!combinedSelectFields.Contains(selectField))
+            {
+                combinedSelectFields.Add(selectField);
+            }
+
+            var whereExpr = $"({sqlExpr})";
+            if (!combinedWhereParts.Contains(whereExpr))
+            {
+                combinedWhereParts.Add(whereExpr);
+            }
+
+            convertConditionSQL = convertConditionSQL.Replace(originalExpr, outerExpr, StringComparison.Ordinal);
+            handledOuterExpressions.Add(outerExpr);
+
+            startIndex = idx + outerExpr.Length;
+        }
+
+        return handledOuterExpressions;
+    }
+
+    private static int FindInstrExpressionEnd(string sql, int startIndex)
+    {
+        var parenDepth = 0;
+        var seenInstrParen = false;
+
+        for (var i = startIndex; i < sql.Length; i++)
+        {
+            var c = sql[i];
+
+            if (c == '(')
+            {
+                parenDepth++;
+                seenInstrParen = true;
+            }
+            else if (c == ')')
+            {
+                parenDepth--;
+            }
+
+            if (seenInstrParen && parenDepth == 0)
+            {
+                var j = i + 1;
+
+                while (j < sql.Length && sql[j] == ' ')
+                    j++;
+
+                if (j < sql.Length && (sql[j] == '>' || sql[j] == '<' || sql[j] == '=' || sql[j] == '!'))
+                {
+                    j++;
+
+                    if (j < sql.Length && sql[j] == '=')
+                        j++;
+
+                    while (j < sql.Length && sql[j] == ' ')
+                        j++;
+
+                    while (j < sql.Length)
+                    {
+                        if (StartsWithBoolBoundary(sql, j))
+                            break;
+
+                        j++;
+                    }
+
+                    return j;
+                }
+
+                return i + 1;
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool StartsWithBoolBoundary(string sql, int index)
+    {
+        if (index >= sql.Length)
+            return true;
+
+        return sql.AsSpan(index).StartsWith(" AND ", StringComparison.Ordinal)
+            || sql.AsSpan(index).StartsWith(" OR ", StringComparison.Ordinal)
+            || sql[index] == ')';
+    }
+
+    private static string TrimTrailingBoolOperator(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+            return s;
+
+        s = s.Trim();
+
+        while (true)
+        {
+            if (s.EndsWith(" OR", StringComparison.Ordinal))
+            {
+                s = s[..^3].TrimEnd();
+                continue;
+            }
+
+            if (s.EndsWith(" AND", StringComparison.Ordinal))
+            {
+                s = s[..^4].TrimEnd();
+                continue;
+            }
+
+            if (s.EndsWith(" OR )", StringComparison.Ordinal))
+            {
+                s = s[..^5].TrimEnd() + ")";
+                continue;
+            }
+
+            if (s.EndsWith(" AND )", StringComparison.Ordinal))
+            {
+                s = s[..^6].TrimEnd() + ")";
+                continue;
+            }
+
+            break;
+        }
+
+        return s;
+    }
+
+    private static string TrimLeadingBoolOperator(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+            return s;
+
+        s = s.TrimStart();
+
+        while (true)
+        {
+            if (s.StartsWith("OR ", StringComparison.Ordinal))
+            {
+                s = s[3..].TrimStart();
+                continue;
+            }
+
+            if (s.StartsWith("AND ", StringComparison.Ordinal))
+            {
+                s = s[4..].TrimStart();
+                continue;
+            }
+
+            break;
+        }
+
+        return s;
+    }
+
+    private static string TrimUnbalancedTrailingRightParens(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+            return s;
+
+        s = s.Trim();
+
+        while (s.EndsWith(")", StringComparison.Ordinal))
+        {
+            var balance = 0;
+            foreach (var c in s)
+            {
+                if (c == '(')
+                    balance++;
+                else if (c == ')')
+                    balance--;
+            }
+
+            if (balance < 0)
+            {
+                s = s[..^1].TrimEnd();
+                continue;
+            }
+
+            break;
+        }
+
+        return s;
+    }
+
+    private static string TrimAtForeignAlias(string expr, string valuePrefix)
+    {
+        if (string.IsNullOrWhiteSpace(expr))
+            return expr;
+
+        var patterns = new[]
+        {
+        " AND \"s",
+        " OR \"s",
+        " AND \"t\".",
+        " OR \"t\".",
+        " AND \"a\".",
+        " OR \"a\".",
+        " AND \"p",
+        " OR \"p"
+    };
+
+        var cut = -1;
+        foreach (var p in patterns)
+        {
+            var idx = expr.IndexOf(p, StringComparison.Ordinal);
+            if (idx >= 0 && (cut < 0 || idx < cut))
+            {
+                cut = idx;
+            }
+        }
+
+        if (cut >= 0)
+        {
+            expr = expr[..cut];
+        }
+
+        return expr.Trim();
+    }
+
     private static List<int> CombineTablesLEFT(
         AasContext db,
         Dictionary<string, string>? conditionsExpression,
@@ -3405,11 +3721,126 @@ public partial class Query
 
             convertConditionSQL = convertConditionSQL.Replace($"\"{smPrefix}\".", "\"t\".");
 
+            List<string> combinedSelectFields = [];
+            List<string> combinedWhereParts = [];
+
+            // -----------------------------
+            // VALUE-PREFIX einsammeln
+            // -----------------------------
+            if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
+            {
+                List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\""];
+
+                CollectValueInstrPredicates(
+                    ref convertConditionSQL,
+                    combinedSelectFields,
+                    combinedWhereParts,
+                    valuePrefix);
+
+                var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
+
+                var prefix = "";
+
+                for (var i = 0; i < split1.Count; i++)
+                {
+                    var s1 = split1[i];
+
+                    // Bereits ersetzte value-Ausdrücke nicht nochmal anfassen
+                    if (s1.Contains("\"value\".", StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    var s1Head = TrimLeadingGroupingParensForValueSql(s1);
+                    var split2 = s1Head.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                    if (split2.Length == 0)
+                    {
+                        prefix = "";
+                        continue;
+                    }
+
+                    if (fields.Contains(split2[0]))
+                    {
+                        var fullSegment = s1;
+                        prefix = "";
+
+                        var sourceExpr = TrimLeadingBoolOperator(TrimTrailingBoolOperator(fullSegment));
+
+                        // 👉 NUR lokalen Value-Teil behalten (kein s1/t/a/p# mehr)
+                        var localValueExpr = TrimAtForeignAlias(sourceExpr, valuePrefix);
+
+                        // 👉 Expressions bauen
+                        var joinExpr = ReplaceBareValueFieldTokens(localValueExpr, fields, "v");
+                        var outerExpr = ReplaceBareValueFieldTokens(sourceExpr, fields, "value");
+                        var sourceExprNormalized = ReplaceBareValueFieldTokens(sourceExpr, fields, valuePrefix);
+                        var localSourceExprNormalized = ReplaceBareValueFieldTokens(localValueExpr, fields, valuePrefix);
+
+                        // 👉 Klammern korrigieren
+                        sourceExpr = TrimUnbalancedTrailingRightParens(sourceExpr);
+                        localValueExpr = TrimUnbalancedTrailingRightParens(localValueExpr);
+                        joinExpr = TrimUnbalancedTrailingRightParens(joinExpr);
+                        outerExpr = TrimUnbalancedTrailingRightParens(outerExpr);
+                        sourceExprNormalized = TrimUnbalancedTrailingRightParens(sourceExprNormalized);
+                        localSourceExprNormalized = TrimUnbalancedTrailingRightParens(localSourceExprNormalized);
+
+                        // 👉 Alle verwendeten Felder ins SELECT aufnehmen
+                        foreach (var f in fields)
+                        {
+                            if (!sourceExpr.Contains(f, StringComparison.Ordinal))
+                                continue;
+
+                            var fieldName2 = f.Replace("\"", "");
+                            var selectField2 = $"    v.\"{fieldName2}\" AS \"{fieldName2}\"";
+                            if (!combinedSelectFields.Contains(selectField2))
+                            {
+                                combinedSelectFields.Add(selectField2);
+                            }
+                        }
+
+                        // 👉 WHERE für inneren value-Join
+                        var trimmedJoinExpr = joinExpr.Trim();
+                        var whereExpr = trimmedJoinExpr.StartsWith("(") && trimmedJoinExpr.EndsWith(")")
+                            ? trimmedJoinExpr
+                            : $"({trimmedJoinExpr})";
+
+                        if (!combinedWhereParts.Contains(whereExpr))
+                        {
+                            combinedWhereParts.Add(whereExpr);
+                        }
+
+                        // 👉 Replace im äußeren Ausdruck
+                        if (convertConditionSQL.Contains(sourceExprNormalized, StringComparison.Ordinal))
+                        {
+                            convertConditionSQL = convertConditionSQL.Replace(sourceExprNormalized, outerExpr, StringComparison.Ordinal);
+                        }
+                        else if (convertConditionSQL.Contains(sourceExpr, StringComparison.Ordinal))
+                        {
+                            convertConditionSQL = convertConditionSQL.Replace(sourceExpr, outerExpr, StringComparison.Ordinal);
+                        }
+                        else if (convertConditionSQL.Contains(localSourceExprNormalized, StringComparison.Ordinal))
+                        {
+                            convertConditionSQL = convertConditionSQL.Replace(localSourceExprNormalized, outerExpr, StringComparison.Ordinal);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        prefix = "";
+                    }
+                }
+            }
+
+            // -----------------------------
+            // SME-PREFIX einsammeln
+            // -----------------------------
             if (convertConditionSQL.Contains($"\"{smePrefix}\"."))
             {
                 var withInstr = false;
-                var ii = 1;
                 var split1 = convertConditionSQL.Split($"\"{smePrefix}\".");
+
                 foreach (var s1 in split1)
                 {
                     if (s1.EndsWith(" IS NOT NULL AND instr("))
@@ -3419,6 +3850,11 @@ public partial class Query
                     }
 
                     var split2 = s1.Split(" ");
+                    if (split2.Length < 3)
+                    {
+                        continue;
+                    }
+
                     var field = split2[0].Replace("\"", "").Replace(",", "");
                     var offsetvalue = 3;
 
@@ -3435,222 +3871,312 @@ public partial class Query
                             s = $"\"{field}\" IS NOT NULL";
                             sInstr = split2[0] + " " + split2[1] + " > 0";
                         }
-                        if (split2.Length >= offsetvalue + 4 && split2[offsetvalue] == "AND")
+
+                        // Feld im SELECT mitnehmen
+                        AddDistinct(combinedSelectFields, $"    sme.\"{field}\" AS \"{field}\"");
+
+                        // SME-Bedingung für groben Vorfilter merken
+                        AddDistinct(combinedWhereParts, $"(\"sme\".{s})");
+
+                        if (sInstr != "")
                         {
-                            var v = split2[offsetvalue + 1] + " " + split2[offsetvalue + 2] + " " + split2[offsetvalue + 3];
-                            if (v.StartsWith('('))
-                            {
-                                var j = offsetvalue + 3;
-                                while (!split2[j].EndsWith(')'))
-                                {
-                                    j++;
-                                    v += " " + split2[j];
-                                }
-                            }
-                            if (v.EndsWith("))"))
-                            {
-                                v = v.Replace("))", ")");
-                            }
-                            else
-                            {
-                                v = v.Replace("(", "").Replace(")", "");
-                            }
-                            var vReplace = v;
-                            v = v.Replace("(", "").Replace(")", "");
-                            v = v.Replace($"\"v\".", "");
-
-                            rawBase += "LEFT JOIN(\r\n";
-                            rawBase += "SELECT sme.SMId\r\n";
-                            rawBase += "FROM ValueSets v\r\n";
-                            rawBase += $"LEFT JOIN SMESets sme ON sme.Id = v.SMEId AND sme.{s}";
-                            if (sInstr != "")
-                            {
-                                rawBase += $" AND instr(sme.{sInstr}";
-                            }
-                            rawBase += "\r\n";
-                            rawBase += $"WHERE \"v\".{v} AND sme.{s}\r\n";
-                            rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
-
-                            var replace = $"\"{smePrefix}\".{s}";
-                            if (sInstr != "")
-                            {
-                                replace += $" AND instr(\"{smePrefix}\".{sInstr}";
-                            }
-                            replace += $" AND {vReplace}";
-
-                            convertConditionSQL = convertConditionSQL.Replace(replace, $"(sme{ii}.SMId IS NOT NULL)");
-
-                            pathPrefix.Add($"sme{ii}");
-
-                            ii++;
+                            // instr-Fall beibehalten wie bisher
+                            AddDistinct(combinedWhereParts, $"(instr(sme.{sInstr})");
                         }
-                        else
+
+                        // Im Gesamtausdruck nur Alias umbiegen:
+                        // "s1"."SemanticId" = '...' -> "value"."SemanticId" = '...'
+                        var replace = $"\"{smePrefix}\".{s}";
+                        var replacement = $"\"value\".{s}";
+
+                        if (sInstr != "")
                         {
-                            rawBase += "LEFT JOIN(\r\n";
-                            rawBase += "SELECT sme.SMId\r\n";
-                            rawBase += "FROM SMESets sme\r\n";
-                            rawBase += "LEFT JOIN ValueSets v ON sme.Id = v.SMEId\r\n";
-                            rawBase += $"WHERE \"sme\".{s}";
-                            if (sInstr != "")
-                            {
-                                rawBase += $" AND instr(sme.{sInstr}";
-                            }
-                            rawBase += "\r\n";
-                            rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
-
-                            var replace = $"\"{smePrefix}\".{s}";
-                            if (sInstr != "")
-                            {
-                                replace += $" AND instr(\"{smePrefix}\".{sInstr}";
-                            }
-
-                            convertConditionSQL = convertConditionSQL.Replace(replace, $"(sme{ii}.SMId IS NOT NULL)");
-
-                            pathPrefix.Add($"sme{ii}");
-
-                            ii++;
+                            replace += $" AND instr(\"{smePrefix}\".{sInstr}";
+                            replacement += $" AND instr(\"value\".{sInstr}";
                         }
+
+                        convertConditionSQL = convertConditionSQL.Replace(replace, replacement);
                     }
                 }
             }
 
-            if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
+            // -----------------------------
+            // Gemeinsamen Vorfilter-Join bauen
+            // -----------------------------
+            if (combinedSelectFields.Count > 0 || combinedWhereParts.Count > 0)
             {
-                List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\""];
-                var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
-                var useValueFastPath = ValueSetAliasOnlyAtTopLevel(convertConditionSQL, valuePrefix);
+                rawBase += "LEFT JOIN(\r\n";
+                rawBase += "  SELECT DISTINCT\r\n";
+                rawBase += "    sme.SMId AS \"SMId\"";
 
-                if (useValueFastPath)
+                foreach (var selectField in combinedSelectFields.Distinct())
                 {
-                    List<string> combineSplit = [];
-                    var withValue = false;
-                    for (var i = 0; i < split1.Count; i++)
+                    rawBase += ",\r\n";
+                    rawBase += selectField;
+                }
+
+                rawBase += "\r\n";
+                rawBase += "  FROM SMESets sme\r\n";
+                rawBase += "  LEFT JOIN ValueSets v ON v.SMEId = sme.Id\r\n";
+
+                if (combinedWhereParts.Count > 0)
+                {
+                    rawBase += "  WHERE " + string.Join("\r\n     OR ", combinedWhereParts.Distinct()) + "\r\n";
+                }
+
+                rawBase += ") AS value ON value.\"SMId\" = t.Id\r\n";
+            }
+
+            if (false)
+            {
+                if (convertConditionSQL.Contains($"\"{smePrefix}\"."))
+                {
+                    var withInstr = false;
+                    var ii = 1;
+                    var split1 = convertConditionSQL.Split($"\"{smePrefix}\".");
+                    foreach (var s1 in split1)
                     {
-                        var head = TrimLeadingGroupingParensForValueSql(split1[i]);
-                        if (head.StartsWith("\"SValue\"", StringComparison.Ordinal)
-                            || head.StartsWith("\"NValue\"", StringComparison.Ordinal)
-                            || head.StartsWith("\"DTValue\"", StringComparison.Ordinal))
+                        if (s1.EndsWith(" IS NOT NULL AND instr("))
                         {
-                            if (withValue)
+                            withInstr = true;
+                            continue;
+                        }
+
+                        var split2 = s1.Split(" ");
+                        var field = split2[0].Replace("\"", "").Replace(",", "");
+                        var offsetvalue = 3;
+
+                        if (smeFields.Contains(field))
+                        {
+                            var s = split2[0] + " " + split2[1] + " " + split2[2];
+                            s = s.Replace(")", "");
+
+                            var sInstr = "";
+                            if (withInstr)
                             {
-                                combineSplit[^1] += $"\"{valuePrefix}\"." + split1[i];
+                                withInstr = false;
+                                offsetvalue = 4;
+                                s = $"\"{field}\" IS NOT NULL";
+                                sInstr = split2[0] + " " + split2[1] + " > 0";
+                            }
+                            if (split2.Length >= offsetvalue + 4 && split2[offsetvalue] == "AND")
+                            {
+                                var v = split2[offsetvalue + 1] + " " + split2[offsetvalue + 2] + " " + split2[offsetvalue + 3];
+                                if (v.StartsWith('('))
+                                {
+                                    var j = offsetvalue + 3;
+                                    while (!split2[j].EndsWith(')'))
+                                    {
+                                        j++;
+                                        v += " " + split2[j];
+                                    }
+                                }
+                                if (v.EndsWith("))"))
+                                {
+                                    v = v.Replace("))", ")");
+                                }
+                                else
+                                {
+                                    v = v.Replace("(", "").Replace(")", "");
+                                }
+                                var vReplace = v;
+                                v = v.Replace("(", "").Replace(")", "");
+                                v = v.Replace($"\"v\".", "");
+
+                                rawBase += "LEFT JOIN(\r\n";
+                                rawBase += "SELECT sme.SMId\r\n";
+                                rawBase += "FROM ValueSets v\r\n";
+                                rawBase += $"LEFT JOIN SMESets sme ON sme.Id = v.SMEId AND sme.{s}";
+                                if (sInstr != "")
+                                {
+                                    rawBase += $" AND instr(sme.{sInstr}";
+                                }
+                                rawBase += "\r\n";
+                                rawBase += $"WHERE \"v\".{v} AND sme.{s}\r\n";
+                                rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
+
+                                var replace = $"\"{smePrefix}\".{s}";
+                                if (sInstr != "")
+                                {
+                                    replace += $" AND instr(\"{smePrefix}\".{sInstr}";
+                                }
+                                replace += $" AND {vReplace}";
+
+                                convertConditionSQL = convertConditionSQL.Replace(replace, $"(sme{ii}.SMId IS NOT NULL)");
+
+                                pathPrefix.Add($"sme{ii}");
+
+                                ii++;
+                            }
+                            else
+                            {
+                                rawBase += "LEFT JOIN(\r\n";
+                                rawBase += "SELECT sme.SMId\r\n";
+                                rawBase += "FROM SMESets sme\r\n";
+                                rawBase += "LEFT JOIN ValueSets v ON sme.Id = v.SMEId\r\n";
+                                rawBase += $"WHERE \"sme\".{s}";
+                                if (sInstr != "")
+                                {
+                                    rawBase += $" AND instr(sme.{sInstr}";
+                                }
+                                rawBase += "\r\n";
+                                rawBase += $") AS sme{ii} ON sme{ii}.SMId = t.Id\r\n";
+
+                                var replace = $"\"{smePrefix}\".{s}";
+                                if (sInstr != "")
+                                {
+                                    replace += $" AND instr(\"{smePrefix}\".{sInstr}";
+                                }
+
+                                convertConditionSQL = convertConditionSQL.Replace(replace, $"(sme{ii}.SMId IS NOT NULL)");
+
+                                pathPrefix.Add($"sme{ii}");
+
+                                ii++;
+                            }
+                        }
+                    }
+                }
+
+                if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
+                {
+                    List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\""];
+                    var split1 = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
+                    var useValueFastPath = ValueSetAliasOnlyAtTopLevel(convertConditionSQL, valuePrefix)
+                        && !ValueSetFastPathHasForeignJoinRefs(convertConditionSQL);
+
+                    if (useValueFastPath)
+                    {
+                        List<string> combineSplit = [];
+                        var withValue = false;
+                        for (var i = 0; i < split1.Count; i++)
+                        {
+                            var head = TrimLeadingGroupingParensForValueSql(split1[i]);
+                            if (head.StartsWith("\"SValue\"", StringComparison.Ordinal)
+                                || head.StartsWith("\"NValue\"", StringComparison.Ordinal)
+                                || head.StartsWith("\"DTValue\"", StringComparison.Ordinal))
+                            {
+                                if (withValue)
+                                {
+                                    combineSplit[^1] += $"\"{valuePrefix}\"." + split1[i];
+                                }
+                                else
+                                {
+                                    combineSplit.Add(split1[i]);
+                                }
+                                withValue = true;
                             }
                             else
                             {
                                 combineSplit.Add(split1[i]);
+                                withValue = false;
                             }
-                            withValue = true;
                         }
-                        else
-                        {
-                            combineSplit.Add(split1[i]);
-                            withValue = false;
-                        }
+                        split1 = combineSplit;
                     }
-                    split1 = combineSplit;
-                }
 
-                var ii = 0;
-                var prefix = "";
-                ii = 1;
-                for (var i = 0; i < split1.Count; i++)
-                {
-                    var s1 = split1[i];
-                    var s1Head = TrimLeadingGroupingParensForValueSql(s1);
-                    var split2 = s1Head.Split(" ");
-                    if (fields.Contains(split2[0]))
+                    var ii = 0;
+                    var prefix = "";
+                    ii = 1;
+                    for (var i = 0; i < split1.Count; i++)
                     {
-                        var fullSegment = prefix + s1;
-                        prefix = "";
-
-                        string v;
-                        string vReplace;
-                        string vPrefix;
-
-                        if (useValueFastPath)
+                        var s1 = split1[i];
+                        var s1Head = TrimLeadingGroupingParensForValueSql(s1);
+                        var split2 = s1Head.Split(" ");
+                        if (fields.Contains(split2[0]))
                         {
-                            var vPrefixParts = "";
-                            foreach (var f in fields)
-                            {
-                                if (!fullSegment.Contains(f, StringComparison.Ordinal))
-                                    continue;
-                                if (vPrefixParts == "")
-                                    vPrefixParts = $"\"v\".{f} is not null";
-                                else
-                                    vPrefixParts += $" OR \"v\".{f} is not null";
-                            }
-                            vPrefix = string.IsNullOrEmpty(vPrefixParts) ? "" : $"({vPrefixParts}) AND ";
-                            v = ReplaceBareValueFieldTokens(fullSegment, fields, "v");
-                            vReplace = ReplaceBareValueFieldTokens(fullSegment, fields, valuePrefix);
-                        }
-                        else
-                        {
-                            vPrefix = "";
-                            v = s1;
-                            vReplace = s1;
-                            foreach (var f in fields)
-                            {
-                                if (!v.Contains(f, StringComparison.Ordinal))
-                                    continue;
-                                v = v.Replace(f, $"\"v\".{f}");
-                                vReplace = vReplace.Replace(f, $"\"{valuePrefix}\".{f}");
-                            }
-                            v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
-                            vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
-                            if (split2[0] == "\"DTValue\"")
-                            {
-                                v += " " + split2[3];
-                                vReplace += " " + split2[3];
-                            }
-                            v = v.Replace(")", "");
-                            vReplace = vReplace.Replace(")", "");
+                            var fullSegment = prefix + s1;
+                            prefix = "";
 
-                            if (split2.Length >= 4 && split2[4] == "AND")
+                            string v;
+                            string vReplace;
+                            string vPrefix;
+
+                            if (useValueFastPath)
                             {
-                                var split3 = split1[i + 1].Split(')');
-                                v = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
-                                vReplace = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
-                                for (var j = 0; j < split3.Length - 1; j++)
+                                var vPrefixParts = "";
+                                foreach (var f in fields)
                                 {
-                                    v += split3[j] + ")";
-                                    vReplace += split3[j] + ")";
+                                    if (!fullSegment.Contains(f, StringComparison.Ordinal))
+                                        continue;
+                                    if (vPrefixParts == "")
+                                        vPrefixParts = $"\"v\".{f} is not null";
+                                    else
+                                        vPrefixParts += $" OR \"v\".{f} is not null";
                                 }
-                                i++;
+                                vPrefix = string.IsNullOrEmpty(vPrefixParts) ? "" : $"({vPrefixParts}) AND ";
+                                v = ReplaceBareValueFieldTokens(fullSegment, fields, "v");
+                                vReplace = ReplaceBareValueFieldTokens(fullSegment, fields, valuePrefix);
                             }
+                            else
+                            {
+                                vPrefix = "";
+                                v = s1;
+                                vReplace = s1;
+                                foreach (var f in fields)
+                                {
+                                    if (!v.Contains(f, StringComparison.Ordinal))
+                                        continue;
+                                    v = v.Replace(f, $"\"v\".{f}");
+                                    vReplace = vReplace.Replace(f, $"\"{valuePrefix}\".{f}");
+                                }
+                                v = "\"v\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                                vReplace = $"\"{valuePrefix}\"." + split2[0] + " " + split2[1] + " " + split2[2];
+                                if (split2[0] == "\"DTValue\"")
+                                {
+                                    v += " " + split2[3];
+                                    vReplace += " " + split2[3];
+                                }
+                                v = v.Replace(")", "");
+                                vReplace = vReplace.Replace(")", "");
+
+                                if (split2.Length >= 4 && split2[4] == "AND")
+                                {
+                                    var split3 = split1[i + 1].Split(')');
+                                    v = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
+                                    vReplace = "(" + $"\"{valuePrefix}\"." + split1[i] + $"\"{valuePrefix}\".";
+                                    for (var j = 0; j < split3.Length - 1; j++)
+                                    {
+                                        v += split3[j] + ")";
+                                        vReplace += split3[j] + ")";
+                                    }
+                                    i++;
+                                }
+                            }
+
+                            rawBase += "LEFT JOIN(\r\n";
+                            rawBase += "SELECT sme.SMId\r\n";
+                            rawBase += "FROM ValueSets v\r\n";
+                            rawBase += "LEFT JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
+                            rawBase += $"WHERE {vPrefix}({v})\r\n";
+                            rawBase += $") AS value{ii} ON value{ii}.SMId = t.Id\r\n";
+
+                            pathPrefix.Add($"value{ii}");
+
+                            convertConditionSQL = convertConditionSQL.Replace(vReplace, $"(value{ii}.SMId IS NOT NULL)");
+
+                            ii++;
                         }
-
-                        rawBase += "LEFT JOIN(\r\n";
-                        rawBase += "SELECT sme.SMId\r\n";
-                        rawBase += "FROM ValueSets v\r\n";
-                        rawBase += "LEFT JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
-                        rawBase += $"WHERE {vPrefix}({v})\r\n";
-                        rawBase += $") AS value{ii} ON value{ii}.SMId = t.Id\r\n";
-
-                        pathPrefix.Add($"value{ii}");
-
-                        convertConditionSQL = convertConditionSQL.Replace(vReplace, $"(value{ii}.SMId IS NOT NULL)");
-
-                        ii++;
-                    }
-                    else
-                    {
-                        prefix += s1;
+                        else
+                        {
+                            prefix += s1;
+                        }
                     }
                 }
-            }
 
-            // The outer SQL is "FROM (SMSets AS t) ..."; EF's WHERE still references join aliases from the
-            // IQueryable (e.g. "s1" for SMESets, valuePrefix for ValueSets). Those aliases are not in scope
-            // on t. The LEFT JOIN subqueries (sme1, value1, ...) already encode the filters; the fragment
-            // Replace above often only substitutes part of the predicate, leaving invalid "s1"/"v" in WHERE.
-            if (pathPrefix.Count > 0 && !string.IsNullOrEmpty(convertConditionSQL))
-            {
-                var stillHasSmeAlias = convertConditionSQL.Contains($"\"{smePrefix}\".", StringComparison.Ordinal);
-                var stillHasValueAlias = !string.IsNullOrEmpty(valuePrefix)
-                    && convertConditionSQL.Contains($"\"{valuePrefix}\".", StringComparison.Ordinal);
-                if (stillHasSmeAlias || stillHasValueAlias)
+                // The outer SQL is "FROM (SMSets AS t) ..."; EF's WHERE still references join aliases from the
+                // IQueryable (e.g. "s1" for SMESets, valuePrefix for ValueSets). Those aliases are not in scope
+                // on t. The LEFT JOIN subqueries (sme1, value1, ...) already encode the filters; the fragment
+                // Replace above often only substitutes part of the predicate, leaving invalid "s1"/"v" in WHERE.
+                if (pathPrefix.Count > 0 && !string.IsNullOrEmpty(convertConditionSQL))
                 {
-                    convertConditionSQL = string.Join(" AND ", pathPrefix.Distinct().Select(p => $"({p}.SMId IS NOT NULL)"));
+                    var stillHasSmeAlias = convertConditionSQL.Contains($"\"{smePrefix}\".", StringComparison.Ordinal);
+                    var stillHasValueAlias = !string.IsNullOrEmpty(valuePrefix)
+                        && convertConditionSQL.Contains($"\"{valuePrefix}\".", StringComparison.Ordinal);
+                    if (stillHasSmeAlias || stillHasValueAlias)
+                    {
+                        convertConditionSQL = string.Join(" AND ", pathPrefix.Distinct().Select(p => $"({p}.SMId IS NOT NULL)"));
+                    }
                 }
             }
 

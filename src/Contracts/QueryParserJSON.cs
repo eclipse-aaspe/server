@@ -11,24 +11,25 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasSecurity.Models;
-using Irony.Parsing;
-using Contracts;
-using System.Linq.Expressions;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using static System.Net.Mime.MediaTypeNames;
+using System.Collections.Generic;
 // using Newtonsoft.Json.Schema;
 // using NJsonSchema;
 // using NJsonSchema.Validation;
 // using Json.Schema;
 using System.Data;
-using System.Xml.Linq;
+using System.Globalization;
+using System.Linq.Expressions;
 using System.Text.Json;
-using NJsonSchema.Validation;
 using System.Text.Json.Nodes;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using AasSecurity.Models;
+using Contracts;
+using Irony.Parsing;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using NJsonSchema.Validation;
+using static System.Net.Mime.MediaTypeNames;
 
 public class QueryGrammarJSON : Grammar
 {
@@ -708,7 +709,7 @@ public class QueryGrammarJSON : Grammar
                     }
                     if (obj is int or long or double)
                     {
-                        return obj.ToString();
+                        return Convert.ToString(obj, CultureInfo.InvariantCulture);
                     }
                     break;
                 case "$dateTimeVal":
