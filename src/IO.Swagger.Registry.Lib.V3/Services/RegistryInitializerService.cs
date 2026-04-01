@@ -339,7 +339,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                 foreach (var ep in endpoints)
                                                 {
                                                     var type = ep?["interface"]?.GetValue<string>();
-                                                    if (string.Equals(type, "AAS-REGISTRY-3.1", StringComparison.OrdinalIgnoreCase))
+                                                    if (string.Equals(type, "AAS-REGISTRY-3.1", StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(type, "AAS-REGISTRY-3.0", StringComparison.OrdinalIgnoreCase))
                                                     {
                                                         var url = ep?["protocolInformation"]?["href"]?.GetValue<string>()?.Trim();
                                                         if (!string.IsNullOrWhiteSpace(url) &&
@@ -504,7 +505,15 @@ public class RegistryInitializerService : IRegistryInitializerService
                         var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
                         string? json        = null;
                         string? accessToken = null;
-                        requestPathGetReg = $"{greg}/shell-descriptors";
+                        if (!greg.EndsWith("/shell-descriptors"))
+                        {
+                            requestPathGetReg = $"{greg}/shell-descriptors";
+                        }
+                        else
+                        {
+                            requestPathGetReg = greg;
+                        }
+
                         var userPW = "";
                         var urlEdcWrapper = "";
                         var replace = "";
@@ -1078,7 +1087,8 @@ public class RegistryInitializerService : IRegistryInitializerService
         var json = "";
         if (ad != null)
         {
-            if (!requestPath.Contains("?", StringComparison.InvariantCulture))
+            if (!requestPath.Contains("?", StringComparison.InvariantCulture)
+                && !requestPath.EndsWith("/shell-descriptors"))
             {
                 requestPath += "/shell-descriptors";
             }
