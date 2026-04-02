@@ -581,14 +581,27 @@ namespace AasSecurity
                             user = "";
                             var jwksUrl = "";
                             var kid = jwtSecurityToken.Header["kid"].ToString();
+                            var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                            using var httpClient = new HttpClient(clientHandler);
+
                             if (kid != null)
                             {
                                 jwksUrl = SecurityHelper.FindServerJwksUrl(kid, iss, out domain);
                             }
-                            if (!jwksUrl.IsNullOrEmpty())
+                            if (jwksUrl.IsNullOrEmpty())
                             {
-                                var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
-                                using var httpClient = new HttpClient(clientHandler);
+                                var openIdConfig = httpClient.GetStringAsync($"{iss}/.well-known/openid-configuration").Result;
+                                var openIdConfigJson = JsonDocument.Parse(openIdConfig);
+
+                                string jwksUri = $"{iss}/jwks";
+                                if (openIdConfigJson.RootElement.TryGetProperty("jwks_uri", out var propJwksUri))
+                                {
+                                    jwksUri = propJwksUri.GetString();
+                                }
+                            }
+
+                            try
+                            {
                                 var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
                                 var jwks = new JsonWebKeySet(jwksJson);
                                 var signingKeys = jwks.GetSigningKeys();
@@ -611,11 +624,12 @@ namespace AasSecurity
                                 }
                                 catch (Exception ex)
                                 {
+                                    _logger.LogError($"Error in validation of token {bearerToken}: {ex.Message}.");
                                 }
                             }
-                            else
+                            catch (Exception ex)
                             {
-
+                                _logger.LogError($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
                             }
                         }
                     }
