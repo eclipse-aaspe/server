@@ -150,6 +150,7 @@ namespace AasSecurity
                             GlobalSecurityVariables.ServerCertFileNames.Add("");
                             GlobalSecurityVariables.ServerDomain.Add(domain);
                             GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
+                            GlobalSecurityVariables.ServerIssuerUrl.Add("");
                             GlobalSecurityVariables.ServerKid.Add(kid);
                         }
                         else if (line.Contains("BEGIN CERTIFICATE"))
@@ -167,6 +168,7 @@ namespace AasSecurity
                             GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
                             GlobalSecurityVariables.ServerDomain.Add(domain);
                             GlobalSecurityVariables.ServerJwksUrl.Add("");
+                            GlobalSecurityVariables.ServerIssuerUrl.Add("");
                             GlobalSecurityVariables.ServerKid.Add("");
                         }
                         else if (insideBas64)
@@ -336,6 +338,7 @@ namespace AasSecurity
                         GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
                         GlobalSecurityVariables.ServerDomain.Add(domain);
                         GlobalSecurityVariables.ServerIssuerUrl.Add(issuer);
+                        GlobalSecurityVariables.ServerJwksUrl.Add("");
                         GlobalSecurityVariables.ServerKid.Add(kid);
                     }
                 }

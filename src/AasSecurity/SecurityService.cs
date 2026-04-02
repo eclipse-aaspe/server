@@ -590,16 +590,23 @@ namespace AasSecurity
                             }
                             if (jwksUrl.IsNullOrEmpty())
                             {
-                                var openIdConfig = httpClient.GetStringAsync($"{iss}/.well-known/openid-configuration").Result;
-                                var openIdConfigJson = JsonDocument.Parse(openIdConfig);
+                                jwksUrl = $"{iss}/jwks";
 
-                                string jwksUri = $"{iss}/jwks";
-                                if (openIdConfigJson.RootElement.TryGetProperty("jwks_uri", out var propJwksUri))
+                                try
                                 {
-                                    jwksUri = propJwksUri.GetString();
+                                    var openIdConfig = httpClient.GetStringAsync($"{iss}/.well-known/openid-configuration").Result;
+                                    var openIdConfigJson = JsonDocument.Parse(openIdConfig);
+
+                                    if (openIdConfigJson.RootElement.TryGetProperty("jwks_uri", out var propJwksUri))
+                                    {
+                                        jwksUrl = propJwksUri.GetString();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogInformation($"Could not access well-known from {iss}");
                                 }
                             }
-
                             try
                             {
                                 var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
