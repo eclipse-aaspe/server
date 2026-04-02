@@ -2899,10 +2899,10 @@ public partial class Query
                         count.Add(split2[0].Count(c => c == (with == "[]" ? '[' : '%')));
                         idShort.Add(split2[0].Split(".").Last());
 
-                        var c = split2[1] + split2[2];
-                        var v = db.ValueSets.Where(c).ToQueryString();
-                        var sql = SafeExtractWherePredicate(v);
-                        field.Add(sql);
+                        // var c = split2[1] + split2[2];
+                        // var v = db.ValueSets.Where(c).ToQueryString();
+                        // var sql = SafeExtractWherePredicate(v);
+                        // field.Add(sql);
                     }
                     order = order.OrderBy(x => count[x]).ToList();
 
@@ -3257,6 +3257,7 @@ public partial class Query
                         var split = where.Split(" AND ");
 
                         var valueSQL = split[split.Length - 1];
+                        valueSQL = valueSQL.Replace($"\"{smePrefix}\".", $"\"{smePath}\".");
 
                         join += $"AND {valueSQL}\r\n";
                         join += $"WHERE {valueSQL} ";
