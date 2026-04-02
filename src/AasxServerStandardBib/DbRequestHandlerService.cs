@@ -38,6 +38,21 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     private IPersistenceService _persistenceService;
     private readonly IServiceProvider _serviceProvider;
 
+    private static List<object> ConvertQueryItems(DbRequestResult dbRequestResult)
+    {
+        if (dbRequestResult.Ids != null)
+        {
+            return dbRequestResult.Ids.ConvertAll(r => r as object);
+        }
+
+        if (dbRequestResult.ResultData != null)
+        {
+            return dbRequestResult.ResultData.ConvertAll(r => r as object);
+        }
+
+        return [];
+    }
+
     private readonly SemaphoreSlim _lock = new(0);
 
     private static int ActiveReadOperations = 0;
@@ -1360,17 +1375,40 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
+        return ConvertQueryItems(tcs);
+    }
 
-        if (tcs.Ids != null)
+    public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression)
+    {
+        var parameters = new DbRequestParams()
         {
-            return tcs.Ids.ConvertAll(r => r as object);
-        }
-        else if (tcs.ResultData != null)
-        {
-            return tcs.ResultData.ConvertAll(r => r as object);
-        }
+            QueryRequest = new DbQueryRequest()
+            {
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
+                ResultType = resultType,
+                Expression = expression,
+                IncludeDebugSql = true
+            }
+        };
 
-        return [];
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryGetSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return new QueryDebugExecutionResult
+        {
+            Result = ConvertQueryItems(tcs),
+            RawSql = tcs.RawSql ?? []
+        };
     }
 
     public async Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId)

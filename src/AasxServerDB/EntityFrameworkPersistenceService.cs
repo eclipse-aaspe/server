@@ -730,7 +730,20 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QueryGetSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var queryResult = query.GetQueryData(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.ResultType, queryRequest.Expression);
+                        var queryResult = query.GetQueryData(
+                            securityConfig.NoSecurity,
+                            db,
+                            securityCondition,
+                            queryRequest.PageFrom,
+                            queryRequest.PageSize,
+                            queryRequest.ResultType,
+                            queryRequest.Expression,
+                            queryRequest.IncludeDebugSql);
+
+                        if (queryRequest.IncludeDebugSql)
+                        {
+                            result.RawSql = queryResult.Sql ?? [];
+                        }
 
                         if (queryResult.Shells != null && queryResult.Shells.Count != 0)
                         {
