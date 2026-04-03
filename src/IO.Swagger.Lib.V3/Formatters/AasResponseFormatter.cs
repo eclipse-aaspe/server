@@ -370,7 +370,11 @@ namespace IO.Swagger.Lib.V3.Formatters
 
                     foreach (var item in queryResult.result)
                     {
-                        if (resultType == ResultType.AssetAdministrationShell.ToString())
+                        if (item is string strItem)
+                        {
+                            jsonArray.Add(strItem);
+                        }
+                        else if (resultType == ResultType.AssetAdministrationShell.ToString())
                         {
                             var json = Jsonization.Serialize.ToJsonObject(item as IClass);
                             jsonArray.Add(json);

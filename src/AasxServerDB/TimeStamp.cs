@@ -22,10 +22,16 @@ namespace TimeStamp
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(stringDateTime))
+                {
+                    Console.WriteLine("EMPTY DateTime string!");
+                }
+
                 return DateTime.Parse(stringDateTime).ToUniversalTime();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Invalid DateTime: '{stringDateTime}'");
                 return DateTime.MinValue;
             }
         }

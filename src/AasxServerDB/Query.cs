@@ -664,11 +664,22 @@ public partial class Query
         return result;
     }
 
+    private static bool _versionLogged;
+
     private static string GetQueryPlan(AasContext db, string smRawSQL)
     {
         var qp = "";
         using var connection = new SqliteConnection(db.Database.GetDbConnection().ConnectionString);
         connection.Open();
+
+        if (!_versionLogged)
+        {
+            _versionLogged = true;
+            using var verCmd = connection.CreateCommand();
+            verCmd.CommandText = "SELECT sqlite_version()";
+            Console.WriteLine("=== SQLite version: " + verCmd.ExecuteScalar() + " ===");
+        }
+
         using var command = connection.CreateCommand();
         command.CommandText = "EXPLAIN QUERY PLAN\n" + smRawSQL;
         using var reader = command.ExecuteReader();
@@ -3764,6 +3775,15 @@ LIMIT {pageSize} OFFSET {pageFrom}";
         AddGeneratedSql(generatedSql, raw);
         var qpRaw = GetQueryPlan(db, raw);
 
+        var page2 = db.Set<SMSetIdResult>()
+            .FromSqlRaw(raw)
+            .AsNoTracking()
+            .Select(x => x.Id)
+            .ToList();
+
+        return page2;
+
+        /*
         IQueryable<SMSetIdResult> resultSMId = null;
         resultSMId = db.Set<SMSetIdResult>()
                .FromSqlRaw(raw)
@@ -3775,6 +3795,7 @@ LIMIT {pageSize} OFFSET {pageFrom}";
 
         // return resultSMId.OrderBy(r => r.Id).Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
         return resultSMId.Select(r => r.Id).ToList();
+        */
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
