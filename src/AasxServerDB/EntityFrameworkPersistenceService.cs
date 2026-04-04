@@ -127,6 +127,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new Exception($"Directory to the database does not exist. Check appsettings.json. Connection string: {connectionString}");
                     }
 
+                    sqliteDb.Database.OpenConnection();
+                    try
+                    {
+                        using var verCmd = sqliteDb.Database.GetDbConnection().CreateCommand();
+                        verCmd.CommandText = "SELECT sqlite_version()";
+                        Console.WriteLine($"=== SQLite version: {verCmd.ExecuteScalar()} ===");
+                    }
+                    finally
+                    {
+                        sqliteDb.Database.CloseConnection();
+                    }
+
                     // Check if db exists
                     var canConnect = sqliteDb.Database.CanConnect();
                     if (!canConnect)

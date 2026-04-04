@@ -48,6 +48,13 @@
         <PackageReference Include="jose-jwt" Version="5.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
+        <!-- Bundle switch: see ../Directory.Build.props (AasxSqliteNativeBundle Embedded | System) -->
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' != 'System'" />
+        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'" />
+        <PackageReference Update="SQLitePCLRaw.bundle_e_sqlite3" Condition="'$(AasxSqliteNativeBundle)' == 'System'">
+            <IncludeAssets>none</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

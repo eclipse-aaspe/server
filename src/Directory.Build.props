@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <!--
+      SQLite native loading (SQLitePCLRaw):
+      - Embedded  — bundle_e_sqlite3 (NuGet, e_sqlite3.dll/.so). Use for Visual Studio / Windows debug.
+      - System    — bundle_sqlite3 (loads libsqlite3 / sqlite3). Use for copy-deploy on Ubuntu; install libsqlite3-0 (+ libsqlite3.so symlink if needed).
+
+      In Visual Studio: open this file from Solution Explorer → Solution Items (or dotnet build -p:AasxSqliteNativeBundle=System).
+    -->
+    <AasxSqliteNativeBundle>System</AasxSqliteNativeBundle>
+  </PropertyGroup>
+</Project>

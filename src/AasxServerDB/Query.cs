@@ -664,21 +664,11 @@ public partial class Query
         return result;
     }
 
-    private static bool _versionLogged;
-
     private static string GetQueryPlan(AasContext db, string smRawSQL)
     {
         var qp = "";
         using var connection = new SqliteConnection(db.Database.GetDbConnection().ConnectionString);
         connection.Open();
-
-        if (!_versionLogged)
-        {
-            _versionLogged = true;
-            using var verCmd = connection.CreateCommand();
-            verCmd.CommandText = "SELECT sqlite_version()";
-            Console.WriteLine("=== SQLite version: " + verCmd.ExecuteScalar() + " ===");
-        }
 
         using var command = connection.CreateCommand();
         command.CommandText = "EXPLAIN QUERY PLAN\n" + smRawSQL;
@@ -1702,6 +1692,19 @@ public partial class Query
     private static bool IsIdentChar(char ch)
     {
         return char.IsLetterOrDigit(ch) || ch == '_' || ch == '.';
+    }
+
+    /// <summary>
+    /// Reads the first <c>smePathN</c> alias from generated match SQL. For <c>[]</c> paths, one logical path can
+    /// produce multiple <c>substr</c> lines; <c>N</c> maps to <c>pathConditions[N - 1]</c> (1-based global SME alias).
+    /// </summary>
+    private static bool TryGetSmePathNumberFromMatchSql(string sql, out int smePathNumber)
+    {
+        smePathNumber = 0;
+        var m = Regex.Match(sql, @"smePath(\d+)");
+        if (!m.Success)
+            return false;
+        return int.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out smePathNumber);
     }
 
     /// <summary>
@@ -3162,6 +3165,7 @@ public partial class Query
 
         var raw = "";
         var rawBase = "";
+        var useValueOnlyDirectPath = false;
         var pathPrefix = new List<string>();
 
         var selectAas = "(\r\n  SELECT Id, Identifier";
@@ -3255,12 +3259,30 @@ public partial class Query
 
                 for (var k = 0; k < matchPathCount; k++)
                 {
-                    var localSmeIndex = globalSmeOffset + k + 1;
-                    var localSmePath = $"smePath{localSmeIndex}";
-
                     var conditionEntry = conditionMatchList[k];
                     if (isSubstrMatch)
                         conditionEntry = "substr(" + conditionEntry;
+
+                    // [] match: conditionMatch has more substr rows than pathConditions (pairwise segments).
+                    // Map by smePathN in SQL -> pathConditions[N-1], not by loop index k.
+                    int pathCondIndex;
+                    string localSmePath;
+                    if (isSubstrMatch
+                        && TryGetSmePathNumberFromMatchSql(conditionEntry, out var smePathNum)
+                        && smePathNum >= 1
+                        && smePathNum <= pathConditions.Count)
+                    {
+                        pathCondIndex = smePathNum - 1;
+                        localSmePath = $"smePath{smePathNum}";
+                    }
+                    else
+                    {
+                        pathCondIndex = globalSmeOffset + k;
+                        if (pathCondIndex < 0 || pathCondIndex >= pathConditions.Count)
+                            throw new InvalidOperationException(
+                                $"CombineTablesLEFT: match path index {pathCondIndex} out of range for pathConditions.Count={pathConditions.Count} (k={k}, substr={isSubstrMatch}).");
+                        localSmePath = $"smePath{globalSmeOffset + k + 1}";
+                    }
 
                     if (k == 0)
                     {
@@ -3278,7 +3300,7 @@ public partial class Query
                     join += $"FROM SMESets {localSmePath}\r\n";
                     join += $"JOIN ValueSets v ON v.SMEId = {localSmePath}.Id ";
 
-                    var convertPathCondition = convert.Where(pathConditions[globalSmeOffset + k]);
+                    var convertPathCondition = convert.Where(pathConditions[pathCondIndex]);
                     var convertPathConditionSQL = convertPathCondition.ToQueryString();
                     var where = SafeExtractWherePredicate(convertPathConditionSQL);
 
@@ -3534,6 +3556,11 @@ public partial class Query
                     }
 
                     var fieldExpression = splitByValue[i];
+                    if (fieldExpression.IsNullOrEmpty())
+                    {
+                        continue;
+                    }
+
                     var splitExpression = SplitExpression(fieldExpression);
                     if (splitExpression?.Count < 3)
                     {
@@ -3630,26 +3657,62 @@ public partial class Query
             // -----------------------------
             if (combinedSelectFields.Count > 0 || combinedWhereParts.Count > 0)
             {
-                rawBase += "LEFT JOIN(\r\n";
-                rawBase += "  SELECT DISTINCT\r\n";
-                rawBase += "    sme.SMId AS \"SMId\"";
+                var distinctWhereParts = combinedWhereParts.Distinct().ToList();
+                var valueSetFirst = distinctWhereParts.Count > 0
+                    && distinctWhereParts.TrueForAll(static p => !p.Contains("\"sme\".", StringComparison.Ordinal));
+                var onlyValueColumnsInSelect = combinedSelectFields.Count == 0
+                    || combinedSelectFields.TrueForAll(static line => !line.Contains("sme.", StringComparison.Ordinal));
 
-                foreach (var selectField in combinedSelectFields.Distinct())
+                var canValueOnlyDirect = pathConditions.Count == 0
+                    && !isWithAASTable
+                    && string.IsNullOrWhiteSpace(whereSm)
+                    && resultType != ResultType.AssetAdministrationShell
+                    && distinctWhereParts.Count > 0
+                    && valueSetFirst
+                    && onlyValueColumnsInSelect
+                    && !flags.Contains("$UNION")
+                    && !flags.Contains("$TEMPTABLE");
+
+                if (canValueOnlyDirect)
                 {
-                    rawBase += ",\r\n";
-                    rawBase += selectField;
+                    // Drop t + LEFT JOIN value: only Value predicates, no SM filter, no path joins — drive from ValueSets.
+                    useValueOnlyDirectPath = true;
+                    rawBase = "SELECT DISTINCT sm.Id\r\nFROM ValueSets v\r\nJOIN SMESets sme ON sme.Id = v.SMEId\r\nJOIN SMSets sm ON sm.Id = sme.SMId\r\n";
+                    rawBase += "WHERE " + string.Join("\r\n     OR ", distinctWhereParts) + "\r\n";
+                    convertConditionSQL = "";
                 }
-
-                rawBase += "\r\n";
-                rawBase += "  FROM SMESets sme\r\n";
-                rawBase += "  LEFT JOIN ValueSets v ON v.SMEId = sme.Id\r\n";
-
-                if (combinedWhereParts.Count > 0)
+                else
                 {
-                    rawBase += "  WHERE " + string.Join("\r\n     OR ", combinedWhereParts.Distinct()) + "\r\n";
-                }
+                    rawBase += "LEFT JOIN(\r\n";
+                    rawBase += "  SELECT DISTINCT\r\n";
+                    rawBase += "    sme.SMId AS \"SMId\"";
 
-                rawBase += ") AS value ON value.\"SMId\" = t.Id\r\n";
+                    foreach (var selectField in combinedSelectFields.Distinct())
+                    {
+                        rawBase += ",\r\n";
+                        rawBase += selectField;
+                    }
+
+                    rawBase += "\r\n";
+                    // ValueSets-first when the subquery only filters on v.* (sme.* in OR would need SME-first).
+                    if (valueSetFirst)
+                    {
+                        rawBase += "  FROM ValueSets v\r\n";
+                        rawBase += "  JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
+                    }
+                    else
+                    {
+                        rawBase += "  FROM SMESets sme\r\n";
+                        rawBase += "  LEFT JOIN ValueSets v ON v.SMEId = sme.Id\r\n";
+                    }
+
+                    if (distinctWhereParts.Count > 0)
+                    {
+                        rawBase += "  WHERE " + string.Join("\r\n     OR ", distinctWhereParts) + "\r\n";
+                    }
+
+                    rawBase += ") AS value ON value.\"SMId\" = t.Id\r\n";
+                }
             }
 
             var withUnion = false;
@@ -3770,7 +3833,9 @@ LIMIT {pageSize} OFFSET {pageFrom}";
             raw = raw.Replace("%", "*");
         }
 
-        raw += $"ORDER BY t.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+        raw += useValueOnlyDirectPath
+            ? $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n"
+            : $"ORDER BY t.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
 
         AddGeneratedSql(generatedSql, raw);
         var qpRaw = GetQueryPlan(db, raw);

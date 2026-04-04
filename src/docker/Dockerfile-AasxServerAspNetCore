@@ -13,6 +13,12 @@ RUN dotnet publish -c Release -v d --no-restore
 
 # Use a runtime image to run the application
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:8.0.8 as base
+# SQLitePCLRaw.bundle_sqlite3: native lib for Microsoft.Data.Sqlite (not bundled e_sqlite3)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libsqlite3-0 \
+    && SO0="$(ls /usr/lib/*/libsqlite3.so.0 2>/dev/null | head -1)" \
+    && test -n "$SO0" && ln -sf "$SO0" "$(dirname "$SO0")/libsqlite3.so" \
+    && rm -rf /var/lib/apt/lists/*
 EXPOSE 5001/tcp
 EXPOSE 5001/udp
 ENV ASPNETCORE_URLS=http://+:5001
