@@ -1,13 +1,13 @@
 # Use a multi-stage build to build and publish the .NET application
-# Specify the initial base architecture (amd64 in this case)
-FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy-arm64v8 AS build-env
+# Ubuntu 24.04 noble arm64 (Jammy: 8.0-jammy-arm64v8).
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble-arm64v8 AS build-env
 WORKDIR /repo/src
 
 # Copy everything else and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-ARG AASX_SQLITE_BUNDLE=Embedded
+ARG AASX_SQLITE_BUNDLE=System
 RUN dotnet clean
 RUN dotnet restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
 RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
@@ -15,7 +15,7 @@ RUN dotnet publish -c Release -v diag --no-restore -p:AasxSqliteNativeBundle=${A
 
 # Use a runtime image to run the application
 # Specify the initial base architecture (amd64 in this case)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy-arm64v8 as base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble-arm64v8 as base
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends curl nano libgdiplus libsqlite3-0 \
     && SO0="$(ls /usr/lib/*/libsqlite3.so.0 2>/dev/null | head -1)" \
