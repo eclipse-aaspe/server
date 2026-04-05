@@ -6,14 +6,15 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
+ARG AASX_SQLITE_BUNDLE=Embedded
 RUN dotnet clean
-RUN dotnet restore
-RUN dotnet build -o /out/AasxServerAspNetCore AasxServerAspNetCore -v d
-RUN dotnet publish -c Release -v d --no-restore
+RUN dotnet restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
+RUN dotnet build -o /out/AasxServerAspNetCore AasxServerAspNetCore -v d -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
+RUN dotnet publish -c Release -v d --no-restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
 
 # Use a runtime image to run the application
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:8.0.8 as base
-# SQLitePCLRaw.bundle_sqlite3: native lib for Microsoft.Data.Sqlite (not bundled e_sqlite3)
+# libsqlite3 only needed at runtime if image was built with AASX_SQLITE_BUNDLE=System (kept for compatibility).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libsqlite3-0 \
     && SO0="$(ls /usr/lib/*/libsqlite3.so.0 2>/dev/null | head -1)" \
