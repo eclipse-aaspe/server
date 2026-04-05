@@ -24,6 +24,7 @@ using Contracts;
 using Microsoft.IdentityModel.Tokens;
 using AasCore.Aas3_0;
 using Extensions;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,6 +60,22 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
         _grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
         _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
+    }
+
+    private static void LogSqliteVersion(string connectionString)
+    {
+        try
+        {
+            using var conn = new SqliteConnection(connectionString);
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT sqlite_version()";
+            Console.WriteLine($"=== SQLite version: {cmd.ExecuteScalar()} ===");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"=== SQLite version: (unavailable: {ex.Message}) ===");
+        }
     }
 
     public void InitDB(bool reloadDB, string dataPath)
@@ -127,18 +144,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new Exception($"Directory to the database does not exist. Check appsettings.json. Connection string: {connectionString}");
                     }
 
-                    sqliteDb.Database.OpenConnection();
-                    try
-                    {
-                        using var verCmd = sqliteDb.Database.GetDbConnection().CreateCommand();
-                        verCmd.CommandText = "SELECT sqlite_version()";
-                        Console.WriteLine($"=== SQLite version: {verCmd.ExecuteScalar()} ===");
-                    }
-                    finally
-                    {
-                        sqliteDb.Database.CloseConnection();
-                    }
-
                     // Check if db exists
                     var canConnect = sqliteDb.Database.CanConnect();
                     if (!canConnect)
@@ -166,6 +171,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     {
                         throw new Exception($"Migration failed: {ex.Message}\nTry deleting the database.");
                     }
+
+                    // Log after EnsureCreated so the file exists again after EnsureDeleted; use a separate connection.
+                    LogSqliteVersion(connectionString);
                 }
             }
         }
