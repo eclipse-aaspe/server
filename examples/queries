@@ -1,0 +1,359 @@
+# Recursive search for SMEs with values
+
+POST https://plugfest10.aas-voyager.com/query/submodels/debug?limit=50000
+
+{
+  "Query": {
+      "$select": "id",
+      "$condition":
+      { "$or": [
+        { "$starts-with": [
+          { "$field": "$sme.ManufacturerName#value" },
+          { "$strVal": "ZVEI" }
+        ] },
+        { "$and": [
+          { "$eq": [
+            { "$field": "$sme.FootprintInformationModule2.CO2eq#value" },
+            { "$numVal": 103 }
+          ] },
+          { "$eq": [
+            { "$field": "$sme#value" },
+            { "$strVal": "2500" }
+          ] }
+        ] },
+        { "$and": [
+          { "$eq": [
+            { "$field": "$sme#value" },
+            { "$hexVal": "16#3DFFAF" }
+          ] }
+        ] }
+      ] }
+  }
+}
+
+# Combination of match with %, path and recursive search
+
+POST https://plugfest10.aas-voyager.com/query/submodels/debug?limit=500000
+
+{ 
+  "Query": { 
+    "$select": "id",
+    "$condition": 
+     { "$or": [ 
+       { "$and": [ 
+         { "$boolean": true },
+         { "$eq": [ 
+           { "$field": "$sm#idShort" }, 
+           { "$strVal": "HandoverDocumentation" } 
+         ] }, 
+         { "$match": [ 
+           { "$eq": [ 
+              { "$field": "$sme.Document%.DocumentVersion.Language%#value" }, 
+              { "$strVal": "ru" } 
+           ] }, 
+           { "$eq": [ 
+             { "$field": "$sme.Document%.DocumentVersion.StatusValue#value" }, 
+             { "$strVal": "Released" } 
+           ] } 
+         ] } 
+       ] }, 
+       { "$and": [ 
+         { "$boolean": true },
+         { "$eq": [
+           { "$field": "$sm#idShort" },
+           { "$strVal": "Nameplate" }
+         ] },
+         { "$starts-with": [
+           { "$field": "$sme.OrderCodeOfManufacturer#value" },
+           { "$strVal": "01" }
+         ] }
+       ] }, 
+       { "$and": [ 
+         { "$boolean": true },
+         { "$eq": [ 
+           { "$field": "$sm#idShort" }, 
+           { "$strVal": "TechnicalData" } 
+         ] }, 
+         { "$eq": [ 
+           { "$field": "$sme#value" }, 
+           { "$hexVal": "16#3DFFAF" } 
+         ] } 
+       ] } 
+     ] } 
+  }
+}
+
+# recursive search edge case with not equal
+
+https://plugfest10.aas-voyager.com/query/submodels/debug?limit=50000
+
+{
+  "Query": {
+    "$select": "id",
+    "$condition":
+      { "$or": [
+        { "$ne": [
+          { "$field": "$sme#value" },
+          { "$strVal": "" }
+        ] },
+        { "$ne": [
+          { "$field": "$sme#value" },
+          { "$numVal": 0 }
+        ] }
+      ] }
+  }
+}
+
+# And values in submodel by path
+
+POST https://discovery.aas-voyager.com/query/submodels
+
+{
+  "Query": {
+    "$condition": {
+      "$and": [
+        {
+          "$eq": [
+            {
+              "$field": "$sm#idShort"
+            },
+            {
+              "$strVal": "TechnicalData"
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "$eq": [
+                {
+                  "$field": "$sme.TechnicalProperties.Number_of_HW_interfaces_Industrial_Ethernet#value"
+                },
+                {
+                  "$numVal": 2.0
+                }
+              ]
+            },
+            {
+              "$eq": [
+                {
+                  "$field": "$sme.TechnicalProperties.max__supply_voltage_with_DC#value"
+                },
+                {
+                  "$numVal": 30.0
+                }
+              ]
+            },
+            {
+              "$lt": [
+                {
+                  "$field": "$sme.TechnicalProperties.height#value"
+                },
+                {
+                  "$numVal": 130.0
+                }
+              ]
+            },
+            {
+              "$gt": [
+                {
+                  "$field": "$sme.TechnicalProperties.height#value"
+                },
+                {
+                  "$numVal": 120.0
+                }
+              ]
+            },
+            {
+              "$eq": [
+                {
+                  "$field": "$sme.TechnicalProperties.width#value"
+                },
+                {
+                  "$numVal": 45.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+# And values in submodel by semanticId and match %
+
+POST https://discovery.aas-voyager.com/query/submodels/debug
+
+{
+  "Query": {
+    "$condition": {
+      "$and": [
+        {
+          "$eq": [
+            {
+              "$field": "$sm#idShort"
+            },
+            {
+              "$strVal": "TechnicalData"
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "$match": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#semanticId"
+                    },
+                    {
+                      "$strVal": "0173-1#02-AAO494#002"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#value"
+                    },
+                    {
+                      "$numVal": 2.0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$match": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#semanticId"
+                    },
+                    {
+                      "$strVal": "0173-1#02-AAB909#008"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#value"
+                    },
+                    {
+                      "$numVal": 30.0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$match": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#semanticId"
+                    },
+                    {
+                      "$strVal": "0173-1#02-BAA020#010"
+                    }
+                  ]
+                },
+                {
+                  "$lt": [
+                    {
+                      "$field": "$sme.%#value"
+                    },
+                    {
+                      "$numVal": 130.0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$match": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#semanticId"
+                    },
+                    {
+                      "$strVal": "0173-1#02-BAA020#010"
+                    }
+                  ]
+                },
+                {
+                  "$gt": [
+                    {
+                      "$field": "$sme.%#value"
+                    },
+                    {
+                      "$numVal": 120.0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$match": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#semanticId"
+                    },
+                    {
+                      "$strVal": "0173-1#02-BAF016#006"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme.%#value"
+                    },
+                    {
+                      "$numVal": 45.0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+# match with 2 levels of SML
+
+POST https://uc2.aas-voyager.com/query/submodels/debug
+
+{
+  "Query": {
+    "$select": "match",
+    "$condition":
+     { "$or": [
+       { "$and": [
+         { "$match": [
+           { "$eq": [
+              { "$field": "$sme.Records[].ItemOfChange.TechnicalData_Changes[].ReasonId#value" },
+              { "$strVal": "SOFTW" }
+           ] },
+           { "$eq": [
+             { "$field": "$sme.Records[].ItemOfChange.TechnicalData_Changes[].Version#value" },
+             { "$strVal": "1.4.0.3" }
+           ] },
+           { "$ge": [
+             { "$field": "$sme.Records[].DateOfRecord#value" },
+             { "$strVal": "2024-04-24T07:53Z" }
+           ] }
+         ] }
+       ] }
+     ] }
+  }
+}
+
