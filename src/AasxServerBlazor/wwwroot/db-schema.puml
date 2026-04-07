@@ -1,0 +1,117 @@
+@startuml db-schema-aasxserverdb
+
+' ============================================================================
+' Single source of truth for the DB ER diagram. Blazor loads wwwroot/db-schema.svg
+' (see Pages/Db-chunked.razor). Regenerate SVG from this file so layout matches 1:1, e.g.:
+'   https://www.plantuml.com/plantuml/uml — paste file, then export/download SVG
+'   CLI: plantuml -tsvg db-schema.puml  (copy/rename output to wwwroot/db-schema.svg)
+' Do not hand-edit db-schema.svg; change this .puml and re-export.
+' ============================================================================
+
+title AasxServerDB entity model (EF Core 8, SqliteAasContext / PostgreAasContext)
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam defaultFontName Consolas
+hide circle
+skinparam linetype ortho
+
+entity "**EnvSets**" as EnvSets {
+  * **Id** : int <<PK>>
+  --
+  Path : string
+}
+
+entity "**CDSets**" as CDSets {
+  * **Id** : int <<PK>>
+  --
+  IdShort, DisplayName, Category, Description
+  Identifier, IsCaseOf, Extensions
+  EmbeddedDataSpecifications, Version, Revision
+  Creator, TemplateId, AEmbeddedDataSpecifications
+  TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete
+}
+
+entity "**EnvCDSets**" as EnvCDSets {
+  * **Id** : int <<PK>>
+  --
+  * **EnvId** : int <<FK → EnvSets>> CASCADE
+  * **CDId** : int <<FK → CDSets>> CASCADE
+}
+
+entity "**AASSets**" as AASSets {
+  * **Id** : int <<PK>>
+  --
+  **EnvId** : int? <<FK → EnvSets>>
+  IdShort, DisplayName, Category, Description, Extensions
+  Identifier, EmbeddedDataSpecifications, DerivedFrom
+  Version, Revision, Creator, TemplateId, AEmbeddedDataSpecifications
+  AssetKind, GlobalAssetId, AssetType, SpecificAssetIds
+  DefaultThumbnailPath, DefaultThumbnailContentType
+  TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete
+}
+
+entity "**SMRefSets**" as SMRefSets {
+  * **Id** : int <<PK>>
+  --
+  **AASId** : int? <<FK → AASSets>>
+  Identifier
+}
+
+entity "**SMSets**" as SMSets {
+  * **Id** : int <<PK>>
+  --
+  **EnvId** : int? <<FK → EnvSets>>
+  **AASId** : int? <<FK → AASSets>>
+  IdShort, DisplayName, Category, Description, Extensions
+  Identifier, Kind, SemanticId, SupplementalSemanticIds
+  Qualifiers, EmbeddedDataSpecifications
+  Version, Revision, Creator, TemplateId, AEmbeddedDataSpecifications
+  TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete
+}
+
+entity "**SMESets**" as SMESets {
+  * **Id** : int <<PK>>
+  --
+  * **SMId** : int <<FK → SMSets>> CASCADE
+  **ParentSMEId** : int? <<FK → SMESets (self)>>
+  SMEType, IdShort, SMLIndex, DisplayName
+  Category, Description, Extensions, SemanticId
+  SupplementalSemanticIds, Qualifiers, EmbeddedDataSpecifications
+  TValue : char(1)
+  TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete
+  IdShortPath
+}
+
+entity "**ValueSets**" as ValueSets {
+  * **Id** : int <<PK>>
+  --
+  * **SMEId** : int <<FK → SMESets>> CASCADE
+  SMId : int?
+  SValue, NValue, DTValue
+  Annotation
+}
+
+entity "**OValueSets**" as OValueSets {
+  * **Id** : int <<PK>>
+  --
+  * **SMEId** : int <<FK → SMESets>> CASCADE
+  Attribute, Value
+}
+
+EnvSets ||--o{ EnvCDSets
+CDSets ||--o{ EnvCDSets
+EnvSets ||--o{ AASSets
+EnvSets ||--o{ SMSets
+AASSets ||--o{ SMSets
+AASSets ||--o{ SMRefSets
+SMSets ||--o{ SMESets
+SMESets ||--o{ ValueSets
+SMESets ||--o{ OValueSets
+
+legend right
+  SMESets: optional self-FK ParentSMEId -> Id (element tree).
+  Tables: EnvSets, CDSets, EnvCDSets, AASSets, SMRefSets, SMSets, SMESets, ValueSets, OValueSets.
+  Source: AasxServerDB.Entities + SqliteAasContextModelSnapshot.
+endlegend
+
+@enduml
