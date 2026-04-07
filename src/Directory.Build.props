@@ -5,8 +5,14 @@
       - Embedded  — bundle_e_sqlite3 (NuGet, e_sqlite3.dll/.so). Use for Visual Studio / Windows debug.
       - System    — bundle_sqlite3 (loads libsqlite3 / sqlite3). Use for copy-deploy on Ubuntu; install libsqlite3-0 (+ libsqlite3.so symlink if needed).
 
-      In Visual Studio: open this file from Solution Explorer → Solution Items (or dotnet build -p:AasxSqliteNativeBundle=System).
+      In Visual Studio: Directory.Build.props must live under server/src (MSBuild walks up from each .csproj). Solution Items link is not enough if the file is not on disk there.
+
+      After switching Embedded -> System: republish and remove stale native files on the server, e.g.
+        rm -rf runtimes/*/native/libe_sqlite3.so*
+      Otherwise an old publish can still load embedded SQLite (~3.46) while the distro lib is 3.45.
+
+      CLI: dotnet publish -p:AasxSqliteNativeBundle=System -r linux-x64
     -->
-    <AasxSqliteNativeBundle>Embedded</AasxSqliteNativeBundle>
+    <AasxSqliteNativeBundle>System</AasxSqliteNativeBundle>
   </PropertyGroup>
 </Project>

@@ -22,7 +22,8 @@
     <!-- Bundle switch: see ../Directory.Build.props (AasxSqliteNativeBundle Embedded | System) -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' != 'System'" />
     <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'" />
-    <PackageReference Update="SQLitePCLRaw.bundle_e_sqlite3" Condition="'$(AasxSqliteNativeBundle)' == 'System'">
+    <!-- Satisfy Microsoft.Data.Sqlite -> bundle_e_sqlite3 without publishing libe_sqlite3 (Update alone can leave native assets). -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'">
       <IncludeAssets>none</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
