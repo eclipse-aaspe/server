@@ -2766,9 +2766,28 @@ public partial class Query
                 fieldExpression = fieldExpression.Substring(splitExpression[0].Length + splitExpression[1].Length + 2);
 
                 var end = 1;
-                while (fieldExpression[end] != '\'')
+                while (end < fieldExpression.Length)
                 {
-                    end++;
+                    while (fieldExpression[end] != '\'')
+                    {
+                        end++;
+                    }
+                    var concatString = "' || '";
+                    if (end < fieldExpression.Length - concatString.Length)
+                    {
+                        if (fieldExpression.Substring(end, concatString.Length) == concatString)
+                        {
+                            end += concatString.Length;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 splitExpression[2] = fieldExpression.Substring(0, end + 1);
@@ -3542,7 +3561,7 @@ public partial class Query
             // -----------------------------
             if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
             {
-                List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\""];
+                List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\"", "\"Annotation\""];
 
                 var splitByValue = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
 
@@ -3613,6 +3632,11 @@ public partial class Query
                     }
 
                     var fieldExpression = splitBySme[i];
+                    if (fieldExpression.IsNullOrEmpty())
+                    {
+                        continue;
+                    }
+
                     var splitExpression = SplitExpression(fieldExpression);
                     if (splitExpression?.Count < 3)
                     {

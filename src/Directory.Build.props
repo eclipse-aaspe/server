@@ -7,6 +7,6 @@
 
       In Visual Studio: open this file from Solution Explorer → Solution Items (or dotnet build -p:AasxSqliteNativeBundle=System).
     -->
-    <AasxSqliteNativeBundle>System</AasxSqliteNativeBundle>
+    <AasxSqliteNativeBundle>Embedded</AasxSqliteNativeBundle>
   </PropertyGroup>
 </Project>

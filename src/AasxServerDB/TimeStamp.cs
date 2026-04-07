@@ -24,7 +24,7 @@ namespace TimeStamp
             {
                 if (string.IsNullOrWhiteSpace(stringDateTime))
                 {
-                    Console.WriteLine("EMPTY DateTime string!");
+                    return DateTime.MinValue;
                 }
 
                 return DateTime.Parse(stringDateTime).ToUniversalTime();
