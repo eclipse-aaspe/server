@@ -37,6 +37,10 @@ public interface IPersistenceService
 
     void ImportAASXIntoDB(string filePath, bool createFilesOnly);
 
+    void BeginBulkImport();
+    void FlushBulkImport();
+    void EndBulkImport();
+
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 }
 

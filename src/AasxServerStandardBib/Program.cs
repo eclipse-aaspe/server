@@ -788,10 +788,13 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
+                if (withDb)
+                    persistenceService.BeginBulkImport();
+
                 var fi = 0;
                 while (fi < fileNames.Length)
                 {
-                    // try
+                    try
                     {
                         fn = fileNames[fi];
                         if (fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("globalsecurity", StringComparison.InvariantCulture) ||
@@ -882,14 +885,10 @@ namespace AasxServer
                         fi++;
                         if (withDb)
                         {
-                            if (fi % 500 == 0) // every 500
+                            if (fi % 100 == 0)
                             {
-                                /*
-                                Console.WriteLine("DB Save Changes");
-                                db.SaveChanges();
-                                db.ChangeTracker.Clear();
-                                System.GC.Collect();
-                                */
+                                Console.WriteLine($"DB Flush at {fi}/{fileNames.Length} ({watch.ElapsedMilliseconds / 1000}s)");
+                                persistenceService.FlushBulkImport();
                             }
                         }
                         else
@@ -897,13 +896,11 @@ namespace AasxServer
                             envi++;
                         }
                     }
-                    /*
-                    catch
+                    catch (Exception ex)
                     {
-                        Console.WriteLine("Error with " + fileNames[fi]);
+                        Console.Error.WriteLine($"Error loading {fileNames[fi]}: {ex.Message} — skipping.");
                         fi++;
                     }
-                    */
                 }
 
                 if (saveTemp == -1)
@@ -911,6 +908,8 @@ namespace AasxServer
 
                 if (withDb)
                 {
+                    persistenceService.EndBulkImport();
+
                     // preload AASX from DB and keep in memory
                     var packages = new List<AdminShellPackageEnv>();
                     var paths = persistenceService.ReadFilteredPackages("--memory", packages);

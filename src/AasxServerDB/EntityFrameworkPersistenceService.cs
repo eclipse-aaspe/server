@@ -184,6 +184,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         VisitorAASX.ImportAASXIntoDB(filePath, createFilesOnly);
     }
 
+    public void BeginBulkImport()  => VisitorAASX.BeginBulkImport();
+    public void FlushBulkImport()  => VisitorAASX.FlushBulkImport();
+    public void EndBulkImport()    => VisitorAASX.EndBulkImport();
+
     public List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list)
     {
         return CrudOperator.GetFilteredPackages(filterPath, list);

@@ -66,6 +66,39 @@ namespace AasxServerDB
             _smDB = smDB;
         }
 
+        // Shared context for bulk import (set via BeginBulkImport / EndBulkImport)
+        private static AasContext? _bulkDb = null;
+
+        public static void BeginBulkImport()
+        {
+            _bulkDb = new AasContext();
+            _bulkDb.ChangeTracker.AutoDetectChangesEnabled = false;
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA journal_mode  = WAL;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = OFF;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA cache_size    = -65536;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA temp_store    = MEMORY;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA mmap_size     = 268435456;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys  = OFF;");
+        }
+
+        public static void FlushBulkImport()
+        {
+            if (_bulkDb == null) return;
+            _bulkDb.SaveChanges();
+            _bulkDb.ChangeTracker.Clear();
+            GC.Collect();
+        }
+
+        public static void EndBulkImport()
+        {
+            if (_bulkDb == null) return;
+            _bulkDb.SaveChanges();
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = NORMAL;");
+            _bulkDb.Dispose();
+            _bulkDb = null;
+        }
+
         // Load AASX
         public static void ImportAASXIntoDB(string filePath, bool createFilesOnly)
         {
@@ -79,37 +112,44 @@ namespace AasxServerDB
                     };
                     ImportAASIntoDB(asp, envDB);
 
-                    using (var db = new AasContext())
-                    {
-                        db.Add(envDB);
-                        db.SaveChanges();
+                    var ownContext = _bulkDb == null;
+                    var db = _bulkDb ?? new AasContext();
+                    db.Add(envDB);
 
-                        // CD
-                        foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
-                            _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
+                    if (ownContext)
+                    {
+                        db.SaveChanges();
+                        db.Dispose();
                     }
+
+                    // CD
+                    foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
+                        _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
                 }
 
 
                 //ToDo: To File Service
                 var name = Path.GetFileName(filePath);
+                var suppFiles = asp.GetListOfSupplementaryFiles();
 
-                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+                if (suppFiles.Count > 0)
                 {
-                    var files = asp.GetListOfSupplementaryFiles();
-                    foreach (var f in files)
+                    using var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create);
+                    using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+
+                    foreach (var f in suppFiles)
                     {
                         try
                         {
-                            using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                            {
-                                var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+                            using var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true);
 
-                                using var archiveStream = archiveFile.Open();
-                                s.CopyTo(archiveStream);
-                            }
+                            // NoCompression: file is already stored compressed inside the AASX ZIP.
+                            // Re-compressing large files (e.g. .stp) is very slow and saves little.
+                            var archiveFile = archive.CreateEntry(f.Uri.OriginalString, CompressionLevel.NoCompression);
+                            Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                            using var archiveStream = archiveFile.Open();
+                            s.CopyTo(archiveStream, 1024 * 1024); // 1 MB buffer
                         }
                         catch (Exception ex)
                         {
