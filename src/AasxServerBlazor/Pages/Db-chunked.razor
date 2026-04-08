@@ -7,6 +7,15 @@
 @page "/db-chunked/sme";
 @page "/db-chunked/value";
 @page "/db-chunked/ovalue";
+@page "/db";
+@page "/db/env";
+@page "/db/cd";
+@page "/db/aas";
+@page "/db/smref";
+@page "/db/sm";
+@page "/db/sme";
+@page "/db/value";
+@page "/db/ovalue";
 @using AasxServer
 @using AasxServerDB
 @using Microsoft.AspNetCore.Http;
@@ -527,7 +536,7 @@
 					}
 
 					<span>
-						&nbsp&nbsp@($"AAS#: {totalCount} size={size} offset={offset} search={search} aasid={aasid} details={details})")
+						&nbsp&nbsp@($"AAS#: {totalCount} size={size} offset={offset} search={search} aasid={aasid} details={details}")
 					</span>
 					<br/>
 

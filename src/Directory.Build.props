@@ -13,6 +13,6 @@
 
       CLI: dotnet publish -p:AasxSqliteNativeBundle=System -r linux-x64
     -->
-    <AasxSqliteNativeBundle>System</AasxSqliteNativeBundle>
+    <AasxSqliteNativeBundle>Embedded</AasxSqliteNativeBundle>
   </PropertyGroup>
 </Project>
