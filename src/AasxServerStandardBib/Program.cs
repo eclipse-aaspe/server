@@ -791,117 +791,131 @@ namespace AasxServer
                 if (withDb)
                     persistenceService.BeginBulkImport();
 
-                var fi = 0;
-                while (fi < fileNames.Length)
+                // Phase 1: globalsecurity/registry files always load into memory sequentially
+                foreach (var f in fileNames)
                 {
-                    try
+                    var fl = f.ToLower(System.Globalization.CultureInfo.CurrentCulture);
+                    if (fl.Contains("globalsecurity", StringComparison.InvariantCulture) ||
+                        fl.Contains("registry", StringComparison.InvariantCulture))
                     {
-                        fn = fileNames[fi];
-                        if (fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("globalsecurity", StringComparison.InvariantCulture) ||
-                            fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("registry", StringComparison.InvariantCulture))
+                        envFileName[envi] = f;
+                        env[envi]         = new AdminShellPackageEnv(f, true, false);
+                        envi++;
+                        envimin = envi;
+                        oldest  = envi;
+                    }
+                }
+
+                // Phase 2: regular AASX files
+                var regularFiles = fileNames
+                    .Skip(startIndex)
+                    .Where(f =>
+                    {
+                        var fl = f.ToLower(System.Globalization.CultureInfo.CurrentCulture);
+                        return !fl.Contains("globalsecurity", StringComparison.InvariantCulture) &&
+                               !fl.Contains("registry", StringComparison.InvariantCulture);
+                    })
+                    .ToArray();
+
+                if (withDb)
+                {
+                    // Producer-consumer: parse in parallel, write to DB serially
+                    const int parserThreads = 4;
+                    var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: parserThreads * 8);
+
+                    var parsedCount = 0;
+                    var producer = Task.Run(() =>
+                    {
+                        try
                         {
-                            envFileName[envi] = fn;
-                            env[envi]         = new AdminShellPackageEnv(fn, true, false);
-                            //TODO:jtikekar
-                            //AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
-                            //AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                            envi++;
-                            envimin = envi;
-                            oldest  = envi;
-                            fi++;
-                            continue;
+                            Parallel.ForEach(regularFiles,
+                                new ParallelOptions { MaxDegreeOfParallelism = parserThreads },
+                                f =>
+                                {
+                                    try
+                                    {
+                                        var envDB = AasxServerDB.VisitorAASX.ParseAASX(f, createFilesOnly);
+                                        if (envDB != null)
+                                        {
+                                            System.Threading.Interlocked.Increment(ref parsedCount);
+                                            queue.Add(envDB);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.Error.WriteLine($"Error parsing {f}: {ex.Message} — skipping.");
+                                    }
+                                });
                         }
-
-                        if (fi < startIndex)
+                        finally
                         {
-                            fi++;
-                            continue;
+                            queue.CompleteAdding();
                         }
+                    });
 
-
-                        if (fn != "" && envi < envimax)
+                    int count = 0;
+                    foreach (var envDB in queue.GetConsumingEnumerable())
+                    {
+                        AasxServerDB.VisitorAASX.AddEnvSetToBulk(envDB);
+                        if (++count % 100 == 0)
                         {
-                            string name     = Path.GetFileName(fn);
-                            string tempName = "./temp/" + Path.GetFileName(fn);
+                            Console.WriteLine($"DB Flush at {count}/{regularFiles.Length} parsed={parsedCount} ({watch.ElapsedMilliseconds / 1000}s)");
+                            persistenceService.FlushBulkImport();
+                        }
+                    }
+                    producer.Wait();
+                }
+                else
+                {
+                    // Sequential load into memory (no DB)
+                    foreach (var f in regularFiles)
+                    {
+                        if (envi >= envimax) break;
+                        try
+                        {
+                            fn = f;
+                            var name     = Path.GetFileName(fn);
+                            var tempName = "./temp/" + name;
 
-                            // Convert to newest version only
                             if (saveTemp == -1)
                             {
                                 env[envi] = new AdminShellPackageEnv(fn, true, false);
-                                if (env[envi] == null)
-                                {
-                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                    return 1;
-                                }
-
-                                Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s " + "SAVE TO TEMP: " + fn);
+                                Console.WriteLine((Array.IndexOf(fileNames, fn) + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s SAVE TO TEMP: " + fn);
                                 Program.env[envi].SaveAs(tempName);
-                                fi++;
                                 continue;
                             }
 
                             if (readTemp && System.IO.File.Exists(tempName))
-                            {
                                 fn = tempName;
-                            }
 
-                            Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s" + " Loading {0}...", fn);
+                            Console.WriteLine($"{Array.IndexOf(fileNames, fn) + 1}/{fileNames.Length} {watch.ElapsedMilliseconds / 1000}s Loading {fn}...");
                             envFileName[envi] = fn;
-                            if (!withDb)
-                            {
-                                env[envi] = new AdminShellPackageEnv(fn, true, false);
-                                if (env[envi] == null)
-                                {
-                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                    return 1;
-                                }
-                            }
-                            else
-                            {
-                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly);
-                                envFileName[envi] = null;
-                                env[envi]         = null;
-                            }
+                            env[envi]         = new AdminShellPackageEnv(fn, true, false);
 
-                            // check if signed
                             string fileCert = "./user/" + name + ".cer";
                             if (System.IO.File.Exists(fileCert))
                             {
                                 X509Certificate2 x509 = new X509Certificate2(fileCert);
                                 envSymbols[envi]       = "S";
                                 envSubjectIssuer[envi] = x509.Subject;
-
                                 X509Chain chain = new X509Chain();
                                 chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                                bool isValid = chain.Build(x509);
-                                if (isValid)
+                                if (chain.Build(x509))
                                 {
                                     envSymbols[envi]       += ";V";
                                     envSubjectIssuer[envi] += ";" + x509.Issuer;
                                 }
                             }
-                        }
-
-                        fi++;
-                        if (withDb)
-                        {
-                            if (fi % 100 == 0)
-                            {
-                                Console.WriteLine($"DB Flush at {fi}/{fileNames.Length} ({watch.ElapsedMilliseconds / 1000}s)");
-                                persistenceService.FlushBulkImport();
-                            }
-                        }
-                        else
-                        {
                             envi++;
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"Error loading {fileNames[fi]}: {ex.Message} — skipping.");
-                        fi++;
+                        catch (Exception ex)
+                        {
+                            Console.Error.WriteLine($"Error loading {f}: {ex.Message} — skipping.");
+                        }
                     }
                 }
+
+                var fi = regularFiles.Length; // for the log line below
 
                 if (saveTemp == -1)
                     return (0);

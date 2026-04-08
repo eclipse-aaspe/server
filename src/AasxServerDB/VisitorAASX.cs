@@ -16,6 +16,7 @@ namespace AasxServerDB
     using AasCore.Aas3_0;
     using AdminShellNS;
     using static AasCore.Aas3_0.Visitation;
+    using EFCore.BulkExtensions;
     using Extensions;
     using System.IO.Compression;
     using Microsoft.IdentityModel.Tokens;
@@ -84,7 +85,7 @@ namespace AasxServerDB
         public static void FlushBulkImport()
         {
             if (_bulkDb == null) return;
-            _bulkDb.SaveChanges();
+            _bulkDb.BulkSaveChanges();
             _bulkDb.ChangeTracker.Clear();
             GC.Collect();
         }
@@ -92,11 +93,58 @@ namespace AasxServerDB
         public static void EndBulkImport()
         {
             if (_bulkDb == null) return;
-            _bulkDb.SaveChanges();
+            _bulkDb.BulkSaveChanges();
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = NORMAL;");
             _bulkDb.Dispose();
             _bulkDb = null;
+        }
+
+        // Parse AASX without touching DB — for parallel producer threads
+        public static EnvSet? ParseAASX(string filePath, bool createFilesOnly)
+        {
+            using var asp = new AdminShellPackageEnv(filePath, false, true);
+
+            EnvSet? envDB = null;
+            if (!createFilesOnly)
+            {
+                envDB = new EnvSet() { Path = filePath };
+                ImportAASIntoDB(asp, envDB);
+            }
+
+            // Supplementary file extraction — IO-bound, runs in parser thread
+            var name = Path.GetFileName(filePath);
+            var suppFiles = asp.GetListOfSupplementaryFiles();
+            if (suppFiles.Count > 0)
+            {
+                using var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create);
+                using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+                foreach (var f in suppFiles)
+                {
+                    try
+                    {
+                        using var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true);
+                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString, CompressionLevel.NoCompression);
+                        using var archiveStream = archiveFile.Open();
+                        s.CopyTo(archiveStream, 1024 * 1024);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Copy failed {name}/{f.Uri.OriginalString}: {ex.Message}");
+                    }
+                }
+            }
+
+            return envDB;
+        }
+
+        // Add a pre-parsed EnvSet to the bulk context — call from writer thread only
+        public static void AddEnvSetToBulk(EnvSet envDB)
+        {
+            if (_bulkDb == null) return;
+            _bulkDb.Add(envDB);
+            foreach (var envcdSet in envDB.EnvCDSets.Where(e => e?.CDSet != null))
+                _cdDBId.TryAdd(envcdSet.CDSet!.Identifier, envcdSet.CDSet.Id);
         }
 
         // Load AASX
