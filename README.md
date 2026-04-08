@@ -1,4 +1,4 @@
-# Eclipse AASX Server
+# Eclipse AASPE Server
 
 > ### Status
 > [![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
@@ -8,16 +8,28 @@
 > 
 > ![GitHub repo size](https://img.shields.io/github/repo-size/eclipse-aaspe/server) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/eclipse-aaspe/server)
 > ### Docker Images
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo:develop)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
-> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
 >
-> ### Important
+> ### Dotnet Version
 > We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-8.0-blue)
 
 
-AASX Server is a companion app for the [AASX Package Explorer](https://github.com/eclipse-aaspe/package-explorer). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core variant exposes endpoints for REST, OPC UA, and MQTT protocols. The **Blazor** variant offers the same functionality and uses Blazor for a browser-based UI.
+AASPE Server is a companion app for the [AASPE Package Explorer](https://github.com/eclipse-aaspe/package-explorer). Some source code is shared, especially AasCore.  
+AASPE Server is a AAS Repository, a Submodel Repository and a Concept Description Repository.  
+It can also import and export AASX packages by the AASX File Server API and supports the Serialization API.  
+AAS and Submodel Queries can be made by the Query Repository API.  
+A readonly AAS Registry can be provided automatically by the AAS Repository.  
+
+AASPE Server uses Entity Framework and stores data in the SQL database SQLite. (Other SQL databases like PostgreSQL may be supported later.)  
+Performance has been tested with up to 100K AAS, 500K SM, 50M SME and 100M Values, where AASQL queries can be made in less than 10 seconds.
+Many optimizations have been made by testing with SQLite.
+
+The Core variant exposes REST endpoints and provides changed data by MQTT.  
+The **Blazor** variant offers the same functionality and uses Blazor for a browser-based UI.
 
 > **IMPORTANT**
 >
