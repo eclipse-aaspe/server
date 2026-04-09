@@ -112,6 +112,10 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("Id");
 
+                    b.HasIndex("IdShort");
+
+                    b.HasIndex("Identifier");
+
                     b.ToTable("AASSets");
                 });
 
@@ -335,6 +339,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("TimeStamp");
 
+                    b.HasIndex("SMId", "IdShort", "IdShortPath");
+
                     b.ToTable("SMESets");
                 });
 
@@ -460,6 +466,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("TimeStampTree");
 
+                    b.HasIndex("Identifier", "IdShort");
+
                     b.ToTable("SMSets");
                 });
 
@@ -501,6 +509,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasIndex("SMId");
 
                     b.HasIndex("SValue");
+
+                    b.HasIndex("SValue", "SMEId");
+
+                    b.HasIndex("NValue", "SMEId");
 
                     b.ToTable("ValueSets");
                 });

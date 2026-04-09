@@ -94,10 +94,13 @@ namespace AasxServerDB
         {
             if (_bulkDb == null) return;
             _bulkDb.BulkSaveChanges();
+            Console.WriteLine("Running ANALYZE to update query planner statistics...");
+            _bulkDb.Database.ExecuteSqlRaw("ANALYZE;");
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = NORMAL;");
             _bulkDb.Dispose();
             _bulkDb = null;
+            Console.WriteLine("ANALYZE done.");
         }
 
         // Parse AASX without touching DB — for parallel producer threads

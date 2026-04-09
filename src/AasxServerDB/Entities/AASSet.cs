@@ -19,6 +19,8 @@ namespace AasxServerDB.Entities
 
     // indexes
     [Index(nameof(Id))]
+    [Index(nameof(IdShort))]
+    [Index(nameof(Identifier))]
 
     public class AASSet
     {

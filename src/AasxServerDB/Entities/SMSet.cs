@@ -24,6 +24,7 @@ namespace AasxServerDB.Entities
     [Index(nameof(SemanticId))]
     [Index(nameof(Identifier))]
     [Index(nameof(TimeStampTree))]
+    [Index(nameof(Identifier), nameof(IdShort))]
 
     public class SMSet
     {

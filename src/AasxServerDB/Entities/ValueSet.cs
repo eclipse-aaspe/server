@@ -24,6 +24,8 @@ namespace AasxServerDB.Entities
     [Index(nameof(SValue))]
     [Index(nameof(NValue))]
     [Index(nameof(DTValue))]
+    [Index(nameof(SValue), nameof(SMEId))]
+    [Index(nameof(NValue), nameof(SMEId))]
 
     public class ValueSet
     {
