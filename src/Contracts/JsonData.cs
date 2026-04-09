@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -251,6 +252,11 @@ public class AccessPermissionRule
 
     public Dictionary<string, string> _formula_conditions = [];
     public Dictionary<string, string> _filter_conditions = [];
+
+    /// <summary>Direct SQL equivalent of <see cref="_formula_conditions"/> — populated by <see cref="QueryGrammarJSON.ParseAccessRules"/> alongside the LINQ strings.</summary>
+    public SqlConditions? _formula_sqlConditions;
+    /// <summary>Direct SQL equivalent of <see cref="_filter_conditions"/> — populated by <see cref="QueryGrammarJSON.ParseAccessRules"/> alongside the LINQ strings.</summary>
+    public SqlConditions? _filter_sqlConditions;
 }
 public class Filter
 {
