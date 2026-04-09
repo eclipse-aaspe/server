@@ -39,7 +39,7 @@ public interface IPersistenceService
 
     void BeginBulkImport();
     void FlushBulkImport();
-    void EndBulkImport();
+    void EndBulkImport(bool analyze = false);
 
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 }

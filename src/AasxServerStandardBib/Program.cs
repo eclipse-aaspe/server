@@ -427,6 +427,7 @@ namespace AasxServer
             public bool     WithDb          { get; set; }
             public bool     NoDbFiles       { get; set; }
             public int      StartIndex      { get; set; }
+            public bool     Analyze         { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -922,7 +923,7 @@ namespace AasxServer
 
                 if (withDb)
                 {
-                    persistenceService.EndBulkImport();
+                    persistenceService.EndBulkImport(a.Analyze);
 
                     // preload AASX from DB and keep in memory
                     var packages = new List<AdminShellPackageEnv>();
@@ -1253,7 +1254,10 @@ namespace AasxServer
                                                    "If set, do not export files from AASX into ZIP"),
                                   new Option<int>(
                                                   new[] {"--start-index"},
-                                                  "If set, start index in list of AASX files")
+                                                  "If set, start index in list of AASX files"),
+                                  new Option<bool>(
+                                                   new[] {"--analyze"},
+                                                   "If set, run ANALYZE after bulk import to update query planner statistics")
                               };
 
             if (args.Length == 0)

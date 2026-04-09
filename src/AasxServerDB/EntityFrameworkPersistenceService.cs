@@ -186,7 +186,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void BeginBulkImport()  => VisitorAASX.BeginBulkImport();
     public void FlushBulkImport()  => VisitorAASX.FlushBulkImport();
-    public void EndBulkImport()    => VisitorAASX.EndBulkImport();
+    public void EndBulkImport(bool analyze = false) => VisitorAASX.EndBulkImport(analyze);
 
     public List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list)
     {

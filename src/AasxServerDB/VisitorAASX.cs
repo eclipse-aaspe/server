@@ -90,17 +90,31 @@ namespace AasxServerDB
             GC.Collect();
         }
 
-        public static void EndBulkImport()
+        public static void EndBulkImport(bool analyze = false)
         {
             if (_bulkDb == null) return;
             _bulkDb.BulkSaveChanges();
-            Console.WriteLine("Running ANALYZE to update query planner statistics...");
-            _bulkDb.Database.ExecuteSqlRaw("ANALYZE;");
+            if (analyze)
+            {
+                Console.WriteLine("Running ANALYZE to update query planner statistics...");
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                _bulkDb.Database.ExecuteSqlRaw("ANALYZE;");
+                sw.Stop();
+                Console.WriteLine($"ANALYZE done in {sw.ElapsedMilliseconds / 1000}s.");
+            }
+
+            Console.WriteLine($"  EnvSets:   {_bulkDb.EnvSets.Count()}");
+            Console.WriteLine($"  CDSets:    {_bulkDb.CDSets.Count()}");
+            Console.WriteLine($"  AASSets:   {_bulkDb.AASSets.Count()}");
+            Console.WriteLine($"  SMRefSets: {_bulkDb.SMRefSets.Count()}");
+            Console.WriteLine($"  SMSets:    {_bulkDb.SMSets.Count()}");
+            Console.WriteLine($"  SMESets:   {_bulkDb.SMESets.Count()}");
+            Console.WriteLine($"  ValueSets: {_bulkDb.ValueSets.Count()}");
+            Console.WriteLine($"  OValueSets:{_bulkDb.OValueSets.Count()}");
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = NORMAL;");
             _bulkDb.Dispose();
             _bulkDb = null;
-            Console.WriteLine("ANALYZE done.");
         }
 
         // Parse AASX without touching DB — for parallel producer threads
