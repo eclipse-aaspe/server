@@ -99,6 +99,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxCsharpLibrary.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "Contracts\Contracts.csproj", "{1438AF76-63E7-485D-B5A4-B39426892FCA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasxServerDB.Tests", "AasxServerDB.Tests\AasxServerDB.Tests.csproj", "{D7A17163-3EA6-409B-A1FC-550265F51F4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -418,6 +420,24 @@ Global
 		{1438AF76-63E7-485D-B5A4-B39426892FCA}.Release|x64.Build.0 = Release|Any CPU
 		{1438AF76-63E7-485D-B5A4-B39426892FCA}.Release|x86.ActiveCfg = Release|Any CPU
 		{1438AF76-63E7-485D-B5A4-B39426892FCA}.Release|x86.Build.0 = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x64.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x86.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x64.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x86.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x64.ActiveCfg = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x64.Build.0 = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x86.ActiveCfg = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
