@@ -1002,6 +1002,7 @@ public class QueryGrammarJSON : Grammar
     public static AllAccessPermissionRules _accessRules = null;
     public static new List<Dictionary<string, string>> allAccessRuleExpressions = [];
     public static new Dictionary<string, string> accessRuleExpression = [];
+    public static SqlConditions? allAccessRuleSqlConditions = null;
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
     public void ParseAccessRules(string expression)
@@ -1009,6 +1010,7 @@ public class QueryGrammarJSON : Grammar
         // mySecurityRules.ClearSecurityRules();
         allAccessRuleExpressions = new List<Dictionary<string, string>>();
         accessRuleExpression = new Dictionary<string, string>();
+        allAccessRuleSqlConditions = null;
         Root deserializedData = null;
 
         var jsonSchema = "";
@@ -1131,42 +1133,6 @@ public class QueryGrammarJSON : Grammar
                     {
                         createExpression("all", le);
                         conditions[i].Add("all", le._expression);
-                        createExpression("sm.", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        else
-                        {
-                            le._expression = le._expression.Replace("sm.", "");
-                        }
-                        conditions[i].Add("sm.", le._expression);
-                        createExpression("sme.", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        else
-                        {
-                            le._expression = le._expression.Replace("sme.", "");
-                        }
-                        conditions[i].Add("sme.", le._expression);
-                        /*
-                        createExpression("svalue", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        le._expression = le._expression.Replace("svalue", "Value");
-                        conditions[i].Add("svalue", le._expression);
-                        createExpression("mvalue", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        le._expression = le._expression.Replace("mvalue", "Value");
-                        conditions[i].Add("mvalue", le._expression);
-                        */
                         createExpression("value", le);
                         if (le._expression == "$SKIP")
                         {
@@ -1174,12 +1140,16 @@ public class QueryGrammarJSON : Grammar
                         }
                         conditions[i].Add("value", le._expression);
 
-                        // Parallel: direct SQL generation (new path, runs alongside LINQ strings)
+                        // SQL generation + C# sm./sme. expressions in one pass
                         var sc = CreateSqlConditions(le);
                         if (i == 0)
                             rule._formula_sqlConditions = sc;
                         else
                             rule._filter_sqlConditions = sc;
+
+                        // C# sm./sme. conditions from ScopeFiltersCSharp (computed inside CreateSqlConditions)
+                        conditions[i].Add("sm.", sc.ScopeFiltersCSharp.GetValueOrDefault("sm.", ""));
+                        conditions[i].Add("sme.", sc.ScopeFiltersCSharp.GetValueOrDefault("sme.", ""));
                     }
                 }
             }
@@ -1187,6 +1157,16 @@ public class QueryGrammarJSON : Grammar
             var accessRuleExpression = new Dictionary<string, string>();
             ParseAccessRule(rule, accessRuleExpression);
             allAccessRuleExpressions.Add(accessRuleExpression);
+
+            // Accumulate SQL conditions across all rules (OR-combine via Merge)
+            if (rule._formula_sqlConditions != null || rule._filter_sqlConditions != null)
+            {
+                var ruleSc = SqlConditionsMerger.Merge(rule._formula_sqlConditions, rule._filter_sqlConditions);
+                if (allAccessRuleSqlConditions == null)
+                    allAccessRuleSqlConditions = ruleSc;
+                else
+                    allAccessRuleSqlConditions = SqlConditionsMerger.OrMerge(allAccessRuleSqlConditions, ruleSc);
+            }
         }
     }
 
@@ -1273,6 +1253,12 @@ public class QueryGrammarJSON : Grammar
 
         // Overall condition with path/match placeholders
         sc.OverallCondition = BuildOverallSql(le, ctx) ?? "1=1";
+
+        // C# Dynamic LINQ expressions for in-memory filtering (sm. and sme. scopes)
+        var smExpr = createExpression("sm.", le);
+        sc.ScopeFiltersCSharp["sm."] = smExpr == "$SKIP" ? "" : smExpr.Replace("sm.", "");
+        var smeExpr = createExpression("sme.", le);
+        sc.ScopeFiltersCSharp["sme."] = smeExpr == "$SKIP" ? "" : smeExpr.Replace("sme.", "");
 
         return sc;
     }

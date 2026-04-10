@@ -34,6 +34,11 @@ internal sealed class NoSecurityRules : IContractSecurityRules
         return true;
     }
 
+    public SqlConditions? GetSqlConditions(
+        string accessRole, string neededRightsClaim,
+        List<Claim>? tokenClaims = null)
+        => null;
+
     public void ClearSecurityRules() { }
 
     public void AddSecurityRule(

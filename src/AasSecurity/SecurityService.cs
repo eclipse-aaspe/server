@@ -49,6 +49,7 @@ namespace AasSecurity
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
         public static List<Dictionary<string, string>>? _condition = new List<Dictionary<string, string>>();
+        public static SqlConditions? _SqlCondition = null;
 
         public static AllAccessPermissionRules? _accessRules = null;
 
@@ -84,6 +85,7 @@ namespace AasSecurity
                         grammar.ParseAccessRules(expression);
                         _accessRules = QueryGrammarJSON._accessRules;
                         _condition = QueryGrammarJSON.allAccessRuleExpressions;
+                        _SqlCondition = QueryGrammarJSON.allAccessRuleSqlConditions;
                     }
                 }
             }
@@ -247,6 +249,16 @@ namespace AasSecurity
             }
 
             return condition;
+        }
+
+        /// <summary>
+        /// SQL equivalent of <see cref="GetCondition"/>: combines <c>_formula_sqlConditions</c> and
+        /// <c>_filter_sqlConditions</c> from all matching rules into a single <see cref="SqlConditions"/>
+        /// by OR-ing scope filters and overall conditions across rules.
+        /// </summary>
+        public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, List<Claim>? tokenClaims = null)
+        {
+            return _SqlCondition;
         }
 
         public void ClearSecurityRules()

@@ -1314,41 +1314,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
-        string equal, string lower, string upper,  IPaginationParameters paginationParameters, string expression)
-    {
-        var parameters = new DbRequestParams()
-        {
-            QueryRequest = new DbQueryRequest()
-            {
-                PageFrom = paginationParameters.Cursor,
-                PageSize = paginationParameters.Limit,
-                SmSemanticId = smSemanticId,
-                Identifier = smIdentifier,
-                SemanticId = semanticId,
-                Diff = diff,
-                Contains = contains,
-                Equal = equal,
-                Lower = lower,
-                Upper = upper,
-                Expression = expression
-            }
-        };
-
-        var dbRequestContext = new DbRequestContext()
-        {
-            SecurityConfig = securityConfig,
-            Params = parameters
-        };
-        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
-
-        var dbRequest = new DbRequest(DbRequestOp.QueryCountSMEs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
-
-        _queryOperations.Add(dbRequest);
-
-        var tcs = await taskCompletionSource.Task;
-        return tcs.Count;
-    }
 
     public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression)
     {

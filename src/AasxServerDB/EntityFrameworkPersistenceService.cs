@@ -199,6 +199,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var securityConfig = dbRequest.Context.SecurityConfig;
 
         Dictionary<string, string>? securityCondition = null;
+        SqlConditions? securitySqlConditions = null;
         List<AccessPermissionRule> accessRules = null;
         bool isAllowed = false;
 
@@ -209,7 +210,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.ReadThumbnail:
             case DbRequestOp.ReadFileByPath:
             case DbRequestOp.ReadPagedAASXPackageIds:
-                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, ignoreNullConfig: true);
+                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, out securitySqlConditions, ignoreNullConfig: true);
 
                 if (!isAllowed)
                 {
@@ -220,8 +221,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.QuerySearchSMs:
             case DbRequestOp.QuerySearchSMEs:
             case DbRequestOp.QueryCountSMs:
-            case DbRequestOp.QueryCountSMEs:
-                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, "/query");
+                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, out securitySqlConditions, "/query");
 
                 if (!isAllowed)
                 {
@@ -229,7 +229,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 break;
             default:
-                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules);
+                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, out securitySqlConditions);
 
                 if (!isAllowed)
                 {
@@ -271,7 +271,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 PackageEnv = new AdminShellPackageEnv(aasEnv),
                             };
                         }
-                        else if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out SMSet smDB, out _))
+                        else if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out SMSet smDB, out _, securitySqlConditions))
                         {
                             //ToDo: Need to be tested
                             var smEnv = CrudOperator.GetEnvironment(db, securityCondition, smDb: smDB);
@@ -408,7 +408,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var reqSemanticId = dbRequest.Context.Params.Reference;
                         var querySM = new Query(_grammar);
 
-                        var output = CrudOperator.ReadPagedSubmodels(db, querySM, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort);
+                        var output = CrudOperator.ReadPagedSubmodels(db, querySM, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort, securitySqlConditions);
 
                         if (dbRequest.Context.Params.Reference != null)
                         {
@@ -423,7 +423,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         result.ResultData = output.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadSubmodelById:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel, securitySqlConditions);
 
                         var aasText = aasIdentifier == null ? "" : $" in Asset Administration Shell with id {aasIdentifier}";
                         if (found)
@@ -456,7 +456,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         break;
                     case DbRequestOp.CreateSubmodel:
                         var newSubmodel = dbRequest.Context.Params.SubmodelBody;
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, false, out _, out _);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, false, out _, out _, securitySqlConditions);
 
                         if (found)
                         {
@@ -473,7 +473,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.UpdateSubmodelById:
                         throw new NotImplementedException();
                     case DbRequestOp.ReplaceSubmodelById:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
 
                         if (found)
                         {
@@ -498,7 +498,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         break;
                     case DbRequestOp.DeleteSubmodelById:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, true, out _, out ISubmodel deletedSubmodel))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, true, out _, out ISubmodel deletedSubmodel, securitySqlConditions))
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
 
@@ -522,7 +522,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         break;
                     case DbRequestOp.ReadPagedSubmodelElements:
                         var submodelElements = CrudOperator.ReadPagedSubmodelElements(db, dbRequest.Context.Params.PaginationParameters,
-                            securityCondition, aasIdentifier, submodelIdentifier);
+                            securityCondition, aasIdentifier, submodelIdentifier, securitySqlConditions);
                         if (submodelElements == null)
                         {
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -531,7 +531,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         result.ResultData = submodelElements.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadSubmodelElementByPath:
-                        var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShort, out SMESet smE);
+                        var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShort, out SMESet smE, securitySqlConditions);
                         if (submodelElement == null)
                         {
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -547,7 +547,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         var newSubmodelElement = dbRequest.Context.Params.SubmodelElementBody;
 
-                        var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _);
+                        var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
                         if (smFound)
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
@@ -578,7 +578,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         };
                         break;
                     case DbRequestOp.ReplaceSubmodelElementByPath:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _);
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
                         if (found)
                         {
                             CrudOperator.ReplaceSubmodelElementByPath(
@@ -587,7 +587,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                                 aasIdentifier,
                                 submodelIdentifier,
                                 idShort,
-                                dbRequest.Context.Params.SubmodelElementBody);
+                                dbRequest.Context.Params.SubmodelElementBody,
+                                securitySqlConditions);
                         }
                         else
                         {
@@ -598,14 +599,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new NotImplementedException();
 
                     case DbRequestOp.DeleteSubmodelElementByPath:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel deletedSmeParentSubmodel))
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel deletedSmeParentSubmodel, securitySqlConditions))
                         {
                             var sme = CrudOperator.DeleteSubmodelElement(
                                 db,
                                 securityCondition,
                                 aasIdentifier,
                                 submodelIdentifier,
-                                idShort);
+                                idShort,
+                                securitySqlConditions);
 
                             if (sme != null)
                             {
@@ -1974,7 +1976,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
     private bool IsSubmodelPresent(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier,
-        bool loadIntoMemory, bool loadIntoMemoryWithoutElements, out SMSet smDb, out ISubmodel output)
+        bool loadIntoMemory, bool loadIntoMemoryWithoutElements, out SMSet smDb, out ISubmodel output, SqlConditions? securitySqlConditions = null)
     {
         output = null;
         smDb = null;
@@ -2015,6 +2017,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
 
         var smDB = smDBQuery.ToList();
+
+        // NEW: raw SQL — only when sm scope filter is set
+        string? smSql = null;
+        securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSql);
+        if (!string.IsNullOrWhiteSpace(smSql) && !string.IsNullOrEmpty(submodelIdentifier))
+        {
+            var smDBNew = CrudOperator.QuerySmRaw(db, submodelIdentifier, smSql);
+            if (!smDB.Select(sm => sm.Id).OrderBy(x => x).SequenceEqual(smDBNew.Select(sm => sm.Id).OrderBy(x => x)))
+                return false;
+        }
 
         if (smDB.Count != 1)
         {
@@ -2126,17 +2138,17 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition,
-        out List<AccessPermissionRule> accessRules, string httpRoute = "", bool ignoreNullConfig = false)
+        out List<AccessPermissionRule> accessRules, out SqlConditions? sqlConditions,
+        string httpRoute = "", bool ignoreNullConfig = false)
     {
         accessRules = null;
         securityCondition = null;
-
+        sqlConditions = null;
 
         if (securityConfig == null)
         {
             return ignoreNullConfig;
         }
-
 
         if (securityConfig.NoSecurity)
         {
@@ -2183,6 +2195,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
         accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
+        sqlConditions = _contractSecurityRules.GetSqlConditions(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
 
         if (accessRules?.Count != 0 && httpRoute != null)
         {

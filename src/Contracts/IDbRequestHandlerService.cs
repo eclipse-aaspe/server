@@ -90,8 +90,6 @@ public interface IDbRequestHandlerService
     Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
     Task<QResult> QuerySearchSMEs(ISecurityConfig securityConfig, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff,
         string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression);
-    Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper,
-        IPaginationParameters paginationParameters, string expression);
     Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression);
     Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression);
 
