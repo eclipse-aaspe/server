@@ -1082,6 +1082,53 @@ public partial class Query
         return fields;
     }
 
+    private static List<string> GetSqlFields(string alias, string? expression)
+    {
+        var fields = new List<string>();
+        var prefix = $"\"{alias}\".";
+
+        if (expression != null)
+        {
+            var split1 = expression.Split(prefix);
+            foreach (var s1 in split1)
+            {
+                if (string.IsNullOrWhiteSpace(s1) || !s1.StartsWith('\"'))
+                {
+                    continue;
+                }
+
+                var field = s1.Split([' ', ')', ',']).FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(field))
+                {
+                    continue;
+                }
+
+                field = field.Trim('\"');
+                if (!string.IsNullOrWhiteSpace(field) && !fields.Contains(field))
+                {
+                    fields.Add(field);
+                }
+            }
+        }
+
+        return fields;
+    }
+
+    private static string NormalizeSqlAliases(string? sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+        {
+            return "";
+        }
+
+        return sql
+            .Replace("\"a\".", "\"aas\".")
+            .Replace("\"t\".", "\"sm\".")
+            .Replace("\"s0\".", "\"sm\".")
+            .Replace("\"s1\".", "\"sme\".")
+            .Replace("\"v\".", "\"value\".");
+    }
+
     /// <summary>
     /// Sucht im großen wherePath nach verbleibenden v.* Prädikaten (aus convertConditionSQL),
     /// baut dafür Flag-CTEs und ersetzt sie durch CASE WHEN.
@@ -1477,17 +1524,37 @@ public partial class Query
         IQueryable<SMESet>? smeTable = null;
         IQueryable<ValueSet>? valueTable = null;
 
-        var restrictAAS = conditionsExpression.TryGetValue("aas", out var value) && value != "" && value.ToLower() != "true";
-        var restrictSM = conditionsExpression.TryGetValue("sm", out value) && value != "" && value.ToLower() != "true";
-        var restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value.ToLower() != "true";
-        var restrictValue = conditionsExpression.TryGetValue("value", out value) && value != "" && value.ToLower() != "true";
+        var sqlAasCondition = NormalizeSqlAliases(sqlConditions?.FormulaConditions.GetValueOrDefault("aas", ""));
+        var sqlSmCondition = NormalizeSqlAliases(sqlConditions?.FormulaConditions.GetValueOrDefault("sm", ""));
+        var sqlSmeCondition = NormalizeSqlAliases(sqlConditions?.FormulaConditions.GetValueOrDefault("sme", ""));
+        var sqlValueCondition = NormalizeSqlAliases(sqlConditions?.FormulaConditions.GetValueOrDefault("value", ""));
+        var sqlOverallCondition = NormalizeSqlAliases(sqlConditions?.FormulaConditions.GetValueOrDefault("all", ""));
+        var sqlFilterAllCondition = NormalizeSqlAliases(sqlConditions?.FilterConditions.GetValueOrDefault("all", ""));
+        var useSqlConditions = sqlConditions != null;
+
+        var restrictAAS = useSqlConditions
+            ? !string.IsNullOrWhiteSpace(sqlAasCondition)
+            : conditionsExpression.TryGetValue("aas", out var value) && value != "" && value.ToLower() != "true";
+        var restrictSM = useSqlConditions
+            ? !string.IsNullOrWhiteSpace(sqlSmCondition)
+            : conditionsExpression.TryGetValue("sm", out value) && value != "" && value.ToLower() != "true";
+        var restrictSME = useSqlConditions
+            ? !string.IsNullOrWhiteSpace(sqlSmeCondition)
+            : conditionsExpression.TryGetValue("sme", out value) && value != "" && value.ToLower() != "true";
+        var restrictValue = useSqlConditions
+            ? !string.IsNullOrWhiteSpace(sqlValueCondition)
+            : conditionsExpression.TryGetValue("value", out value) && value != "" && value.ToLower() != "true";
 
         var aasFields = new List<string>();
         var smFields = new List<string>();
         var smeFields = new List<string>();
+        var overallFieldCondition = useSqlConditions
+            ? AppendAndCondition(sqlOverallCondition, sqlFilterAllCondition)
+            : conditionsExpression.GetValueOrDefault("all", "");
 
-        if (conditionsExpression.TryGetValue("all", out value) && value != "" && value.ToLower() != "true")
+        if (!string.IsNullOrWhiteSpace(overallFieldCondition) && !string.Equals(overallFieldCondition, "true", StringComparison.OrdinalIgnoreCase))
         {
+            value = overallFieldCondition;
             while (value.Contains("$$match$$$$true") || value.Contains("$$match$$$$match$$"))
             {
                 value = value.Replace("$$match$$$$true", "$$match$$");
@@ -1496,9 +1563,18 @@ public partial class Query
 
             if (value != "")
             {
-                aasFields = GetFields("aas.", value);
-                smFields = GetFields("sm.", value);
-                smeFields = GetFields("sme.", value);
+                if (useSqlConditions)
+                {
+                    aasFields = GetSqlFields("aas", value);
+                    smFields = GetSqlFields("sm", value);
+                    smeFields = GetSqlFields("sme", value);
+                }
+                else
+                {
+                    aasFields = GetFields("aas.", value);
+                    smFields = GetFields("sm.", value);
+                    smeFields = GetFields("sme.", value);
+                }
             }
         }
 
@@ -1509,7 +1585,10 @@ public partial class Query
         var pathAllCondition = "";
         var pathAllConditionRaw = "";
 
-        var aasExistInCondition = conditionsExpression.TryGetValue("all", out value) && value.Contains("aas.");
+        var aasExistInCondition = !string.IsNullOrWhiteSpace(overallFieldCondition)
+            && (useSqlConditions
+                ? overallFieldCondition.Contains("\"aas\".")
+                : overallFieldCondition.Contains("aas."));
 
         bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
@@ -1796,10 +1875,10 @@ public partial class Query
             pathAllCondition = conditionAll;
         }
 
-        var rawAas = aasTable?.ToQueryString();
-        var whereAas = SafeExtractWherePredicate(rawAas);
-        var rawSm = smTable?.ToQueryString();
-        var whereSm = SafeExtractWherePredicate(rawSm);
+        var rawAas = useSqlConditions ? null : aasTable?.ToQueryString();
+        var whereAas = useSqlConditions ? sqlAasCondition : SafeExtractWherePredicate(rawAas);
+        var rawSm = useSqlConditions ? null : smTable?.ToQueryString();
+        var whereSm = useSqlConditions ? sqlSmCondition : SafeExtractWherePredicate(rawSm);
 
         IQueryable<joinAll>? convert = null;
 
@@ -1840,10 +1919,10 @@ public partial class Query
         //   SMESets   → "s1"
         //   ValueSets → "v"
         // These constants eliminate the fragile regex extraction of ToQueryString() output.
-        const string aasPrefix = "a";
-        const string smPrefix = "s0";
-        const string smePrefix = "s1";
-        const string valuePrefix = "v";
+        const string aasPrefix = "aas";
+        const string smPrefix = "sm";
+        const string smePrefix = "sme";
+        const string valuePrefix = "value";
 
         var raw = "";
         var rawBase = "";
@@ -1861,7 +1940,7 @@ public partial class Query
         selectAas += "\r\n  FROM AASSets\r\n";
         if (!string.IsNullOrWhiteSpace(whereAas))
         {
-            var whereAas2 = whereAas.Replace("\"a\".", "");
+            var whereAas2 = whereAas.Replace($"\"{aasPrefix}\".", "");
             selectAas += $"WHERE {whereAas2}\r\n";
         }
         selectAas += ")";
@@ -1879,6 +1958,7 @@ public partial class Query
         {
             var whereSm2 = whereSm.Replace("\"s\".", "");
             whereSm2 = whereSm2.Replace("\"s0\".", "");
+            whereSm2 = whereSm2.Replace($"\"{smPrefix}\".", "");
 
             selectSm += $"WHERE {whereSm2}\r\n";
         }
@@ -1888,22 +1968,22 @@ public partial class Query
 
         if (resultType == ResultType.AssetAdministrationShell)
         {
-            rawBase += "a.Id\r\n";
+            rawBase += "aas.Id\r\n";
         }
         else
         {
-            rawBase += "t.Id\r\n";
+            rawBase += "sm.Id\r\n";
         }
 
         if (isWithAASTable)
         {
-            rawBase += $"FROM {selectAas} AS a\r\n";
-            rawBase += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\n";
-            rawBase += $"INNER JOIN {selectSm} AS t ON sx.Identifier = t.Identifier\r\n";
+            rawBase += $"FROM {selectAas} AS aas\r\n";
+            rawBase += "INNER JOIN SMRefSets AS sx ON aas.Id = sx.AASId\r\n";
+            rawBase += $"INNER JOIN {selectSm} AS sm ON sx.Identifier = sm.Identifier\r\n";
         }
         else
         {
-            rawBase += $"FROM {selectSm} AS t\r\n";
+            rawBase += $"FROM {selectSm} AS sm\r\n";
         }
 
         var placeholderSQL = new string[pathConditions.Count];
@@ -1993,9 +2073,9 @@ public partial class Query
                     else
                     {
                         var convertPathCondition = convert.Where(pathConditions[pathCondIndex]);
-                        var sql1 = SafeExtractWherePredicate(convertPathCondition.ToQueryString());
+                        var sql1 = NormalizeSqlAliases(SafeExtractWherePredicate(convertPathCondition.ToQueryString()));
                         var s1 = sql1.Split(" AND ");
-                        valueSQL      = s1[s1.Length - 1].Replace($"\"{smePrefix}\".", $"\"{localSmePath}\".");
+                        valueSQL      = s1[s1.Length - 1].Replace($"\"{valuePrefix}\".", "\"v\".");
                         smeSQLPath    = s1[s1.Length - 2].Replace($"\"{smePrefix}\".", $"\"{localSmePath}\".");
                         smeSQLIdShort = s1[s1.Length - 3].Replace($"\"{smePrefix}\".", $"\"{localSmePath}\".");
                     }
@@ -2068,9 +2148,9 @@ public partial class Query
                     var where = "";
 
                     var convertPathCondition = convert.Where(pathConditions[i]);
-                    var convertPathConditionSQL = convertPathCondition.ToQueryString();
+                    var convertPathConditionSQL = NormalizeSqlAliases(convertPathCondition.ToQueryString());
                     where = SafeExtractWherePredicate(convertPathConditionSQL);
-                    where = where.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
+                    where = where.Replace($"\"{smePrefix}\".", "sme.").Replace($"\"{valuePrefix}\".", "v.");
 
                     split = where.Split(" AND ");
 
@@ -2140,7 +2220,8 @@ public partial class Query
                         var cp = convert.Where(pathConditions[i]).Select(r => r.SMId);
                         raw3 = SafeExtractWherePredicate(cp.ToQueryString());
                     }
-                    raw3 = raw3.Replace($"\"{smePrefix}\".", "sme.").Replace("\"v\".", "v.");
+                    raw3 = NormalizeSqlAliases(raw3);
+                    raw3 = raw3.Replace($"\"{smePrefix}\".", "sme.").Replace($"\"{valuePrefix}\".", "v.");
                     var s3 = raw3.Split(" AND ");
                     valueSQL      = s3[s3.Length - 1];
                     smeSQLPath    = s3[s3.Length - 2];
@@ -2165,7 +2246,7 @@ public partial class Query
                 i++;
             }
 
-            join += $"\r\n) AS p{j + 1} ON p{j + 1}.SMId = t.Id\r\n";
+            join += $"\r\n) AS p{j + 1} ON p{j + 1}.SMId = sm.Id\r\n";
 
             pathPrefix.Add($"p{j + 1}");
 
@@ -2189,12 +2270,15 @@ public partial class Query
             convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"SValue\" IS NULL", "");
             convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"NValue\" IS NULL", "");
             convertConditionSQL = convertConditionSQL.Replace(" OR \"v\".\"DTValue\" IS NULL", "");
+            convertConditionSQL = NormalizeValueAnnotationInstrForCombineSql(convertConditionSQL);
         }
+
+        convertConditionSQL = AppendAndCondition(
+            convertConditionSQL,
+            sqlConditions?.FilterConditions.GetValueOrDefault("all", ""));
 
         if (!string.IsNullOrEmpty(convertConditionSQL))
         {
-            convertConditionSQL = NormalizeValueAnnotationInstrForCombineSql(convertConditionSQL);
-
             for (var i = 0; i < pathConditions.Count; i++)
             {
                 if (placeholderSQL[i] != null)
@@ -2216,7 +2300,7 @@ public partial class Query
                 }
             }
 
-            convertConditionSQL = convertConditionSQL.Replace($"\"{smPrefix}\".", "\"t\".");
+            convertConditionSQL = NormalizeSqlAliases(convertConditionSQL);
 
             List<string> combinedSelectFields = [];
             List<string> combinedWhereParts = [];
@@ -2400,7 +2484,7 @@ public partial class Query
                         rawBase += "  WHERE " + string.Join("\r\n     OR ", distinctWhereParts) + "\r\n";
                     }
 
-                    rawBase += ") AS value ON value.\"SMId\" = t.Id\r\n";
+                    rawBase += ") AS value ON value.\"SMId\" = sm.Id\r\n";
                 }
             }
 
@@ -2524,7 +2608,7 @@ public partial class Query
 
         raw += useValueOnlyDirectPath
             ? $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n"
-            : $"ORDER BY t.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+            : $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
 
         AddGeneratedSql(generatedSql, raw);
         var qpRaw = GetQueryPlan(db, raw);
@@ -2592,12 +2676,14 @@ public partial class Query
     internal static string? BuildRawSqlFromSqlConditions(
         SqlConditions sc, bool isWithAASTable, ResultType resultType, int pageFrom, int pageSize)
     {
-        var whereAas = sc.FormulaConditions.GetValueOrDefault("aas", "");
-        var whereSm  = sc.FormulaConditions.GetValueOrDefault("sm",  "");
-        var whereVal = sc.FormulaConditions.GetValueOrDefault("value", "");
+        var whereAas = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("aas", ""));
+        var whereSm  = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sm",  ""));
+        var whereSme = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sme", ""));
+        var whereVal = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("value", ""));
+        var filterAll = NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("all", ""));
 
         // Resolve placeholder references
-        var overall = sc.FormulaConditions.GetValueOrDefault("all", "");
+        var overall = AppendAndCondition(NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("all", "")), filterAll);
         var pathNum  = 1;
         var matchNum = 1;
         foreach (var path  in sc.Paths)    overall = overall.Replace($"$${path.Placeholder}$$",  $"(p{pathNum++}.SMId IS NOT NULL)");
@@ -2608,15 +2694,16 @@ public partial class Query
         // overall only references value-table columns (v.)
         // ----------------------------------------------------------------
         bool hasPathsOrMatches = sc.Paths.Count > 0 || sc.Matches.Count > 0;
-        bool overallHasVRef    = overall.Contains("\"v\".");
-        bool overallHasTRef    = overall.Contains("\"t\".") || overall.Contains("\"a\".");
+        bool overallHasSmeRef  = overall.Contains("\"sme\".");
+        bool overallHasVRef    = overall.Contains("\"value\".");
+        bool overallHasTRef    = overall.Contains("\"sm\".") || overall.Contains("\"aas\".");
 
         if (!hasPathsOrMatches && !isWithAASTable
             && string.IsNullOrWhiteSpace(whereSm)
             && resultType != ResultType.AssetAdministrationShell
             && overallHasVRef && !overallHasTRef)
         {
-            var raw = "SELECT DISTINCT sm.Id\r\nFROM ValueSets v\r\nJOIN SMESets sme ON sme.Id = v.SMEId\r\nJOIN SMSets sm ON sm.Id = sme.SMId\r\n";
+            var raw = "SELECT DISTINCT sm.Id\r\nFROM ValueSets AS value\r\nJOIN SMESets AS sme ON sme.Id = value.SMEId\r\nJOIN SMSets AS sm ON sm.Id = sme.SMId\r\n";
             raw += $"WHERE {overall}\r\n";
             raw += $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
             return raw;
@@ -2627,26 +2714,26 @@ public partial class Query
         // ----------------------------------------------------------------
         var selectAas = "(\r\n  SELECT Id, Identifier\r\n  FROM AASSets\r\n";
         if (!string.IsNullOrWhiteSpace(whereAas))
-            selectAas += $"  WHERE {whereAas}\r\n";
+            selectAas += $"  WHERE {whereAas.Replace("\"aas\".", "")}\r\n";
         selectAas += ")";
 
         var selectSm = "(\r\n  SELECT Id, IdShort, Identifier\r\n  FROM SMSets\r\n";
         if (!string.IsNullOrWhiteSpace(whereSm))
-            selectSm += $"  WHERE {whereSm}\r\n";
+            selectSm += $"  WHERE {whereSm.Replace("\"sm\".", "")}\r\n";
         selectSm += ")";
 
         var rawBase = "SELECT DISTINCT ";
-        rawBase += resultType == ResultType.AssetAdministrationShell ? "a.Id\r\n" : "t.Id\r\n";
+        rawBase += resultType == ResultType.AssetAdministrationShell ? "aas.Id\r\n" : "sm.Id\r\n";
 
         if (isWithAASTable)
         {
-            rawBase += $"FROM {selectAas} AS a\r\n";
-            rawBase += "INNER JOIN SMRefSets AS sx ON a.Id = sx.AASId\r\n";
-            rawBase += $"INNER JOIN {selectSm} AS t ON sx.Identifier = t.Identifier\r\n";
+            rawBase += $"FROM {selectAas} AS aas\r\n";
+            rawBase += "INNER JOIN SMRefSets AS sx ON aas.Id = sx.AASId\r\n";
+            rawBase += $"INNER JOIN {selectSm} AS sm ON sx.Identifier = sm.Identifier\r\n";
         }
         else
         {
-            rawBase += $"FROM {selectSm} AS t\r\n";
+            rawBase += $"FROM {selectSm} AS sm\r\n";
         }
 
         // Standalone path LEFT JOINs
@@ -2654,7 +2741,7 @@ public partial class Query
         foreach (var path in sc.Paths)
         {
             // SubquerySql is body only (FROM … WHERE …); add SELECT header with fixed alias "sme"
-            rawBase += $"LEFT JOIN (\r\nSELECT sme.SMId AS SMId\r\n{path.SubquerySql}\r\n) AS p{pathNum} ON p{pathNum}.SMId = t.Id\r\n";
+            rawBase += $"LEFT JOIN (\r\nSELECT sme.SMId AS SMId\r\n{path.SubquerySql}\r\n) AS p{pathNum} ON p{pathNum}.SMId = sm.Id\r\n";
             pathNum++;
         }
 
@@ -2663,8 +2750,22 @@ public partial class Query
         foreach (var match in sc.Matches)
         {
             var matchSql = BuildMatchSubquerySql(match);
-            rawBase += $"LEFT JOIN (\r\n{matchSql}\r\n) AS m{matchNum} ON m{matchNum}.SMId = t.Id\r\n";
+            rawBase += $"LEFT JOIN (\r\n{matchSql}\r\n) AS m{matchNum} ON m{matchNum}.SMId = sm.Id\r\n";
             matchNum++;
+        }
+
+        if (overallHasSmeRef)
+        {
+            var smeFields = GetSqlFields("sme", overall);
+            var smeWhere = whereSme.Replace("\"sme\".", "\"sme_inner\".");
+
+            rawBase += "LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme_inner.SMId AS \"SMId\"";
+            foreach (var field in smeFields)
+                rawBase += $",\r\n    sme_inner.\"{field}\" AS \"{field}\"";
+            rawBase += "\r\n  FROM SMESets sme_inner\r\n";
+            if (!string.IsNullOrWhiteSpace(smeWhere))
+                rawBase += $"  WHERE {smeWhere}\r\n";
+            rawBase += ") AS sme ON sme.\"SMId\" = sm.Id\r\n";
         }
 
         // Value LEFT JOIN: when overall references v. columns outside path/match subqueries
@@ -2673,15 +2774,13 @@ public partial class Query
             // Collect which value columns are referenced
             var valFields = new List<string>();
             foreach (var col in new[] { "SValue", "NValue", "DTValue", "Annotation" })
-                if (overall.Contains($"\"v\".\"{col}\"")) valFields.Add(col);
-
-            var valSelect = string.Join(",\r\n    ", valFields.Select(f => $"v.\"{f}\" AS \"{f}\""));
-            var valWhere  = string.IsNullOrWhiteSpace(whereVal) ? "1=1" : whereVal;
+                if (overall.Contains($"\"value\".\"{col}\"")) valFields.Add(col);
+            var valWhere  = string.IsNullOrWhiteSpace(whereVal) ? "1=1" : whereVal.Replace("\"value\".", "v.");
 
             rawBase += $"LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme.SMId AS \"SMId\"";
             foreach (var f in valFields) rawBase += $",\r\n    v.\"{f}\" AS \"{f}\"";
             rawBase += "\r\n  FROM ValueSets v\r\n  JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
-            rawBase += $"  WHERE {valWhere}\r\n) AS value ON value.\"SMId\" = t.Id\r\n";
+            rawBase += $"  WHERE {valWhere}\r\n) AS value ON value.\"SMId\" = sm.Id\r\n";
 
             // Replace "v"."Col" → "value"."Col" in the outer WHERE
             foreach (var col in valFields)
@@ -2691,7 +2790,7 @@ public partial class Query
         if (!string.IsNullOrWhiteSpace(overall) && overall != "1=1")
             rawBase += $"WHERE {overall}\r\n";
 
-        rawBase += $"ORDER BY t.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+        rawBase += $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
         return rawBase;
     }
 
@@ -2812,6 +2911,24 @@ public partial class Query
         }
     }
 
+    private static string AppendAndCondition(string? left, string? right)
+    {
+        var normalizedLeft = string.IsNullOrWhiteSpace(left) || left.Trim() == "1=1" ? "" : left.Trim();
+        var normalizedRight = string.IsNullOrWhiteSpace(right) || right.Trim() == "1=1" ? "" : right.Trim();
+
+        if (string.IsNullOrWhiteSpace(normalizedLeft))
+        {
+            return normalizedRight;
+        }
+
+        if (string.IsNullOrWhiteSpace(normalizedRight))
+        {
+            return normalizedLeft;
+        }
+
+        return $"({normalizedLeft}) AND ({normalizedRight})";
+    }
+
     private static void AddGeneratedSql(List<string>? generatedSql, string? raw)
     {
         if (generatedSql == null || string.IsNullOrWhiteSpace(raw))
@@ -2827,6 +2944,11 @@ public partial class Query
         if (fieldExpression != null)
         {
             var splitExpression = fieldExpression.Split(" ").ToList();
+
+            if (splitExpression.Count < 3)
+            {
+                return [];
+            }
 
             if (splitExpression[1].StartsWith('\''))
             {
@@ -2878,7 +3000,7 @@ public partial class Query
             return splitExpression;
         }
 
-        return null;
+        return [];
     }
 
     private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition, out SqlConditions? sqlConditionsOut)
