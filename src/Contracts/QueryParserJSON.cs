@@ -1147,9 +1147,9 @@ public class QueryGrammarJSON : Grammar
                         else
                             rule._filter_sqlConditions = sc;
 
-                        // C# sm./sme. conditions from ScopeFiltersCSharp (computed inside CreateSqlConditions)
-                        conditions[i].Add("sm.", sc.ScopeFiltersCSharp.GetValueOrDefault("sm.", ""));
-                        conditions[i].Add("sme.", sc.ScopeFiltersCSharp.GetValueOrDefault("sme.", ""));
+                        // C# sm./sme. conditions from FormulaConditionsCSharp (computed inside CreateSqlConditions)
+                        conditions[i].Add("sm.", sc.FormulaConditionsCSharp.GetValueOrDefault("sm.", ""));
+                        conditions[i].Add("sme.", sc.FormulaConditionsCSharp.GetValueOrDefault("sme.", ""));
                     }
                 }
             }
@@ -1158,14 +1158,29 @@ public class QueryGrammarJSON : Grammar
             ParseAccessRule(rule, accessRuleExpression);
             allAccessRuleExpressions.Add(accessRuleExpression);
 
-            // Accumulate SQL conditions across all rules (OR-combine via Merge)
-            if (rule._formula_sqlConditions != null || rule._filter_sqlConditions != null)
+            // Accumulate SQL access conditions across all rules. FILTER stays separate, like the C# condition["filter"] path.
+            if (rule._formula_sqlConditions != null)
             {
-                var ruleSc = SqlConditionsMerger.Merge(rule._formula_sqlConditions, rule._filter_sqlConditions);
                 if (allAccessRuleSqlConditions == null)
-                    allAccessRuleSqlConditions = ruleSc;
+                    allAccessRuleSqlConditions = rule._formula_sqlConditions;
                 else
-                    allAccessRuleSqlConditions = SqlConditionsMerger.OrMerge(allAccessRuleSqlConditions, ruleSc);
+                    allAccessRuleSqlConditions = SqlConditionsMerger.OrMerge(allAccessRuleSqlConditions, rule._formula_sqlConditions);
+            }
+
+            if (rule._filter_sqlConditions != null)
+            {
+                allAccessRuleSqlConditions ??= new SqlConditions();
+                foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
+                {
+                    if (string.IsNullOrWhiteSpace(filterScope.Value))
+                        continue;
+
+                    var existing = allAccessRuleSqlConditions.FilterConditions.GetValueOrDefault(filterScope.Key, "");
+                    allAccessRuleSqlConditions.FilterConditions[filterScope.Key] =
+                        string.IsNullOrWhiteSpace(existing)
+                            ? filterScope.Value
+                            : $"({existing}) OR ({filterScope.Value})";
+                }
             }
         }
     }
@@ -1246,19 +1261,17 @@ public class QueryGrammarJSON : Grammar
         var ctx = new SqlBuildContext(sc);
 
         // Scope filters — one pass per scope (mirrors createExpression modes)
-        sc.ScopeFilters["aas"]   = BuildScopeSql(le, SqlScope.Aas)   ?? "";
-        sc.ScopeFilters["sm"]    = BuildScopeSql(le, SqlScope.Sm)     ?? "";
-        sc.ScopeFilters["sme"]   = BuildScopeSql(le, SqlScope.Sme)    ?? "";
-        sc.ScopeFilters["value"] = BuildScopeSql(le, SqlScope.Value)  ?? "";
+        sc.FormulaConditions["aas"]   = BuildScopeSql(le, SqlScope.Aas)   ?? "";
+        sc.FormulaConditions["sm"]    = BuildScopeSql(le, SqlScope.Sm)     ?? "";
+        sc.FormulaConditions["sme"]   = BuildScopeSql(le, SqlScope.Sme)    ?? "";
+        sc.FormulaConditions["value"] = BuildScopeSql(le, SqlScope.Value)  ?? "";
 
         // Overall condition with path/match placeholders
-        sc.OverallCondition = BuildOverallSql(le, ctx) ?? "1=1";
+        sc.FormulaConditions["all"] = BuildOverallSql(le, ctx);
 
-        // C# Dynamic LINQ expressions for in-memory filtering (sm. and sme. scopes)
-        var smExpr = createExpression("sm.", le);
-        sc.ScopeFiltersCSharp["sm."] = smExpr == "$SKIP" ? "" : smExpr.Replace("sm.", "");
-        var smeExpr = createExpression("sme.", le);
-        sc.ScopeFiltersCSharp["sme."] = smeExpr == "$SKIP" ? "" : smeExpr.Replace("sme.", "");
+        // C# Dynamic LINQ expressions derived from SQL scope filters via micro-parser
+        sc.FormulaConditionsCSharp["sm."]  = SqlToLinqConverter.Convert(sc.FormulaConditions["sm"],  "sm.");
+        sc.FormulaConditionsCSharp["sme."] = SqlToLinqConverter.Convert(sc.FormulaConditions["sme"], "sme.");
 
         return sc;
     }
@@ -1434,7 +1447,7 @@ public class QueryGrammarJSON : Grammar
     {
         var result = BuildOverallSqlNode(le.ExpressionValue, le.ExpressionType, ctx, "");
         if (result == "$SKIP" || result == "$ERROR" || result == null)
-            return "1=1";
+            return "";
         return result;
     }
 
@@ -1533,7 +1546,7 @@ public class QueryGrammarJSON : Grammar
         return CombineComparisonSql(leftSql, type, rightSql);
     }
 
-    /// <summary>Builds a standalone path placeholder in OverallCondition, adds PathJoin to Sc.Paths.</summary>
+    /// <summary>Builds a standalone path placeholder in FormulaConditions["all"], adds PathJoin to Sc.Paths.</summary>
     private static string? TryBuildStandalonePathSql(
         LogicalExpression fieldNode, LogicalExpression valueNode, string type, string smeValue, SqlBuildContext ctx)
     {

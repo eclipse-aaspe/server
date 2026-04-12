@@ -2020,7 +2020,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         // NEW: raw SQL — only when sm scope filter is set
         string? smSql = null;
-        securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSql);
+        securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSql);
         if (!string.IsNullOrWhiteSpace(smSql) && !string.IsNullOrEmpty(submodelIdentifier))
         {
             var smDBNew = CrudOperator.QuerySmRaw(db, submodelIdentifier, smSql);
@@ -2035,7 +2035,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (loadIntoMemory)
         {
-            output = CrudOperator.ReadSubmodel(db, smDB[0], securityCondition: securityCondition, loadIntoMemoryWithoutElements: loadIntoMemoryWithoutElements);
+            output = CrudOperator.ReadSubmodel(
+                db,
+                smDB[0],
+                securityCondition: securityCondition,
+                loadIntoMemoryWithoutElements: loadIntoMemoryWithoutElements,
+                securitySqlConditions: securitySqlConditions);
             if (output != null)
             {
                 smDb = smDB[0];

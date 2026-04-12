@@ -2589,15 +2589,15 @@ public partial class Query
     // ------------------------------------------------------------------
     // SQL assembly from SqlConditions (new path)
     // ------------------------------------------------------------------
-    private static string? BuildRawSqlFromSqlConditions(
+    internal static string? BuildRawSqlFromSqlConditions(
         SqlConditions sc, bool isWithAASTable, ResultType resultType, int pageFrom, int pageSize)
     {
-        var whereAas = sc.ScopeFilters.GetValueOrDefault("aas", "");
-        var whereSm  = sc.ScopeFilters.GetValueOrDefault("sm",  "");
-        var whereVal = sc.ScopeFilters.GetValueOrDefault("value", "");
+        var whereAas = sc.FormulaConditions.GetValueOrDefault("aas", "");
+        var whereSm  = sc.FormulaConditions.GetValueOrDefault("sm",  "");
+        var whereVal = sc.FormulaConditions.GetValueOrDefault("value", "");
 
         // Resolve placeholder references
-        var overall = sc.OverallCondition;
+        var overall = sc.FormulaConditions.GetValueOrDefault("all", "");
         var pathNum  = 1;
         var matchNum = 1;
         foreach (var path  in sc.Paths)    overall = overall.Replace($"$${path.Placeholder}$$",  $"(p{pathNum++}.SMId IS NOT NULL)");
@@ -2793,7 +2793,7 @@ public partial class Query
         }
 
         if (whereParts.Count > 0)
-            sb.AppendLine($"WHERE {string.Join(" AND ", whereParts)}");
+            sb.AppendLine($"WHERE {string.Join(" AND ", whereParts.Select(part => $"({part})"))}");
 
         return sb.ToString().TrimEnd();
     }
@@ -2922,7 +2922,7 @@ public partial class Query
 
             if (securityCondition != null && securityCondition.TryGetValue("value", out value) && value != "")
             {
-                condition["value"] = value.Replace("svalue", "SValue").Replace("mvalue", "DValue").Replace("dtvalue", "DTValue");
+                condition["value"] = value.Replace("svalue", "SValue").Replace("mvalue", "NValue").Replace("dtvalue", "DTValue");
             }
 
             return condition;
@@ -3219,7 +3219,7 @@ public partial class Query
                 }
                 else
                 {
-                    condition["value"] = condition["value"].Replace("svalue", "SValue").Replace("mvalue", "DValue").Replace("dtvalue", "DTValue");
+                    condition["value"] = condition["value"].Replace("svalue", "SValue").Replace("mvalue", "NValue").Replace("dtvalue", "DTValue");
                 }
                 if (securityCondition != null && securityCondition.TryGetValue("value", out value) && value != "")
                 {

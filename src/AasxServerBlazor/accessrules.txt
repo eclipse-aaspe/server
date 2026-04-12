@@ -112,7 +112,34 @@
               ]
             }
           ]
-        }
+        },
+       "FILTER": {
+         "FRAGMENT": "xxx",
+         "CONDITION": {
+              "$or": [
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Generalxxx"
+                    }
+                  ]
+                },
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                }
+              ]
+            }
+         }
       },
       {
         "ACL": {

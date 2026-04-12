@@ -524,7 +524,7 @@ namespace AasxServerDB
             var parts = new List<string> { $"\"Identifier\" = '{submodelIdentifier.Replace("'", "''")}'" };
             if (!string.IsNullOrWhiteSpace(smSql))
                 parts.Add(smSql);
-            return db.SMSets.FromSqlRaw("SELECT * FROM \"SMSets\" WHERE " + string.Join(" AND ", parts)).ToList();
+            return db.SMSets.FromSqlRaw("SELECT * FROM \"SMSets\" WHERE " + string.Join(" AND ", parts.Select(part => $"({part})"))).ToList();
         }
 
         private static List<SMESet> QuerySmeRaw(AasContext db, List<int> smeIds, string? smeSql)
@@ -541,17 +541,17 @@ namespace AasxServerDB
         {
             var sql = "SELECT * FROM \"ValueSets\" AS v";
             if (!string.IsNullOrWhiteSpace(valSql))
-                sql += $" WHERE {valSql}";
+                sql += $" WHERE ({valSql})";
             return db.ValueSets.FromSqlRaw(sql).ToList();
         }
 
-        private static IQueryable<SMESet> ApplySmeSqlScopeFilters(AasContext db, IQueryable<SMESet> smeQuery, SMSet smSet, SqlConditions? sqlConditions)
+        private static IQueryable<SMESet> ApplySmeSqlFilterConditions(AasContext db, IQueryable<SMESet> smeQuery, SMSet smSet, SqlConditions? sqlConditions)
         {
             if (sqlConditions == null)
                 return smeQuery;
 
-            sqlConditions.ScopeFilters.TryGetValue("sme", out var smeSql);
-            sqlConditions.ScopeFilters.TryGetValue("value", out var valueSql);
+            sqlConditions.FilterConditions.TryGetValue("sme", out var smeSql);
+            sqlConditions.FilterConditions.TryGetValue("value", out var valueSql);
             if (string.IsNullOrWhiteSpace(smeSql) && string.IsNullOrWhiteSpace(valueSql))
                 return smeQuery;
 
@@ -568,6 +568,35 @@ namespace AasxServerDB
 
             var filteredSmes = db.SMESets.FromSqlRaw(sql.ToString(), smSet.Id);
             return smeQuery.Where(sme => filteredSmes.Select(filtered => filtered.Id).Contains(sme.Id));
+        }
+
+        private static bool? IsSubmodelAllowedBySqlCondition(AasContext db, SMSet smSet, SqlConditions? sqlConditions)
+        {
+            if (sqlConditions == null)
+                return null;
+
+            try
+            {
+                var raw = Query.BuildRawSqlFromSqlConditions(
+                    sqlConditions,
+                    isWithAASTable: false,
+                    resultType: ResultType.Submodel,
+                    pageFrom: 0,
+                    pageSize: int.MaxValue);
+                if (string.IsNullOrWhiteSpace(raw))
+                    return null;
+
+                var sql = $"SELECT allowed.\"Id\" AS \"Id\" FROM ({raw}) AS allowed WHERE allowed.\"Id\" = {{0}}";
+                return db.Set<SMSetIdResult>()
+                    .FromSqlRaw(sql, smSet.Id)
+                    .AsNoTracking()
+                    .Any();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SqlConditions submodel allow check error: {ex.Message}");
+                return null;
+            }
         }
 
         public static List<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, List<SMESet>? listSME, SMSet? smSet, SqlConditions? sqlConditions = null)
@@ -590,15 +619,17 @@ namespace AasxServerDB
 
             // --- OLD path: LINQ-string filter on ValueSets ---
             IQueryable<ValueSet> valueSets = db.ValueSets;
-            if (securityCondition != null && securityCondition["value"] != "")
+            if (securityCondition != null &&
+                securityCondition.TryGetValue("value", out var valueCondition) &&
+                valueCondition != "")
             {
-                var c = securityCondition["value"].Replace("svalue", "SValue").Replace("mvalue", "DValue").Replace("dtvalue", "DTValue");
+                var c = valueCondition.Replace("svalue", "SValue").Replace("mvalue", "NValue").Replace("dtvalue", "DTValue");
                 valueSets = valueSets.Where(c);
             }
 
             // --- NEW path: raw SQL — only value filter, like C# side ---
             if (sqlConditions != null &&
-                sqlConditions.ScopeFilters.TryGetValue("value", out var valSql) && !string.IsNullOrWhiteSpace(valSql))
+                sqlConditions.FormulaConditions.TryGetValue("value", out var valSql) && !string.IsNullOrWhiteSpace(valSql))
             {
                 var valListOld = valueSets.Select(v => v.SMEId).OrderBy(x => x).ToList();
                 var valListNew = QueryValueRaw(db, valSql).Select(v => v.SMEId).OrderBy(x => x).ToList();
@@ -711,23 +742,21 @@ namespace AasxServerDB
             if (smParamSql.Count > 0)
             {
                 var paramSql = new SqlConditions();
-                paramSql.ScopeFilters["sm"] = string.Join(" AND ", smParamSql);
+                paramSql.FormulaConditions["sm"] = string.Join(" AND ", smParamSql.Select(part => $"({part})"));
                 mergedSqlConditions = SqlConditionsMerger.Merge(securitySqlConditions, paramSql);
             }
 
-            // OLD: pure LINQ path — no SQL conditions
-            var resultOld = querySM?.SearchSMs(condition, db, pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit, expression: "$all")
-                            ?? new List<int>();
-            var smDBList = db.SMSets.Where(sm => resultOld.Contains(sm.Id)).ToList();
+            var result = querySM?.SearchSMs(
+                condition,
+                db,
+                pageFrom: paginationParameters.Cursor,
+                pageSize: paginationParameters.Limit,
+                expression: "$all",
+                securitySqlConditions: mergedSqlConditions);
+            if (result == null)
+                return output;
 
-            // NEW: full SQL path via SearchSMs + CombineTablesLEFT (security + semanticId/idShort merged in)
-            var resultNew = querySM?.SearchSMs(condition, db, pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit, expression: "$all", securitySqlConditions: mergedSqlConditions)
-                            ?? new List<int>();
-
-            var oldIds = resultOld.OrderBy(id => id).ToList();
-            var newIds = resultNew.OrderBy(id => id).ToList();
-            if (!oldIds.SequenceEqual(newIds))
-                return output; // empty — signals mismatch between LINQ and SQL paths
+            var smDBList = db.SMSets.Where(sm => result.Contains(sm.Id)).ToList();
 
             var timeStamp = DateTime.UtcNow;
 
@@ -760,7 +789,7 @@ namespace AasxServerDB
 
                 // NEW: raw SQL — only when sm scope filter is set
                 string? smSql = null;
-                securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSql);
+                securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSql);
                 if (!string.IsNullOrWhiteSpace(smSql))
                 {
                     var smDBListNew = QuerySmRaw(db, submodelIdentifier, smSql);
@@ -803,60 +832,26 @@ namespace AasxServerDB
 
             if (!loadIntoMemoryWithoutElements)
             {
-                SMEQueryAll = ApplySmeSqlScopeFilters(db, SMEQueryAll, smDB, securitySqlConditions);
-                var smeMerged = GetSmeMerged(db, null, SMEQueryAll, smDB, securitySqlConditions);
-
-                var sCondition = "true";
-                if (securityCondition?["all"] != null && securityCondition?["all"] != "")
+                var isAllowedBySql = IsSubmodelAllowedBySqlCondition(db, smDB, securitySqlConditions);
+                if (isAllowedBySql == false)
                 {
-                    sCondition = securityCondition["all"];
+                    return null;
                 }
 
-                if (smeMerged != null && smeMerged.Count != 0)
+                var smeMerged = GetSmeMerged(
+                    db,
+                    null,
+                    ApplySmeSqlFilterConditions(db, SMEQueryAll, smDB, securitySqlConditions),
+                    smDB,
+                    null);
+
+                if (smeMerged == null)
                 {
-                    // at least 1 exists
-                    var mergeForCondition = smeMerged.Select(sme => new
-                    {
-                        sm = sme.smSet,
-                        sme = sme.smeSet,
-                        svalue = (sme.smeSet.TValue == "S" && sme.valueSet != null && sme.valueSet.SValue != null) ? sme.valueSet.SValue : "",
-                        //mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
-                        //    (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
-                    }).Distinct();
-                    // at least 1 must exist to also approve security condition for SME
-                    var resultCondition = mergeForCondition.AsQueryable().Where(sCondition);
-                    if (!resultCondition.Any())
-                    {
-                        return null;
-                    }
+                    return null;
+                }
 
-                    var filter = "true";
-                    if (securityCondition != null && securityCondition.TryGetValue("filter-all", out _))
-                    {
-                        if (securityCondition?["filter-all"] != null && securityCondition?["filter-all"] != "")
-                        {
-                            filter = securityCondition?["filter-all"];
-                        }
-                    }
-                    if (condition != null && condition.TryGetValue("filter-all", out var filter2))
-                    {
-                        if (filter2 != null)
-                        {
-                            if (filter == "true")
-                            {
-                                filter = filter2;
-                            }
-                            else
-                            {
-                                filter = $"({filter} && {filter2})";
-                            }
-                        }
-                    }
-
-                    resultCondition = mergeForCondition.AsQueryable().Where(filter);
-                    var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
-                    smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
-
+                if (smeMerged.Count != 0)
+                {
                     LoadSME(submodel, null, null, null, smeMerged);
                 }
             }
@@ -979,7 +974,7 @@ namespace AasxServerDB
             var smDB = smDBQuery.ToList();
 
             // NEW: raw SQL — only when sm scope filter is set
-            string? smSql2 = null; securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSql2);
+            string? smSql2 = null; securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSql2);
             if (!string.IsNullOrWhiteSpace(smSql2))
             {
                 var smDBNew = QuerySmRaw(db, submodelIdentifier, smSql2);
@@ -999,7 +994,7 @@ namespace AasxServerDB
             var smeSmTopList = smeSmTopQuery.ToList();
 
             // NEW: raw SQL — only when sme scope filter is set
-            string? smeSql2 = null; securitySqlConditions?.ScopeFilters.TryGetValue("sme", out smeSql2);
+            string? smeSql2 = null; securitySqlConditions?.FormulaConditions.TryGetValue("sme", out smeSql2);
             if (!string.IsNullOrWhiteSpace(smeSql2))
             {
                 var smeIds2 = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null).Select(sme => sme.Id).ToList();
@@ -1115,7 +1110,7 @@ namespace AasxServerDB
             var smDB = smDBQuery.ToList();
 
             // NEW: raw SQL — only when sm scope filter is set
-            string? smSqlByPath = null; securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSqlByPath);
+            string? smSqlByPath = null; securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSqlByPath);
             if (!string.IsNullOrWhiteSpace(smSqlByPath))
             {
                 var smDBNewByPath = QuerySmRaw(db, submodelIdentifier, smSqlByPath);
@@ -1154,29 +1149,10 @@ namespace AasxServerDB
             var smeFoundTree = CrudOperator.GetTree(db, smDB[0], smeFound);
             var smeMerged = CrudOperator.GetSmeMerged(db, securityCondition, smeFoundTree, smDB[0], securitySqlConditions);
 
-            if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
+            var isAllowedBySql = IsSubmodelAllowedBySqlCondition(db, smDB[0], securitySqlConditions);
+            if (isAllowedBySql == false)
             {
-                // at least 1 exists
-                var mergeForCondition = smeMerged.Select(sme => new
-                {
-                    sm = sme.smSet,
-                    sme = sme.smeSet,
-                    svalue = (sme.smeSet.TValue == "S" && sme.valueSet != null && sme.valueSet.SValue != null) ? sme.valueSet.SValue : "",
-                    //mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
-                    //    (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
-                }).Distinct();
-                // at least 1 must exist to approve security condition
-                var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
-                if (!resultCondition.Any())
-                {
-                    return null;
-                }
-                if (securityCondition.TryGetValue("filter-all", out _))
-                {
-                    resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter-all"]);
-                    var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
-                    smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
-                }
+                return null;
             }
 
             smeEntity = smeFound[0];
@@ -1211,7 +1187,7 @@ namespace AasxServerDB
             var smDBListReplace = smDBQuery.ToList();
 
             // NEW: raw SQL — only when sm scope filter is set
-            string? smSqlReplace = null; securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSqlReplace);
+            string? smSqlReplace = null; securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSqlReplace);
             if (!string.IsNullOrWhiteSpace(smSqlReplace))
             {
                 var smDBNewReplace = QuerySmRaw(db, submodelIdentifier, smSqlReplace);
@@ -1290,7 +1266,7 @@ namespace AasxServerDB
                     var smDB = smDBQuery.ToList();
 
                     // NEW: raw SQL — only when sm scope filter is set
-                    string? smSqlDel = null; securitySqlConditions?.ScopeFilters.TryGetValue("sm", out smSqlDel);
+                    string? smSqlDel = null; securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSqlDel);
                     if (!string.IsNullOrWhiteSpace(smSqlDel))
                     {
                         var smDBNew = QuerySmRaw(db, submodelIdentifier, smSqlDel);

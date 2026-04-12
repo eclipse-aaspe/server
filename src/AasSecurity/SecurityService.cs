@@ -252,9 +252,8 @@ namespace AasSecurity
         }
 
         /// <summary>
-        /// SQL equivalent of <see cref="GetCondition"/>: combines <c>_formula_sqlConditions</c> and
-        /// <c>_filter_sqlConditions</c> from all matching rules into a single <see cref="SqlConditions"/>
-        /// by OR-ing scope filters and overall conditions across rules.
+        /// SQL equivalent of <see cref="GetCondition"/>: access formulas in <see cref="SqlConditions.FormulaConditions"/>
+        /// and FILTER rules separately in <see cref="SqlConditions.FilterConditions"/>.
         /// </summary>
         public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, List<Claim>? tokenClaims = null)
         {
