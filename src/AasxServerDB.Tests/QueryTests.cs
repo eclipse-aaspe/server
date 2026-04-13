@@ -1,6 +1,8 @@
 namespace AasxServerDB.Tests;
 
+using Contracts.Pagination;
 using Contracts.QueryResult;
+using Contracts;
 using FluentAssertions;
 
 [Collection(DatabaseFixture.Collection)]
@@ -11,6 +13,64 @@ public sealed class QueryTests
     public QueryTests(DatabaseFixture fixture)
     {
         _fixture = fixture;
+    }
+
+    private static SqlConditions LoadSubmodelAccessRuleSqlConditions(string expression)
+    {
+        var blazorDir = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..",
+            "AasxServerBlazor"));
+        var grammar = new QueryGrammarJSON(new NoSecurityRules());
+        var originalCurrentDirectory = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(blazorDir);
+            grammar.ParseAccessRules(expression);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalCurrentDirectory);
+        }
+
+        var matchingRules = QueryGrammarJSON._accessRules.Rules
+            .Where(rule =>
+                rule.Acl?.Access == "ALLOW" &&
+                rule.Acl.Rights?.Contains("READ") == true &&
+                rule.Acl.Attributes?.Any(a => a.ItemType == "CLAIM" && a.Value == "isNotAuthenticated") == true &&
+                rule.Objects?.Any(o => o.ItemType == "ROUTE" && o.Value == "/submodels") == true)
+            .ToList();
+
+        matchingRules.Should().NotBeEmpty("the noauth /submodels rule from accessrules.txt should exist");
+
+        SqlConditions? merged = null;
+        foreach (var rule in matchingRules)
+        {
+            if (rule._formula_sqlConditions != null)
+            {
+                merged = merged == null
+                    ? rule._formula_sqlConditions
+                    : SqlConditionsMerger.OrMerge(merged, rule._formula_sqlConditions);
+            }
+
+            if (rule._filter_sqlConditions == null)
+                continue;
+
+            merged ??= new SqlConditions();
+            foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
+            {
+                if (string.IsNullOrWhiteSpace(filterScope.Value))
+                    continue;
+
+                var existing = merged.FilterConditions.GetValueOrDefault(filterScope.Key, "");
+                merged.FilterConditions[filterScope.Key] = string.IsNullOrWhiteSpace(existing)
+                    ? filterScope.Value
+                    : $"({existing}) OR ({filterScope.Value})";
+            }
+        }
+
+        merged.Should().NotBeNull();
+        return merged!;
     }
 
     // -------------------------------------------------------------------------
@@ -275,5 +335,134 @@ public sealed class QueryTests
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public void ReadPagedSubmodels_NoAuthSecurityFilter_MatchesExpectedSubset()
+    {
+        const string expression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [
+                        {
+                          "CLAIM": "isNotAuthenticated"
+                        }
+                      ],
+                      "RIGHTS": [
+                        "READ"
+                      ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [
+                      {
+                        "ROUTE": "/submodels"
+                      }
+                    ],
+                    "FORMULA": {
+                      "$or": [
+                        {
+                          "$and": [
+                            {
+                              "$eq": [
+                                {
+                                  "$field": "$sm#idShort"
+                                },
+                                {
+                                  "$strVal": "Nameplate"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "$and": [
+                            {
+                              "$eq": [
+                                {
+                                  "$field": "$sm#idShort"
+                                },
+                                {
+                                  "$strVal": "TechnicalData"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "FILTER": {
+                      "FRAGMENT": "xxx",
+                      "CONDITION": {
+                        "$or": [
+                          {
+                            "$starts-with": [
+                              {
+                                "$field": "$sme#idShort"
+                              },
+                              {
+                                "$strVal": "Generalxxx"
+                              }
+                            ]
+                          },
+                          {
+                            "$starts-with": [
+                              {
+                                "$field": "$sme#idShort"
+                              },
+                              {
+                                "$strVal": "Manufacturer"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        var expected = new[]
+        {
+            "http://smart.festo.com/id/instance/99920220506120448000013695",
+            "http://smart.festo.com/id/instance/99920220506120451000016016",
+            "https://example.com/ids/sm/dc-qr/3220_4132_1032_1386",
+            "https://example.com/ids/sm/dc-qr/5560_1110_5022_5423",
+            "https://i.hilscher.com/00000000wln",
+            "https://i4d.de/T/2900542/submodel/Nameplate",
+            "https://i4d.de/T/2900542/submodel/TechnicalData",
+            "https://i4d.de/T/2966265/submodel/Nameplate",
+            "https://i4d.de/T/2966265/submodel/TechnicalData",
+            "https://i4d.de/T/3209510/submodel/Nameplate",
+            "https://i4d.de/T/3209510/submodel/TechnicalData",
+            "https://zvei.org/demo/sm/605E831AA35645D6A194E64312AB599B",
+            "https://zvei.org/demo/sm/CC46DCB43AB54ED0881CA8727928DA59",
+        };
+
+        using var db = _fixture.CreateDbContext();
+
+        var securitySqlConditions = LoadSubmodelAccessRuleSqlConditions(expression);
+        var pagination = new PaginationParameters("0", 500);
+
+        var result = CrudOperator.ReadPagedSubmodels(
+            db,
+            new Query(_fixture.Grammar),
+            pagination,
+            reqSemanticId: null,
+            idShort: null,
+            securitySqlConditions: securitySqlConditions);
+
+        var actualIdentifiers = result
+            .Select(sm => sm.Id)
+            .OrderBy(id => id)
+            .ToList();
+
+        actualIdentifiers.Should().BeEquivalentTo(expected, options => options.WithStrictOrdering());
+        actualIdentifiers.Should().NotBeEmpty();
+        result.Select(sm => sm.IdShort).Distinct().Should().OnlyContain(idShort => idShort == "Nameplate" || idShort == "TechnicalData");
     }
 }
