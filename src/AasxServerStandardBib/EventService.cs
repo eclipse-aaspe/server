@@ -669,7 +669,7 @@ public class EventService : IEventService
         return Base64UrlEncoder.Encode(hashBytes);
     }
 
-    public List<EventPayload> CollectPayload(Dictionary<string, string> securityCondition, bool isREST, string basicEventElementSourceString,
+    public List<EventPayload> CollectPayload(SqlConditions? securitySqlConditions, bool isREST, string basicEventElementSourceString,
         string basicEventElementSemanticId, string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
         bool withPayload, bool smOnly, int limitSm, int offsetSm, bool showTransmitted, SubmodelElementCollection statusData = null)
@@ -735,30 +735,32 @@ public class EventService : IEventService
             {
                 searchSM = conditionSM.Value;
             }
-            if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
+            var securityConditionSM = securitySqlConditions?.FormulaConditionsCSharp.GetValueOrDefault("sm.", "");
+            if (!string.IsNullOrWhiteSpace(securityConditionSM))
             {
                 if (searchSM == string.Empty)
                 {
-                    searchSM = securityCondition["sm."];
+                    searchSM = securityConditionSM;
                 }
                 else
                 {
-                    searchSM = $"({securityCondition["sm."]})&&({searchSM})";
+                    searchSM = $"({securityConditionSM})&&({searchSM})";
                 }
             }
             if (conditionSME != null && conditionSME.Value != null)
             {
                 searchSME = conditionSME.Value;
             }
-            if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
+            var securityConditionSME = securitySqlConditions?.FormulaConditionsCSharp.GetValueOrDefault("sme.", "");
+            if (!string.IsNullOrWhiteSpace(securityConditionSME))
             {
                 if (searchSME == string.Empty)
                 {
-                    searchSME = securityCondition["sme."];
+                    searchSME = securityConditionSME;
                 }
                 else
                 {
-                    searchSME = $"({securityCondition["sme."]})&&({searchSME})";
+                    searchSME = $"({securityConditionSME})&&({searchSME})";
                 }
             }
 
@@ -872,7 +874,7 @@ public class EventService : IEventService
                         {
                             // smeSearchTimeStamp = smeSearchSM.Where(sme => sme.ParentSMEId == null).ToList();
                             var tree = CrudOperator.GetTree(db, sm, smeSearchTimeStamp);
-                            var treeMerged = CrudOperator.GetSmeMerged(db, null, tree, sm);
+                            var treeMerged = CrudOperator.GetSmeMerged(db, tree, sm);
                             // var lookupChildren = treeMerged?.ToLookup(m => m.smeSet.ParentSMEId);
 
                             completeSM = false;
@@ -1250,7 +1252,7 @@ public class EventService : IEventService
                             var smDBId = smDB.Id;
                             var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                             CrudOperator.CreateIdShortPath(db, smeSmList);
-                            var smeSmMerged = CrudOperator.GetSmeMerged(db, null, smeSmList, smDB);
+                            var smeSmMerged = CrudOperator.GetSmeMerged(db, smeSmList, smDB);
                             visitor.smSmeMerged = smeSmMerged;
 
                             foreach (var e in entriesSubmodel)

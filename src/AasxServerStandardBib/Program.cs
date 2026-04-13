@@ -286,7 +286,7 @@ namespace AasxServer
                         }
 
                         // create package env
-                        env[i] = CrudOperator.GetPackageEnv(db, null, envId);
+                        env[i] = CrudOperator.GetPackageEnv(db, envId);
                         if (env[i] == null || env[i].AasEnv == null)
                         {
                             return output;

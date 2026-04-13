@@ -165,6 +165,10 @@ namespace AasSecurity
                 var rule = rules[i];
                 foreach (var c in rule._formula_conditions)
                 {
+                    if (c.Key is "sm." or "sme.")
+                    {
+                        continue;
+                    }
                     if (i == 0)
                     {
                         condition[c.Key] = c.Value;
@@ -192,6 +196,39 @@ namespace AasSecurity
                         }
                     }
                 }
+
+                var csharpConditions = rule._formula_sqlConditions?.FormulaConditionsCSharp;
+                foreach (var key in new[] { "sm.", "sme." })
+                {
+                    var value = csharpConditions?.GetValueOrDefault(key, "") ?? "";
+                    if (i == 0)
+                    {
+                        condition[key] = value;
+                    }
+                    else
+                    {
+                        var hasValue = condition.TryGetValue(key, out var existing);
+                        if (hasValue && existing != "")
+                        {
+                            if (existing != "(True)")
+                            {
+                                if (value != "")
+                                {
+                                    condition[key] = existing + " || " + value;
+                                }
+                                else
+                                {
+                                    condition[key] = "(True)";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            condition[key] = value;
+                        }
+                    }
+                }
+
                 foreach (var c in rule._filter_conditions)
                 {
                     if (i == 0)
@@ -1151,15 +1188,22 @@ namespace AasSecurity
 
             var conditionSM = "";
             var conditionSME = "";
-            // TODO find all correct entries: copied from GetCondition()
-            foreach (var c in _condition)
+            // SQL-first: read sm./sme. C# conditions from per-rule FormulaConditionsCSharp
+            // (populated by the SQL→LINQ micro-parser in QueryGrammarJSON.CreateSqlConditions).
+            if (_accessRules?.Rules != null)
             {
-                var a = c["claim"];
-                var n = c["right"];
-                if (a.Contains(currentRole + " ") && n.Contains(neededRights.ToString()))
+                var neededRight = neededRights.ToString();
+                foreach (var rule in _accessRules.Rules)
                 {
-                    conditionSM = c["sm."];
-                    conditionSME = c["sme."];
+                    var acl = rule.Acl;
+                    if (acl?.Rights == null || !acl.Rights.Contains(neededRight)) continue;
+                    if (acl.Attributes == null) continue;
+                    var claimMatches = acl.Attributes.Any(a => a.ItemType == "CLAIM" && a.Value == currentRole);
+                    if (!claimMatches) continue;
+                    var sc = rule._formula_sqlConditions;
+                    if (sc == null) continue;
+                    conditionSM  = sc.FormulaConditionsCSharp.GetValueOrDefault("sm.",  "");
+                    conditionSME = sc.FormulaConditionsCSharp.GetValueOrDefault("sme.", "");
                 }
             }
 

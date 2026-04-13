@@ -198,7 +198,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var result = new DbRequestResult();
         var securityConfig = dbRequest.Context.SecurityConfig;
 
-        Dictionary<string, string>? securityCondition = null;
         SqlConditions? securitySqlConditions = null;
         List<AccessPermissionRule> accessRules = null;
         bool isAllowed = false;
@@ -210,7 +209,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.ReadThumbnail:
             case DbRequestOp.ReadFileByPath:
             case DbRequestOp.ReadPagedAASXPackageIds:
-                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, out securitySqlConditions, ignoreNullConfig: true);
+                isAllowed = InitSecurity(securityConfig, out accessRules, out securitySqlConditions, ignoreNullConfig: true);
 
                 if (!isAllowed)
                 {
@@ -221,7 +220,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.QuerySearchSMs:
             case DbRequestOp.QuerySearchSMEs:
             case DbRequestOp.QueryCountSMs:
-                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, out securitySqlConditions, "/query");
+                isAllowed = InitSecurity(securityConfig, out accessRules, out securitySqlConditions, "/query");
 
                 if (!isAllowed)
                 {
@@ -229,7 +228,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 break;
             default:
-                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, out securitySqlConditions);
+                isAllowed = InitSecurity(securityConfig, out accessRules, out securitySqlConditions);
 
                 if (!isAllowed)
                 {
@@ -255,7 +254,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 switch (dbRequest.Operation)
                 {
                     case DbRequestOp.ReadPackageEnv:
-                        if (IsPackageEnvPresent(db, securityCondition, null, aasIdentifier, submodelIdentifier, true, out EnvSet envSet, out AdminShellPackageEnv packageEnv))
+                        if (IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, true, out EnvSet envSet, out AdminShellPackageEnv packageEnv, securitySqlConditions))
                         {
                             result.PackageEnv = new DbRequestPackageEnvResult()
                             {
@@ -265,16 +264,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         else if (IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasDB, out _))
                         {
-                            var aasEnv = CrudOperator.GetEnvironment(db, securityCondition, aasDb: aasDB);
+                            var aasEnv = CrudOperator.GetEnvironment(db, aasDb: aasDB, securitySqlConditions: securitySqlConditions);
                             result.PackageEnv = new DbRequestPackageEnvResult()
                             {
                                 PackageEnv = new AdminShellPackageEnv(aasEnv),
                             };
                         }
-                        else if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out SMSet smDB, out _, securitySqlConditions))
+                        else if (IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out SMSet smDB, out _, securitySqlConditions))
                         {
                             //ToDo: Need to be tested
-                            var smEnv = CrudOperator.GetEnvironment(db, securityCondition, smDb: smDB);
+                            var smEnv = CrudOperator.GetEnvironment(db, smDb: smDB, securitySqlConditions: securitySqlConditions);
                             result.PackageEnv = new DbRequestPackageEnvResult()
                             {
                                 PackageEnv = new AdminShellPackageEnv(smEnv),
@@ -408,7 +407,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var reqSemanticId = dbRequest.Context.Params.Reference;
                         var querySM = new Query(_grammar);
 
-                        var output = CrudOperator.ReadPagedSubmodels(db, querySM, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort, securitySqlConditions);
+                        var output = CrudOperator.ReadPagedSubmodels(db, querySM, dbRequest.Context.Params.PaginationParameters, reqSemanticId, dbRequest.Context.Params.IdShort, securitySqlConditions);
 
                         if (dbRequest.Context.Params.Reference != null)
                         {
@@ -423,7 +422,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         result.ResultData = output.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadSubmodelById:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel, securitySqlConditions);
+                        found = IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel submodel, securitySqlConditions);
 
                         var aasText = aasIdentifier == null ? "" : $" in Asset Administration Shell with id {aasIdentifier}";
                         if (found)
@@ -456,7 +455,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         break;
                     case DbRequestOp.CreateSubmodel:
                         var newSubmodel = dbRequest.Context.Params.SubmodelBody;
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, false, out _, out _, securitySqlConditions);
+                        found = IsSubmodelPresent(db, aasIdentifier, newSubmodel.Id, false, false, out _, out _, securitySqlConditions);
 
                         if (found)
                         {
@@ -473,7 +472,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.UpdateSubmodelById:
                         throw new NotImplementedException();
                     case DbRequestOp.ReplaceSubmodelById:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
+                        found = IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
 
                         if (found)
                         {
@@ -498,7 +497,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
                         break;
                     case DbRequestOp.DeleteSubmodelById:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, true, out _, out ISubmodel deletedSubmodel, securitySqlConditions))
+                        if (IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, true, true, out _, out ISubmodel deletedSubmodel, securitySqlConditions))
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
 
@@ -522,7 +521,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         break;
                     case DbRequestOp.ReadPagedSubmodelElements:
                         var submodelElements = CrudOperator.ReadPagedSubmodelElements(db, dbRequest.Context.Params.PaginationParameters,
-                            securityCondition, aasIdentifier, submodelIdentifier, securitySqlConditions);
+                            aasIdentifier, submodelIdentifier, securitySqlConditions);
                         if (submodelElements == null)
                         {
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -531,7 +530,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         result.ResultData = submodelElements.ConvertAll(r => r as IClass);
                         break;
                     case DbRequestOp.ReadSubmodelElementByPath:
-                        var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShort, out SMESet smE, securitySqlConditions);
+                        var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShort, out SMESet smE, securitySqlConditions);
                         if (submodelElement == null)
                         {
                             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -547,7 +546,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         var newSubmodelElement = dbRequest.Context.Params.SubmodelElementBody;
 
-                        var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
+                        var smFound = IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
                         if (smFound)
                         {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
@@ -578,12 +577,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         };
                         break;
                     case DbRequestOp.ReplaceSubmodelElementByPath:
-                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
+                        found = IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
                         if (found)
                         {
                             CrudOperator.ReplaceSubmodelElementByPath(
                                 db,
-                                securityCondition,
                                 aasIdentifier,
                                 submodelIdentifier,
                                 idShort,
@@ -599,11 +597,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         throw new NotImplementedException();
 
                     case DbRequestOp.DeleteSubmodelElementByPath:
-                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel deletedSmeParentSubmodel, securitySqlConditions))
+                        if (IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, true, false, out _, out ISubmodel deletedSmeParentSubmodel, securitySqlConditions))
                         {
                             var sme = CrudOperator.DeleteSubmodelElement(
                                 db,
-                                securityCondition,
                                 aasIdentifier,
                                 submodelIdentifier,
                                 idShort,
@@ -624,10 +621,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         long fileSize;
                         var file = ReadFileByPath(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                             dbRequest.Context.Params.SubmodelIdentifier,
-                            dbRequest.Context.Params.IdShort, out content, out fileSize);
+                            dbRequest.Context.Params.IdShort, out content, out fileSize, securitySqlConditions);
                         result.FileRequestResult = new DbFileRequestResult()
                         {
                             Content = content,
@@ -638,21 +634,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReplaceFileByPath:
                         ReplaceFileByPath(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                             dbRequest.Context.Params.SubmodelIdentifier,
                             dbRequest.Context.Params.IdShort,
                             dbRequest.Context.Params.FileRequest.File,
                             dbRequest.Context.Params.FileRequest.ContentType,
-                            dbRequest.Context.Params.FileRequest.Stream);
+                            dbRequest.Context.Params.FileRequest.Stream,
+                            securitySqlConditions);
                         break;
                     case DbRequestOp.DeleteFileByPath:
                         DeleteFileByPath(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                             dbRequest.Context.Params.SubmodelIdentifier,
-                            dbRequest.Context.Params.IdShort);
+                            dbRequest.Context.Params.IdShort,
+                            securitySqlConditions);
                         break;
 
                     case DbRequestOp.ReadAssetInformation:
@@ -689,7 +685,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReadThumbnail:
                         var thumbnail = ReadThumbnail(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                             out content, out fileSize);
 
@@ -703,7 +698,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReplaceThumbnail:
                         ReplaceThumbnail(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                             dbRequest.Context.Params.FileRequest.File,
                             dbRequest.Context.Params.FileRequest.ContentType,
@@ -715,33 +709,34 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             dbRequest.Context.Params.AssetAdministrationShellIdentifier);
                         break;
                     case DbRequestOp.ReadEventMessages:
-                        var eventPayload = ReadEventMessages(securityCondition,
+                        var eventPayload = ReadEventMessages(
+                            securitySqlConditions,
                             dbRequest.Context.Params.EventRequest);
                         result.EventPayload = eventPayload;
                         break;
                     case DbRequestOp.UpdateEventMessages:
-                        UpdateEventMessages(db, securityCondition,
+                        UpdateEventMessages(db,
                             dbRequest.Context.Params.EventRequest);
                         break;
 
                     //case DbRequestOp.QuerySearchSMs:
                     //    var queryRequest = dbRequest.Context.Params.QueryRequest;
                     //    var query = new Query(_grammar);
-                    //    var qresult = query.SearchSMs(securityCondition, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                    //    var qresult = query.SearchSMs(db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
                     //        queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.QueryResult = qresult;
                     //    break;
                     //case DbRequestOp.QueryCountSMs:
                     //    queryRequest = dbRequest.Context.Params.QueryRequest;
                     //    query = new Query(_grammar);
-                    //    var count = query.CountSMs(securityConfig, securityCondition, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
+                    //    var count = query.CountSMs(securityConfig, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
                     //        queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.Count = count;
                     //    break;
                     //case DbRequestOp.QuerySearchSMEs:
                     //    queryRequest = dbRequest.Context.Params.QueryRequest;
                     //    query = new Query(_grammar);
-                    //    qresult = query.SearchSMEs(securityConfig, securityCondition,
+                    //    qresult = query.SearchSMEs(securityConfig,
                     //        db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                     //        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.QueryResult = qresult;
@@ -749,7 +744,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     //case DbRequestOp.QueryCountSMEs:
                     //    queryRequest = dbRequest.Context.Params.QueryRequest;
                     //    query = new Query(_grammar);
-                    //    count = query.CountSMEs(securityConfig, securityCondition, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                    //    count = query.CountSMEs(securityConfig, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                     //        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.Count = count;
                     //    break;
@@ -759,12 +754,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var queryResult = query.GetQueryData(
                             securityConfig.NoSecurity,
                             db,
-                            securityCondition,
                             queryRequest.PageFrom,
                             queryRequest.PageSize,
                             queryRequest.ResultType,
                             queryRequest.Expression,
-                            queryRequest.IncludeDebugSql);
+                            queryRequest.IncludeDebugSql,
+                            securitySqlConditions);
 
                         if (queryRequest.IncludeDebugSql)
                         {
@@ -968,7 +963,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var submodelIds = dbRequest.Context.Params.SubmodelIds;
                         var includeCD = dbRequest.Context.Params.IncludeCD;
 
-                        var environment = CrudOperator.GetEnvironment(db, securityCondition, -1, aasIds, submodelIds, includeCD: includeCD);
+                        var environment = CrudOperator.GetEnvironment(db, -1, aasIds, submodelIds, includeCD: includeCD, securitySqlConditions: securitySqlConditions);
 
                         if (!dbRequest.Context.Params.CreateAASXPackage)
                         {
@@ -987,7 +982,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                             //Create Temp file
                             string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
-                            AddPackageFilesToAdd(securityCondition, db, environment, requestedPackage);
+                            AddPackageFilesToAdd(db, environment, requestedPackage);
 
                             requestedPackage.SaveAs(copyFileName, true, true);
 
@@ -1009,9 +1004,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReadAASXByPackageId:
                         var packageFileName = ReadAASXByPackageId(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.PackageIdentifier,
-                            out content, out fileSize);
+                            out content, out fileSize,
+                            securitySqlConditions);
 
                         result.FileRequestResult = new DbFileRequestResult()
                         {
@@ -1022,7 +1017,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         break;
                     case DbRequestOp.ReadPagedAASXPackageIds:
                         var packageDescriptions = CrudOperator.ReadPagedPackageDescriptions(db, dbRequest.Context.Params.PaginationParameters,
-                            securityCondition, aasIdentifier);
+                            aasIdentifier);
                         if (packageDescriptions == null)
                         {
                             throw new NotFoundException($"Package descriptions with  id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -1033,7 +1028,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.CreateAASXPackage:
                         var packageDescription = CreateAASXPackage(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.FileRequest.File,
                             dbRequest.Context.Params.FileRequest.Stream);
                         result.PackageDescriptions = new List<PackageDescription>
@@ -1044,7 +1038,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReplaceAASXPackageById:
                         ReplaceAASXPackageById(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.PackageIdentifier,
                             dbRequest.Context.Params.FileRequest.File,
                             dbRequest.Context.Params.FileRequest.Stream);
@@ -1052,7 +1045,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.DeleteAASXByPackageId:
                         DeleteAASXByPackageId(
                             db,
-                            securityCondition,
                             dbRequest.Context.Params.PackageIdentifier);
                         break;
                     default:
@@ -1071,7 +1063,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
-    private static void AddPackageFilesToAdd(Dictionary<string, string>? securityCondition, AasContext db, AasCore.Aas3_0.Environment environment, AdminShellPackageEnv requestedPackage)
+    private static void AddPackageFilesToAdd(AasContext db, AasCore.Aas3_0.Environment environment, AdminShellPackageEnv requestedPackage)
     {
         if (environment.AssetAdministrationShells != null)
         {
@@ -1114,7 +1106,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 var zipPath = FileService.GetFilesZipPath();
 
-                if (IsPackageEnvPresent(db, securityCondition, null, null, submodelInEnv.Id, false, out EnvSet env, out _))
+                if (IsPackageEnvPresent(db, null, null, submodelInEnv.Id, false, out EnvSet env, out _))
                 {
                     zipPath = FileService.GetFilesZipPath(env.Path);
                 }
@@ -1154,9 +1146,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    private void DeleteAASXByPackageId(AasContext db, Dictionary<string, string>? securityCondition, string packageIdentifier)
+    private void DeleteAASXByPackageId(AasContext db, string packageIdentifier)
     {
-        if (IsPackageEnvPresent(db, securityCondition, packageIdentifier, null, null, true, out EnvSet envDB, out AdminShellPackageEnv packageEnv))
+        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out EnvSet envDB, out AdminShellPackageEnv packageEnv))
         {
             //ToDo: Do we really want to delete the aasx file, too?
             if (System.IO.File.Exists(envDB.Path))
@@ -1200,10 +1192,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    private void ReplaceAASXPackageById(AasContext db, Dictionary<string, string>? securityCondition, string packageIdentifier, string file,
+    private void ReplaceAASXPackageById(AasContext db, string packageIdentifier, string file,
         MemoryStream fileContent)
     {
-        if (IsPackageEnvPresent(db, securityCondition, packageIdentifier, null, null, true, out EnvSet envDB, out AdminShellPackageEnv packageEnv))
+        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out EnvSet envDB, out AdminShellPackageEnv packageEnv))
         {
             var newFileName = Path.Combine(AasContext.DataPath, file);
 
@@ -1289,11 +1281,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            CreateAASXPackage(db, securityCondition, file, fileContent);
+            CreateAASXPackage(db, file, fileContent);
         }
     }
 
-    private PackageDescription CreateAASXPackage(AasContext db, Dictionary<string, string>? securityCondition, string fileName, Stream fileContent)
+    private PackageDescription CreateAASXPackage(AasContext db, string fileName, Stream fileContent)
     {
         var newFileName = Path.Combine(AasContext.DataPath, fileName);
         //Check if file already exists
@@ -1336,7 +1328,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         };
     }
 
-    private string ReadAASXByPackageId(AasContext db, Dictionary<string, string>? securityCondition, string packageIdentifier, out byte[] content, out long fileSize)
+    private string ReadAASXByPackageId(AasContext db, string packageIdentifier, out byte[] content, out long fileSize,
+        SqlConditions? securitySqlConditions = null)
     {
         content = null;
         fileSize = 0;
@@ -1346,14 +1339,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         bool isFromUnpackedAAS = false;
 
-        if (IsPackageEnvPresent(db, securityCondition, packageIdentifier, null, null, true, out EnvSet env, out AdminShellPackageEnv packageEnv))
+        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out EnvSet env, out AdminShellPackageEnv packageEnv))
         {
             requestedPackage = packageEnv;
             requestedFileName = env.Path;
         }
         else if (IsAssetAdministrationShellPresent(db, packageIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
-            requestedPackage = CrudOperator.GetPackageEnv(db, securityCondition, -1, aas: aasDB);
+            requestedPackage = CrudOperator.GetPackageEnv(db, -1, aas: aasDB, securitySqlConditions: securitySqlConditions);
 
             requestedFileName = Path.Combine(AasContext.DataPath, aas.IdShort + ".aasx");
 
@@ -1379,7 +1372,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
         System.IO.File.Copy(requestedFileName, copyFileName, true);
 
-        AddPackageFilesToAdd(securityCondition, db, requestedPackage.AasEnv, requestedPackage);
+        AddPackageFilesToAdd(db, requestedPackage.AasEnv, requestedPackage);
 
         requestedPackage.SaveAs(copyFileName, true, true);
 
@@ -1398,11 +1391,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return fileName;
     }
 
-    private string ReadFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
+    private string ReadFileByPath(AasContext db, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize, SqlConditions? securitySqlConditions = null)
     {
-        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _))
+        if (IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions))
         {
-            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
+            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE, securitySqlConditions);
             content = null;
             fileSize = 0;
 
@@ -1419,7 +1412,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     {
                         var envFileName = string.Empty;
 
-                        var packageEnvFound = IsPackageEnvPresent(db, securityCondition, null, aasIdentifier, submodelIdentifier, false, out EnvSet env, out _);
+                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out EnvSet env, out _, securitySqlConditions);
 
                         if (packageEnvFound)
                         {
@@ -1454,11 +1447,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void ReplaceFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
+    public void ReplaceFileByPath(AasContext db, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream, SqlConditions? securitySqlConditions = null)
     {
-        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _))
+        if (IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions))
         {
-            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out _);
+            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShortPath, out _, securitySqlConditions);
 
             var found = fileElement != null;
             if (found)
@@ -1471,7 +1464,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     {
                         var envFileName = string.Empty;
 
-                        var packageEnvFound = IsPackageEnvPresent(db, securityCondition, null, aasIdentifier, submodelIdentifier, false, out EnvSet env, out _);
+                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out EnvSet env, out _, securitySqlConditions);
                         if (packageEnvFound)
                         {
                             envFileName = env.Path;
@@ -1479,7 +1472,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (FileService.ReplaceFileInZip(scopedLogger, envFileName, ref file, fileName, contentType, stream))
                         {
-                            CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                            CrudOperator.ReplaceSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShortPath, file, securitySqlConditions);
                         }
                         else
                         {
@@ -1503,11 +1496,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void DeleteFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public void DeleteFileByPath(AasContext db, string aasIdentifier, string submodelIdentifier, string idShortPath, SqlConditions? securitySqlConditions = null)
     {
-        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, false, out _, out _))
+        if (IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions))
         {
-            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out _);
+            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShortPath, out _, securitySqlConditions);
 
             var found = fileElement != null;
             if (found)
@@ -1521,7 +1514,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     {
                         var envFileName = string.Empty;
 
-                        var packageEnvFound = IsPackageEnvPresent(db, securityCondition, null, aasIdentifier, submodelIdentifier, false, out EnvSet envSet, out _);
+                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out EnvSet envSet, out _, securitySqlConditions);
                         if (packageEnvFound)
                         {
                             envFileName = envSet.Path;
@@ -1529,7 +1522,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (FileService.DeleteFileInZip(scopedLogger, envFileName, ref file))
                         {
-                            CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                            CrudOperator.ReplaceSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShortPath, file, securitySqlConditions);
                         }
                         else
                         {
@@ -1553,7 +1546,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    private string ReadThumbnail(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, out byte[] byteArray, out long fileSize)
+    private string ReadThumbnail(AasContext db, string aasIdentifier, out byte[] byteArray, out long fileSize)
     {
         string thumbnail = null;
         byteArray = null;
@@ -1592,7 +1585,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
 
-    public void ReplaceThumbnail(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string fileName, string contentType, MemoryStream stream)
+    public void ReplaceThumbnail(AasContext db, string aasIdentifier, string fileName, string contentType, MemoryStream stream)
     {
         if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
@@ -1657,7 +1650,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    private List<Contracts.Events.EventPayload> ReadEventMessages(Dictionary<string, string>? securityCondition, DbEventRequest dbEventRequest)
+    private List<Contracts.Events.EventPayload> ReadEventMessages(SqlConditions? securitySqlConditions, DbEventRequest dbEventRequest)
     {
         var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
         var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
@@ -1717,7 +1710,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
         }
 
-        var eventPayload = _eventService.CollectPayload(securityCondition, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
+        var eventPayload = _eventService.CollectPayload(securitySqlConditions, true, String.Empty, String.Empty, domain, eventData.ConditionSM, eventData.ConditionSME,
             diff, diffEntry, DateTime.MinValue, TimeSpan.Zero, TimeSpan.Zero, wp, smOnly, limSm, offSm, showTransmitted);
 
         if (requestType == DbEventRequestType.Status
@@ -1794,7 +1787,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return eventPayload;
     }
 
-    private void UpdateEventMessages(AasContext db, Dictionary<string, string>? securityCondition, DbEventRequest eventRequest)
+    private void UpdateEventMessages(AasContext db, DbEventRequest eventRequest)
     {
         var op = _eventService.FindEvent(eventRequest.Submodel, eventRequest.EventName);
         var eventData = _eventService.ParseData(op, eventRequest.Env[eventRequest.PackageIndex]);
@@ -1868,8 +1861,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public static bool IsPackageEnvPresent(AasContext db, Dictionary<string, string>? securityCondition, string packageId, string aasID, string smId,
-        bool loadInMemory, out EnvSet? envSet, out AdminShellPackageEnv? packageEnv)
+    public static bool IsPackageEnvPresent(AasContext db, string packageId, string aasID, string smId,
+        bool loadInMemory, out EnvSet? envSet, out AdminShellPackageEnv? packageEnv, SqlConditions? securitySqlConditions = null)
     {
         packageEnv = null;
         envSet = null;
@@ -1943,7 +1936,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (loadInMemory)
         {
-            packageEnv = CrudOperator.GetPackageEnv(db, securityCondition, envId);
+            packageEnv = CrudOperator.GetPackageEnv(db, envId, securitySqlConditions: securitySqlConditions);
         }
 
         return true;
@@ -1975,13 +1968,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return false;
     }
 
-    private bool IsSubmodelPresent(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier,
+    private bool IsSubmodelPresent(AasContext db, string aasIdentifier, string submodelIdentifier,
         bool loadIntoMemory, bool loadIntoMemoryWithoutElements, out SMSet smDb, out ISubmodel output, SqlConditions? securitySqlConditions = null)
     {
         output = null;
         smDb = null;
-
-        var result = false;
 
         var smDBQuery = db.SMSets.AsQueryable();
 
@@ -2006,26 +1997,17 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
 
-        if (securityCondition != null)
-        {
-            smDBQuery = smDBQuery.Where(securityCondition["sm."]);
-
-            if (!string.IsNullOrEmpty(aasIdentifier))
-            {
-                //ToDo: Add aas securityCondition
-            }
-        }
-
         var smDB = smDBQuery.ToList();
 
-        // NEW: raw SQL — only when sm scope filter is set
         string? smSql = null;
         securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSql);
-        if (!string.IsNullOrWhiteSpace(smSql) && !string.IsNullOrEmpty(submodelIdentifier))
+        if (!string.IsNullOrWhiteSpace(smSql))
         {
             var smDBNew = CrudOperator.QuerySmRaw(db, submodelIdentifier, smSql);
             if (!smDB.Select(sm => sm.Id).OrderBy(x => x).SequenceEqual(smDBNew.Select(sm => sm.Id).OrderBy(x => x)))
+            {
                 return false;
+            }
         }
 
         if (smDB.Count != 1)
@@ -2038,7 +2020,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             output = CrudOperator.ReadSubmodel(
                 db,
                 smDB[0],
-                securityCondition: securityCondition,
                 loadIntoMemoryWithoutElements: loadIntoMemoryWithoutElements,
                 securitySqlConditions: securitySqlConditions);
             if (output != null)
@@ -2054,68 +2035,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         smDb = smDB[0];
         return true;
-
-        /*
-        using (var db = new AasContext())
-        {
-            var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-
-            if (!aasIdentifier.IsNullOrEmpty())
-            {
-                var aasDB = db.AASSets
-                    .Where(aas => aas.Identifier == aasIdentifier);
-                if (aasDB == null || aasDB.Count() != 1)
-                {
-                    return false;
-                }
-                var aasDBId = aasDB.First().Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
-            }
-
-            if (!securityConditionSM.IsNullOrEmpty())
-            {
-                smDBQuery = smDBQuery.Where(securityConditionSM);
-            }
-            var smDB = smDBQuery.ToList();
-
-            if (smDB == null || smDB.Count != 1)
-            {
-                return result;
-            }
-            else
-            {
-                if (loadIntoMemory)
-                {
-                    output = Converter.GetSubmodel(smDB[0]);
-                }
-                result = true;
-            }
-        }
-        */
-
-        //    if (!aasIdentifier.IsNullOrEmpty())
-        //{
-        //    var aas = ReadAssetAdministrationShellById(aasIdentifier);
-        //    if (aas != null)
-        //    {
-        //        foreach (var submodelReference in aas.Submodels)
-        //        {
-        //            if (submodelReference.GetAsExactlyOneKey().Value.Equals(submodelIdentifier))
-        //            {
-        //                output = Converter.GetSubmodel(null, submodelIdentifier);
-        //                return true;
-        //            }
-        //        }
-        //    }
-        //}
-        //else
-        //{
-        //    output = Converter.GetSubmodel(null, submodelIdentifier);
-        //    bool isSubmodelPresent = output != null;
-        //    return isSubmodelPresent;
-        //}
-
-        return result;
     }
 
     private bool IsConceptDescriptionPresent(AasContext db, string cdIdentifier, bool loadIntoMemory, out IConceptDescription output)
@@ -2142,12 +2061,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
     //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
-    private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition,
+    private bool InitSecurity(ISecurityConfig? securityConfig,
         out List<AccessPermissionRule> accessRules, out SqlConditions? sqlConditions,
         string httpRoute = "", bool ignoreNullConfig = false)
     {
         accessRules = null;
-        securityCondition = null;
         sqlConditions = null;
 
         if (securityConfig == null)
@@ -2198,7 +2116,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
 
-        securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
         accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
         sqlConditions = _contractSecurityRules.GetSqlConditions(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
 

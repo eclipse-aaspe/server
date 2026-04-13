@@ -77,7 +77,7 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db, securityCondition: null,
+            .GetQueryData(noSecurity: true, db,
                 pageFrom: 0, pageSize: int.MaxValue,
                 ResultType.Submodel, expression);
 
@@ -133,7 +133,7 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db, securityCondition: null,
+            .GetQueryData(noSecurity: true, db,
                 pageFrom: 0, pageSize: int.MaxValue,
                 ResultType.Submodel, expression);
 
@@ -221,7 +221,7 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db, securityCondition: null,
+            .GetQueryData(noSecurity: true, db,
                 pageFrom: 0, pageSize: int.MaxValue,
                 ResultType.Submodel, expression);
 
@@ -269,7 +269,7 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db, securityCondition: null,
+            .GetQueryData(noSecurity: true, db,
                 pageFrom: 0, pageSize: int.MaxValue,
                 ResultType.Submodel, expression);
 

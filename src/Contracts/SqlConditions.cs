@@ -38,6 +38,12 @@ public class SqlConditions
     public Dictionary<string, string> FilterConditions { get; } = new();
 
     /// <summary>
+    /// Query projection hint from the parsed request, e.g. <c>"id"</c> or <c>"match"</c>.
+    /// Kept with the SQL conditions so callers do not need a parallel metadata dictionary.
+    /// </summary>
+    public string Select { get; set; } = "";
+
+    /// <summary>
     /// Per-scope C# Dynamic LINQ expressions for in-memory filtering of AAS model objects.
     /// Keys: "sm." (for <c>Submodel</c>), "sme." (for <c>ISubmodelElement</c>).
     /// Populated in parallel with <see cref="FormulaConditions"/> during <c>ParseAccessRules</c>.

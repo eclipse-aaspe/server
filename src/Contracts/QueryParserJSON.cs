@@ -1147,9 +1147,6 @@ public class QueryGrammarJSON : Grammar
                         else
                             rule._filter_sqlConditions = sc;
 
-                        // C# sm./sme. conditions from FormulaConditionsCSharp (computed inside CreateSqlConditions)
-                        conditions[i].Add("sm.", sc.FormulaConditionsCSharp.GetValueOrDefault("sm.", ""));
-                        conditions[i].Add("sme.", sc.FormulaConditionsCSharp.GetValueOrDefault("sme.", ""));
                     }
                 }
             }
