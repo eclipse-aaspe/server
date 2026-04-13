@@ -46,9 +46,18 @@ public class SqlConditions
     /// <summary>
     /// Per-scope C# Dynamic LINQ expressions for in-memory filtering of AAS model objects.
     /// Keys: "sm." (for <c>Submodel</c>), "sme." (for <c>ISubmodelElement</c>).
-    /// Populated in parallel with <see cref="FormulaConditions"/> during <c>ParseAccessRules</c>.
+    /// Derived from <see cref="FormulaConditions"/> <c>sm</c>/<c>sme</c> SQL via <see cref="SqlToLinqConverter"/> whenever scopes are finalized (create/merge).
     /// </summary>
     public Dictionary<string, string> FormulaConditionsCSharp { get; } = new();
+
+    /// <summary>
+    /// Fills <see cref="FormulaConditionsCSharp"/> from the current <c>sm</c>/<c>sme</c> entries in <see cref="FormulaConditions"/>.
+    /// </summary>
+    public static void RefreshFormulaConditionsCSharpFromFormulaSql(SqlConditions sc)
+    {
+        sc.FormulaConditionsCSharp["sm."] = SqlToLinqConverter.Convert(sc.FormulaConditions.GetValueOrDefault("sm", ""), "sm.");
+        sc.FormulaConditionsCSharp["sme."] = SqlToLinqConverter.Convert(sc.FormulaConditions.GetValueOrDefault("sme", ""), "sme.");
+    }
 
     /// <summary>
     /// Standalone path conditions (from <c>$sme.idShortPath#field</c> outside a <c>$match</c>).
@@ -155,6 +164,7 @@ public static class SqlConditionsMerger
             merged.Matches.Add(newMatch);
         }
 
+        SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
         return merged;
     }
 
@@ -210,6 +220,7 @@ public static class SqlConditionsMerger
             merged.Matches.Add(newMatch);
         }
 
+        SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
         return merged;
     }
 

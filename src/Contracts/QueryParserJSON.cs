@@ -1266,10 +1266,7 @@ public class QueryGrammarJSON : Grammar
         // Overall condition with path/match placeholders
         sc.FormulaConditions["all"] = BuildOverallSql(le, ctx);
 
-        // C# Dynamic LINQ expressions derived from SQL scope filters via micro-parser
-        sc.FormulaConditionsCSharp["sm."]  = SqlToLinqConverter.Convert(sc.FormulaConditions["sm"],  "sm.");
-        sc.FormulaConditionsCSharp["sme."] = SqlToLinqConverter.Convert(sc.FormulaConditions["sme"], "sme.");
-
+        SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(sc);
         return sc;
     }
 

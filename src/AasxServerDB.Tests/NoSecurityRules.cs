@@ -11,11 +11,6 @@ using Contracts;
 /// </summary>
 internal sealed class NoSecurityRules : IContractSecurityRules
 {
-    public Dictionary<string, string> GetCondition(
-        string accessRole, string neededRightsClaim,
-        string? httpRoute = null, List<Claim>? tokenClaims = null)
-        => new();
-
     public List<AccessPermissionRule> GetAccessRules(
         string accessRole, string neededRightsClaim,
         string? httpRoute = null, List<Claim>? tokenClaims = null)
@@ -36,6 +31,7 @@ internal sealed class NoSecurityRules : IContractSecurityRules
 
     public SqlConditions? GetSqlConditions(
         string accessRole, string neededRightsClaim,
+        string? httpRoute = null,
         List<Claim>? tokenClaims = null)
         => null;
 

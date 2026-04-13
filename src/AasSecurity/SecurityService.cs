@@ -150,157 +150,61 @@ namespace AasSecurity
 
             return null;
         }
-        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
-        {
-            var rules = GetAccessRules(accessRole, neededRightsClaim, tokenClaims: tokenClaims);
 
-            if (rules == null)
+        /// <summary>
+        /// Effective SQL conditions for the current request: same rule filtering as <see cref="GetAccessRules"/>,
+        /// merged like <see cref="QueryGrammarJSON.ParseAccessRules"/> (formula OR across rules, filter OR per scope into <see cref="SqlConditions.FilterConditions"/>).
+        /// </summary>
+        public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
+        {
+            var rules = GetAccessRules(accessRole, neededRightsClaim, httpRoute, tokenClaims);
+            if (rules == null || rules.Count == 0)
             {
                 return null;
             }
 
-            Dictionary<string, string> condition = [];
-            for (var i = 0; i < rules.Count; i++)
+            SqlConditions? merged = null;
+            foreach (var rule in rules)
             {
-                var rule = rules[i];
-                foreach (var c in rule._formula_conditions)
+                if (rule._formula_sqlConditions != null)
                 {
-                    if (c.Key is "sm." or "sme.")
-                    {
-                        continue;
-                    }
-                    if (i == 0)
-                    {
-                        condition[c.Key] = c.Value;
-                    }
-                    else
-                    {
-                        var hasValue = condition.TryGetValue(c.Key, out var value);
-                        if (hasValue && value != "")
-                        {
-                            if (value != "(True)")
-                            {
-                                if (c.Value != "")
-                                {
-                                    condition[c.Key] = value + " || " + c.Value;
-                                }
-                                else
-                                {
-                                    condition[c.Key] = "(True)";
-                                }
-                            }
-                        }
-                        else
-                        {
-                            condition[c.Key] = c.Value;
-                        }
-                    }
+                    merged = merged == null
+                        ? rule._formula_sqlConditions
+                        : SqlConditionsMerger.OrMerge(merged, rule._formula_sqlConditions);
                 }
 
-                var csharpConditions = rule._formula_sqlConditions?.FormulaConditionsCSharp;
-                foreach (var key in new[] { "sm.", "sme." })
+                if (rule._filter_sqlConditions != null)
                 {
-                    var value = csharpConditions?.GetValueOrDefault(key, "") ?? "";
-                    if (i == 0)
+                    merged ??= new SqlConditions();
+                    foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
                     {
-                        condition[key] = value;
-                    }
-                    else
-                    {
-                        var hasValue = condition.TryGetValue(key, out var existing);
-                        if (hasValue && existing != "")
+                        if (string.IsNullOrWhiteSpace(filterScope.Value))
                         {
-                            if (existing != "(True)")
-                            {
-                                if (value != "")
-                                {
-                                    condition[key] = existing + " || " + value;
-                                }
-                                else
-                                {
-                                    condition[key] = "(True)";
-                                }
-                            }
+                            continue;
                         }
-                        else
-                        {
-                            condition[key] = value;
-                        }
-                    }
-                }
 
-                foreach (var c in rule._filter_conditions)
-                {
-                    if (i == 0)
-                    {
-                        condition["filter-" + c.Key] = c.Value;
-                    }
-                    else
-                    {
-                        var hasValue = condition.TryGetValue("filter-" + c.Key, out var value);
-                        if (hasValue && value != "")
-                        {
-                            if (value != "(True)")
-                            {
-                                if (c.Value != "")
-                                {
-                                    condition["filter-" + c.Key] = value + " || " + c.Value;
-                                }
-                                else
-                                {
-                                    condition["filter-" + c.Key] = "(True)";
-                                }
-                            }
-                        }
-                        else
-                        {
-                            condition["filter-" + c.Key] = c.Value;
-                        }
+                        var existing = merged.FilterConditions.GetValueOrDefault(filterScope.Key, "");
+                        merged.FilterConditions[filterScope.Key] =
+                            string.IsNullOrWhiteSpace(existing)
+                                ? filterScope.Value
+                                : $"({existing}) OR ({filterScope.Value})";
                     }
                 }
             }
 
-            foreach (var c in condition)
+            if (merged != null)
             {
-                if (condition[c.Key] is not "" and not "(True)")
-                {
-                    condition[c.Key] = "(" + c.Value + ")";
-                }
-
-                while (condition[c.Key].Contains("CLAIM("))
-                {
-                    var split = c.Value.Split("CLAIM(");
-                    split = split[1].Split(")");
-                    var claim = split[0];
-                    if (claim.StartsWith("token:"))
-                    {
-                        var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        condition[c.Key] = c.Value.Replace($"CLAIM({claim})", $"\"{value}\"");
-                    }
-                    if (claim == accessRole)
-                    {
-                        var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        condition[c.Key] = c.Value.Replace($"CLAIM({accessRole})", $"\"{value}\"");
-                    }
-                }
+                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
             }
 
-            return condition;
-        }
-
-        /// <summary>
-        /// SQL equivalent of <see cref="GetCondition"/>: access formulas in <see cref="SqlConditions.FormulaConditions"/>
-        /// and FILTER rules separately in <see cref="SqlConditions.FilterConditions"/>.
-        /// </summary>
-        public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, List<Claim>? tokenClaims = null)
-        {
-            return _SqlCondition;
+            return merged;
         }
 
         public void ClearSecurityRules()
         {
             _condition.Clear();
             _accessRules = null;
+            _SqlCondition = null;
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
 

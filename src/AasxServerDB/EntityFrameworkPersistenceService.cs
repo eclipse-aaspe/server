@@ -2116,8 +2116,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
 
-        accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
-        sqlConditions = _contractSecurityRules.GetSqlConditions(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
+        accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString(), httpRoute, tokenClaims: tokenClaims);
+        sqlConditions = _contractSecurityRules.GetSqlConditions(accessRole, neededRights.ToString(), httpRoute, tokenClaims: tokenClaims);
 
         if (accessRules?.Count != 0 && httpRoute != null)
         {

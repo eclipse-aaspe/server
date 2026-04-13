@@ -2414,6 +2414,7 @@ public partial class Query
         {
             sqlConditionsOut = new SqlConditions();
             sqlConditionsOut.FormulaConditions["all"] = "true";
+            SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(sqlConditionsOut);
             return true;
         }
 
@@ -2543,8 +2544,13 @@ public partial class Query
                                     }
                                 }
 
-                                // New direct-SQL path: build SqlConditions alongside the LINQ path
+                                // New direct-SQL path: main condition + optional Filter (AND, same as query ∩ security merge)
                                 sqlConditionsOut = QueryGrammarJSON.CreateSqlConditions(logicalExpressions[0]!);
+                                if (logicalExpressions.Count > 1 && logicalExpressions[1] != null)
+                                {
+                                    var filterSql = QueryGrammarJSON.CreateSqlConditions(logicalExpressions[1]!);
+                                    sqlConditionsOut = SqlConditionsMerger.Merge(sqlConditionsOut, filterSql);
+                                }
                             }
                             else
                             {
