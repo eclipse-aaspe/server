@@ -129,10 +129,6 @@ public sealed class QueryTests
             "https://i4d.de/T/2966265/submodel/Nameplate",
             "https://i4d.de/T/2966265/submodel/HandoverDocumentation",
             "https://i4d.de/T/2966265/submodel/CarbonFootprint",
-            "https://i4d.de/T/3209510/submodel/TechnicalData",
-            "https://i4d.de/T/3209510/submodel/Nameplate",
-            "https://i4d.de/T/3209510/submodel/HandoverDocumentation",
-            "https://i4d.de/T/3209510/submodel/CarbonFootprint",
         };
 
         using var db = _fixture.CreateDbContext();
@@ -188,7 +184,6 @@ public sealed class QueryTests
             "https://zvei.org/demo/sm/605E831AA35645D6A194E64312AB599B",
             "https://i4d.de/T/2900542/submodel/TechnicalData",
             "https://i4d.de/T/2966265/submodel/TechnicalData",
-            "https://i4d.de/T/3209510/submodel/TechnicalData",
         };
 
         using var db = _fixture.CreateDbContext();
@@ -276,7 +271,6 @@ public sealed class QueryTests
             "https://i4d.de/T/2900542/submodel/TechnicalData",
             "https://i4d.de/T/2966265/submodel/TechnicalData",
             "https://i4d.de/T/2966265/submodel/HandoverDocumentation",
-            "https://i4d.de/T/3209510/submodel/TechnicalData",
         };
 
         using var db = _fixture.CreateDbContext();
@@ -437,8 +431,6 @@ public sealed class QueryTests
             "https://i4d.de/T/2900542/submodel/TechnicalData",
             "https://i4d.de/T/2966265/submodel/Nameplate",
             "https://i4d.de/T/2966265/submodel/TechnicalData",
-            "https://i4d.de/T/3209510/submodel/Nameplate",
-            "https://i4d.de/T/3209510/submodel/TechnicalData",
             "https://zvei.org/demo/sm/605E831AA35645D6A194E64312AB599B",
             "https://zvei.org/demo/sm/CC46DCB43AB54ED0881CA8727928DA59",
         };
