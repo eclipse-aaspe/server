@@ -49,7 +49,6 @@ namespace AasSecurity
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
         public static List<Dictionary<string, string>>? _condition = new List<Dictionary<string, string>>();
-        public static SqlConditions? _SqlCondition = null;
 
         public static AllAccessPermissionRules? _accessRules = null;
 
@@ -85,7 +84,6 @@ namespace AasSecurity
                         grammar.ParseAccessRules(expression);
                         _accessRules = QueryGrammarJSON._accessRules;
                         _condition = QueryGrammarJSON.allAccessRuleExpressions;
-                        _SqlCondition = QueryGrammarJSON.allAccessRuleSqlConditions;
                     }
                 }
             }
@@ -108,22 +106,6 @@ namespace AasSecurity
 
             if (_accessRules != null)
             {
-                /*
-                var rules = _accessRules.Rules.Where(r =>
-                    r.Acl != null &&
-                    r.Acl.Access == "ALLOW" &&
-                    r.Acl.Rights.Contains(neededRightsClaim) && r.Acl.Attributes[0].ItemType == "CLAIM" &&
-                    (
-                        (accessRole != null && r.Acl.Attributes[0].Value == accessRole) ||
-                        (accessRole == null && tokenClaims != null && tokenClaims.Any(t => t.ValueType == "token:" + r.Acl.Attributes[0].Value))
-                    ) &&
-                    (
-                        (httpRoute == null) ||
-                        (httpRoute != null && r.Objects.Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, httpRoute)))
-                    )
-                ).ToList();
-                */
-
                 var rules = _accessRules.Rules
                     .Where(r =>
                         r.Acl != null &&
@@ -373,7 +355,6 @@ namespace AasSecurity
         {
             _condition.Clear();
             _accessRules = null;
-            _SqlCondition = null;
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
 

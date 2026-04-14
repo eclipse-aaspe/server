@@ -36,8 +36,12 @@
 		{
 			<div class="mb-1">
 				<label class="small text-muted" for="treePreviewAccessRole">Preview access role (empty = anonymous)</label>
-				<input id="treePreviewAccessRole" class="form-control form-control-sm" type="text" autocomplete="off"
-				       value="@treePreviewAccessRole" @onchange="OnTreePreviewAccessRoleChange" />
+				<div class="input-group input-group-sm">
+					<input id="treePreviewAccessRole" class="form-control" type="text" autocomplete="off" spellcheck="false"
+					       title="Rebuild runs when you leave the field; use Apply to force the same rebuild."
+					       @bind="treePreviewAccessRole" @bind:after="OnTreePreviewAccessRoleBindAfterAsync" />
+					<button type="button" class="btn btn-outline-secondary" @onclick="OnTreePreviewAccessRoleApplyClickAsync">Apply</button>
+				</div>
 			</div>
 		}
 		<span></span>
@@ -45,12 +49,10 @@
 		HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
 			<TitleTemplate>
 				@{
-					var getPolicy = string.Empty;
 					@if (GlobalSecurityVariables.WithAuthentication && context is Item treeItem && treeItem.Tag is Submodel or ISubmodelElement)
 					{
 						var access = treeItem.TreeSecurityAccess;
 						var mixedDescendants = treeItem.TreeSecurityWithAllow;
-						getPolicy = treeItem.TreeSecurityPolicy ?? string.Empty;
 
 						if (mixedDescendants)
 						{
@@ -70,10 +72,6 @@
 
 					<span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
 					@ViewNodeID(context)@ViewNodeInfo(context)
-					@if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
-					{
-						<span style="color:blue"> @getPolicy</span>
-					}
 
 					<span style="color:blue;font-size:14px">@GetSymbols(context)</span>
 					<span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
@@ -783,8 +781,6 @@
 
 		/// <summary> True if strict descendants include both an allowed (green) and a denied (red) SM/SME node — drives rot/grün Streifen.</summary>
 		public bool TreeSecurityWithAllow { get; set; }
-
-		public string? TreeSecurityPolicy { get; set; }
 	}
 
 	/// <summary> Empty = same behaviour as previous anonymous preview (<c>null</c> role).</summary>
@@ -876,6 +872,62 @@
 
 	bool update = true;
 
+	/// <summary>
+	/// Recreates <see cref="Items"/> from the AAS model (same as data reload) and maps selection/expansion to the new <see cref="Item"/> instances.
+	/// Preview role only re-colored the old graph before; without a rebuild, <see cref="ExpandedNodes"/> could keep stale nodes and collections might not expand.
+	/// </summary>
+	void RebuildVisibleTreePreservingExpansion()
+	{
+		if (!update)
+		{
+			return;
+		}
+
+		var selectedNode = SelectedNode;
+		var isSelected   = selectedNode != null;
+		var isExpanded   = ExpandedNodes.Count != 0;
+		var expandedNodesPath = new List<string>[ExpandedNodes.Count];
+		if (isExpanded)
+		{
+			for (var j = 0; j < ExpandedNodes.Count; j++)
+			{
+				expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
+			}
+		}
+
+		var selectedNodePath = GetPath(selectedNode);
+
+		var buildTree = SubmodelService.BuildTree(aasID, smID);
+		Items = buildTree;
+
+		ExpandedNodes.Clear();
+		selectedNode = null;
+		if (isSelected)
+		{
+			selectedNode = FindPath(selectedNodePath);
+		}
+
+		if (isExpanded)
+		{
+			foreach (var path in expandedNodesPath)
+			{
+				if (path == null)
+				{
+					continue;
+				}
+
+				var p = FindPath(path);
+				if (p != null)
+				{
+					ExpandedNodes.Add(p);
+				}
+			}
+		}
+
+		AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
+		SelectedNode = selectedNode;
+	}
+
 	void updateVisibleTree()
 	{
 		if (!update)
@@ -890,42 +942,9 @@
 				break;
 			case 1:
 			case 2:
-				var isSelected = selectedNode != null;
-				var isExpanded = ExpandedNodes.Count != 0;
-				var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-				var selectedNodePath = GetPath(selectedNode);
-				if (isExpanded)
-				{
-					for (var j = 0; j < ExpandedNodes.Count; j++)
-					{
-						expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
-					}
-				}
-
-				var buildTree = SubmodelService.BuildTree(aasID, smID);
-
-				Items = buildTree;
-
-				ExpandedNodes.Clear();
-				selectedNode = null;
-				if (isSelected)
-				{
-					selectedNode = FindPath(selectedNodePath);
-				}
-
-				if (isExpanded)
-				{
-					foreach (var path in expandedNodesPath)
-					{
-						var p = FindPath(path);
-						if (p != null)
-							ExpandedNodes.Add(p);
-					}
-				}
-
+				RebuildVisibleTreePreservingExpansion();
 				newDataMode = 0;
-				AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
-				break;
+				return;
 			// 3 == build new tree, all nodes closed
 			case 3:
 				var buildTree2 = SubmodelService.BuildTree(aasID, smID);
@@ -946,13 +965,27 @@
 
 	string? ResolveTreePreviewAccessRole() => ResolveTreePreviewAccessRole(treePreviewAccessRole);
 
-	void OnTreePreviewAccessRoleChange(ChangeEventArgs e)
+	/// <summary> Runs after <see cref="treePreviewAccessRole"/> is written from the input (commit on blur / change).</summary>
+	async Task OnTreePreviewAccessRoleBindAfterAsync()
 	{
-		treePreviewAccessRole = e.Value?.ToString() ?? "";
-		if (Items != null && GlobalSecurityVariables.WithAuthentication)
+		await ApplyTreePreviewAccessRoleRebuildAsync();
+	}
+
+	async Task OnTreePreviewAccessRoleApplyClickAsync()
+	{
+		await ApplyTreePreviewAccessRoleRebuildAsync();
+	}
+
+	/// <summary> Rebuild tree + security preview; <see cref="InvokeAsync(StateHasChanged)"/> ensures a render after the graph is replaced.</summary>
+	async Task ApplyTreePreviewAccessRoleRebuildAsync()
+	{
+		if (!GlobalSecurityVariables.WithAuthentication)
 		{
-			AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
+			return;
 		}
+
+		RebuildVisibleTreePreservingExpansion();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	static string BuildSubmodelElementSecurityPath(ISubmodelElement sme)
@@ -1020,9 +1053,7 @@
 		{
 			case Submodel sm:
 			{
-				item.TreeSecurityAccess    = SecService.EvaluateTreeSubmodelRead(accessRole, sm, "/submodels");
-				item.TreeSecurityWithAllow = false;
-				item.TreeSecurityPolicy    = null;
+				item.TreeSecurityAccess = SecService.EvaluateTreeSubmodelRead(accessRole, sm, "/submodels");
 				break;
 			}
 			case ISubmodelElement sme:
@@ -1034,15 +1065,12 @@
 					p = (p as ISubmodelElement)!.Parent;
 				}
 
-				item.TreeSecurityAccess    = SecService.EvaluateTreeSubmodelElementRead(accessRole, (Submodel)p, path, "/submodel-elements");
-				item.TreeSecurityWithAllow = false;
-				item.TreeSecurityPolicy    = null;
+				item.TreeSecurityAccess = SecService.EvaluateTreeSubmodelElementRead(accessRole, (Submodel)p, path, "/submodel-elements");
 				break;
 			}
 			default:
 				item.TreeSecurityAccess    = false;
 				item.TreeSecurityWithAllow = false;
-				item.TreeSecurityPolicy    = null;
 				break;
 		}
 
