@@ -16,7 +16,6 @@ namespace AasxServerDB
     using AasCore.Aas3_0;
     using AdminShellNS;
     using static AasCore.Aas3_0.Visitation;
-    using EFCore.BulkExtensions;
     using Extensions;
     using System.IO.Compression;
     using Microsoft.IdentityModel.Tokens;
@@ -85,7 +84,12 @@ namespace AasxServerDB
         public static void FlushBulkImport()
         {
             if (_bulkDb == null) return;
-            _bulkDb.BulkSaveChanges();
+            // BulkSaveChanges (EFCore.BulkExtensions) does not reliably preserve insert order / FK fixup for
+            // self-referencing SMESet.ParentSMEId (nested SMC/SML/Entity trees). Children can be inserted with
+            // NULL ParentSMEId. Standard SaveChanges applies dependency order like non-bulk import.
+            _bulkDb.ChangeTracker.AutoDetectChangesEnabled = true;
+            _bulkDb.ChangeTracker.DetectChanges();
+            _bulkDb.SaveChanges();
             _bulkDb.ChangeTracker.Clear();
             GC.Collect();
         }
@@ -93,7 +97,9 @@ namespace AasxServerDB
         public static void EndBulkImport(bool analyze = false)
         {
             if (_bulkDb == null) return;
-            _bulkDb.BulkSaveChanges();
+            _bulkDb.ChangeTracker.AutoDetectChangesEnabled = true;
+            _bulkDb.ChangeTracker.DetectChanges();
+            _bulkDb.SaveChanges();
             if (analyze)
             {
                 Console.WriteLine("Running ANALYZE to update query planner statistics...");
@@ -171,6 +177,7 @@ namespace AasxServerDB
             {
                 if (!createFilesOnly)
                 {
+                    Console.WriteLine($"Import to DB: {Path.GetFileName(filePath)}");
                     var envDB = new EnvSet()
                     {
                         Path = filePath,

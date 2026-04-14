@@ -822,6 +822,9 @@ namespace AasxServer
                 {
                     // Producer-consumer: parse in parallel, write to DB serially
                     const int parserThreads = 4;
+                    // After switching from BulkSaveChanges to SaveChanges (correct ParentSMEId), each flush is heavier.
+                    // Increase (e.g. 200–500) for fewer SaveChanges rounds on large imports; uses more RAM until the next flush.
+                    const int importDbFlushEveryNPackages = 100;
                     var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: parserThreads * 8);
 
                     var parsedCount = 0;
@@ -857,8 +860,11 @@ namespace AasxServer
                     int count = 0;
                     foreach (var envDB in queue.GetConsumingEnumerable())
                     {
+                        count++;
+                        var aasxName = string.IsNullOrEmpty(envDB.Path) ? "?" : Path.GetFileName(envDB.Path);
+                        Console.WriteLine($"Import to DB ({count}/{regularFiles.Length}): {aasxName}");
                         AasxServerDB.VisitorAASX.AddEnvSetToBulk(envDB);
-                        if (++count % 100 == 0)
+                        if (count % importDbFlushEveryNPackages == 0)
                         {
                             Console.WriteLine($"DB Flush at {count}/{regularFiles.Length} parsed={parsedCount} ({watch.ElapsedMilliseconds / 1000}s)");
                             persistenceService.FlushBulkImport();
