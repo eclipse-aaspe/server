@@ -1,6 +1,6 @@
 # Use a multi-stage build to build and publish the .NET application
-# Ubuntu 24.04 (noble); for 22.04 hosts use 8.0-jammy sdk/runtime tags.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build-env
+# Ubuntu 24.04 (noble); for 22.04 hosts use 9.0-jammy sdk/runtime tags.
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-noble AS build-env
 WORKDIR /repo/src
 
 # Copy the source code and build
@@ -14,7 +14,7 @@ RUN dotnet build -o /out/AasxServerAspNetCore AasxServerAspNetCore -v d -p:AasxS
 RUN dotnet publish -c Release -v d --no-restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
 
 # Use a runtime image to run the application
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:8.0-noble as base
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:9.0-noble as base
 # Required for System bundle (libsqlite3.so + symlink for SQLitePCLRaw).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libsqlite3-0 \

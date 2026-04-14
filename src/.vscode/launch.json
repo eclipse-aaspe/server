@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/AasxServerBlazor/bin/Debug/net8.0/AasxServerBlazor.dll",
+            "program": "${workspaceFolder}/AasxServerBlazor/bin/Debug/net9.0/AasxServerBlazor.dll",
             "args": [],
             "cwd": "${workspaceFolder}/AasxServerBlazor",
             "stopAtEntry": false,

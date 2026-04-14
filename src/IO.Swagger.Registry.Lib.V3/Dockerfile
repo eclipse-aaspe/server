@@ -1,7 +1,7 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
 WORKDIR /app
 
-ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 # copy csproj and restore as distinct layers
 COPY *.csproj ./
@@ -12,8 +12,8 @@ COPY . ./
 RUN dotnet publish -c Release -o out
 
 # build runtime image
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build-env /app/out .
 
-ENTRYPOINT ["dotnet", "IO.Swagger.dll"]
+ENTRYPOINT ["dotnet", "IO.Swagger.Registry.Lib.V3.dll"]

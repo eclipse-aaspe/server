@@ -15,7 +15,7 @@
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
 >
 > ### Dotnet Version
-> We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-8.0-blue)
+> We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-9.0-blue)
 
 
 AASPE Server is a companion app for the [AASPE Package Explorer](https://github.com/eclipse-aaspe/package-explorer). Some source code is shared, especially AasCore.  
@@ -91,7 +91,7 @@ export Kestrel__Endpoints__Http__Url=http://*:YOURPORT
 dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL
 ```
 
-Default port in many configs is **5001**. [ASP.NET Core Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) is required.
+Default port in many configs is **5001**. [.NET 9 Runtime / SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) is required to build and run.
 
 ### Running with Docker
 
