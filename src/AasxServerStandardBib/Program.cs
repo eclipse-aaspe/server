@@ -820,12 +820,15 @@ namespace AasxServer
 
                 if (withDb)
                 {
-                    // Producer-consumer: parse in parallel, write to DB serially
+                    // Producer-consumer: parse in parallel, write to DB serially (one thread — same DbContext is not thread-safe).
+                    // While FlushBulkImport runs (sync SaveChanges), the consumer does not dequeue; parsers keep filling the queue
+                    // until it is full, then queue.Add blocks. A larger buffer keeps parse overlapping with long flushes (more RAM).
                     const int parserThreads = 4;
                     // After switching from BulkSaveChanges to SaveChanges (correct ParentSMEId), each flush is heavier.
                     // Increase (e.g. 200–500) for fewer SaveChanges rounds on large imports; uses more RAM until the next flush.
                     const int importDbFlushEveryNPackages = 100;
-                    var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: parserThreads * 8);
+                    const int importParseQueueCapacity = 512;
+                    var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: importParseQueueCapacity);
 
                     var parsedCount = 0;
                     var producer = Task.Run(() =>
