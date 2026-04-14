@@ -32,69 +32,40 @@
 				<span style="color:white;background-color:blue;">Loading...</span>
 			}
 		}
+		@if (GlobalSecurityVariables.WithAuthentication)
+		{
+			<div class="mb-1">
+				<label class="small text-muted" for="treePreviewAccessRole">Preview access role (empty = anonymous)</label>
+				<input id="treePreviewAccessRole" class="form-control form-control-sm" type="text" autocomplete="off"
+				       value="@treePreviewAccessRole" @onchange="OnTreePreviewAccessRoleChange" />
+			</div>
+		}
 		<span></span>
 		<Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
 		HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
 			<TitleTemplate>
 				@{
 					var getPolicy = string.Empty;
-					@if (GlobalSecurityVariables.WithAuthentication)
+					@if (GlobalSecurityVariables.WithAuthentication && context is Item treeItem && treeItem.Tag is Submodel or ISubmodelElement)
 					{
-						var display = false;
-						var access = false;
-						var withAllow = false;
-						switch (context.Tag)
-						{
-							case Submodel sm:
-								{
-									// check, if access to submodel is allowed
-									withAllow = false;
-									access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-										out _, out withAllow, out getPolicy, sm.IdShort!, "submodel", sm);
-									display = true;
-									break;
-								}
-							case ISubmodelElement sme:
-								{
-									var path = sme.IdShort;
-									var p = sme.Parent;
-									while (p is not Submodel)
-									{
-										path = $"{(p as ISubmodelElement).IdShort}.{path}";
-										p = (p as ISubmodelElement).Parent;
-									}
+						var access = treeItem.TreeSecurityAccess;
+						var mixedDescendants = treeItem.TreeSecurityWithAllow;
+						getPolicy = treeItem.TreeSecurityPolicy ?? string.Empty;
 
-									path = $"{(p as Submodel).IdShort}.{path}";
-									var error = string.Empty;
-									access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-										out error, out withAllow, out getPolicy, path, string.Empty, p);
-									display = true;
-									break;
-								}
-						}
-
-						if (display)
+						if (mixedDescendants)
 						{
-							if (context.Children == null || !context.Children.Any())
-								withAllow = false;
-							if (access)
-							{
-								<span style="color:green;background-color:green;">&nbsp&nbsp</span>
-							}
-							else
-							{
-								if (!withAllow)
-								{
-									<span style="color:red;background-color:red;">&nbsp&nbsp</span>
-								}
-								else
-								{
-									<span style="color:red;background-color:red;">&nbsp</span>
-									<span style="color:green;background-color:green;">&nbsp</span>
-								}
-							}
-							<span>&nbsp&nbsp</span>
+							<span style="color:red;background-color:red;">&nbsp</span>
+							<span style="color:green;background-color:green;">&nbsp</span>
 						}
+						else if (access)
+						{
+							<span style="color:green;background-color:green;">&nbsp&nbsp</span>
+						}
+						else
+						{
+							<span style="color:red;background-color:red;">&nbsp&nbsp</span>
+						}
+						<span>&nbsp&nbsp</span>
 					}
 
 					<span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
@@ -807,7 +778,17 @@
 
 		public DetailsImageData DetailsImage { get; set; }
 
+		/// <summary> READ access preview for <see cref="Tag"/> Submodel / ISubmodelElement; filled by <see cref="AnnotateTreeSecurity"/>.</summary>
+		public bool TreeSecurityAccess { get; set; }
+
+		/// <summary> True if strict descendants include both an allowed (green) and a denied (red) SM/SME node — drives rot/grün Streifen.</summary>
+		public bool TreeSecurityWithAllow { get; set; }
+
+		public string? TreeSecurityPolicy { get; set; }
 	}
+
+	/// <summary> Empty = same behaviour as previous anonymous preview (<c>null</c> role).</summary>
+	string treePreviewAccessRole = "";
 
 	List<Item> Items = null;
 
@@ -943,6 +924,7 @@
 				}
 
 				newDataMode = 0;
+				AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
 				break;
 			// 3 == build new tree, all nodes closed
 			case 3:
@@ -952,10 +934,127 @@
 				ExpandedNodes.Clear();
 				selectedNode = null;
 				newDataMode = 0;
+				AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
 				break;
 		}
 
 		SelectedNode = selectedNode;
+	}
+
+	static string? ResolveTreePreviewAccessRole(string? raw) =>
+		string.IsNullOrWhiteSpace(raw) ? null : raw.Trim();
+
+	string? ResolveTreePreviewAccessRole() => ResolveTreePreviewAccessRole(treePreviewAccessRole);
+
+	void OnTreePreviewAccessRoleChange(ChangeEventArgs e)
+	{
+		treePreviewAccessRole = e.Value?.ToString() ?? "";
+		if (Items != null && GlobalSecurityVariables.WithAuthentication)
+		{
+			AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
+		}
+	}
+
+	static string BuildSubmodelElementSecurityPath(ISubmodelElement sme)
+	{
+		var path = sme.IdShort;
+		var p    = sme.Parent;
+		while (p is not Submodel)
+		{
+			path = $"{(p as ISubmodelElement)!.IdShort}.{path}";
+			p    = (p as ISubmodelElement)!.Parent;
+		}
+
+		return $"{(p as Submodel)!.IdShort}.{path}";
+	}
+
+	void AnnotateTreeSecurity(List<Item>? roots, string? accessRole)
+	{
+		if (roots == null || !GlobalSecurityVariables.WithAuthentication)
+		{
+			return;
+		}
+
+		foreach (var item in roots)
+		{
+			AnnotateTreeItemSecurity(item, accessRole);
+		}
+
+		foreach (var item in roots)
+		{
+			ApplyTreeSecuritySubtreeMixedStripes(item);
+		}
+	}
+
+	/// <summary>
+	/// Sets <see cref="Item.TreeSecurityWithAllow"/> when this node’s subtree (including self) has both allow and deny for SM/SME preview — e.g. submodel READ ok but some SME denied by FILTER.
+	/// </summary>
+	static (bool subtreeHasGreen, bool subtreeHasRed) ApplyTreeSecuritySubtreeMixedStripes(Item n)
+	{
+		var descGreen = false;
+		var descRed   = false;
+		if (n.Children != null)
+		{
+			foreach (var c in n.Children)
+			{
+				var (tg, tr) = ApplyTreeSecuritySubtreeMixedStripes(c);
+				descGreen |= tg;
+				descRed   |= tr;
+			}
+		}
+
+		var isSec = n.Tag is Submodel or ISubmodelElement;
+		var selfG = isSec && n.TreeSecurityAccess;
+		var selfR = isSec && !n.TreeSecurityAccess;
+
+		var subtreeGreen = descGreen || selfG;
+		var subtreeRed   = descRed   || selfR;
+		n.TreeSecurityWithAllow = subtreeGreen && subtreeRed;
+
+		return (subtreeGreen, subtreeRed);
+	}
+
+	void AnnotateTreeItemSecurity(Item item, string? accessRole)
+	{
+		switch (item.Tag)
+		{
+			case Submodel sm:
+			{
+				item.TreeSecurityAccess    = SecService.EvaluateTreeSubmodelRead(accessRole, sm, "/submodels");
+				item.TreeSecurityWithAllow = false;
+				item.TreeSecurityPolicy    = null;
+				break;
+			}
+			case ISubmodelElement sme:
+			{
+				var path = BuildSubmodelElementSecurityPath(sme);
+				var p    = sme.Parent;
+				while (p is not Submodel)
+				{
+					p = (p as ISubmodelElement)!.Parent;
+				}
+
+				item.TreeSecurityAccess    = SecService.EvaluateTreeSubmodelElementRead(accessRole, (Submodel)p, path, "/submodel-elements");
+				item.TreeSecurityWithAllow = false;
+				item.TreeSecurityPolicy    = null;
+				break;
+			}
+			default:
+				item.TreeSecurityAccess    = false;
+				item.TreeSecurityWithAllow = false;
+				item.TreeSecurityPolicy    = null;
+				break;
+		}
+
+		if (item.Children == null)
+		{
+			return;
+		}
+
+		foreach (var child in item.Children)
+		{
+			AnnotateTreeItemSecurity(child, accessRole);
+		}
 	}
 
 	List<string> GetPath(Item i)

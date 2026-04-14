@@ -100,6 +100,12 @@ namespace AasSecurity
         public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null,
             List<Claim>? tokenClaims = null)
         {
+            // Align with CheckAccessLevelWithError / AuthenticateRequest: unauthenticated preview has no role and no token claims.
+            if (string.IsNullOrWhiteSpace(accessRole) && (tokenClaims == null || tokenClaims.Count == 0))
+            {
+                accessRole = "isNotAuthenticated";
+            }
+
             if (_accessRules != null)
             {
                 /*
@@ -139,6 +145,13 @@ namespace AasSecurity
                         )
                     )
                     .ToList();
+
+                // Many accessrules.txt entries list /submodels but not /submodel-elements; REST and tree use both.
+                if (rules.Count == 0 && httpRoute != null &&
+                    httpRoute.Contains("/submodel-elements", StringComparison.OrdinalIgnoreCase))
+                {
+                    return GetAccessRulesStatic(accessRole, neededRightsClaim, "/submodels", tokenClaims);
+                }
 
                 if (rules.Count == 0)
                 {
@@ -198,6 +211,162 @@ namespace AasSecurity
             }
 
             return merged;
+        }
+
+        /// <inheritdoc />
+        public bool EvaluateTreeSubmodelRead(string? accessRole, Submodel sm, string httpRoute, List<Claim>? tokenClaims = null)
+        {
+            var rules = GetAccessRules(accessRole, AccessRights.READ.ToString(), httpRoute, tokenClaims);
+            if (rules == null || rules.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var rule in rules)
+            {
+                var combined = CombineAccessRuleFormulaAndFilter(rule);
+                if (combined == null)
+                {
+                    continue;
+                }
+
+                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(combined);
+                if (EvaluateSingleRuleTreeSubmodel(combined, sm))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <inheritdoc />
+        public bool EvaluateTreeSubmodelElementRead(string? accessRole, Submodel parentSubmodel, string objPath, string httpRoute,
+            List<Claim>? tokenClaims = null)
+        {
+            var rules = GetAccessRules(accessRole, AccessRights.READ.ToString(), httpRoute, tokenClaims);
+            if (rules == null || rules.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var rule in rules)
+            {
+                var combined = CombineAccessRuleFormulaAndFilter(rule);
+                if (combined == null)
+                {
+                    continue;
+                }
+
+                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(combined);
+                if (EvaluateSingleRuleTreeSubmodelElement(combined, parentSubmodel, objPath))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// FORMULA and FILTER are separate <see cref="SqlConditions"/> on the rule; tree preview must AND them (same idea as DB combining formula + filter).
+        /// </summary>
+        private static SqlConditions? CombineAccessRuleFormulaAndFilter(AccessPermissionRule rule)
+        {
+            var f = rule._formula_sqlConditions;
+            var b = rule._filter_sqlConditions;
+            if (f == null && b == null)
+            {
+                return null;
+            }
+
+            if (f == null)
+            {
+                return b;
+            }
+
+            if (b == null)
+            {
+                return f;
+            }
+
+            return SqlConditionsMerger.Merge(f, b);
+        }
+
+        /// <summary>
+        /// In-memory READ check for one access rule's SQL conditions (correlated sm./sme.); used by tree preview only.
+        /// </summary>
+        private static bool EvaluateSingleRuleTreeSubmodel(SqlConditions sc, Submodel sm)
+        {
+            var conditionSm = sc.FormulaConditionsCSharp.GetValueOrDefault("sm.", "").Trim();
+            if (string.IsNullOrEmpty(conditionSm))
+            {
+                return true;
+            }
+
+            var submodels = new List<Submodel> { sm };
+            return submodels.AsQueryable().Where(conditionSm).Any();
+        }
+
+        private static bool EvaluateSingleRuleTreeSubmodelElement(SqlConditions sc, Submodel parentSubmodel, string objPath)
+        {
+            var conditionSm  = sc.FormulaConditionsCSharp.GetValueOrDefault("sm.", "").Trim();
+            var conditionSme = sc.FormulaConditionsCSharp.GetValueOrDefault("sme.", "").Trim();
+
+            if (conditionSme != "" && objPath.Contains('.') && parentSubmodel.SubmodelElements != null)
+            {
+                var submodelElements = parentSubmodel.SubmodelElements;
+                var path             = objPath.Split('.');
+                var i                = 1;
+                while (i < path.Length)
+                {
+                    var idShort = path[i];
+                    var found   = submodelElements.FindIndex(x => x.IdShort == idShort);
+                    if (found == -1)
+                    {
+                        break;
+                    }
+
+                    if (i == path.Length - 1)
+                    {
+                        var list = new List<ISubmodelElement> { submodelElements[found] };
+                        var x = list.AsQueryable().Where(conditionSme);
+                        if (x.Any())
+                        {
+                            return true;
+                        }
+                    }
+
+                    switch (submodelElements[found])
+                    {
+                        case SubmodelElementCollection smc:
+                            submodelElements = smc.Value;
+                            break;
+                        case SubmodelElementList sml:
+                            submodelElements = sml.Value;
+                            break;
+                    }
+
+                    i++;
+                }
+            }
+
+            if (conditionSm != "" && (conditionSme == "" || !objPath.Contains('.')))
+            {
+                var submodels = new List<Submodel> { parentSubmodel };
+                var x = submodels.AsQueryable().Where(conditionSm);
+                if (x.Any())
+                {
+                    return true;
+                }
+            }
+
+            if (string.IsNullOrEmpty(conditionSme) && string.IsNullOrEmpty(conditionSm))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public void ClearSecurityRules()
