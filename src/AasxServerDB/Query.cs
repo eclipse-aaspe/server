@@ -2511,45 +2511,24 @@ public partial class Query
                             {
                                 messages.Add("Successfully deserialized.");
 
-                                // mode: all, sm., sme., svalue, mvalue
                                 List<LogicalExpression?> logicalExpressions = [];
-                                List<Dictionary<string, string>> conditions = [];
                                 if (deserializedData.Query != null && deserializedData.Query.Condition != null)
                                 {
                                     logicalExpressions.Add(deserializedData.Query.Condition);
-                                    conditions.Add(deserializedData.Query._query_conditions);
                                     if (deserializedData.Query.Filter != null)
                                     {
                                         logicalExpressions.Add(deserializedData.Query.Filter);
-                                        conditions.Add(deserializedData.Query._filter_conditions);
-                                    }
-                                }
-                                if (logicalExpressions.Count != 0)
-                                {
-                                    for (int i = 0; i < logicalExpressions.Count; i++)
-                                    {
-                                        var le = logicalExpressions[i];
-                                        if (le != null)
-                                        {
-                                            QueryGrammarJSON.createExpression("all", le);
-                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
-                                            conditions[i].Add("all", le._expression);
-                                            QueryGrammarJSON.createExpression("all-aas", le);
-                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
-                                            conditions[i].Add("all-aas", le._expression);
-                                            QueryGrammarJSON.createExpression("aas.", le);
-                                            le._expression = QueryGrammarJSON.optimizeTrueFalse(le._expression);
-                                            conditions[i].Add("aas.", le._expression);
-                                        }
                                     }
                                 }
 
-                                // New direct-SQL path: main condition + optional Filter (AND, same as query ∩ security merge)
-                                sqlConditionsOut = QueryGrammarJSON.CreateSqlConditions(logicalExpressions[0]!);
-                                if (logicalExpressions.Count > 1 && logicalExpressions[1] != null)
+                                if (logicalExpressions.Count != 0)
                                 {
-                                    var filterSql = QueryGrammarJSON.CreateSqlConditions(logicalExpressions[1]!);
-                                    sqlConditionsOut = SqlConditionsMerger.Merge(sqlConditionsOut, filterSql);
+                                    sqlConditionsOut = QueryGrammarJSON.CreateSqlConditions(logicalExpressions[0]!);
+                                    if (logicalExpressions.Count > 1 && logicalExpressions[1] != null)
+                                    {
+                                        var filterSql = QueryGrammarJSON.CreateSqlConditions(logicalExpressions[1]!);
+                                        sqlConditionsOut = SqlConditionsMerger.Merge(sqlConditionsOut, filterSql);
+                                    }
                                 }
                             }
                             else
