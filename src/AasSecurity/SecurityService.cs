@@ -557,7 +557,7 @@ namespace AasSecurity
                             if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
                             {
                                 bearerToken = tokenElement.GetString();
-                                Console.WriteLine("token exchange " + bearerToken);
+                                Console.WriteLine("token exchange 2 " + bearerToken);
                                 jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                 iss = "";
@@ -565,6 +565,46 @@ namespace AasSecurity
                                 if (issClaim.Any())
                                 {
                                     iss = issClaim.First().Value;
+
+                                    var tokenExchange3 = System.Environment.GetEnvironmentVariable("TOKENEXCHANGE3");
+
+                                    if (!string.IsNullOrEmpty(tokenExchange3))
+                                    {
+                                        var audClaim = jwtSecurityToken.Claims.Where(c => c.Type == "aud");
+
+                                        if (audClaim.Any())
+                                        {
+                                            parameters = new Dictionary<string, string>
+                                            {
+                                                { "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange" },
+                                                { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
+                                                { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
+                                                { "subject_token", bearerToken }
+                                            };
+                                            request = new HttpRequestMessage(HttpMethod.Post, $"{tokenExchange3}/token")
+                                            {
+                                                Content = new FormUrlEncodedContent(parameters)
+                                            };
+                                            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+                                            response = client.SendAsync(request);
+                                            content = response.GetAwaiter().GetResult().Content.ContentToString();
+
+                                            bearerToken = "";
+                                            jwtSecurityToken = null;
+                                            doc = JsonDocument.Parse(content);
+                                            if (doc.RootElement.TryGetProperty("access_token", out var tokenElement2))
+                                            {
+                                                bearerToken = tokenElement2.GetString();
+                                                Console.WriteLine("token exchange 3 (with local idP) " + bearerToken);
+                                                jwtSecurityToken = handler.ReadJwtToken(bearerToken);
+
+                                                issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
+
+                                                iss = issClaim.First().Value;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             if (jwtSecurityToken == null)
