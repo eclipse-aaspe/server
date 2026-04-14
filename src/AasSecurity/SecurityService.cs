@@ -593,15 +593,20 @@ namespace AasSecurity
                                             bearerToken = "";
                                             jwtSecurityToken = null;
                                             doc = JsonDocument.Parse(content);
-                                            if (doc.RootElement.TryGetProperty("access_token", out var tokenElement2))
+                                            if (doc.RootElement.TryGetProperty("access_token", out var tokenElementFromLocalIdp))
                                             {
-                                                bearerToken = tokenElement2.GetString();
+                                                bearerToken = tokenElementFromLocalIdp.GetString();
                                                 Console.WriteLine("token exchange 3 (with local idP) " + bearerToken);
                                                 jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                                 issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
 
                                                 iss = issClaim.First().Value;
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine($"Did not receive token in token exchange 3 response content: {content}");
+n
                                             }
                                         }
                                     }
