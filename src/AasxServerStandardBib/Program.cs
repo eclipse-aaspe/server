@@ -818,16 +818,24 @@ namespace AasxServer
                     })
                     .ToArray();
 
+                // Full sorted list position (1-based) and --start-index (skip count) use fileNames order; parallel parse may complete out of order.
+                var fileIndexByPath = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                for (var fileIdx = 0; fileIdx < fileNames.Length; fileIdx++)
+                {
+                    fileIndexByPath[fileNames[fileIdx]] = fileIdx;
+                }
+
                 if (withDb)
                 {
                     // Producer-consumer: parse in parallel, write to DB serially (one thread — same DbContext is not thread-safe).
                     // While FlushBulkImport runs (sync SaveChanges), the consumer does not dequeue; parsers keep filling the queue
-                    // until it is full, then queue.Add blocks. A larger buffer keeps parse overlapping with long flushes (more RAM).
+                    // until it is full, then queue.Add blocks. Steady-state gap (parsed − written) stays ≤ ~queue capacity (+1 in flight);
+                    // it does not grow without bound. Smaller capacity = less RAM, producers block sooner if DB is slower than parse.
                     const int parserThreads = 4;
                     // After switching from BulkSaveChanges to SaveChanges (correct ParentSMEId), each flush is heavier.
                     // Increase (e.g. 200–500) for fewer SaveChanges rounds on large imports; uses more RAM until the next flush.
                     const int importDbFlushEveryNPackages = 100;
-                    const int importParseQueueCapacity = 512;
+                    const int importParseQueueCapacity = 128;
                     var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: importParseQueueCapacity);
 
                     var parsedCount = 0;
@@ -844,8 +852,8 @@ namespace AasxServer
                                         var envDB = AasxServerDB.VisitorAASX.ParseAASX(f, createFilesOnly);
                                         if (envDB != null)
                                         {
-                                            System.Threading.Interlocked.Increment(ref parsedCount);
                                             queue.Add(envDB);
+                                            System.Threading.Interlocked.Increment(ref parsedCount);
                                         }
                                     }
                                     catch (Exception ex)
@@ -861,15 +869,26 @@ namespace AasxServer
                     });
 
                     int count = 0;
+                    var maxResumeStartIndex = startIndex;
                     foreach (var envDB in queue.GetConsumingEnumerable())
                     {
                         count++;
                         var aasxName = string.IsNullOrEmpty(envDB.Path) ? "?" : Path.GetFileName(envDB.Path);
-                        Console.WriteLine($"Import to DB ({count}/{regularFiles.Length}): {aasxName}");
+                        var idx = string.IsNullOrEmpty(envDB.Path) ? -1 : fileIndexByPath.GetValueOrDefault(envDB.Path, -1);
+                        if (idx >= 0)
+                        {
+                            maxResumeStartIndex = Math.Max(maxResumeStartIndex, idx + 1);
+                        }
+
+                        // 1-based position in sorted directory; --start-index after this file finishes = (idx+1) — same as 0-based index of next file.
+                        Console.WriteLine(idx >= 0
+                            ? $"Import to DB ({idx + 1}/{fileNames.Length}): {aasxName}"
+                            : $"Import to DB (?/{fileNames.Length}): {aasxName}");
                         AasxServerDB.VisitorAASX.AddEnvSetToBulk(envDB);
                         if (count % importDbFlushEveryNPackages == 0)
                         {
-                            Console.WriteLine($"DB Flush at {count}/{regularFiles.Length} parsed={parsedCount} ({watch.ElapsedMilliseconds / 1000}s)");
+                            Console.WriteLine(
+                                $"DB Flush: written={count} (regular batch {regularFiles.Length}) max --start-index={maxResumeStartIndex}/{fileNames.Length} parsed={parsedCount} ({watch.ElapsedMilliseconds / 1000}s)");
                             persistenceService.FlushBulkImport();
                         }
                     }
