@@ -606,7 +606,6 @@ namespace AasSecurity
                                             else
                                             {
                                                 Console.WriteLine($"Did not receive token in token exchange 3 response content: {content}");
-n
                                             }
                                         }
                                     }
