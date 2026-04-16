@@ -70,6 +70,24 @@ public class SqlConditions
     /// Matches[i] corresponds to placeholder <c>$$match{i}$$</c> in <c>FormulaConditions["all"]</c>.
     /// </summary>
     public List<MatchJoin> Matches { get; } = new();
+
+    /// <summary>
+    /// Correlated EXISTS predicates produced from direct <c>$sme#value</c> overall subtrees.
+    /// ExistsConditions[i] corresponds to placeholder <c>$$exists{i}$$</c> in <c>FormulaConditions["all"]</c>.
+    /// </summary>
+    public List<ExistsCondition> ExistsConditions { get; } = new();
+}
+
+/// <summary>
+/// A correlated EXISTS predicate for an overall condition. The predicate SQL uses <c>v</c> for ValueSets.
+/// </summary>
+public class ExistsCondition
+{
+    /// <summary>Placeholder token used in <c>SqlConditions.FormulaConditions["all"]</c>, e.g. <c>exists0</c>.</summary>
+    public string Placeholder { get; set; } = "";
+
+    /// <summary>Predicate SQL inside the correlated EXISTS query.</summary>
+    public string PredicateSql { get; set; } = "";
 }
 
 /// <summary>
@@ -118,6 +136,7 @@ public static class SqlConditionsMerger
         // --- Renumber security placeholders ---
         int pathOffset  = query.Paths.Count;
         int matchOffset = query.Matches.Count;
+        int existsOffset = query.ExistsConditions.Count;
 
         // Rewrite security FormulaConditions["all"] with shifted indices
         var secOverall = security.FormulaConditions.GetValueOrDefault("all", "");
@@ -126,6 +145,8 @@ public static class SqlConditionsMerger
             secOverall = secOverall.Replace($"$$path{i}$$", $"$$path{i + pathOffset}$$");
         for (int i = security.Matches.Count - 1; i >= 0; i--)
             secOverall = secOverall.Replace($"$$match{i}$$", $"$$match{i + matchOffset}$$");
+        for (int i = security.ExistsConditions.Count - 1; i >= 0; i--)
+            secOverall = secOverall.Replace($"$$exists{i}$$", $"$$exists{i + existsOffset}$$");
 
         // --- FormulaConditions["all"]: AND-combine ---
         var qOver = NormalizeNeutralCondition(query.FormulaConditions.GetValueOrDefault("all", ""));
@@ -164,6 +185,19 @@ public static class SqlConditionsMerger
             merged.Matches.Add(newMatch);
         }
 
+        // --- EXISTS: query first, then renumbered security ---
+        foreach (var e in query.ExistsConditions)
+            merged.ExistsConditions.Add(e);
+        for (int i = 0; i < security.ExistsConditions.Count; i++)
+        {
+            var se = security.ExistsConditions[i];
+            merged.ExistsConditions.Add(new ExistsCondition
+            {
+                Placeholder = $"exists{i + existsOffset}",
+                PredicateSql = se.PredicateSql
+            });
+        }
+
         SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
         // Projection ($select: id | match) lives on the user query; security fragments usually omit it.
         merged.Select = !string.IsNullOrWhiteSpace(query.Select)
@@ -193,12 +227,15 @@ public static class SqlConditionsMerger
         // --- Renumber right placeholders ---
         int pathOffset  = left.Paths.Count;
         int matchOffset = left.Matches.Count;
+        int existsOffset = left.ExistsConditions.Count;
 
         var rightOverall = right.FormulaConditions.GetValueOrDefault("all", "");
         for (int i = right.Paths.Count - 1; i >= 0; i--)
             rightOverall = rightOverall.Replace($"$$path{i}$$", $"$$path{i + pathOffset}$$");
         for (int i = right.Matches.Count - 1; i >= 0; i--)
             rightOverall = rightOverall.Replace($"$$match{i}$$", $"$$match{i + matchOffset}$$");
+        for (int i = right.ExistsConditions.Count - 1; i >= 0; i--)
+            rightOverall = rightOverall.Replace($"$$exists{i}$$", $"$$exists{i + existsOffset}$$");
 
         // --- FormulaConditions["all"]: OR-combine ---
         var lOver = NormalizeNeutralCondition(left.FormulaConditions.GetValueOrDefault("all", ""));
@@ -223,6 +260,18 @@ public static class SqlConditionsMerger
             var newMatch = new MatchJoin { Placeholder = $"match{i + matchOffset}", JoinConditionSql = rm.JoinConditionSql };
             foreach (var p in rm.Paths) newMatch.Paths.Add(p);
             merged.Matches.Add(newMatch);
+        }
+
+        foreach (var e in left.ExistsConditions)
+            merged.ExistsConditions.Add(e);
+        for (int i = 0; i < right.ExistsConditions.Count; i++)
+        {
+            var re = right.ExistsConditions[i];
+            merged.ExistsConditions.Add(new ExistsCondition
+            {
+                Placeholder = $"exists{i + existsOffset}",
+                PredicateSql = re.PredicateSql
+            });
         }
 
         SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);

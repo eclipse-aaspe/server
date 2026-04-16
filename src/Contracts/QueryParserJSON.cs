@@ -1282,6 +1282,7 @@ public class QueryGrammarJSON : Grammar
         public SqlConditions Sc { get; } = sc;
         public int PathIndex { get; set; } = 0;
         public int MatchIndex { get; set; } = 0;
+        public int ExistsIndex { get; set; } = 0;
     }
 
     private enum SqlScope { Aas, Sm, Sme, Value }
@@ -1547,9 +1548,26 @@ public class QueryGrammarJSON : Grammar
 
                 case "$and":
                 {
+                    if (TryBuildDirectValueExistsPredicate(eList, type, out var existsPredicate))
+                    {
+                        if (existsPredicate == SqlBoolTrue || existsPredicate == SqlBoolFalse)
+                            return existsPredicate;
+                        return AddExistsCondition(ctx, existsPredicate);
+                    }
+
                     var parts = new List<string>();
+                    var valueExistsPredicates = new List<string>();
                     foreach (var e in eList)
                     {
+                        if (TryBuildDirectValueExistsPredicate(e, out var valueExistsPredicate))
+                        {
+                            if (valueExistsPredicate == SqlBoolFalse)
+                                return SqlBoolFalse;
+                            if (valueExistsPredicate != SqlBoolTrue)
+                                valueExistsPredicates.Add(valueExistsPredicate);
+                            continue;
+                        }
+
                         var part = BuildOverallSqlNode(e.ExpressionValue, e.ExpressionType, ctx, smeValue);
                         if (part == "$ERROR")
                             return "$ERROR";
@@ -1558,6 +1576,14 @@ public class QueryGrammarJSON : Grammar
                             return SqlBoolFalse;
                         if (part != null && part != "$SKIP")
                             parts.Add(part);
+                    }
+
+                    if (valueExistsPredicates.Count > 0)
+                    {
+                        var valueExistsPredicate = valueExistsPredicates.Count == 1
+                            ? valueExistsPredicates[0]
+                            : "(" + string.Join(" AND ", valueExistsPredicates) + ")";
+                        parts.Add(AddExistsCondition(ctx, valueExistsPredicate));
                     }
 
                     if (parts.Count == 0)
@@ -1570,6 +1596,13 @@ public class QueryGrammarJSON : Grammar
 
                 case "$or":
                 {
+                    if (TryBuildDirectValueExistsPredicate(eList, type, out var existsPredicate))
+                    {
+                        if (existsPredicate == SqlBoolTrue || existsPredicate == SqlBoolFalse)
+                            return existsPredicate;
+                        return AddExistsCondition(ctx, existsPredicate);
+                    }
+
                     var parts = new List<string>();
                     foreach (var e in eList)
                     {
@@ -1622,6 +1655,120 @@ public class QueryGrammarJSON : Grammar
         }
 
         return "$SKIP";
+    }
+
+    private static string AddExistsCondition(SqlBuildContext ctx, string predicateSql)
+    {
+        var idx = ctx.ExistsIndex++;
+        var exists = new ExistsCondition
+        {
+            Placeholder = $"exists{idx}",
+            PredicateSql = predicateSql
+        };
+        ctx.Sc.ExistsConditions.Add(exists);
+        return $"$${exists.Placeholder}$$";
+    }
+
+    private static bool TryBuildDirectValueExistsPredicate(
+        List<LogicalExpression> eList,
+        string type,
+        out string predicateSql)
+    {
+        predicateSql = "";
+
+        if (type is "$and" or "$or")
+        {
+            var parts = new List<string>();
+            foreach (var e in eList)
+            {
+                if (e.ExpressionValue is bool boolValue)
+                {
+                    var folded = boolValue ? SqlBoolTrue : SqlBoolFalse;
+                    if (type == "$and" && folded == SqlBoolFalse)
+                    {
+                        predicateSql = SqlBoolFalse;
+                        return true;
+                    }
+                    if (type == "$or" && folded == SqlBoolTrue)
+                    {
+                        predicateSql = SqlBoolTrue;
+                        return true;
+                    }
+                    if ((type == "$and" && folded == SqlBoolTrue) || (type == "$or" && folded == SqlBoolFalse))
+                        continue;
+                }
+
+                if (!TryBuildDirectValueExistsPredicate(e, out var part))
+                    return false;
+                parts.Add(part);
+            }
+
+            if (parts.Count == 0)
+            {
+                predicateSql = type == "$and" ? SqlBoolTrue : SqlBoolFalse;
+                return true;
+            }
+
+            predicateSql = parts.Count == 1
+                ? parts[0]
+                : "(" + string.Join(type == "$and" ? " AND " : " OR ", parts) + ")";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryBuildDirectValueExistsPredicate(LogicalExpression le, out string predicateSql)
+    {
+        predicateSql = "";
+
+        if (le.ExpressionValue is List<LogicalExpression> eList)
+        {
+            if (le.ExpressionType is "$and" or "$or")
+                return TryBuildDirectValueExistsPredicate(eList, le.ExpressionType, out predicateSql);
+
+            if (le.ExpressionType is "$eq" or "$ne" or "$gt" or "$ge" or "$lt" or "$le" or "$starts-with" or "$ends-with" or "$contains")
+            {
+                if (eList.Count < 2)
+                    return false;
+
+                var leftNode = eList[0];
+                var rightNode = eList[1];
+                if (leftNode.ExpressionType != "$field" || leftNode.ExpressionValue is not string rawField || rawField != "$sme#value")
+                    return false;
+
+                var smeValue = rightNode.ExpressionType switch
+                {
+                    "$strVal" => "svalue",
+                    "$numVal" => "mvalue",
+                    "$dateTimeVal" => "dtvalue",
+                    "$hexVal" => "mvalue",
+                    _ => ""
+                };
+                var leftSql = smeValue switch
+                {
+                    "svalue" => "v.\"SValue\"",
+                    "mvalue" => "v.\"NValue\"",
+                    "dtvalue" => "v.\"DTValue\"",
+                    _ => "$SKIP"
+                };
+                if (leftSql == "$SKIP")
+                    return false;
+
+                var rightSql = BuildScopeLiteralSql(rightNode, smeValue);
+                if (rightSql == "$SKIP" || rightSql == null)
+                    return false;
+
+                var combined = CombineComparisonSql(leftSql, le.ExpressionType, rightSql);
+                if (combined == null)
+                    return false;
+
+                predicateSql = combined;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string? BuildOverallComparisonSql(List<LogicalExpression> eList, string type, SqlBuildContext ctx)

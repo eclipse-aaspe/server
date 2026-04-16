@@ -1612,6 +1612,8 @@ public partial class Query
         var matchNum = 1;
         foreach (var path  in sc.Paths)    overall = overall.Replace($"$${path.Placeholder}$$",  $"(p{pathNum++}.SMId IS NOT NULL)");
         foreach (var match in sc.Matches)  overall = overall.Replace($"$${match.Placeholder}$$", $"(m{matchNum++}.SMId IS NOT NULL)");
+        foreach (var exists in sc.ExistsConditions)
+            overall = overall.Replace($"$${exists.Placeholder}$$", BuildValueExistsSql(exists.PredicateSql));
 
         // ----------------------------------------------------------------
         // Direct paths: no paths/matches, no AAS join, no SM filter, standalone SM list.
@@ -1779,6 +1781,17 @@ public partial class Query
             return sql;
         sql = sql.Replace(" LIKE ", " GLOB ", StringComparison.Ordinal);
         return sql.Replace("%", "*");
+    }
+
+    private static string BuildValueExistsSql(string predicateSql)
+    {
+        return $@"EXISTS (
+  SELECT 1
+  FROM ValueSets v
+  JOIN SMESets sme_value ON sme_value.Id = v.SMEId
+  WHERE sme_value.SMId = sm.Id
+    AND ({predicateSql})
+)";
     }
 
     private static string BuildDirectUnionOrTempSql(
@@ -2477,4 +2490,3 @@ public partial class Query
         return rawSQL;
     }
 }
-

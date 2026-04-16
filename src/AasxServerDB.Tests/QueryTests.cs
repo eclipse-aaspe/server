@@ -145,11 +145,13 @@ public sealed class QueryTests
                 pageSize: int.MaxValue,
                 ResultType.Submodel,
                 expression,
-                includeDebugSql: false,
+                includeDebugSql: true,
                 securitySqlConditions: null);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
+        result.Sql.Should().ContainSingle(sql => sql.Contains("EXISTS ("));
+        result.Sql.Should().NotContain(sql => sql.Contains("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme.SMId AS \"SMId\""));
     }
 
     // -------------------------------------------------------------------------
@@ -355,6 +357,57 @@ public sealed class QueryTests
         sqlConditions.FormulaConditions["aas"].Should().BeEmpty();
         sqlConditions.FormulaConditions["sme"].Should().Be("(\"SemanticId\" = 'https://example.com/semantic/technical-data')");
         sqlConditions.FormulaConditions["value"].Should().Be("(v.\"NValue\" = 4063151.0)");
+    }
+
+    [Fact]
+    public void CreateSqlConditions_NestedDirectValueOr_UsesExistsPlaceholder()
+    {
+        const string expression = """
+            {
+              "Query": {
+                "$condition": {
+                  "$and": [
+                    { "$or": [
+                      { "$ne": [
+                        { "$field": "$sme#value" },
+                        { "$strVal": "" }
+                      ] },
+                      { "$ne": [
+                        { "$field": "$sme#value" },
+                        { "$numVal": 0 }
+                      ] }
+                    ] },
+                    { "$or": [
+                      { "$eq": [
+                        { "$field": "$sm#idShort" },
+                        { "$strVal": "Nameplate" }
+                      ] },
+                      { "$eq": [
+                        { "$field": "$sm#idShort" },
+                        { "$strVal": "TechnicalData" }
+                      ] }
+                    ] },
+                    { "$ne": [
+                      { "$field": "$sme#value" },
+                      { "$numVal": 1 }
+                    ] }
+                  ]
+                }
+              }
+            }
+            """;
+
+        var root = JsonConvert.DeserializeObject<Root>(expression);
+
+        root.Should().NotBeNull();
+        var sqlConditions = QueryGrammarJSON.CreateSqlConditions(root!.Query.Condition);
+
+        sqlConditions.FormulaConditions["all"].Should().Contain("$$exists0$$");
+        sqlConditions.FormulaConditions["all"].Should().NotContain("\"value\".");
+        sqlConditions.ExistsConditions.Should().ContainSingle();
+        sqlConditions.ExistsConditions[0].PredicateSql.Should().Contain(" AND ");
+        sqlConditions.ExistsConditions[0].PredicateSql.Should().Contain("((v.\"SValue\" <> '') OR (v.\"NValue\" <> 0))");
+        sqlConditions.ExistsConditions[0].PredicateSql.Should().Contain("(v.\"NValue\" <> 1)");
     }
 
     // -------------------------------------------------------------------------
