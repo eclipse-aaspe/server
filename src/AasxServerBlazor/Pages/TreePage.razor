@@ -36,11 +36,11 @@
 		{
 			<div class="mb-1">
 				<label class="small text-muted" for="treePreviewAccessRole">Preview access role (empty = anonymous)</label>
-				<div class="input-group input-group-sm">
-					<input id="treePreviewAccessRole" class="form-control" type="text" autocomplete="off" spellcheck="false"
+				<div class="d-flex align-items-center">
+					<input id="treePreviewAccessRole" class="form-control form-control-sm flex-grow-1" style="min-width:0" type="text" autocomplete="off" spellcheck="false"
 					       title="Rebuild runs when you leave the field; use Apply to force the same rebuild."
 					       @bind="treePreviewAccessRole" @bind:after="OnTreePreviewAccessRoleBindAfterAsync" />
-					<button type="button" class="btn btn-outline-secondary" @onclick="OnTreePreviewAccessRoleApplyClickAsync">Apply</button>
+					<button type="button" class="btn btn-outline-secondary btn-sm ml-2 flex-shrink-0" @onclick="OnTreePreviewAccessRoleApplyClickAsync">Apply</button>
 				</div>
 			</div>
 		}

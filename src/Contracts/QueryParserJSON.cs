@@ -1294,7 +1294,7 @@ public class QueryGrammarJSON : Grammar
         var result = BuildScopeSqlNode(le.ExpressionValue, le.ExpressionType, scope, "");
         if (result == "$SKIP" || result == "$ERROR" || result == null)
             return "";
-        return result == "true" ? "" : result;
+        return result == "true" || result == SqlBoolTrue ? "" : result;
     }
 
     private static string? BuildScopeSqlNode(object? obj, string type, SqlScope scope, string smeValue)
@@ -1339,17 +1339,22 @@ public class QueryGrammarJSON : Grammar
 
                 case "$or":
                 {
-                    // OR only the branches that constrain this scope. Branches irrelevant here ($SKIP)
-                    // are dropped so e.g. $or(sm, sm, sme, sme) still fills FormulaConditions["sme"]
-                    // for Vorfilter SQL (outer "all" keeps full semantics).
+                    // Most scope prefilters must stay conservative across OR:
+                    // if any satisfiable branch has no predicate for that scope, that scope cannot be restricted.
+                    // Example: (aas=A) OR (aas=B) OR (sm=TechnicalData AND sme.value=X) must yield no AAS
+                    // prefilter; otherwise the third branch is filtered out before the overall condition can match.
                     var branchResults = eList
                         .Select(e => BuildScopeSqlNode(e, scope, smeValue))
                         .ToList();
                     if (branchResults.Any(p => p == "$ERROR")) return "$ERROR";
+                    if (scope is not (SqlScope.Sme or SqlScope.Value) && branchResults.Any(p => p == "$SKIP" || p == null || p == SqlBoolTrue))
+                        return SqlBoolTrue;
                     var parts = branchResults
-                        .Where(p => p != null && p != "$SKIP")
+                        .Where(p => p != null && p != "$SKIP" && p != SqlBoolTrue && p != SqlBoolFalse)
+                        .Select(p => p!)
                         .ToList();
-                    if (parts.Count == 0) return "$SKIP";
+                    if (parts.Count == 0)
+                        return branchResults.All(p => p == SqlBoolFalse) ? SqlBoolFalse : "$SKIP";
                     parts = FoldBooleanOrParts(parts);
                     if (parts.Count == 1)
                         return parts[0];
@@ -1416,19 +1421,23 @@ public class QueryGrammarJSON : Grammar
                 var fieldName = withoutPrefix[(hashIdx + 1)..];
                 if (fieldName == "value")
                 {
-                    return scope switch
+                    if (scope != SqlScope.Value)
+                        return "$SKIP";
+
+                    // Path and match values are enforced by their generated subqueries. They must not widen the
+                    // global ValueSets prefilter used for direct "$sme#value" overall references.
+                    if (!string.IsNullOrEmpty(withoutPrefix[..hashIdx]))
+                        return "$SKIP";
+
+                    return smeValue switch
                     {
-                        SqlScope.Value => smeValue switch
-                        {
-                            "svalue"  => "v.\"SValue\"",
-                            "mvalue"  => "v.\"NValue\"",
-                            "dtvalue" => "v.\"DTValue\"",
-                            _ => "$SKIP"
-                        },
+                        "svalue"  => "v.\"SValue\"",
+                        "mvalue"  => "v.\"NValue\"",
+                        "dtvalue" => "v.\"DTValue\"",
                         _ => "$SKIP"
                     };
                 }
-                if (scope == SqlScope.Sme)
+                if (scope == SqlScope.Sme && string.IsNullOrEmpty(withoutPrefix[..hashIdx]))
                 {
                     var col = SmeColumnSql(fieldName);
                     if (col != null)
@@ -1970,4 +1979,3 @@ public class QueryGrammarJSON : Grammar
         return sql;
     }
 }
-

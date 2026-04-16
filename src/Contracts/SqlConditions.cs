@@ -262,8 +262,56 @@ public static class SqlConditionsMerger
         }
     }
 
-    private static string NormalizeNeutralCondition(string? condition)
-        => string.IsNullOrWhiteSpace(condition) || condition.Trim() == "1=1" ? "" : condition;
+    /// <summary>
+    /// Empty, <c>1=1</c>, or parenthesized tautologies only (e.g. <c>(1=1)</c>, <c>((1=1))</c>) — for AND/OR merges so query <c>$boolean: true</c> does not add noise.
+    /// </summary>
+    public static string NormalizeNeutralCondition(string? condition)
+    {
+        if (string.IsNullOrWhiteSpace(condition))
+            return "";
+        if (IsPureTautologySql(condition))
+            return "";
+        return condition.Trim();
+    }
+
+    /// <summary>True if the SQL fragment is only <c>1=1</c> with optional balanced wrapping parentheses.</summary>
+    private static bool IsPureTautologySql(string sql)
+    {
+        var t = sql.Trim();
+        while (true)
+        {
+            if (t == "1=1")
+                return true;
+            if (t.Length >= 2 && t[0] == '(' && t[^1] == ')')
+            {
+                if (!IsSingleBalancedParenthesisWrap(t))
+                    return false;
+                t = t.Substring(1, t.Length - 2).Trim();
+                continue;
+            }
+
+            return false;
+        }
+    }
+
+    private static bool IsSingleBalancedParenthesisWrap(string t)
+    {
+        if (t.Length < 2 || t[0] != '(')
+            return false;
+        var depth = 0;
+        for (var i = 0; i < t.Length; i++)
+        {
+            if (t[i] == '(') depth++;
+            else if (t[i] == ')')
+            {
+                depth--;
+                if (depth == 0)
+                    return i == t.Length - 1;
+            }
+        }
+
+        return false;
+    }
 }
 
 /// <summary>

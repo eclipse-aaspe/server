@@ -4,6 +4,7 @@ using Contracts.Pagination;
 using Contracts.QueryResult;
 using Contracts;
 using FluentAssertions;
+using Newtonsoft.Json;
 
 /// <summary>
 /// Query1–4: <c>noSecurity: true</c> (no rule merge / no in-memory security) — expected IDs match pure JSON query.
@@ -297,6 +298,63 @@ public sealed class QueryTests
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public void CreateSqlConditions_OrBranchWithoutAas_DoesNotRestrictAasPrefilter()
+    {
+        const string expression = """
+            {
+              "Query": {
+                "$condition": {
+                  "$or": [
+                    { "$and": [
+                      { "$boolean": true },
+                      { "$eq": [
+                        { "$field": "$aas#id" },
+                        { "$strVal": "https://phoenixcontact.com/qr/2966265/1/aas" }
+                      ] }
+                    ] },
+                    { "$and": [
+                      { "$boolean": true },
+                      { "$eq": [
+                        { "$field": "$aas#id" },
+                        { "$strVal": "https://zvei.org/demo/aas/ControlCabinet" }
+                      ] },
+                      { "$eq": [
+                        { "$field": "$sme.FootprintInformationModule2.CO2eq#value" },
+                        { "$numVal": 103 }
+                      ] }
+                    ] },
+                    { "$and": [
+                      { "$boolean": true },
+                      { "$eq": [
+                        { "$field": "$sm#idShort" },
+                        { "$strVal": "TechnicalData" }
+                      ] },
+                      { "$eq": [
+                        { "$field": "$sme#value" },
+                        { "$hexVal": "16#3DFFAF" }
+                      ] },
+                      { "$eq": [
+                        { "$field": "$sme#semanticId" },
+                        { "$strVal": "https://example.com/semantic/technical-data" }
+                      ] }
+                    ] }
+                  ]
+                }
+              }
+            }
+            """;
+
+        var root = JsonConvert.DeserializeObject<Root>(expression);
+
+        root.Should().NotBeNull();
+        var sqlConditions = QueryGrammarJSON.CreateSqlConditions(root!.Query.Condition);
+
+        sqlConditions.FormulaConditions["aas"].Should().BeEmpty();
+        sqlConditions.FormulaConditions["sme"].Should().Be("(\"SemanticId\" = 'https://example.com/semantic/technical-data')");
+        sqlConditions.FormulaConditions["value"].Should().Be("(v.\"NValue\" = 4063151.0)");
     }
 
     // -------------------------------------------------------------------------

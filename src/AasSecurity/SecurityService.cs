@@ -169,16 +169,27 @@ namespace AasSecurity
                     merged ??= new SqlConditions();
                     foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
                     {
-                        if (string.IsNullOrWhiteSpace(filterScope.Value))
+                        var incoming = SqlConditionsMerger.NormalizeNeutralCondition(filterScope.Value);
+                        if (string.IsNullOrWhiteSpace(incoming))
                         {
                             continue;
                         }
 
-                        var existing = merged.FilterConditions.GetValueOrDefault(filterScope.Key, "");
-                        merged.FilterConditions[filterScope.Key] =
-                            string.IsNullOrWhiteSpace(existing)
-                                ? filterScope.Value
-                                : $"({existing}) OR ({filterScope.Value})";
+                        var existing = SqlConditionsMerger.NormalizeNeutralCondition(
+                            merged.FilterConditions.GetValueOrDefault(filterScope.Key, ""));
+                        if (string.IsNullOrWhiteSpace(existing))
+                        {
+                            merged.FilterConditions[filterScope.Key] = incoming;
+                            continue;
+                        }
+
+                        // Same SQL from several identical/overlapping rules — do not build (A) OR (A) OR …
+                        if (string.Equals(existing, incoming, StringComparison.Ordinal))
+                        {
+                            continue;
+                        }
+
+                        merged.FilterConditions[filterScope.Key] = $"({existing}) OR ({incoming})";
                     }
                 }
             }
