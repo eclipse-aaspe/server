@@ -521,14 +521,6 @@ namespace AasxServerDB
             }
         }
 
-        internal static List<SMSet> QuerySmRaw(AasContext db, string submodelIdentifier, string? smSql)
-        {
-            var parts = new List<string> { $"\"Identifier\" = '{submodelIdentifier.Replace("'", "''")}'" };
-            if (!string.IsNullOrWhiteSpace(smSql))
-                parts.Add(smSql);
-            return db.SMSets.FromSqlRaw("SELECT * FROM \"SMSets\" WHERE " + string.Join(" AND ", parts.Select(part => $"({part})"))).ToList();
-        }
-
         private static List<SMESet> QuerySmeRaw(AasContext db, List<int> smeIds, string? smeSql)
         {
             if (smeIds.Count == 0) return [];
@@ -572,7 +564,8 @@ namespace AasxServerDB
             return smeQuery.Where(sme => filteredSmes.Select(filtered => filtered.Id).Contains(sme.Id));
         }
 
-        private static bool? IsSubmodelAllowedBySqlCondition(AasContext db, SMSet smSet, SqlConditions? sqlConditions)
+        /// <summary>Uses the same SQL as list queries (<see cref="Query.BuildRawSqlFromSqlConditions"/>), including Formula+Filter merge.</summary>
+        internal static bool? IsSubmodelAllowedBySqlCondition(AasContext db, SMSet smSet, SqlConditions? sqlConditions)
         {
             if (sqlConditions == null)
                 return null;

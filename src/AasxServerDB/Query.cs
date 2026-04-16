@@ -266,6 +266,9 @@ public partial class Query
         int pageFrom, int pageSize, ResultType resultType, string expression, bool includeDebugSql = false,
         SqlConditions? securitySqlConditions = null)
     {
+        // When true (--no-security), ignore any passed-in rule merge and in-memory filtering.
+        var effectiveSecurity = noSecurity ? null : securitySqlConditions;
+
         var qResult = new QResult()
         {
             Count = 0,
@@ -290,7 +293,7 @@ public partial class Query
 
         List<string>? generatedSql = includeDebugSql ? new List<string>() : null;
         var result = GetSMs(out var effectiveSqlConditions, resultType,
-            qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression, generatedSql, securitySqlConditions);
+            qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression, generatedSql, effectiveSecurity);
         if (result == null)
         {
             text = "No query is generated.";
@@ -414,7 +417,7 @@ public partial class Query
                     var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                     foreach (var sm in smList.Select(selector: submodelDB =>
-                        ReadSubmodel(db, smDB: submodelDB, securitySqlConditions: securitySqlConditions)))
+                        ReadSubmodel(db, smDB: submodelDB, securitySqlConditions: effectiveSecurity)))
                     {
                         if (sm != null)
                         {
@@ -1516,567 +1519,91 @@ public partial class Query
         if (sqlConditions == null)
             throw new InvalidOperationException("CombineTablesLEFT requires SqlConditions.");
 
-        var sqlAasCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("aas", ""));
-        var sqlSmCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("sm", ""));
-        var sqlSmeCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("sme", ""));
-        var sqlValueCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("value", ""));
+        var sqlAasMerged = AppendAndCondition(
+            NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("aas", "")),
+            NormalizeSqlAliases(sqlConditions.FilterConditions.GetValueOrDefault("aas", "")));
         var sqlOverallCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("all", ""));
         var sqlFilterAllCondition = NormalizeSqlAliases(sqlConditions.FilterConditions.GetValueOrDefault("all", ""));
 
-        var restrictAAS = !string.IsNullOrWhiteSpace(sqlAasCondition);
-        var restrictSM = !string.IsNullOrWhiteSpace(sqlSmCondition);
-        var restrictSME = !string.IsNullOrWhiteSpace(sqlSmeCondition);
-        var restrictValue = !string.IsNullOrWhiteSpace(sqlValueCondition);
-
-        var aasFields = new List<string>();
-        var smFields = new List<string>();
-        var smeFields = new List<string>();
         var overallFieldCondition = AppendAndCondition(sqlOverallCondition, sqlFilterAllCondition);
 
-            if (!string.IsNullOrWhiteSpace(overallFieldCondition) && !string.Equals(overallFieldCondition, "true", StringComparison.OrdinalIgnoreCase))
-            {
-                aasFields = GetSqlFields("aas", overallFieldCondition);
-                smFields = GetSqlFields("sm", overallFieldCondition);
-                smeFields = GetSqlFields("sme", overallFieldCondition);
-            }
-
+        // Do not join AASSets when the AAS scope is only a tautology (e.g. (1=1) from folding) — same idea as "all" without "aas".
+        var restrictAAS = !SqlConditionIsPureTautology(sqlAasMerged);
         var aasExistInCondition = !string.IsNullOrWhiteSpace(overallFieldCondition)
             && overallFieldCondition.Contains("\"aas\".");
 
         bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
-        var whereAas = sqlAasCondition;
-        var whereSm = sqlSmCondition;
-        var sqlPathByIndex = new Dictionary<int, PathJoin>();
-        var sqlMatchByIndex = new Dictionary<int, MatchJoin>();
-        var pathCount = 0;
 
-        foreach (var p in sqlConditions.Paths)
+        var rawSql = BuildRawSqlFromSqlConditions(sqlConditions, isWithAASTable, resultType, pageFrom, pageSize, flags);
+        if (rawSql == null)
+            throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
+
+        if (flags.Contains("$TEMPTABLE"))
         {
-            if (p.Placeholder.StartsWith("path", StringComparison.Ordinal)
-                && int.TryParse(p.Placeholder["path".Length..], out var idx))
-            {
-                sqlPathByIndex[idx] = p;
-                pathCount = Math.Max(pathCount, idx + 1);
-            }
-        }
+            using var tx = db.Database.BeginTransaction();
 
-        foreach (var m in sqlConditions.Matches)
-        {
-            var matchPathIndices = new List<int>();
-            foreach (var p in m.Paths)
-            {
-                if (p.Placeholder.StartsWith("path", StringComparison.Ordinal)
-                    && int.TryParse(p.Placeholder["path".Length..], out var idx))
-                {
-                    sqlPathByIndex[idx] = p;
-                    matchPathIndices.Add(idx);
-                    pathCount = Math.Max(pathCount, idx + 1);
-                }
-            }
+            AddGeneratedSql(generatedSql, rawSql);
+            db.Database.ExecuteSqlRaw(rawSql);
 
-            if (matchPathIndices.Count > 0)
-            {
-                sqlMatchByIndex[matchPathIndices.Min()] = m;
-            }
-        }
-
-        
-
-        // EF Core 8 / SQLite generates deterministic single-letter aliases for the
-        // 4-table join above (first letter of entity type, incremented on collision):
-        //   AASSets   → "a"
-        //   SMRefSets → "s"   (consumed by the first join)
-        //   SMSets    → "s0"
-        //   SMESets   → "s1"
-        //   ValueSets → "v"
-        // These constants eliminate the fragile regex extraction of ToQueryString() output.
-        const string aasPrefix = "aas";
-        const string smPrefix = "sm";
-        const string smePrefix = "sme";
-        const string valuePrefix = "value";
-
-        var raw = "";
-        var rawBase = "";
-        var useValueOnlyDirectPath = false;
-        var pathPrefix = new List<string>();
-
-        var selectAas = "(\r\n  SELECT Id, Identifier";
-        foreach (var aasField in aasFields)
-        {
-            if (aasField != "Identifier")
-            {
-                selectAas += $", {aasField}";
-            }
-        }
-        selectAas += "\r\n  FROM AASSets\r\n";
-        if (!string.IsNullOrWhiteSpace(whereAas))
-        {
-            var whereAas2 = whereAas.Replace($"\"{aasPrefix}\".", "");
-            selectAas += $"WHERE {whereAas2}\r\n";
-        }
-        selectAas += ")";
-
-        var selectSm = "(\r\n  SELECT Id, IdShort, Identifier";
-        foreach (var smField in smFields)
-        {
-            if (smField != "IdShort" && smField != "Identifier")
-            {
-                selectSm += $", {smField}";
-            }
-        }
-        selectSm += "\r\n  FROM SMSets\r\n";
-        if (!string.IsNullOrWhiteSpace(whereSm))
-        {
-            var whereSm2 = whereSm.Replace("\"s\".", "");
-            whereSm2 = whereSm2.Replace("\"s0\".", "");
-            whereSm2 = whereSm2.Replace($"\"{smPrefix}\".", "");
-
-            selectSm += $"WHERE {whereSm2}\r\n";
-        }
-        selectSm += ")";
-
-        rawBase = "SELECT DISTINCT ";
-
-        if (resultType == ResultType.AssetAdministrationShell)
-        {
-            rawBase += "aas.Id\r\n";
-        }
-        else
-        {
-            rawBase += "sm.Id\r\n";
-        }
-
-        if (isWithAASTable)
-        {
-            rawBase += $"FROM {selectAas} AS aas\r\n";
-            rawBase += "INNER JOIN SMRefSets AS sx ON aas.Id = sx.AASId\r\n";
-            rawBase += $"INNER JOIN {selectSm} AS sm ON sx.Identifier = sm.Identifier\r\n";
-        }
-        else
-        {
-            rawBase += $"FROM {selectSm} AS sm\r\n";
-        }
-
-        var matchPlaceholderSql = new Dictionary<string, string>();
-        for (var i = 0; i < pathCount;)
-        {
-            var j = i;
-            var join = "";
-            if (sqlMatchByIndex.TryGetValue(i, out var match))
-            {
-                join += $"LEFT JOIN(\r\n";
-                join += BuildMatchSubquerySql(match);
-                i += match.Paths.Count;
-            }
-            else
-            {
-                if (!sqlPathByIndex.TryGetValue(i, out var sqlPath))
-                    throw new InvalidOperationException($"CombineTablesLEFT: missing SQL path definition for path{i}.");
-
-                join += $"LEFT JOIN(\r\n";
-                join += $"SELECT sme.SMId AS SMId";
-                join += "\r\n";
-                join += $"FROM SMESets sme\r\n";
-                join += $"LEFT JOIN ValueSets v ON v.SMEId = sme.Id ";
-
-                var pathSql = sqlPath.SubquerySql
-                    .Replace("\"sme\".", "sme.")
-                    .Replace("\"v\".", "v.");
-                var splitSql = pathSql.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);
-                var valueSQL = splitSql.FirstOrDefault(l => l.TrimStart().StartsWith("WHERE ", StringComparison.Ordinal))?.TrimStart().Substring("WHERE ".Length) ?? "";
-                var smeSQLIdShort = splitSql.FirstOrDefault(l => l.TrimStart().StartsWith("AND ", StringComparison.Ordinal) && l.Contains("\"IdShort\"", StringComparison.Ordinal) && !l.Contains("\"IdShortPath\"", StringComparison.Ordinal))?.TrimStart().Substring("AND ".Length) ?? "";
-                var smeSQLPath = splitSql.LastOrDefault(l => l.TrimStart().StartsWith("AND ", StringComparison.Ordinal))?.TrimStart().Substring("AND ".Length) ?? "";
-
-                join += $"AND {valueSQL}\r\n";
-                join += $"WHERE {valueSQL} ";
-
-                if (smeSQLPath.Contains("[]"))
-                    smeSQLPath = smeSQLPath.Replace("[]", "[%]");
-                if (smeSQLPath.Contains("%"))
-                {
-                    smeSQLPath = smeSQLPath.Replace("\"IdShortPath\" = ", "\"IdShortPath\" GLOB ");
-                    smeSQLPath = smeSQLPath.Replace("%", "*");
-                }
-
-                if (!smeSQLIdShort.Contains("[]") && !smeSQLIdShort.Contains("%"))
-                    join += $"AND {smeSQLIdShort} ";
-
-                join += $"AND {smeSQLPath}\r\n";
-                i++;
-            }
-
-            join += $"\r\n) AS p{j + 1} ON p{j + 1}.SMId = sm.Id\r\n";
-
-            pathPrefix.Add($"p{j + 1}");
-            matchPlaceholderSql[$"$$path{j}$$"] = $"(p{j + 1}.SMId IS NOT NULL)";
-            if (sqlMatchByIndex.TryGetValue(j, out var currentMatch))
-                matchPlaceholderSql[$"$${currentMatch.Placeholder}$$"] = $"(p{j + 1}.SMId IS NOT NULL)";
-
-            rawBase += join;
-        }
-
-        string? convertConditionSQL = AppendAndCondition(
-            sqlOverallCondition,
-            sqlConditions?.FilterConditions.GetValueOrDefault("all", ""));
-
-        if (!string.IsNullOrEmpty(convertConditionSQL))
-        {
-            for (var i = 0; i < pathCount; i++)
-            {
-                convertConditionSQL = convertConditionSQL.Replace($"$$path{i}$$", $"(p{i + 1}.SMId IS NOT NULL)");
-            }
-            foreach (var replacement in matchPlaceholderSql)
-                convertConditionSQL = convertConditionSQL.Replace(replacement.Key, replacement.Value);
-
-            convertConditionSQL = NormalizeSqlAliases(convertConditionSQL);
-
-            List<string> combinedSelectFields = [];
-            List<string> combinedWhereParts = [];
-
-            // -----------------------------
-            // VALUE-PREFIX einsammeln
-            // -----------------------------
-            if (convertConditionSQL.Contains($"\"{valuePrefix}\"."))
-            {
-                List<string> fields = ["\"SValue\"", "\"NValue\"", "\"DTValue\"", "\"Annotation\""];
-
-                var splitByValue = convertConditionSQL.Split($"\"{valuePrefix}\".").ToList();
-
-                var withInstr = false;
-                for (var i = 0; i < splitByValue.Count; i++)
-                {
-                    if (splitByValue[i].EndsWith(" IS NOT NULL AND instr("))
-                    {
-                        withInstr = true;
-                        continue;
-                    }
-
-                    var fieldExpression = splitByValue[i];
-                    if (fieldExpression.IsNullOrEmpty())
-                    {
-                        continue;
-                    }
-
-                    var splitExpression = SplitExpression(fieldExpression);
-                    if (splitExpression?.Count < 3)
-                    {
-                        continue;
-                    }
-
-                    var field = splitExpression[0].Replace(",", "");
-
-                    if (fields.Contains(field))
-                    {
-                        var replace = "";
-                        var replacement = "";
-
-                        if (!withInstr)
-                        {
-                            replace = $"\"{valuePrefix}\"." + field + " " + splitExpression[1] + " " + splitExpression[2];
-                            replace = replace.TrimEnd(')');
-                            replacement = $"\"value\"." + field + " " + splitExpression[1] + " " + splitExpression[2];
-                            replacement = replacement.TrimEnd(')');
-                        }
-                        else
-                        {
-                            withInstr = false;
-
-                            replace = $"\"{valuePrefix}\".{field} IS NOT NULL AND instr(\"{valuePrefix}\".{field}, {splitExpression[1]}) > 0";
-                            replacement = $"\"value\".{field} IS NOT NULL AND instr(\"value\".{field}, {splitExpression[1]}) > 0";
-                        }
-
-                        AddDistinct(combinedSelectFields, $"    v.{field} AS {field}");
-                        AddDistinct(combinedWhereParts, $"({replace})");
-                        convertConditionSQL = convertConditionSQL.Replace(replace, replacement);
-                    }
-                }
-            }
-
-            // -----------------------------
-            // SME-PREFIX einsammeln
-            // -----------------------------
-            if (convertConditionSQL.Contains($"\"{smePrefix}\"."))
-            {
-                var splitBySme = convertConditionSQL.Split($"\"{smePrefix}\".").ToList();
-
-                var withInstr = false;
-                for (var i = 0; i < splitBySme.Count; i++)
-                {
-                    if (splitBySme[i].EndsWith(" IS NOT NULL AND instr("))
-                    {
-                        withInstr = true;
-                        continue;
-                    }
-
-                    var fieldExpression = splitBySme[i];
-                    if (fieldExpression.IsNullOrEmpty())
-                    {
-                        continue;
-                    }
-
-                    var splitExpression = SplitExpression(fieldExpression);
-                    if (splitExpression?.Count < 3)
-                    {
-                        continue;
-                    }
-
-                    var field = splitExpression[0].Replace(",", "").Replace("\"", "");
-
-                    if (smeFields.Contains(field))
-                    {
-                        var replace = "";
-                        var replacement = "";
-                        var where = "";
-
-                        if (!withInstr)
-                        {
-                            replace = $"\"{smePrefix}\".\"{field}\" " + splitExpression[1] + " " + splitExpression[2];
-                            replace = replace.TrimEnd(')');
-                            replacement = $"\"value\".\"{field}\" " + splitExpression[1] + " " + splitExpression[2];
-                            replacement = replacement.TrimEnd(')');
-                            where = $"\"sme\".\"{field}\" " + splitExpression[1] + " " + splitExpression[2];
-                            where = where.TrimEnd(')');
-                        }
-                        else
-                        {
-                            withInstr = false;
-
-                            replace = $"\"{smePrefix}\".\"{field}\" IS NOT NULL AND instr(\"{smePrefix}\".\"{field}\", {splitExpression[1]}) > 0";
-                            replacement = $"\"value\".\"{field}\" IS NOT NULL AND instr(\"value\".\"{field}\", {splitExpression[1]}) > 0";
-                            where = $"\"sme\".\"{field}\" IS NOT NULL AND instr(\"sme\".\"{field}\", {splitExpression[1]}) > 0";
-                        }
-
-                        AddDistinct(combinedSelectFields, $"    sme.\"{field}\" AS \"{field}\"");
-                        AddDistinct(combinedWhereParts, $"({where})");
-                        convertConditionSQL = convertConditionSQL.Replace(replace, replacement);
-                    }
-                }
-            }
-
-            // -----------------------------
-            // Gemeinsamen Vorfilter-Join bauen
-            // -----------------------------
-            if (combinedSelectFields.Count > 0 || combinedWhereParts.Count > 0)
-            {
-                var distinctWhereParts = combinedWhereParts.Distinct().ToList();
-                var valueSetFirst = distinctWhereParts.Count > 0
-                    && distinctWhereParts.TrueForAll(static p => !p.Contains("\"sme\".", StringComparison.Ordinal));
-                var onlyValueColumnsInSelect = combinedSelectFields.Count == 0
-                    || combinedSelectFields.TrueForAll(static line => !line.Contains("sme.", StringComparison.Ordinal));
-
-                var canValueOnlyDirect = pathCount == 0
-                    && !isWithAASTable
-                    && string.IsNullOrWhiteSpace(whereSm)
-                    && resultType != ResultType.AssetAdministrationShell
-                    && distinctWhereParts.Count > 0
-                    && valueSetFirst
-                    && onlyValueColumnsInSelect
-                    && !flags.Contains("$UNION")
-                    && !flags.Contains("$TEMPTABLE");
-
-                if (canValueOnlyDirect)
-                {
-                    // Drop t + LEFT JOIN value: only Value predicates, no SM filter, no path joins — drive from ValueSets.
-                    useValueOnlyDirectPath = true;
-                    rawBase = "SELECT DISTINCT sm.Id\r\nFROM ValueSets v\r\nJOIN SMESets sme ON sme.Id = v.SMEId\r\nJOIN SMSets sm ON sm.Id = sme.SMId\r\n";
-                    rawBase += "WHERE " + string.Join("\r\n     OR ", distinctWhereParts) + "\r\n";
-                    convertConditionSQL = "";
-                }
-                else
-                {
-                    rawBase += "LEFT JOIN(\r\n";
-                    rawBase += "  SELECT DISTINCT\r\n";
-                    rawBase += "    sme.SMId AS \"SMId\"";
-
-                    foreach (var selectField in combinedSelectFields.Distinct())
-                    {
-                        rawBase += ",\r\n";
-                        rawBase += selectField;
-                    }
-
-                    rawBase += "\r\n";
-                    // ValueSets-first when the subquery only filters on v.* (sme.* in OR would need SME-first).
-                    if (valueSetFirst)
-                    {
-                        rawBase += "  FROM ValueSets v\r\n";
-                        rawBase += "  JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
-                    }
-                    else
-                    {
-                        rawBase += "  FROM SMESets sme\r\n";
-                        rawBase += "  LEFT JOIN ValueSets v ON v.SMEId = sme.Id\r\n";
-                    }
-
-                    if (distinctWhereParts.Count > 0)
-                    {
-                        rawBase += "  WHERE " + string.Join("\r\n     OR ", distinctWhereParts) + "\r\n";
-                    }
-
-                    rawBase += ") AS value ON value.\"SMId\" = sm.Id\r\n";
-                }
-            }
-
-            var withUnion = false;
-            var withTempTable = false;
-            if (flags.Contains("$UNION"))
-            {
-                withUnion = true;
-            }
-            if (flags.Contains("$TEMPTABLE"))
-            {
-                withTempTable = true;
-            }
-
-            if (withUnion || withTempTable)
-            {
-                var splitConvertConditionSQL = SplitTopLevelOr(convertConditionSQL);
-
-                if (withTempTable)
-                {
-                    raw += "DROP TABLE IF EXISTS union_ids;\r\n";
-                    raw += "CREATE TEMP TABLE union_ids (\r\n";
-                    raw += "Id INTEGER PRIMARY KEY\r\n";
-                    raw += ") WITHOUT ROWID;\r\n";
-                    raw += "\r\n";
-                }
-
-                var splitLeftJoin = rawBase.Split("LEFT JOIN(\r\n");
-
-                for (var s = 0; s < splitConvertConditionSQL.Count; s++)
-                {
-                    var rawBaseUnionStart = splitLeftJoin[0];
-
-                    var rawBaseUnion = "";
-                    for (var i = 1; i < splitLeftJoin.Length; i++)
-                    {
-                        if (splitConvertConditionSQL[s].Contains($"({pathPrefix[i - 1]}.SMId IS NOT NULL)"))
-                        {
-                            rawBaseUnion += "LEFT JOIN(\r\n";
-                            rawBaseUnion += splitLeftJoin[i];
-                        }
-                    }
-
-                    var rawBaseTopLevel = rawBaseUnionStart + rawBaseUnion + "WHERE " + splitConvertConditionSQL[s] + "\r\n";
-                    if (withTempTable)
-                    {
-                        rawBaseTopLevel += "ORDER BY 1\r\n";
-                        raw += "INSERT OR IGNORE INTO union_ids(Id)\r\n" + rawBaseTopLevel + ";\r\n\r\n";
-                    }
-                    if (withUnion)
-                    {
-                        raw += rawBaseTopLevel;
-                        if (s != splitConvertConditionSQL.Count -1)
-                        {
-                            raw += "\r\n" + "UNION\r\n\r\n";
-                        }
-                    }
-                }
-
-                rawBase = raw;
-
-                raw = rawBase;
-                if (raw.Contains(" LIKE "))
-                {
-                    raw = raw.Replace(" LIKE ", " GLOB ");
-                    raw = raw.Replace("%", "*");
-                }
-
-                List<int> page = [];
-                if (withUnion)
-                {
-                    raw = "SELECT DISTINCT Id\r\nFROM(\r\n\r\n" + raw;
-                    raw += "\r\n)\r\nORDER BY Id\r\n";
-                    raw += $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
-
-                    AddGeneratedSql(generatedSql, raw);
-                    page = db.Set<SMSetIdResult>()
-                        .FromSqlRaw(raw)
-                        .AsNoTracking()
-                        .Select(x => x.Id)
-                        .ToList();
-                }
-                if (withTempTable)
-                {
-                    using var tx = db.Database.BeginTransaction();
-
-                    AddGeneratedSql(generatedSql, raw);
-                    db.Database.ExecuteSqlRaw(raw);
-
-                    var tempTableSelectRaw = $@"SELECT Id
+            var tempTableSelectRaw = $@"SELECT Id
                         FROM union_ids
                         ORDER BY 1
                         LIMIT {pageSize} OFFSET {pageFrom}";
-                    AddGeneratedSql(generatedSql, tempTableSelectRaw);
-                    page = db.Set<SMSetIdResult>()
-                        .FromSqlRaw(@"
+            AddGeneratedSql(generatedSql, tempTableSelectRaw);
+            var page = db.Set<SMSetIdResult>()
+                .FromSqlRaw(@"
                         SELECT Id
                         FROM union_ids
                         ORDER BY 1
                         LIMIT {0} OFFSET {1}", pageSize, pageFrom)
-                        .AsNoTracking()
-                        .Select(x => x.Id)
-                        .ToList();
+                .AsNoTracking()
+                .Select(x => x.Id)
+                .ToList();
 
-                    tx.Commit();
-                }
-
-                return page;
-            }
+            tx.Commit();
+            return page;
         }
 
-        raw = string.IsNullOrWhiteSpace(convertConditionSQL)
-            ? rawBase + "\r\n"
-            : rawBase + $"WHERE {convertConditionSQL}\r\n";
-
-        if (raw.Contains(" LIKE "))
-        {
-            raw = raw.Replace(" LIKE ", " GLOB ");
-            raw = raw.Replace("%", "*");
-        }
-
-        raw += useValueOnlyDirectPath
-            ? $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n"
-            : $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
-
-        var rawNew = BuildRawSqlFromSqlConditions(sqlConditions, isWithAASTable, resultType, pageFrom, pageSize);
-        if (rawNew == null)
-            throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
-
-        AddGeneratedSql(generatedSql, rawNew);
-        var qpRaw = GetQueryPlan(db, rawNew);
+        AddGeneratedSql(generatedSql, rawSql);
+        var qpRaw = GetQueryPlan(db, rawSql);
 
         return db.Set<SMSetIdResult>()
-            .FromSqlRaw(rawNew)
+            .FromSqlRaw(rawSql)
             .AsNoTracking()
             .Select(x => x.Id)
             .ToList();
-
-        /*
-        IQueryable<SMSetIdResult> resultSMId = null;
-        resultSMId = db.Set<SMSetIdResult>()
-               .FromSqlRaw(raw)
-               .AsNoTracking()
-               .AsQueryable();
-
-        var smRawSQL = resultSMId.ToQueryString();
-        var qp = GetQueryPlan(db, smRawSQL);
-
-        // return resultSMId.OrderBy(r => r.Id).Select(r => r.Id).Skip(pageFrom).Take(pageSize).ToList();
-        return resultSMId.Select(r => r.Id).ToList();
-        */
     }
 
     // ------------------------------------------------------------------
-    // SQL assembly from SqlConditions (new path)
+    // SQL assembly from SqlConditions (single source of truth for SM list SQL)
     // ------------------------------------------------------------------
     internal static string? BuildRawSqlFromSqlConditions(
-        SqlConditions sc, bool isWithAASTable, ResultType resultType, int pageFrom, int pageSize)
+        SqlConditions sc,
+        bool isWithAASTable,
+        ResultType resultType,
+        int pageFrom,
+        int pageSize,
+        IReadOnlyList<string>? queryFlags = null)
     {
-        var whereAas = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("aas", ""));
-        var whereSm  = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sm",  ""));
-        var whereSme = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sme", ""));
-        var whereVal = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("value", ""));
+        // Inner AAS/SM subquery WHERE: Formula + per-scope Filter (e.g. security), same pattern as sme/value.
+        var whereAas = AppendAndCondition(
+            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("aas", "")),
+            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("aas", "")));
+        var whereSm = AppendAndCondition(
+            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sm", "")),
+            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("sm", "")));
+        // Per-scope FILTER (e.g. security); inner SME/Value JOIN Vorfilter must not use Formula["sme"] alone.
+        var whereSme = AppendAndCondition(
+            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sme", "")),
+            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("sme", "")));
+        var whereVal = AppendAndCondition(
+            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("value", "")),
+            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("value", "")));
         var filterAll = NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("all", ""));
+
+        var withUnion = queryFlags != null && queryFlags.Contains("$UNION");
+        var withTemp  = queryFlags != null && queryFlags.Contains("$TEMPTABLE");
+        var unionOrTemp = withUnion || withTemp;
 
         // Resolve placeholder references
         var overall = AppendAndCondition(NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("all", "")), filterAll);
@@ -2086,23 +1613,43 @@ public partial class Query
         foreach (var match in sc.Matches)  overall = overall.Replace($"$${match.Placeholder}$$", $"(m{matchNum++}.SMId IS NOT NULL)");
 
         // ----------------------------------------------------------------
-        // useValueOnlyDirect: no paths/matches, no AAS join, no SM filter,
-        // overall only references value-table columns (v.)
+        // Direct paths: no paths/matches, no AAS join, no SM filter, standalone SM list.
+        // SME-only: drive from SMESets so OR SME predicates apply inside WHERE (not a scan + outer filter).
+        // Value-only: drive from ValueSets (analogous).
         // ----------------------------------------------------------------
         bool hasPathsOrMatches = sc.Paths.Count > 0 || sc.Matches.Count > 0;
         bool overallHasSmeRef  = overall.Contains("\"sme\".");
         bool overallHasVRef    = overall.Contains("\"value\".");
         bool overallHasTRef    = overall.Contains("\"sm\".") || overall.Contains("\"aas\".");
 
-        if (!hasPathsOrMatches && !isWithAASTable
+        bool canDirectSme = !hasPathsOrMatches && !isWithAASTable
             && string.IsNullOrWhiteSpace(whereSm)
             && resultType != ResultType.AssetAdministrationShell
-            && overallHasVRef && !overallHasTRef)
+            && overallHasSmeRef && !overallHasVRef && !overallHasTRef;
+
+        bool canDirectValue = !hasPathsOrMatches && !isWithAASTable
+            && string.IsNullOrWhiteSpace(whereSm)
+            && resultType != ResultType.AssetAdministrationShell
+            && overallHasVRef && !overallHasTRef;
+
+        if (canDirectSme)
         {
+            if (unionOrTemp)
+                return BuildDirectUnionOrTempSql(isSmeTable: true, overall, withUnion, withTemp, pageFrom, pageSize);
+            var raw = "SELECT DISTINCT sm.Id\r\nFROM SMESets AS sme\r\nJOIN SMSets AS sm ON sm.Id = sme.SMId\r\n";
+            raw += $"WHERE {overall}\r\n";
+            raw += $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+            return ApplyLikeToGlob(raw);
+        }
+
+        if (canDirectValue)
+        {
+            if (unionOrTemp)
+                return BuildDirectUnionOrTempSql(isSmeTable: false, overall, withUnion, withTemp, pageFrom, pageSize);
             var raw = "SELECT DISTINCT sm.Id\r\nFROM ValueSets AS value\r\nJOIN SMESets AS sme ON sme.Id = value.SMEId\r\nJOIN SMSets AS sm ON sm.Id = sme.SMId\r\n";
             raw += $"WHERE {overall}\r\n";
             raw += $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
-            return raw;
+            return ApplyLikeToGlob(raw);
         }
 
         // ----------------------------------------------------------------
@@ -2132,62 +1679,226 @@ public partial class Query
             rawBase += $"FROM {selectSm} AS sm\r\n";
         }
 
-        // Standalone path LEFT JOINs
+        var pathJoins = new List<(string alias, string sql)>();
         pathNum = 1;
         foreach (var path in sc.Paths)
         {
-            // SubquerySql is body only (FROM … WHERE …); add SELECT header with fixed alias "sme"
-            rawBase += $"LEFT JOIN (\r\nSELECT sme.SMId AS SMId\r\n{path.SubquerySql}\r\n) AS p{pathNum} ON p{pathNum}.SMId = sm.Id\r\n";
+            var frag = $"LEFT JOIN(\r\nSELECT sme.SMId AS SMId\r\n{path.SubquerySql}\r\n) AS p{pathNum} ON p{pathNum}.SMId = sm.Id\r\n";
+            pathJoins.Add(($"p{pathNum}", frag));
             pathNum++;
         }
 
-        // Match LEFT JOINs
+        var matchJoins = new List<(string alias, string sql)>();
         matchNum = 1;
         foreach (var match in sc.Matches)
         {
             var matchSql = BuildMatchSubquerySql(match);
-            rawBase += $"LEFT JOIN (\r\n{matchSql}\r\n) AS m{matchNum} ON m{matchNum}.SMId = sm.Id\r\n";
+            var frag = $"LEFT JOIN(\r\n{matchSql}\r\n) AS m{matchNum} ON m{matchNum}.SMId = sm.Id\r\n";
+            matchJoins.Add(($"m{matchNum}", frag));
             matchNum++;
         }
 
+        string? smeJoin = null;
         if (overallHasSmeRef)
         {
             var smeFields = GetSqlFields("sme", overall);
             var smeWhere = whereSme.Replace("\"sme\".", "\"sme_inner\".");
 
-            rawBase += "LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme_inner.SMId AS \"SMId\"";
+            var sbSme = new StringBuilder();
+            sbSme.Append("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme_inner.SMId AS \"SMId\"");
             foreach (var field in smeFields)
-                rawBase += $",\r\n    sme_inner.\"{field}\" AS \"{field}\"";
-            rawBase += "\r\n  FROM SMESets sme_inner\r\n";
+                sbSme.Append($",\r\n    sme_inner.\"{field}\" AS \"{field}\"");
+            sbSme.Append("\r\n  FROM SMESets sme_inner\r\n");
             if (!string.IsNullOrWhiteSpace(smeWhere))
-                rawBase += $"  WHERE {smeWhere}\r\n";
-            rawBase += ") AS sme ON sme.\"SMId\" = sm.Id\r\n";
+                sbSme.Append($"  WHERE {smeWhere}\r\n");
+            sbSme.Append(") AS sme ON sme.\"SMId\" = sm.Id\r\n");
+            smeJoin = sbSme.ToString();
         }
 
-        // Value LEFT JOIN: when overall references v. columns outside path/match subqueries
+        string? valueJoin = null;
         if (overallHasVRef)
         {
-            // Collect which value columns are referenced
             var valFields = new List<string>();
             foreach (var col in new[] { "SValue", "NValue", "DTValue", "Annotation" })
                 if (overall.Contains($"\"value\".\"{col}\"")) valFields.Add(col);
             var valWhere  = string.IsNullOrWhiteSpace(whereVal) ? "1=1" : whereVal.Replace("\"value\".", "v.");
 
-            rawBase += $"LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme.SMId AS \"SMId\"";
-            foreach (var f in valFields) rawBase += $",\r\n    v.\"{f}\" AS \"{f}\"";
-            rawBase += "\r\n  FROM ValueSets v\r\n  JOIN SMESets sme ON sme.Id = v.SMEId\r\n";
-            rawBase += $"  WHERE {valWhere}\r\n) AS value ON value.\"SMId\" = sm.Id\r\n";
+            var sbVal = new StringBuilder();
+            sbVal.Append("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme.SMId AS \"SMId\"");
+            foreach (var f in valFields) sbVal.Append($",\r\n    v.\"{f}\" AS \"{f}\"");
+            sbVal.Append("\r\n  FROM ValueSets v\r\n  JOIN SMESets sme ON sme.Id = v.SMEId\r\n");
+            sbVal.Append($"  WHERE {valWhere}\r\n) AS value ON value.\"SMId\" = sm.Id\r\n");
+            valueJoin = sbVal.ToString();
 
-            // Replace "v"."Col" → "value"."Col" in the outer WHERE
             foreach (var col in valFields)
                 overall = overall.Replace($"\"v\".\"{col}\"", $"\"value\".\"{col}\"");
         }
+
+        if (unionOrTemp)
+        {
+            var orParts = string.IsNullOrWhiteSpace(overall) || overall == "1=1"
+                ? new List<string> { "1=1" }
+                : SplitTopLevelOr(overall);
+            if (orParts.Count == 0)
+                orParts = new List<string> { "1=1" };
+            return BuildJoinedUnionOrTempSql(
+                rawBase,
+                pathJoins,
+                matchJoins,
+                smeJoin,
+                valueJoin,
+                overallHasSmeRef,
+                overallHasVRef,
+                orParts,
+                withUnion,
+                withTemp,
+                pageFrom,
+                pageSize);
+        }
+
+        foreach (var j in pathJoins)
+            rawBase += j.sql;
+        foreach (var j in matchJoins)
+            rawBase += j.sql;
+        if (smeJoin != null)
+            rawBase += smeJoin;
+        if (valueJoin != null)
+            rawBase += valueJoin;
 
         if (!string.IsNullOrWhiteSpace(overall) && overall != "1=1")
             rawBase += $"WHERE {overall}\r\n";
 
         rawBase += $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
-        return rawBase;
+        return ApplyLikeToGlob(rawBase);
+    }
+
+    private static string ApplyLikeToGlob(string sql)
+    {
+        if (!sql.Contains(" LIKE ", StringComparison.Ordinal))
+            return sql;
+        sql = sql.Replace(" LIKE ", " GLOB ", StringComparison.Ordinal);
+        return sql.Replace("%", "*");
+    }
+
+    private static string BuildDirectUnionOrTempSql(
+        bool isSmeTable,
+        string overall,
+        bool withUnion,
+        bool withTemp,
+        int pageFrom,
+        int pageSize)
+    {
+        var orParts = SplitTopLevelOr(overall);
+        if (orParts.Count == 0)
+            orParts = new List<string> { "1=1" };
+        var fromSql = isSmeTable
+            ? "SELECT DISTINCT sm.Id\r\nFROM SMESets AS sme\r\nJOIN SMSets AS sm ON sm.Id = sme.SMId\r\n"
+            : "SELECT DISTINCT sm.Id\r\nFROM ValueSets AS value\r\nJOIN SMESets AS sme ON sme.Id = value.SMEId\r\nJOIN SMSets AS sm ON sm.Id = sme.SMId\r\n";
+
+        if (withTemp)
+        {
+            var sb = new StringBuilder();
+            sb.Append("DROP TABLE IF EXISTS union_ids;\r\n");
+            sb.Append("CREATE TEMP TABLE union_ids (\r\n");
+            sb.Append("Id INTEGER PRIMARY KEY\r\n");
+            sb.Append(") WITHOUT ROWID;\r\n\r\n");
+            foreach (var part in orParts)
+            {
+                var q = fromSql + $"WHERE {part}\r\nORDER BY 1\r\n";
+                q = ApplyLikeToGlob(q);
+                sb.Append("INSERT OR IGNORE INTO union_ids(Id)\r\n").Append(q).Append(";\r\n\r\n");
+            }
+            return sb.ToString();
+        }
+
+        if (withUnion)
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < orParts.Count; i++)
+            {
+                var q = fromSql + $"WHERE {orParts[i]}\r\n";
+                q = ApplyLikeToGlob(q);
+                sb.Append(q);
+                if (i < orParts.Count - 1)
+                    sb.Append("\r\nUNION\r\n\r\n");
+            }
+            return "SELECT DISTINCT Id\r\nFROM(\r\n\r\n" + sb + "\r\n)\r\nORDER BY Id\r\n"
+                + $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
+        }
+
+        throw new InvalidOperationException("BuildDirectUnionOrTempSql requires $UNION or $TEMPTABLE.");
+    }
+
+    private static string BuildJoinedUnionOrTempSql(
+        string selectFromPrefix,
+        List<(string alias, string sql)> pathJoins,
+        List<(string alias, string sql)> matchJoins,
+        string? smeJoin,
+        string? valueJoin,
+        bool overallHasSmeRef,
+        bool overallHasVRef,
+        List<string> orParts,
+        bool withUnion,
+        bool withTemp,
+        int pageFrom,
+        int pageSize)
+    {
+        string OneBranch(string wherePart)
+        {
+            var b = selectFromPrefix;
+            foreach (var j in pathJoins)
+            {
+                if (wherePart.Contains($"({j.alias}.SMId IS NOT NULL)", StringComparison.Ordinal))
+                    b += j.sql;
+            }
+            foreach (var j in matchJoins)
+            {
+                if (wherePart.Contains($"({j.alias}.SMId IS NOT NULL)", StringComparison.Ordinal))
+                    b += j.sql;
+            }
+            if (smeJoin != null && overallHasSmeRef && wherePart.Contains("\"sme\".", StringComparison.Ordinal))
+                b += smeJoin;
+            if (valueJoin != null && overallHasVRef && wherePart.Contains("\"value\".", StringComparison.Ordinal))
+                b += valueJoin;
+            if (!string.IsNullOrWhiteSpace(wherePart) && wherePart != "1=1")
+                b += $"WHERE {wherePart}\r\n";
+            return b;
+        }
+
+        if (withTemp)
+        {
+            var sb = new StringBuilder();
+            sb.Append("DROP TABLE IF EXISTS union_ids;\r\n");
+            sb.Append("CREATE TEMP TABLE union_ids (\r\n");
+            sb.Append("Id INTEGER PRIMARY KEY\r\n");
+            sb.Append(") WITHOUT ROWID;\r\n\r\n");
+            foreach (var part in orParts)
+            {
+                var branch = OneBranch(part);
+                branch = ApplyLikeToGlob(branch);
+                sb.Append("INSERT OR IGNORE INTO union_ids(Id)\r\n")
+                    .Append(branch)
+                    .Append("ORDER BY 1\r\n;\r\n\r\n");
+            }
+            return sb.ToString();
+        }
+
+        if (withUnion)
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < orParts.Count; i++)
+            {
+                var branch = OneBranch(orParts[i]);
+                branch = ApplyLikeToGlob(branch);
+                sb.Append(branch);
+                if (i < orParts.Count - 1)
+                    sb.Append("\r\nUNION\r\n\r\n");
+            }
+            return "SELECT DISTINCT Id\r\nFROM(\r\n\r\n" + sb + "\r\n)\r\nORDER BY Id\r\n"
+                + $"LIMIT {pageSize} OFFSET {pageFrom}\r\n";
+        }
+
+        throw new InvalidOperationException("BuildJoinedUnionOrTempSql requires $UNION or $TEMPTABLE.");
     }
 
     private static string BuildMatchSubquerySql(MatchJoin match)
@@ -2207,7 +1918,7 @@ public partial class Query
             percentSegments = shortestPath.Split('%').ToList();
         }
 
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
         sb.AppendLine("SELECT Path1.SMId AS SMId");
 
         for (int k = 0; k < match.Paths.Count; k++)
@@ -2307,10 +2018,54 @@ public partial class Query
         }
     }
 
+    /// <summary>
+    /// True if the fragment is empty or only <c>1=1</c>, optionally wrapped in balanced parentheses (e.g. <c>(1=1)</c>, <c>((1=1))</c>).
+    /// </summary>
+    private static bool SqlConditionIsPureTautology(string? sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            return true;
+        var t = sql.Trim();
+        while (true)
+        {
+            if (t == "1=1")
+                return true;
+            if (t.Length >= 2 && t[0] == '(' && t[^1] == ')')
+            {
+                if (!IsSingleBalancedParenthesisWrap(t))
+                    return false;
+                t = t.Substring(1, t.Length - 2).Trim();
+                continue;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>Returns true if the string is <c>( ... )</c> and the first '(' matches the last ')' (whole expression wrapped).</summary>
+    private static bool IsSingleBalancedParenthesisWrap(string t)
+    {
+        if (t.Length < 2 || t[0] != '(')
+            return false;
+        var depth = 0;
+        for (var i = 0; i < t.Length; i++)
+        {
+            if (t[i] == '(') depth++;
+            else if (t[i] == ')')
+            {
+                depth--;
+                if (depth == 0)
+                    return i == t.Length - 1;
+            }
+        }
+
+        return false;
+    }
+
     private static string AppendAndCondition(string? left, string? right)
     {
-        var normalizedLeft = string.IsNullOrWhiteSpace(left) || left.Trim() == "1=1" ? "" : left.Trim();
-        var normalizedRight = string.IsNullOrWhiteSpace(right) || right.Trim() == "1=1" ? "" : right.Trim();
+        var normalizedLeft = string.IsNullOrWhiteSpace(left) || SqlConditionIsPureTautology(left) ? "" : left.Trim();
+        var normalizedRight = string.IsNullOrWhiteSpace(right) || SqlConditionIsPureTautology(right) ? "" : right.Trim();
 
         if (string.IsNullOrWhiteSpace(normalizedLeft))
         {

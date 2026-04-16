@@ -1999,18 +1999,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var smDB = smDBQuery.ToList();
 
-        string? smSql = null;
-        securitySqlConditions?.FormulaConditions.TryGetValue("sm", out smSql);
-        if (!string.IsNullOrWhiteSpace(smSql))
+        if (smDB.Count != 1)
         {
-            var smDBNew = CrudOperator.QuerySmRaw(db, submodelIdentifier, smSql);
-            if (!smDB.Select(sm => sm.Id).OrderBy(x => x).SequenceEqual(smDBNew.Select(sm => sm.Id).OrderBy(x => x)))
-            {
-                return false;
-            }
+            return false;
         }
 
-        if (smDB.Count != 1)
+        // Same allow logic as /submodels queries: full SqlConditions (Formula + Filter per scope), not Formula["sm"] + raw SMSets only.
+        if (CrudOperator.IsSubmodelAllowedBySqlCondition(db, smDB[0], securitySqlConditions) == false)
         {
             return false;
         }

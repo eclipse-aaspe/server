@@ -33,6 +33,10 @@ using static System.Net.Mime.MediaTypeNames;
 
 public class QueryGrammarJSON : Grammar
 {
+    /// <summary>SQL boolean literals for constant folding ($boolean → overall / scope SQL).</summary>
+    private const string SqlBoolTrue = "(1=1)";
+    private const string SqlBoolFalse = "(0=1)";
+
     /// <summary>While evaluating the RHS of a comparison in <c>value</c> mode, indicates Annotation is valueType vs language.</summary>
     private static readonly Stack<SmeSemanticKind> _pendingValueStrSemantic = new();
 
@@ -1297,6 +1301,9 @@ public class QueryGrammarJSON : Grammar
     {
         if (obj == null) return "$SKIP";
 
+        if (obj is bool boolLit)
+            return boolLit ? SqlBoolTrue : SqlBoolFalse;
+
         // Recurse through LogicalExpression wrapper
         if (obj is LogicalExpression le)
             return BuildScopeSqlNode(le.ExpressionValue, le.ExpressionType, scope, smeValue);
@@ -1317,23 +1324,36 @@ public class QueryGrammarJSON : Grammar
                 {
                     var parts = eList
                         .Select(e => BuildScopeSqlNode(e, scope, smeValue))
-                        .Where(s => s != "$SKIP" && s != null)
+                        .Where(s => s != null && s != "$SKIP" && s != "$ERROR")
                         .ToList();
                     if (parts.Count == 0) return "$SKIP";
                     if (parts.Any(p => p == "$ERROR")) return "$ERROR";
-                    return parts.Count == 1 ? parts[0] : "(" + string.Join(" AND ", parts) + ")";
+                    parts = FoldBooleanAndParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    // Value-scope → inner ValueSets Vorfilter only: never AND (one row cannot combine arbitrary
+                    // leaves); outer WHERE + path joins keep full semantics.
+                    var joiner = scope == SqlScope.Value ? " OR " : " AND ";
+                    return "(" + string.Join(joiner, parts) + ")";
                 }
 
                 case "$or":
                 {
-                    // For OR: if ANY branch is unconstrained for this scope ($SKIP),
-                    // the whole OR is unconstrained — do NOT emit a partial filter.
-                    var parts = eList
+                    // OR only the branches that constrain this scope. Branches irrelevant here ($SKIP)
+                    // are dropped so e.g. $or(sm, sm, sme, sme) still fills FormulaConditions["sme"]
+                    // for Vorfilter SQL (outer "all" keeps full semantics).
+                    var branchResults = eList
                         .Select(e => BuildScopeSqlNode(e, scope, smeValue))
                         .ToList();
-                    if (parts.Any(p => p == "$SKIP" || p == null)) return "$SKIP";
-                    if (parts.Any(p => p == "$ERROR")) return "$ERROR";
-                    return parts.Count == 1 ? parts[0] : "(" + string.Join(" OR ", parts) + ")";
+                    if (branchResults.Any(p => p == "$ERROR")) return "$ERROR";
+                    var parts = branchResults
+                        .Where(p => p != null && p != "$SKIP")
+                        .ToList();
+                    if (parts.Count == 0) return "$SKIP";
+                    parts = FoldBooleanOrParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    return "(" + string.Join(" OR ", parts) + ")";
                 }
 
                 case "$match":
@@ -1383,8 +1403,40 @@ public class QueryGrammarJSON : Grammar
         if (node.ExpressionType != "$field" || node.ExpressionValue is not string raw)
             return "$SKIP";
 
-        // $sme.path#field → not a scope filter
-        if (raw.Contains("$sme.")) return "$SKIP";
+        // "$sme.{idShortPath}#field" — overall uses path joins; for scope SQL we emit the same SME
+        // columns as "$sme#field" so FormulaConditions["sme"] can Vorfilter the SMESets subquery in
+        // BuildRawSql (inner filter may be slightly wider than path-specific overall; outer WHERE unchanged).
+        var smeDotIdx = raw.IndexOf("$sme.", StringComparison.OrdinalIgnoreCase);
+        if (smeDotIdx >= 0 && raw.Contains('#'))
+        {
+            var withoutPrefix = raw[(smeDotIdx + "$sme.".Length)..];
+            var hashIdx = withoutPrefix.IndexOf('#');
+            if (hashIdx > 0 && hashIdx < withoutPrefix.Length - 1)
+            {
+                var fieldName = withoutPrefix[(hashIdx + 1)..];
+                if (fieldName == "value")
+                {
+                    return scope switch
+                    {
+                        SqlScope.Value => smeValue switch
+                        {
+                            "svalue"  => "v.\"SValue\"",
+                            "mvalue"  => "v.\"NValue\"",
+                            "dtvalue" => "v.\"DTValue\"",
+                            _ => "$SKIP"
+                        },
+                        _ => "$SKIP"
+                    };
+                }
+                if (scope == SqlScope.Sme)
+                {
+                    var col = SmeColumnSql(fieldName);
+                    if (col != null)
+                        return col;
+                }
+            }
+            return "$SKIP";
+        }
 
         // Semantic fields: vtvalue / langvalue
         var vNorm = raw.StartsWith("$sme#") ? raw.Replace("$sme#", "sme.") : raw;
@@ -1434,6 +1486,22 @@ public class QueryGrammarJSON : Grammar
         return "$SKIP";
     }
 
+    private static List<string> FoldBooleanAndParts(List<string> parts)
+    {
+        if (parts.Any(p => p == SqlBoolFalse))
+            return [SqlBoolFalse];
+        var rest = parts.Where(p => p != SqlBoolTrue).ToList();
+        return rest.Count == 0 ? [SqlBoolTrue] : rest;
+    }
+
+    private static List<string> FoldBooleanOrParts(List<string> parts)
+    {
+        if (parts.Any(p => p == SqlBoolTrue))
+            return [SqlBoolTrue];
+        var rest = parts.Where(p => p != SqlBoolFalse).ToList();
+        return rest.Count == 0 ? [SqlBoolFalse] : rest;
+    }
+
     // ------------------------------------------------------------------
     // Overall-condition builder — produces SQL with path/match placeholders
     // ------------------------------------------------------------------
@@ -1448,6 +1516,9 @@ public class QueryGrammarJSON : Grammar
     private static string? BuildOverallSqlNode(object? obj, string type, SqlBuildContext ctx, string smeValue)
     {
         if (obj == null) return "$SKIP";
+
+        if (obj is bool boolLit)
+            return boolLit ? SqlBoolTrue : SqlBoolFalse;
 
         if (obj is LogicalExpression le)
             return BuildOverallSqlNode(le.ExpressionValue, le.ExpressionType, ctx, smeValue);
@@ -1466,15 +1537,49 @@ public class QueryGrammarJSON : Grammar
                     return "$SKIP";
 
                 case "$and":
+                {
+                    var parts = new List<string>();
+                    foreach (var e in eList)
+                    {
+                        var part = BuildOverallSqlNode(e.ExpressionValue, e.ExpressionType, ctx, smeValue);
+                        if (part == "$ERROR")
+                            return "$ERROR";
+                        // Short-circuit: do not visit siblings (no path/match side effects) once AND is unsatisfiable.
+                        if (part == SqlBoolFalse)
+                            return SqlBoolFalse;
+                        if (part != null && part != "$SKIP")
+                            parts.Add(part);
+                    }
+
+                    if (parts.Count == 0)
+                        return "$SKIP";
+                    parts = FoldBooleanAndParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    return "(" + string.Join(" AND ", parts) + ")";
+                }
+
                 case "$or":
                 {
-                    var parts = eList
-                        .Select(e => BuildOverallSqlNode(e.ExpressionValue, e.ExpressionType, ctx, smeValue))
-                        .Where(s => s != "$SKIP" && s != null && s != "$ERROR")
-                        .ToList();
-                    if (parts.Count == 0) return "$SKIP";
-                    var join = type == "$and" ? " AND " : " OR ";
-                    return parts.Count == 1 ? parts[0] : "(" + string.Join(join, parts) + ")";
+                    var parts = new List<string>();
+                    foreach (var e in eList)
+                    {
+                        var part = BuildOverallSqlNode(e.ExpressionValue, e.ExpressionType, ctx, smeValue);
+                        if (part == "$ERROR")
+                            return "$ERROR";
+                        // Short-circuit: later branches must not register paths/joins if expression is already tautological.
+                        if (part == SqlBoolTrue)
+                            return SqlBoolTrue;
+                        if (part != null && part != "$SKIP")
+                            parts.Add(part);
+                    }
+
+                    if (parts.Count == 0)
+                        return "$SKIP";
+                    parts = FoldBooleanOrParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    return "(" + string.Join(" OR ", parts) + ")";
                 }
 
                 case "$match":

@@ -5,6 +5,10 @@ using Contracts.QueryResult;
 using Contracts;
 using FluentAssertions;
 
+/// <summary>
+/// Query1–4: <c>noSecurity: true</c> (no rule merge / no in-memory security) — expected IDs match pure JSON query.
+/// <see cref="ReadPagedSubmodels_NoAuthSecurityFilter_MatchesExpectedSubset"/>: loads merged access-rule <see cref="SqlConditions"/> (Formula + FILTER), like authenticated /submodels.
+/// </summary>
 [Collection(DatabaseFixture.Collection)]
 public sealed class QueryTests
 {
@@ -133,9 +137,15 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db,
-                pageFrom: 0, pageSize: int.MaxValue,
-                ResultType.Submodel, expression);
+            .GetQueryData(
+                noSecurity: true,
+                db,
+                pageFrom: 0,
+                pageSize: int.MaxValue,
+                ResultType.Submodel,
+                expression,
+                includeDebugSql: false,
+                securitySqlConditions: null);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
@@ -188,9 +198,15 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db,
-                pageFrom: 0, pageSize: int.MaxValue,
-                ResultType.Submodel, expression);
+            .GetQueryData(
+                noSecurity: true,
+                db,
+                pageFrom: 0,
+                pageSize: int.MaxValue,
+                ResultType.Submodel,
+                expression,
+                includeDebugSql: false,
+                securitySqlConditions: null);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
@@ -323,14 +339,21 @@ public sealed class QueryTests
 
         using var db = _fixture.CreateDbContext();
         var result = new Query(_fixture.Grammar)
-            .GetQueryData(noSecurity: true, db,
-                pageFrom: 0, pageSize: int.MaxValue,
-                ResultType.Submodel, expression);
+            .GetQueryData(
+                noSecurity: true,
+                db,
+                pageFrom: 0,
+                pageSize: int.MaxValue,
+                ResultType.Submodel,
+                expression,
+                includeDebugSql: false,
+                securitySqlConditions: null);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
     }
 
+    /// <summary>With security: OR-merged access rules + FILTER fragments (sme idShort), not a pure query-only condition.</summary>
     [Fact]
     public void ReadPagedSubmodels_NoAuthSecurityFilter_MatchesExpectedSubset()
     {

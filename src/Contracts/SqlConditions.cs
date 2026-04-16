@@ -165,6 +165,11 @@ public static class SqlConditionsMerger
         }
 
         SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
+        // Projection ($select: id | match) lives on the user query; security fragments usually omit it.
+        merged.Select = !string.IsNullOrWhiteSpace(query.Select)
+            ? query.Select
+            : security.Select ?? "";
+
         return merged;
     }
 
@@ -221,6 +226,10 @@ public static class SqlConditionsMerger
         }
 
         SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
+        merged.Select = !string.IsNullOrWhiteSpace(left.Select)
+            ? left.Select
+            : right.Select ?? "";
+
         return merged;
     }
 
@@ -239,10 +248,17 @@ public static class SqlConditionsMerger
 
             var lVal = NormalizeNeutralCondition(left.GetValueOrDefault(key, ""));
             var rVal = NormalizeNeutralCondition(right.GetValueOrDefault(key, ""));
-            target[key] =
-                !string.IsNullOrWhiteSpace(lVal) && !string.IsNullOrWhiteSpace(rVal)
-                    ? $"({lVal}) {op} ({rVal})"
-                    : string.IsNullOrWhiteSpace(lVal) ? rVal : lVal;
+            if (!string.IsNullOrWhiteSpace(lVal) && !string.IsNullOrWhiteSpace(rVal))
+            {
+                // Avoid (X) OR (X) / (X) AND (X) when merging duplicate rule fragments (same string).
+                target[key] = string.Equals(lVal, rVal, StringComparison.Ordinal)
+                    ? lVal
+                    : $"({lVal}) {op} ({rVal})";
+            }
+            else
+            {
+                target[key] = string.IsNullOrWhiteSpace(lVal) ? rVal : lVal;
+            }
         }
     }
 
