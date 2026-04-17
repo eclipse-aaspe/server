@@ -63,7 +63,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     AasxServer.Program.externalRepository + "/shells/" +
                     Base64UrlEncoder.Encode(ad.Id);
                 // _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
-                Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
+                //Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
                 e.Interface = "AAS-3.0";
                 ad.Endpoints = new List<Models.Endpoint>
                 {
