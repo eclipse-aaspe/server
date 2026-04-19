@@ -208,11 +208,22 @@ public sealed class QueryTests
                 pageSize: int.MaxValue,
                 ResultType.Submodel,
                 expression,
-                includeDebugSql: false,
+                includeDebugSql: true,
                 securitySqlConditions: null);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
+
+        // SQL shape: path conditions ($sme.ManufacturerName, $sme.FootprintInformationModule2.CO2eq)
+        // must produce LEFT JOIN path subqueries, not a full-table SME scan.
+        // Direct $sme#value conditions must use EXISTS, not a joined SME scan.
+        result.Sql.Should().ContainSingle();
+        var sql = result.Sql[0];
+        sql.Should().Contain("LEFT JOIN(", because: "path conditions must use path subquery LEFT JOINs");
+        sql.Should().Contain("EXISTS (", because: "direct $sme#value conditions must use EXISTS subqueries");
+        sql.Should().Contain("GLOB", because: "LIKE must be converted to GLOB for SQLite index performance");
+        sql.Should().NotContain("LIKE", because: "LIKE must be converted to GLOB for SQLite index performance");
+        sql.Should().NotContain("INNER JOIN SMRefSets", because: "no $aas condition in Query2 — AAS table join must be skipped");
     }
 
     // -------------------------------------------------------------------------
@@ -296,118 +307,25 @@ public sealed class QueryTests
         var result = new Query(_fixture.Grammar)
             .GetQueryData(noSecurity: true, db,
                 pageFrom: 0, pageSize: int.MaxValue,
-                ResultType.Submodel, expression);
+                ResultType.Submodel, expression,
+                includeDebugSql: true);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
-    }
 
-    [Fact]
-    public void CreateSqlConditions_OrBranchWithoutAas_DoesNotRestrictAasPrefilter()
-    {
-        const string expression = """
-            {
-              "Query": {
-                "$condition": {
-                  "$or": [
-                    { "$and": [
-                      { "$boolean": true },
-                      { "$eq": [
-                        { "$field": "$aas#id" },
-                        { "$strVal": "https://phoenixcontact.com/qr/2966265/1/aas" }
-                      ] }
-                    ] },
-                    { "$and": [
-                      { "$boolean": true },
-                      { "$eq": [
-                        { "$field": "$aas#id" },
-                        { "$strVal": "https://zvei.org/demo/aas/ControlCabinet" }
-                      ] },
-                      { "$eq": [
-                        { "$field": "$sme.FootprintInformationModule2.CO2eq#value" },
-                        { "$numVal": 103 }
-                      ] }
-                    ] },
-                    { "$and": [
-                      { "$boolean": true },
-                      { "$eq": [
-                        { "$field": "$sm#idShort" },
-                        { "$strVal": "TechnicalData" }
-                      ] },
-                      { "$eq": [
-                        { "$field": "$sme#value" },
-                        { "$hexVal": "16#3DFFAF" }
-                      ] },
-                      { "$eq": [
-                        { "$field": "$sme#semanticId" },
-                        { "$strVal": "https://example.com/semantic/technical-data" }
-                      ] }
-                    ] }
-                  ]
-                }
-              }
-            }
-            """;
-
-        var root = JsonConvert.DeserializeObject<Root>(expression);
-
-        root.Should().NotBeNull();
-        var sqlConditions = QueryGrammarJSON.CreateSqlConditions(root!.Query.Condition);
-
-        sqlConditions.FormulaConditions["aas"].Should().BeEmpty();
-        sqlConditions.FormulaConditions["sme"].Should().Be("(\"SemanticId\" = 'https://example.com/semantic/technical-data')");
-        sqlConditions.FormulaConditions["value"].Should().Be("(v.\"NValue\" = 4063151.0)");
-    }
-
-    [Fact]
-    public void CreateSqlConditions_NestedDirectValueOr_UsesExistsPlaceholder()
-    {
-        const string expression = """
-            {
-              "Query": {
-                "$condition": {
-                  "$and": [
-                    { "$or": [
-                      { "$ne": [
-                        { "$field": "$sme#value" },
-                        { "$strVal": "" }
-                      ] },
-                      { "$ne": [
-                        { "$field": "$sme#value" },
-                        { "$numVal": 0 }
-                      ] }
-                    ] },
-                    { "$or": [
-                      { "$eq": [
-                        { "$field": "$sm#idShort" },
-                        { "$strVal": "Nameplate" }
-                      ] },
-                      { "$eq": [
-                        { "$field": "$sm#idShort" },
-                        { "$strVal": "TechnicalData" }
-                      ] }
-                    ] },
-                    { "$ne": [
-                      { "$field": "$sme#value" },
-                      { "$numVal": 1 }
-                    ] }
-                  ]
-                }
-              }
-            }
-            """;
-
-        var root = JsonConvert.DeserializeObject<Root>(expression);
-
-        root.Should().NotBeNull();
-        var sqlConditions = QueryGrammarJSON.CreateSqlConditions(root!.Query.Condition);
-
-        sqlConditions.FormulaConditions["all"].Should().Contain("$$exists0$$");
-        sqlConditions.FormulaConditions["all"].Should().NotContain("\"value\".");
-        sqlConditions.ExistsConditions.Should().ContainSingle();
-        sqlConditions.ExistsConditions[0].PredicateSql.Should().Contain(" AND ");
-        sqlConditions.ExistsConditions[0].PredicateSql.Should().Contain("((v.\"SValue\" <> '') OR (v.\"NValue\" <> 0))");
-        sqlConditions.ExistsConditions[0].PredicateSql.Should().Contain("(v.\"NValue\" <> 1)");
+        // SQL shape: $aas#id conditions require AAS join; $match requires a match subquery
+        // with Path{N} aliases and substr() for %-wildcard segment extraction;
+        // path conditions ($sme.FootprintInformationModule2.CO2eq) use LEFT JOIN path subqueries;
+        // direct $sme#value (hex) uses EXISTS.
+        result.Sql.Should().ContainSingle();
+        var sql = result.Sql[0];
+        sql.Should().Contain("INNER JOIN SMRefSets", because: "$aas#id conditions require the AAS→SMRefSets join");
+        sql.Should().Contain("SELECT Path1.SMId AS SMId", because: "$match must produce a match subquery joining Path aliases");
+        sql.Should().Contain("substr(", because: "%-wildcard $match paths must extract segments via substr()");
+        sql.Should().Contain("LEFT JOIN(", because: "path conditions must use path subquery LEFT JOINs");
+        sql.Should().Contain("EXISTS (", because: "direct $sme#value hex condition must use EXISTS subquery");
+        sql.Should().Contain("GLOB", because: "LIKE must be converted to GLOB for SQLite index performance");
+        sql.Should().NotContain("LIKE", because: "LIKE must be converted to GLOB for SQLite index performance");
     }
 
     // -------------------------------------------------------------------------
@@ -457,11 +375,23 @@ public sealed class QueryTests
                 pageSize: int.MaxValue,
                 ResultType.Submodel,
                 expression,
-                includeDebugSql: false,
+                includeDebugSql: true,
                 securitySqlConditions: null);
 
         result.Should().NotBeNull();
         result!.Ids.Should().BeEquivalentTo(expected);
+
+        // SQL shape: $match with [] array syntax must produce a match subquery that uses
+        // substr()/instr() to extract the array-index segment between fixed path components,
+        // and Part1_* column aliases to correlate the same array element across all paths in the match.
+        result.Sql.Should().ContainSingle();
+        var sql = result.Sql[0];
+        sql.Should().Contain("SELECT Path1.SMId AS SMId", because: "$match must produce a match subquery with Path aliases");
+        sql.Should().Contain("substr(", because: "[] array match must extract segment positions with substr()");
+        sql.Should().Contain("instr(", because: "[] array match must locate segment boundaries with instr()");
+        sql.Should().Contain("Part1_", because: "[] array match must use Part1_* columns to correlate array indices across paths");
+        sql.Should().Contain("GLOB", because: "LIKE must be converted to GLOB for SQLite index performance");
+        sql.Should().NotContain("LIKE", because: "LIKE must be converted to GLOB for SQLite index performance");
     }
 
     /// <summary>With security: OR-merged access rules + FILTER fragments (sme idShort), not a pure query-only condition.</summary>

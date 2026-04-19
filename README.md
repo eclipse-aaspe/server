@@ -160,6 +160,13 @@ Use [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1) on Windows/PowerShe
 
 V3 can persist data with **Entity Framework** (SQLite is common; PostgreSQL has been used in tests).
 
+For a walkthrough of the relational schema (entity model, `IdShortPath` flattening)
+and how AASQL is translated to SQL (the `CombineTablesLEFT` pipeline with
+`$$path{n}$$` / `$$match{n}$$` / `EXISTS` placeholders and the recursive
+`smePath{k}` / `Path{k}` / `Part1_{..}_{..}` aliases), see
+[`docs/database-and-query.md`](docs/database-and-query.md).
+
+
 | Flag | Purpose |
 |------|---------|
 | `--with-db` | Enable database storage |
