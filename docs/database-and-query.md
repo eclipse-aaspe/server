@@ -63,6 +63,60 @@ dotted path string (`IdShortPath`) such as `Records[0].DateOfRecord` or
 Both representations are kept in sync on write; reads prefer `IdShortPath` because
 it avoids a recursive CTE per query.
 
+### 1.2 Interactive DB browser (`/db` Blazor page)
+
+The AAS server ships a built-in Blazor page at `/db` that exposes the same
+entities live from the running server. It is the developer-facing counterpart of
+the static schema above and is implemented in
+`src/AasxServerBlazor/Pages/Db-chunked.razor`.
+
+![AASX Server /db overview page](images/db-ui-overview.png)
+
+The landing page (`/db`) shows:
+
+- Which backend is active (**SQLite database** or **PostgreSQL database**),
+  driven by `AasContext.IsPostgres`.
+- A **row-count table** for every entity set in `AasContext` — `EnvSets`,
+  `CDSets`, `AASSets`, `SMRefSets`, `SMSets`, `SMESets`, `ValueSets`,
+  `OValueSets` — each with a link (`env`, `cd`, `aas`, `smref`, `sm`, `sme`,
+  `value`, `ovalue`) to a virtualised table view of that set.
+- The `db-schema.svg` diagram (from `wwwroot/db-schema.svg`, generated from
+  `wwwroot/db-schema.puml`) — the same image embedded at the top of this
+  document.
+
+The page is also reachable under the legacy alias `/db-chunked` and exposes one
+route per table (e.g. `/db/sme`, `/db/value`). Each table page uses Blazor's
+`<Virtualize>` to stream rows on demand and supports a simple URL / text-box
+query language:
+
+| Parameter        | Meaning                                                                 |
+|------------------|-------------------------------------------------------------------------|
+| `size=N`         | Page size for the virtualised list (default 1000).                      |
+| `offset=N`       | Skip the first `N` rows before paging.                                  |
+| `search=text`    | Free-text filter applied to `IdShort` / `Identifier` / `SemanticId` / `GlobalAssetId` / `SValue`, depending on the table. |
+| `envid`, `cdid`, `aasid`, `smid`, `smeid`, `parid` | Constrain the view to rows belonging to a specific environment, concept description, AAS, submodel, SME, or parent SME. |
+| `details=true`   | Expand truncated cells (descriptions, semantic IDs, specifications, …). |
+
+Parameters can be passed either via the query string
+(e.g. `/db/sme?smid=42&details=true`) or by typing `key=value` into the input box
+at the top of any table page; the Razor code-behind parses the input and
+refreshes the `Virtualize` container.
+
+Cross-links between the tables mirror the foreign keys in the schema: from an
+AAS row you can jump to its environment, submodel references, submodels, and
+tree view; from an SME you can jump to its submodel, parent SME, children,
+primary `ValueSet` (when `TValue = "S"`) and any `OValueSets`. When
+`Program.edit` is enabled, property values and `TimeStamp` columns become
+editable in-place (via `CrudOperator.setTimeStampValue`), which is convenient
+when debugging timestamp / write-path issues without going through the REST
+API.
+
+The page is intended for developers and operators: it is the quickest way to
+verify that an AASX import produced the expected rows, to eyeball
+`IdShortPath` values generated during flattening (see §1.1), and to spot-check
+the result of an AASQL query by navigating from the reported SM id back into
+the `/db/sme` / `/db/value` views.
+
 ---
 
 ## 2. From AASQL to SQL — the pipeline
