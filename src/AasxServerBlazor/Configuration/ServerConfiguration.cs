@@ -123,7 +123,7 @@ public static class ServerConfiguration
     /// </summary>
     /// <param name="app">The application builder used to configure the middleware pipeline.</param>
     /// <param name="env">The hosting environment the application is running in.</param>
-    public static void ConfigureEnvironment(IApplicationBuilder app, IWebHostEnvironment env)
+    public static void ConfigureEnvironment(IApplicationBuilder app, IWebHostEnvironment env, IConfiguration configuration)
     {
         if (env.IsDevelopment())
         {
@@ -141,6 +141,11 @@ public static class ServerConfiguration
         app.UseRouting();
         app.UseAuthorization();
         app.UseCors(CorsPolicyName);
+
+        // Swagger must be registered BEFORE UseEndpoints: the Blazor fallback
+        // endpoint (MapFallbackToPage("/_Host")) matches every unmatched route
+        // and would otherwise swallow "/swagger" / "/swagger/index.html".
+        ConfigureSwagger(app, configuration);
 
         app.UseEndpoints(ConfigureEndpoints);
     }
