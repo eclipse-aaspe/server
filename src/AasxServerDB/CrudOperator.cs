@@ -14,6 +14,7 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Runtime.Intrinsics.X86;
@@ -29,6 +30,51 @@ namespace AasxServerDB
     // using Microsoft.EntityFrameworkCore.Metadata.Internal;
     using Contracts;
     using Microsoft.IdentityModel.Tokens;
+
+    internal static class ReadDiag
+    {
+        public static bool Enabled = true;
+
+        public static long ReadSubmodelTicks;
+        public static int ReadSubmodelCount;
+
+        public static long AllowCheckTicks;
+        public static int AllowCheckCount;
+
+        public static long ApplyFilterTicks;
+        public static int ApplyFilterCount;
+
+        public static long GetSmeMergedTicks;
+        public static int GetSmeMergedCount;
+
+        public static long JoinSValueTicks;
+        public static long JoinOValueTicks;
+        public static long NoValueTicks;
+
+        public static void Reset()
+        {
+            ReadSubmodelTicks = 0; ReadSubmodelCount = 0;
+            AllowCheckTicks = 0; AllowCheckCount = 0;
+            ApplyFilterTicks = 0; ApplyFilterCount = 0;
+            GetSmeMergedTicks = 0; GetSmeMergedCount = 0;
+            JoinSValueTicks = 0; JoinOValueTicks = 0; NoValueTicks = 0;
+        }
+
+        private static double Ms(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
+
+        public static void Print(string label)
+        {
+            if (!Enabled) return;
+            Console.WriteLine($"[ReadDiag] {label}");
+            Console.WriteLine($"[ReadDiag]   ReadSubmodel         : {ReadSubmodelCount,5} x, total {Ms(ReadSubmodelTicks),8:F1} ms, avg {(ReadSubmodelCount > 0 ? Ms(ReadSubmodelTicks) / ReadSubmodelCount : 0),6:F2} ms");
+            Console.WriteLine($"[ReadDiag]   IsSubmodelAllowed... : {AllowCheckCount,5} x, total {Ms(AllowCheckTicks),8:F1} ms, avg {(AllowCheckCount > 0 ? Ms(AllowCheckTicks) / AllowCheckCount : 0),6:F2} ms");
+            Console.WriteLine($"[ReadDiag]   ApplySmeSqlFilter... : {ApplyFilterCount,5} x, total {Ms(ApplyFilterTicks),8:F1} ms, avg {(ApplyFilterCount > 0 ? Ms(ApplyFilterTicks) / ApplyFilterCount : 0),6:F2} ms");
+            Console.WriteLine($"[ReadDiag]   GetSmeMerged         : {GetSmeMergedCount,5} x, total {Ms(GetSmeMergedTicks),8:F1} ms, avg {(GetSmeMergedCount > 0 ? Ms(GetSmeMergedTicks) / GetSmeMergedCount : 0),6:F2} ms");
+            Console.WriteLine($"[ReadDiag]     join ValueSets     : total {Ms(JoinSValueTicks),8:F1} ms");
+            Console.WriteLine($"[ReadDiag]     join OValueSets    : total {Ms(JoinOValueTicks),8:F1} ms");
+            Console.WriteLine($"[ReadDiag]     no-value residual  : total {Ms(NoValueTicks),8:F1} ms");
+        }
+    }
 
     public class CrudOperator
     {
@@ -564,7 +610,14 @@ namespace AasxServerDB
             return smeQuery.Where(sme => filteredSmes.Select(filtered => filtered.Id).Contains(sme.Id));
         }
 
-        /// <summary>Uses the same SQL as list queries (<see cref="Query.BuildRawSqlFromSqlConditions"/>), including Formula+Filter merge.</summary>
+        /// <summary>
+        /// Single-row allow check that reuses the same SQL builder as list queries
+        /// (<see cref="Query.BuildRawSqlFromSqlConditions"/>), including Formula+Filter merge.
+        /// Injects <c>"Id" = {smSet.Id}</c> into the inner SMSets sub-WHERE so the engine performs
+        /// an indexed lookup and <c>LIMIT 1</c> short-circuits the LEFT JOINs/DISTINCT, instead of
+        /// materializing the full allowed-set behind a wrapping subquery (which previously cost
+        /// seconds per call on large datasets).
+        /// </summary>
         internal static bool? IsSubmodelAllowedBySqlCondition(AasContext db, SMSet smSet, SqlConditions? sqlConditions)
         {
             if (sqlConditions == null)
@@ -572,18 +625,21 @@ namespace AasxServerDB
 
             try
             {
+                var single = CloneSqlConditions(sqlConditions);
+                var existing = single.FilterConditions.GetValueOrDefault("sm", "");
+                single.FilterConditions["sm"] = AppendSqlAnd(existing, $"\"Id\" = {smSet.Id}");
+
                 var raw = Query.BuildRawSqlFromSqlConditions(
-                    sqlConditions,
+                    single,
                     isWithAASTable: false,
                     resultType: ResultType.Submodel,
                     pageFrom: 0,
-                    pageSize: int.MaxValue);
+                    pageSize: 1);
                 if (string.IsNullOrWhiteSpace(raw))
                     return null;
 
-                var sql = $"SELECT allowed.\"Id\" AS \"Id\" FROM ({raw}) AS allowed WHERE allowed.\"Id\" = {{0}}";
                 return db.Set<SMSetIdResult>()
-                    .FromSqlRaw(sql, smSet.Id)
+                    .FromSqlRaw(raw)
                     .AsNoTracking()
                     .Any();
             }
@@ -592,6 +648,18 @@ namespace AasxServerDB
                 Console.WriteLine($"SqlConditions submodel allow check error: {ex.Message}");
                 return null;
             }
+        }
+
+        private static SqlConditions CloneSqlConditions(SqlConditions src)
+        {
+            var dst = new SqlConditions { Select = src.Select };
+            foreach (var kv in src.FormulaConditions) dst.FormulaConditions[kv.Key] = kv.Value;
+            foreach (var kv in src.FilterConditions) dst.FilterConditions[kv.Key] = kv.Value;
+            foreach (var kv in src.FormulaConditionsCSharp) dst.FormulaConditionsCSharp[kv.Key] = kv.Value;
+            dst.Paths.AddRange(src.Paths);
+            dst.Matches.AddRange(src.Matches);
+            dst.ExistsConditions.AddRange(src.ExistsConditions);
+            return dst;
         }
 
         private static string? AppendSqlAnd(string? left, string? right)
@@ -632,36 +700,49 @@ namespace AasxServerDB
                 valueSets = QueryValueRaw(db, valueSql).AsQueryable();
             }
 
+            var swJoinS = Stopwatch.StartNew();
             var joinSValue = querySME.Join(
                 valueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
                 (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, valueSet = sv, oValueSet = null })
                 .ToList();
+            swJoinS.Stop();
+            if (ReadDiag.Enabled) ReadDiag.JoinSValueTicks += swJoinS.ElapsedTicks;
 
+            var swJoinO = Stopwatch.StartNew();
             var joinOValue = querySME.Join(
                 db.OValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
                 (sme, sv) => new SmeMerged {smSet = smSet, smeSet = sme, valueSet = null, oValueSet = sv })
                 .ToList();
+            swJoinO.Stop();
+            if (ReadDiag.Enabled) ReadDiag.JoinOValueTicks += swJoinO.ElapsedTicks;
 
             var result = joinSValue;
             result.AddRange(joinOValue);
 
+            var swNoVal = Stopwatch.StartNew();
             var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
             var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
                 .Select(sme => new SmeMerged {smSet = smSet, smeSet = sme, valueSet = null, oValueSet = null })
                 .ToList();
             result.AddRange(noValue);
+            swNoVal.Stop();
+            if (ReadDiag.Enabled) ReadDiag.NoValueTicks += swNoVal.ElapsedTicks;
 
             return result;
         }
 
         public static List<ISubmodel> ReadPagedSubmodels(AasContext db, Query? querySM, IPaginationParameters paginationParameters, IReference reqSemanticId, string idShort, SqlConditions? securitySqlConditions = null)
         {
+            ReadDiag.Reset();
+            var swPage = Stopwatch.StartNew();
+
             List<ISubmodel> output = new List<ISubmodel>();
 
+            var swPrep = Stopwatch.StartNew();
             // Build SQL equivalents of semanticId/idShort and merge with securitySqlConditions
             var smParamSql = new List<string>();
             string? semanticIdVal = reqSemanticId?.Keys?.Count > 0 ? reqSemanticId.Keys[0].Value : null;
@@ -677,21 +758,30 @@ namespace AasxServerDB
                 paramSql.FormulaConditions["sm"] = string.Join(" AND ", smParamSql.Select(part => $"({part})"));
                 mergedSqlConditions = SqlConditionsMerger.Merge(securitySqlConditions, paramSql);
             }
+            swPrep.Stop();
 
+            var swSearch = Stopwatch.StartNew();
             var result = querySM?.SearchSMs(
                 db,
                 pageFrom: paginationParameters.Cursor,
                 pageSize: paginationParameters.Limit,
                 expression: "$all",
                 securitySqlConditions: mergedSqlConditions);
+            swSearch.Stop();
             if (result == null)
+            {
+                if (ReadDiag.Enabled)
+                    Console.WriteLine($"[ReadDiag] ReadPagedSubmodels: SearchSMs returned null after {swSearch.ElapsedMilliseconds} ms");
                 return output;
+            }
 
+            var swMaterialize = Stopwatch.StartNew();
             var smDBList = db.SMSets.Where(sm => result.Contains(sm.Id)).ToList();
+            swMaterialize.Stop();
 
             var timeStamp = DateTime.UtcNow;
 
-            foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB, securitySqlConditions: mergedSqlConditions)))
+            foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB, securitySqlConditions: mergedSqlConditions, skipAllowCheck: true)))
             {
                 if (sm != null)
                 {
@@ -704,12 +794,25 @@ namespace AasxServerDB
                 }
             }
 
+            swPage.Stop();
+            if (ReadDiag.Enabled)
+            {
+                Console.WriteLine($"[ReadDiag] ReadPagedSubmodels page: pageSize={paginationParameters.Limit}, cursor={paginationParameters.Cursor}, returned={output.Count}, total={swPage.ElapsedMilliseconds} ms");
+                Console.WriteLine($"[ReadDiag]   prep mergedSqlConditions    : {swPrep.ElapsedMilliseconds,5} ms");
+                Console.WriteLine($"[ReadDiag]   SearchSMs                   : {swSearch.ElapsedMilliseconds,5} ms (returned {result.Count} ids)");
+                Console.WriteLine($"[ReadDiag]   db.SMSets.Where(...).ToList : {swMaterialize.ElapsedMilliseconds,5} ms (loaded {smDBList.Count} rows)");
+                ReadDiag.Print("  ReadSubmodel phases:");
+            }
+
             return output;
         }
 
         public static Submodel? ReadSubmodel(AasContext db, SMSet? smDB = null, string submodelIdentifier = "",
-            bool loadIntoMemoryWithoutElements = false, SqlConditions? securitySqlConditions = null)
+            bool loadIntoMemoryWithoutElements = false, SqlConditions? securitySqlConditions = null,
+            bool skipAllowCheck = false)
         {
+            var swRead = Stopwatch.StartNew();
+
             if (!submodelIdentifier.IsNullOrEmpty())
             {
                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
@@ -750,17 +853,43 @@ namespace AasxServerDB
 
             if (!loadIntoMemoryWithoutElements)
             {
-                var isAllowedBySql = IsSubmodelAllowedBySqlCondition(db, smDB, securitySqlConditions);
-                if (isAllowedBySql == false)
+                if (!skipAllowCheck)
                 {
-                    return null;
+                    var swAllow = Stopwatch.StartNew();
+                    var isAllowedBySql = IsSubmodelAllowedBySqlCondition(db, smDB, securitySqlConditions);
+                    swAllow.Stop();
+                    if (ReadDiag.Enabled)
+                    {
+                        ReadDiag.AllowCheckTicks += swAllow.ElapsedTicks;
+                        ReadDiag.AllowCheckCount++;
+                    }
+                    if (isAllowedBySql == false)
+                    {
+                        return null;
+                    }
                 }
 
+                var swApply = Stopwatch.StartNew();
+                var filteredSmeQuery = ApplySmeSqlFilterConditions(db, SMEQueryAll, smDB, securitySqlConditions);
+                swApply.Stop();
+                if (ReadDiag.Enabled)
+                {
+                    ReadDiag.ApplyFilterTicks += swApply.ElapsedTicks;
+                    ReadDiag.ApplyFilterCount++;
+                }
+
+                var swMerged = Stopwatch.StartNew();
                 var smeMerged = GetSmeMerged(
                     db,
-                    ApplySmeSqlFilterConditions(db, SMEQueryAll, smDB, securitySqlConditions),
+                    filteredSmeQuery,
                     smDB,
                     securitySqlConditions);
+                swMerged.Stop();
+                if (ReadDiag.Enabled)
+                {
+                    ReadDiag.GetSmeMergedTicks += swMerged.ElapsedTicks;
+                    ReadDiag.GetSmeMergedCount++;
+                }
 
                 if (smeMerged == null)
                 {
@@ -778,6 +907,13 @@ namespace AasxServerDB
             submodel.TimeStampTree = smDB.TimeStampTree;
             submodel.TimeStampDelete = smDB.TimeStampDelete;
             submodel.SetAllParents();
+
+            swRead.Stop();
+            if (ReadDiag.Enabled)
+            {
+                ReadDiag.ReadSubmodelTicks += swRead.ElapsedTicks;
+                ReadDiag.ReadSubmodelCount++;
+            }
 
             return submodel;
         }

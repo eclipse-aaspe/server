@@ -417,7 +417,7 @@ public partial class Query
                     var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                     foreach (var sm in smList.Select(selector: submodelDB =>
-                        ReadSubmodel(db, smDB: submodelDB, securitySqlConditions: effectiveSecurity)))
+                        ReadSubmodel(db, smDB: submodelDB, securitySqlConditions: effectiveSecurity, skipAllowCheck: true)))
                     {
                         if (sm != null)
                         {
@@ -1421,7 +1421,10 @@ public partial class Query
 
         bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
+        var swBuild = Stopwatch.StartNew();
         var rawSql = BuildRawSqlFromSqlConditions(sqlConditions, isWithAASTable, resultType, pageFrom, pageSize, flags);
+        swBuild.Stop();
+        Console.WriteLine($"[ReadDiag] CombineTablesLEFT.BuildRawSql: {swBuild.ElapsedMilliseconds} ms");
         if (rawSql == null)
             throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
 
@@ -1453,13 +1456,21 @@ public partial class Query
 
 
         AddGeneratedSql(generatedSql, rawSql);
-        var qpRaw = GetQueryPlan(db, rawSql);
 
-        return db.Set<SMSetIdResult>()
+        var swPlan = Stopwatch.StartNew();
+        var qpRaw = GetQueryPlan(db, rawSql);
+        swPlan.Stop();
+        Console.WriteLine($"[ReadDiag] CombineTablesLEFT.GetQueryPlan: {swPlan.ElapsedMilliseconds} ms");
+
+        var swExec = Stopwatch.StartNew();
+        var ids = db.Set<SMSetIdResult>()
             .FromSqlRaw(rawSql)
             .AsNoTracking()
             .Select(x => x.Id)
             .ToList();
+        swExec.Stop();
+        Console.WriteLine($"[ReadDiag] CombineTablesLEFT.Execute   : {swExec.ElapsedMilliseconds} ms ({ids.Count} ids)");
+        return ids;
     }
 
     // ------------------------------------------------------------------

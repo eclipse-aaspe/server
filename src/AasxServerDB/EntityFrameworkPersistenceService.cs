@@ -2016,7 +2016,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 db,
                 smDB[0],
                 loadIntoMemoryWithoutElements: loadIntoMemoryWithoutElements,
-                securitySqlConditions: securitySqlConditions);
+                securitySqlConditions: securitySqlConditions,
+                skipAllowCheck: true);
             if (output != null)
             {
                 smDb = smDB[0];
