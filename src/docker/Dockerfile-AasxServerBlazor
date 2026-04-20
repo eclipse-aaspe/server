@@ -9,12 +9,13 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-# System = SQLitePCLRaw loads distro libsqlite3 (installed below on Ubuntu). Embedded = bundled e_sqlite3 from NuGet.
-ARG AASX_SQLITE_BUNDLE=System
+# SQLite provider is selected at runtime (see AasxServerDB.SqliteProviderInitializer).
+# In this container we default to the distro libsqlite3 (installed below); override
+# by running with -e AASX_SQLITE_PROVIDER=embedded to use the bundled e_sqlite3.
 RUN dotnet clean
-RUN dotnet restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
-RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v d -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
-RUN dotnet publish -c Release -v d --no-restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
+RUN dotnet restore
+RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v d
+RUN dotnet publish -c Release -v d --no-restore
 
 # Use a runtime image to run the application
 # Specify the initial base architecture (amd64 in this case)
@@ -27,6 +28,9 @@ RUN apt-get update && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 ENV ASPNETCORE_URLS=http://+:5001
 ENV ASPNETCORE_HTTP_PORTS=5001
+# Default SQLite provider in this image = distro libsqlite3. Override with
+# `-e AASX_SQLITE_PROVIDER=embedded` (or strict-system) at container start.
+ENV AASX_SQLITE_PROVIDER=system
 EXPOSE 5001/tcp
 EXPOSE 5001/udp
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/

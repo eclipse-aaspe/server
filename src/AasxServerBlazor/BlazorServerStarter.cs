@@ -35,6 +35,8 @@ public static class BlazorServerStarter
 
     public static void Main(string[] args)
     {
+        AasxServerDB.SqliteProviderInitializer.Initialize();
+
         if (args.Contains("--debug-wait"))
         {
             Console.WriteLine();

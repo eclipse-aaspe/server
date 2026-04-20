@@ -19,15 +19,20 @@
     <PackageReference Include="Irony" Version="1.5.2" />
     <PackageReference Include="jose-jwt" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
-    <!-- Bundle switch: see ../Directory.Build.props (AasxSqliteNativeBundle Embedded | System) -->
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' != 'System'" />
-    <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'" />
-    <!-- Satisfy Microsoft.Data.Sqlite -> bundle_e_sqlite3 without publishing libe_sqlite3 (Update alone can leave native assets). -->
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'">
-      <IncludeAssets>none</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <!--
+      SQLite native: runtime-switchable (no more compile-time bundle choice).
+      The embedded shim (e_sqlite3) and its native are always shipped.
+      The stock provider (sqlite3) is a thin P/Invoke shim; it only touches
+      the OS libsqlite3 when selected at startup via AASX_SQLITE_PROVIDER=system.
+      Provider is chosen in AasxServerDB.SqliteProviderInitializer (ModuleInitializer).
+      Use Microsoft.EntityFrameworkCore.Sqlite.Core / Microsoft.Data.Sqlite.Core
+      to avoid pulling the auto-initializing bundle_* meta-package.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.9" />
+    <PackageReference Include="SQLitePCLRaw.core" Version="2.1.10" />
+    <PackageReference Include="SQLitePCLRaw.provider.e_sqlite3" Version="2.1.10" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
+    <PackageReference Include="SQLitePCLRaw.provider.sqlite3" Version="2.1.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

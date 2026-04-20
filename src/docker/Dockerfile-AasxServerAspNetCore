@@ -7,15 +7,18 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-ARG AASX_SQLITE_BUNDLE=System
+# SQLite provider is selected at runtime (see AasxServerDB.SqliteProviderInitializer).
+# Container default = distro libsqlite3 (installed below). Opt-out with
+# -e AASX_SQLITE_PROVIDER=embedded.
 RUN dotnet clean
-RUN dotnet restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
-RUN dotnet build -o /out/AasxServerAspNetCore AasxServerAspNetCore -v d -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
-RUN dotnet publish -c Release -v d --no-restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
+RUN dotnet restore
+RUN dotnet build -o /out/AasxServerAspNetCore AasxServerAspNetCore -v d
+RUN dotnet publish -c Release -v d --no-restore
 
 # Use a runtime image to run the application
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:9.0-noble as base
-# Required for System bundle (libsqlite3.so + symlink for SQLitePCLRaw).
+# Install distro libsqlite3 so the runtime switch AASX_SQLITE_PROVIDER=system works
+# out-of-the-box. If not selected, the bundled e_sqlite3 is used and this lib is idle.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libsqlite3-0 \
     && SO0="$(ls /usr/lib/*/libsqlite3.so.0 2>/dev/null | head -1)" \
@@ -24,6 +27,9 @@ RUN apt-get update \
 EXPOSE 5001/tcp
 EXPOSE 5001/udp
 ENV ASPNETCORE_URLS=http://+:5001
+# Default SQLite provider in this image = distro libsqlite3. Override with
+# `-e AASX_SQLITE_PROVIDER=embedded` (or strict-system) at container start.
+ENV AASX_SQLITE_PROVIDER=system
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
 WORKDIR /AasxServerAspNetCore

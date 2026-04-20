@@ -7,11 +7,13 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-ARG AASX_SQLITE_BUNDLE=System
+# SQLite provider is selected at runtime (see AasxServerDB.SqliteProviderInitializer).
+# Container default = distro libsqlite3 (installed below). Opt-out with
+# -e AASX_SQLITE_PROVIDER=embedded.
 RUN dotnet clean
-RUN dotnet restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
-RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
-RUN dotnet publish -c Release -v diag --no-restore -p:AasxSqliteNativeBundle=${AASX_SQLITE_BUNDLE}
+RUN dotnet restore
+RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag
+RUN dotnet publish -c Release -v diag --no-restore
 
 # Use a runtime image to run the application
 # Specify the initial base architecture (amd64 in this case)
@@ -21,6 +23,9 @@ RUN apt-get update && apt-get upgrade -y \
     && SO0="$(ls /usr/lib/*/libsqlite3.so.0 2>/dev/null | head -1)" \
     && test -n "$SO0" && ln -sf "$SO0" "$(dirname "$SO0")/libsqlite3.so" \
     && rm -rf /var/lib/apt/lists/*
+# Default SQLite provider in this image = distro libsqlite3. Override with
+# `-e AASX_SQLITE_PROVIDER=embedded` (or strict-system) at container start.
+ENV AASX_SQLITE_PROVIDER=system
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/

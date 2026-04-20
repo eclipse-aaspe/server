@@ -47,14 +47,12 @@
         <PackageReference Include="IdentityModel" Version="7.0.0" />
         <PackageReference Include="jose-jwt" Version="5.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
-        <!-- Bundle switch: see ../Directory.Build.props (AasxSqliteNativeBundle Embedded | System) -->
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' != 'System'" />
-        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'" />
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" Condition="'$(AasxSqliteNativeBundle)' == 'System'">
-            <IncludeAssets>none</IncludeAssets>
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
+        <!-- SQLite native provider is selected at runtime; see AasxServerDB.SqliteProviderInitializer. -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.9" />
+        <PackageReference Include="SQLitePCLRaw.core" Version="2.1.10" />
+        <PackageReference Include="SQLitePCLRaw.provider.e_sqlite3" Version="2.1.10" />
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
+        <PackageReference Include="SQLitePCLRaw.provider.sqlite3" Version="2.1.10" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

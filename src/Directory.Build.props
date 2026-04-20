@@ -1,18 +1,16 @@
 <Project>
-  <PropertyGroup>
-    <!--
-      SQLite native loading (SQLitePCLRaw):
-      - Embedded  — bundle_e_sqlite3 (NuGet, e_sqlite3.dll/.so). Use for Visual Studio / Windows debug.
-      - System    — bundle_sqlite3 (loads libsqlite3 / sqlite3). Use for copy-deploy on Ubuntu; install libsqlite3-0 (+ libsqlite3.so symlink if needed).
+  <!--
+    SQLite native loading is now decided at RUNTIME, not at build time.
+    A single build ships the embedded e_sqlite3 native plus both SQLitePCLRaw
+    providers. At process start, AasxServerDB.SqliteProviderInitializer picks
+    the provider based on OS and the AASX_SQLITE_PROVIDER environment variable:
 
-      In Visual Studio: Directory.Build.props must live under server/src (MSBuild walks up from each .csproj). Solution Items link is not enough if the file is not on disk there.
+      Windows                   : always embedded (bundled e_sqlite3).
+      Linux / macOS default     : embedded.
+      Linux / macOS opt-in      : AASX_SQLITE_PROVIDER=system   -> use distro libsqlite3
+                                   (auto-fallback to embedded if libsqlite3 is missing)
+                                  AASX_SQLITE_PROVIDER=strict-system -> hard fail if missing
 
-      After switching Embedded -> System: republish and remove stale native files on the server, e.g.
-        rm -rf runtimes/*/native/libe_sqlite3.so*
-      Otherwise an old publish can still load embedded SQLite (~3.46) while the distro lib is 3.45.
-
-      CLI: dotnet publish -p:AasxSqliteNativeBundle=System -r linux-x64
-    -->
-    <AasxSqliteNativeBundle>Embedded</AasxSqliteNativeBundle>
-  </PropertyGroup>
+    The former MSBuild property AasxSqliteNativeBundle is obsolete.
+  -->
 </Project>
