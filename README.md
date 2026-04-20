@@ -38,10 +38,11 @@ The **Blazor** variant offers the same functionality and uses Blazor for a brows
 
 > **TIP**
 >
-> A demo server is running at [https://v3.admin-shell-io.com](https://v3.admin-shell-io.com).  
-> You can explore the API manually at [https://v3.admin-shell-io.com/swagger](https://v3.admin-shell-io.com/swagger).
+> The current reference demo (large dataset, **security and row-level filtering enabled**) is [`https://big.aas-voyager.com/`](https://big.aas-voyager.com/).  
+> Explore the API at [`/swagger`](https://big.aas-voyager.com/swagger), the live access rules at [`/access`](https://big.aas-voyager.com/access), and the DB browser at [`/db`](https://big.aas-voyager.com/db).  
+> See [`docs/security.md`](docs/security.md) for how the roles, rule language and `FILTER` blocks used by that server are wired up.
 
-An AASX Server with security enabled can be found here: https://v3security.admin-shell-io.com/.
+> Older demo endpoints such as `v3.admin-shell-io.com` and `v3security.admin-shell-io.com` are outdated; prefer `big.aas-voyager.com` for all new tests and screenshots.
 
 ## Quick reference (V3)
 
@@ -175,7 +176,19 @@ and how AASQL is translated to SQL (the `CombineTablesLEFT` pipeline with
 | `--save-temp SEC` | Periodically write API changes to the DB every **SEC** seconds |
 | `--aasx-in-memory N` | Limit how many AAS appear in the Blazor tree (only the most recently changed may be shown when limited) |
 
-Example server with DB (third-party): [Example Server](https://cloudrepo.h2894164.stratoserver.net) · [DB view](https://cloudrepo.h2894164.stratoserver.net/db) · [GraphQL](https://cloudrepo.h2894164.stratoserver.net/graphql/) (type `{` then space for the wizard).
+Reference demo with DB enabled: [`big.aas-voyager.com`](https://big.aas-voyager.com/) · [DB view](https://big.aas-voyager.com/db) · [access rules](https://big.aas-voyager.com/access) · [Swagger](https://big.aas-voyager.com/swagger).
+
+### Security (authentication, roles, access rules)
+
+Security is configured through AAS submodels (`SecuritySettingsForServer`,
+`SecurityMetamodelForServer`) plus a JSON rule file served at `/Access`.
+The reference deployment [`big.aas-voyager.com`](https://big.aas-voyager.com/)
+has role-based authentication **and** row-level `FILTER` rules enabled.
+
+For the role catalogue (`isNotAuthenticated`, `isReaderOnly`,
+`isAuthenticatedUser`, `isSuperDuperUser`, …), the `AllAccessPermissionRules`
+rule language served at `/Access`, and how `FORMULA` / `FILTER` expressions are
+merged into the AASQL pipeline, see [`docs/security.md`](docs/security.md).
 
 Example GraphQL query:
 
