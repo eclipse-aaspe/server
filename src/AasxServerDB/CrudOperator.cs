@@ -735,7 +735,8 @@ namespace AasxServerDB
             return result;
         }
 
-        public static List<ISubmodel> ReadPagedSubmodels(AasContext db, Query? querySM, IPaginationParameters paginationParameters, IReference reqSemanticId, string idShort, SqlConditions? securitySqlConditions = null)
+        /// <summary>Paged submodels; <paramref name="searchExpression"/> is forwarded to <see cref="Query.SearchSMs"/> (append <c>$LEGACYSMEJOIN</c> to force legacy SME DISTINCT LEFT JOIN SQL).</summary>
+        public static List<ISubmodel> ReadPagedSubmodels(AasContext db, Query? querySM, IPaginationParameters paginationParameters, IReference reqSemanticId, string idShort, SqlConditions? securitySqlConditions = null, string searchExpression = "$all")
         {
             ReadDiag.Reset();
             var swPage = Stopwatch.StartNew();
@@ -765,7 +766,7 @@ namespace AasxServerDB
                 db,
                 pageFrom: paginationParameters.Cursor,
                 pageSize: paginationParameters.Limit,
-                expression: "$all",
+                expression: searchExpression,
                 securitySqlConditions: mergedSqlConditions);
             swSearch.Stop();
             if (result == null)

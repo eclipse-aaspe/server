@@ -570,7 +570,7 @@ public partial class Query
             expression = expression.Replace("$CONSOLIDATE", string.Empty);
         }
 
-        List<string> possibleFlags = ["$LEFTJOIN", "$UNION", "$TEMPTABLE"];
+        List<string> possibleFlags = ["$LEFTJOIN", "$UNION", "$TEMPTABLE", "$LEGACYSMEJOIN"];
         List<string> flags = [];
         foreach (var flag in possibleFlags)
         {
@@ -580,6 +580,9 @@ public partial class Query
                 expression = expression.Replace(flag, string.Empty);
             }
         }
+
+        if (flags.Contains("$LEGACYSMEJOIN"))
+            messages.Add("$LEGACYSMEJOIN");
 
         var lastID = -1;
         var orderBy = false;
@@ -1173,6 +1176,167 @@ public partial class Query
         return parts;
     }
 
+    /// <summary>
+    /// Splits a WHERE expression into top-level AND parts (same token rules as <see cref="SplitTopLevelOr"/>).
+    /// </summary>
+    public static List<string> SplitTopLevelAnd(string whereExpression)
+    {
+        if (whereExpression == null)
+            throw new ArgumentNullException(nameof(whereExpression));
+
+        var parts = new List<string>();
+        var sb = new StringBuilder(whereExpression.Length);
+
+        int depth = 0;
+        bool inSingle = false;
+        bool inDouble = false;
+        bool inLineComment = false;
+        bool inBlockComment = false;
+
+        for (int i = 0; i < whereExpression.Length; i++)
+        {
+            char c = whereExpression[i];
+            char next = i + 1 < whereExpression.Length ? whereExpression[i + 1] : '\0';
+
+            if (inLineComment)
+            {
+                sb.Append(c);
+                if (c == '\n')
+                    inLineComment = false;
+                continue;
+            }
+
+            if (inBlockComment)
+            {
+                sb.Append(c);
+                if (c == '*' && next == '/')
+                {
+                    sb.Append(next);
+                    i++;
+                    inBlockComment = false;
+                }
+                continue;
+            }
+
+            if (!inSingle && !inDouble)
+            {
+                if (c == '-' && next == '-')
+                {
+                    sb.Append(c).Append(next);
+                    i++;
+                    inLineComment = true;
+                    continue;
+                }
+                if (c == '/' && next == '*')
+                {
+                    sb.Append(c).Append(next);
+                    i++;
+                    inBlockComment = true;
+                    continue;
+                }
+            }
+
+            if (!inDouble && c == '\'')
+            {
+                sb.Append(c);
+                if (inSingle)
+                {
+                    if (next == '\'')
+                    {
+                        sb.Append(next);
+                        i++;
+                    }
+                    else
+                    {
+                        inSingle = false;
+                    }
+                }
+                else
+                {
+                    inSingle = true;
+                }
+                continue;
+            }
+
+            if (!inSingle && c == '"')
+            {
+                sb.Append(c);
+                if (inDouble)
+                {
+                    if (next == '"')
+                    {
+                        sb.Append(next);
+                        i++;
+                    }
+                    else
+                    {
+                        inDouble = false;
+                    }
+                }
+                else
+                {
+                    inDouble = true;
+                }
+                continue;
+            }
+
+            if (!inSingle && !inDouble)
+            {
+                if (c == '(')
+                {
+                    depth++;
+                    sb.Append(c);
+                    continue;
+                }
+
+                if (c == ')')
+                {
+                    depth = Math.Max(0, depth - 1);
+                    sb.Append(c);
+                    continue;
+                }
+            }
+
+            if (!inSingle && !inDouble && depth == 0 && IsAndTokenAt(whereExpression, i))
+            {
+                var part = sb.ToString().Trim();
+                if (part.Length > 0)
+                    parts.Add(part);
+                sb.Clear();
+                i += 2;
+                while (i + 1 < whereExpression.Length && char.IsWhiteSpace(whereExpression[i + 1]))
+                    i++;
+                continue;
+            }
+
+            sb.Append(c);
+        }
+
+        var last = sb.ToString().Trim();
+        if (last.Length > 0)
+            parts.Add(last);
+
+        return parts;
+    }
+
+    private static bool IsAndTokenAt(string s, int index)
+    {
+        if (index + 2 >= s.Length)
+            return false;
+
+        char c0 = s[index];
+        char c1 = s[index + 1];
+        char c2 = s[index + 2];
+        if (!((c0 == 'A' || c0 == 'a') && (c1 == 'N' || c1 == 'n') && (c2 == 'D' || c2 == 'd')))
+            return false;
+
+        char before = index > 0 ? s[index - 1] : '\0';
+        char after = index + 3 < s.Length ? s[index + 3] : '\0';
+        bool beforeOk = index == 0 || !IsIdentChar(before);
+        bool afterOk = index + 3 >= s.Length || !IsIdentChar(after);
+        return beforeOk && afterOk;
+    }
+
     private static bool IsOrTokenAt(string s, int index)
     {
         // Need "OR" case-insensitive and token-bounded
@@ -1503,6 +1667,8 @@ public partial class Query
         var withUnion = queryFlags != null && queryFlags.Contains("$UNION");
         var withTemp  = queryFlags != null && queryFlags.Contains("$TEMPTABLE");
         var unionOrTemp = withUnion || withTemp;
+        // Default: rewrite pure SME filters to correlated EXISTS. Opt out with $LEGACYSMEJOIN (legacy LEFT JOIN + DISTINCT sme_inner).
+        var useLegacySmeJoin = queryFlags != null && queryFlags.Contains("$LEGACYSMEJOIN");
 
         // Resolve placeholder references
         var overall = AppendAndCondition(NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("all", "")), filterAll);
@@ -1602,18 +1768,23 @@ public partial class Query
         string? smeJoin = null;
         if (overallHasSmeRef)
         {
-            var smeFields = GetSqlFields("sme", overall);
-            var smeWhere = whereSme.Replace("\"sme\".", "\"sme_inner\".");
+            if (!useLegacySmeJoin && TryRewriteOverallWithSmeExists(overall, whereSme, out var overallSmeExists))
+                overall = overallSmeExists;
+            else
+            {
+                var smeFields = GetSqlFields("sme", overall);
+                var smeWhere = whereSme.Replace("\"sme\".", "\"sme_inner\".");
 
-            var sbSme = new StringBuilder();
-            sbSme.Append("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme_inner.SMId AS \"SMId\"");
-            foreach (var field in smeFields)
-                sbSme.Append($",\r\n    sme_inner.\"{field}\" AS \"{field}\"");
-            sbSme.Append("\r\n  FROM SMESets sme_inner\r\n");
-            if (!string.IsNullOrWhiteSpace(smeWhere))
-                sbSme.Append($"  WHERE {smeWhere}\r\n");
-            sbSme.Append(") AS sme ON sme.\"SMId\" = sm.Id\r\n");
-            smeJoin = sbSme.ToString();
+                var sbSme = new StringBuilder();
+                sbSme.Append("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme_inner.SMId AS \"SMId\"");
+                foreach (var field in smeFields)
+                    sbSme.Append($",\r\n    sme_inner.\"{field}\" AS \"{field}\"");
+                sbSme.Append("\r\n  FROM SMESets sme_inner\r\n");
+                if (!string.IsNullOrWhiteSpace(smeWhere))
+                    sbSme.Append($"  WHERE {smeWhere}\r\n");
+                sbSme.Append(") AS sme ON sme.\"SMId\" = sm.Id\r\n");
+                smeJoin = sbSme.ToString();
+            }
         }
 
         string? valueJoin = null;
@@ -1690,6 +1861,116 @@ public partial class Query
   WHERE sme_value.SMId = sm.Id
     AND ({predicateSql})
 )";
+    }
+
+    /// <summary>
+    /// True if this top-level AND conjunct references <c>"sme".</c> but no other table aliases that would
+    /// require staying in the outer WHERE (sm/aas/value/path/match). Used to gate SME EXISTS rewrite (unless <c>$LEGACYSMEJOIN</c>).
+    /// </summary>
+    private static bool SmeExistsConjunctIsPure(string conjunct)
+    {
+        if (!conjunct.Contains("\"sme\".", StringComparison.Ordinal))
+            return false;
+        if (conjunct.Contains("\"sm\".", StringComparison.Ordinal)) return false;
+        if (conjunct.Contains("\"aas\".", StringComparison.Ordinal)) return false;
+        if (conjunct.Contains("\"value\".", StringComparison.Ordinal)) return false;
+        if (Regex.IsMatch(conjunct, @"\bp\d+\.SMId\b")) return false;
+        if (Regex.IsMatch(conjunct, @"\bm\d+\.SMId\b")) return false;
+        return true;
+    }
+
+    /// <summary>
+    /// Normalizes SME EXISTS inner fragments so duplicate predicates (Filter <c>whereSme</c> vs. merged
+    /// <c>"sme".</c> conjuncts, or <c>e.</c> vs. unqualified columns inside <c>FROM SMESets e</c>) collapse to one key.
+    /// </summary>
+    private static string NormalizeSmeExistsChunkForDedup(string sql)
+    {
+        var s = sql.Trim();
+        s = s.Replace("\"e\".", "", StringComparison.Ordinal);
+        s = s.Replace("\"sme\".", "", StringComparison.Ordinal);
+        return Regex.Replace(s, @"\s+", " ", RegexOptions.CultureInvariant);
+    }
+
+    /// <summary>
+    /// Moves pure top-level AND conjuncts that reference <c>"sme"</c> into a correlated
+    /// <c>EXISTS (SELECT 1 FROM SMESets e WHERE e.SMId = sm.Id AND …)</c> and merges per-scope
+    /// <paramref name="whereSme"/> (formula+filter) into the EXISTS body. Returns false if any
+    /// <c>"sme"</c> conjunct also references other aliases (caller must use the DISTINCT LEFT JOIN path).
+    /// </summary>
+    private static bool TryRewriteOverallWithSmeExists(string overall, string whereSme, out string rewrittenOverall)
+    {
+        rewrittenOverall = overall;
+        if (string.IsNullOrWhiteSpace(overall) || overall == "1=1")
+            return false;
+        if (!overall.Contains("\"sme\".", StringComparison.Ordinal))
+            return false;
+
+        var parts = SplitTopLevelAnd(overall);
+        if (parts.Count == 0)
+            return false;
+
+        var smeParts = new List<string>();
+        var restParts = new List<string>();
+
+        foreach (var p in parts)
+        {
+            var trimmed = p.Trim();
+            if (trimmed.Length == 0)
+                continue;
+
+            if (!trimmed.Contains("\"sme\".", StringComparison.Ordinal))
+            {
+                restParts.Add(trimmed);
+                continue;
+            }
+
+            if (!SmeExistsConjunctIsPure(trimmed))
+                return false;
+
+            smeParts.Add(trimmed);
+        }
+
+        if (smeParts.Count == 0)
+            return false;
+
+        var smeWhereE = string.IsNullOrWhiteSpace(whereSme) ? "" : whereSme.Replace("\"sme\".", "\"e\".", StringComparison.Ordinal);
+
+        var innerChunks = new List<string>();
+        var innerSeen = new HashSet<string>(StringComparer.Ordinal);
+        void AddInnerChunk(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return;
+            var t = raw.Trim();
+            var key = NormalizeSmeExistsChunkForDedup(t);
+            if (key.Length == 0 || !innerSeen.Add(key)) return;
+            innerChunks.Add(t);
+        }
+
+        AddInnerChunk(smeWhereE);
+        foreach (var sp in smeParts)
+            AddInnerChunk(sp.Replace("\"sme\".", "\"e\".", StringComparison.Ordinal));
+
+        if (innerChunks.Count == 0)
+            return false;
+
+        string? innerCombined = null;
+        foreach (var ch in innerChunks)
+            innerCombined = AppendAndCondition(innerCombined, ch);
+
+        var existsClause =
+            "EXISTS (\r\n" +
+            "  SELECT 1\r\n" +
+            "  FROM SMESets e\r\n" +
+            "  WHERE e.SMId = sm.Id\r\n" +
+            $"    AND ({innerCombined})\r\n" +
+            ")";
+
+        string? restChain = null;
+        foreach (var rp in restParts)
+            restChain = AppendAndCondition(restChain, rp);
+
+        rewrittenOverall = AppendAndCondition(restChain, existsClause);
+        return true;
     }
 
     private static string BuildDirectUnionOrTempSql(
