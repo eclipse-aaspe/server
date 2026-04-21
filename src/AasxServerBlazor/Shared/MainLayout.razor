@@ -265,67 +265,72 @@
 
 @code{
 
-    static List<string> roleList = new()
+	static List<string> roleList = new()
                                    {
                                        "Anonym", "Isabelle", "Steven", "Albert"
                                    };
 
-    static string _role = roleList[ 0 ];
-    static string _input = string.Empty;
-    static string _watchText = string.Empty;
-    static string _path = string.Empty;
-    static bool _loading;
-    static bool _edit;
+	static string _role = roleList[ 0 ];
+	static string _input = string.Empty;
+	static string _watchText = string.Empty;
+	static string _path = string.Empty;
+	static bool _loading;
+	static bool _edit;
 
-//TODO: code duplication with Pcf2.razor
-    static string getAasLink(IIdentifiable aas)
-    {
-        string endpoint  = null;
-        var    idEncoded = Base64UrlEncoder.Encode(aas.Id);
-        if (aas.Extensions != null)
-        {
-            endpoint = aas.Extensions[ 0 ].Value;
-        }
-        else
-        {
-            endpoint = Program.externalBlazor + "/shells/" + idEncoded;
-        }
+	//TODO: code duplication with Pcf2.razor
+	static string getAasLink(IIdentifiable aas)
+	{
+		string endpoint  = null;
+		var    idEncoded = Base64UrlEncoder.Encode(aas.Id);
+		if (aas.Extensions != null)
+		{
+			endpoint = aas.Extensions[ 0 ].Value;
+		}
+		else
+		{
+			endpoint = Program.externalBlazor + "/shells/" + idEncoded;
+		}
 
-        return endpoint;
-    }
+		return endpoint;
+	}
 
-    string getIframePath()
-    {
-        var link = "";
-        //get the admin shell of the cabinet
-        foreach (var env in AasxServer.Program.env)
-        {
-            if (env != null)
-            {
-                var    queryPara     = "";
-                var    userPW        = "";
-                var    urlEdcWrapper = "";
-                string replace       = "";
+	string getIframePath()
+	{
+		var link = "";
+		//get the admin shell of the cabinet
+		foreach (var env in AasxServer.Program.env)
+		{
+			if (env != null)
+			{
+				var    queryPara     = "";
+				var    userPW        = "";
+				var    urlEdcWrapper = "";
+				string replace       = "";
 
-                var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
-                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-                    continue;
+				var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
+				if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+					continue;
 
-                link = getAasLink(aas);
+				link = getAasLink(aas);
 
-                var registry = AasRegistryService.GetRegistryList();
-                if (registry != null && registry.Count != 0)
-                {
-                    string registryURL = registry[ 0 ];
+				var registry = AasRegistryService.GetRegistryList();
+				if (registry != null && registry.Count != 0)
+				{
+					string registryURL = registry[0];
 
-                    if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
-                    {
-                        if (replace != "")
-                            registryURL = replace;
-                    }
+					if (registryURL.EndsWith("/shell-descriptors"))
+					{
+						registryURL = registryURL.Substring(0, registryURL.Length - "/shell-descriptors".Length);
+					}
 
-                    link += "&registryURL=" + registryURL;
-                }
+					if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+					{
+						if (replace != "")
+							registryURL = replace;
+					}
+
+					link += "&registryURL=" + registryURL;
+				}
 
                 queryPara     = "";
                 userPW        = "";

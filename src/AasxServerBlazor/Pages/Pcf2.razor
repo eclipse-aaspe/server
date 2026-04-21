@@ -363,6 +363,10 @@
                                             {
                                                 var ad = aasDescriptors.FirstOrDefault(ad => ad.Id == node.aas.Id);
                                                 var registryURL = ad.Extensions[0].Value;
+												if (registryURL.EndsWith("/shell-descriptors"))
+												{
+													registryURL = registryURL.Substring(0, registryURL.Length - "/shell-descriptors".Length);
+												}
 
                                                 if (AasxCredentials.get(AasxTaskService, cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                 {
