@@ -743,8 +743,6 @@ namespace AasSecurity
                         }
                     }
 
-                    valid = true;
-
                     if (valid)
                     {
                         tokenClaims.AddRange(jwtSecurityToken.Claims);
