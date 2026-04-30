@@ -17,6 +17,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.AccessControl;
 using System.Security.Claims;
@@ -24,6 +25,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Web;
 using AasSecurity.Exceptions;
 using AasSecurity.Models;
@@ -40,6 +42,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Namotion.Reflection;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static QRCoder.PayloadGenerator;
 using File = AasCore.Aas3_0.File;
@@ -346,6 +349,32 @@ namespace AasSecurity
             return false;
         }
 
+        private string HandleJsonFormatedTokenClaim(string value)
+        {
+            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
+
+            var key = dict.Keys.First();
+
+            if (dict != null && dict.TryGetValue(key, out var tokenClaims))
+            {
+                var valueBuildString = new StringBuilder("");
+
+                foreach (var tokenClaim in tokenClaims)
+                {
+                    valueBuildString = valueBuildString.Append($"{tokenClaim}");
+
+                    if (tokenClaims.IndexOf(tokenClaim) < tokenClaims.Count - 1)
+                    {
+                        var seperator = " ";
+                        valueBuildString.Append(seperator);
+                    }
+                }
+                value = valueBuildString.ToString();
+            }
+
+            return value;
+        }
+
         public void ClearSecurityRules()
         {
             _condition.Clear();
@@ -522,6 +551,8 @@ namespace AasSecurity
             {
                 var handler = new JwtSecurityTokenHandler();
                 var jwtSecurityToken = handler.ReadJwtToken(bearerToken);
+                JwtSecurityToken emailVerifierJwtSecurityToken = null;
+
                 if (jwtSecurityToken != null && jwtSecurityToken.Claims != null)
                 {
                     var iss = "";
@@ -577,6 +608,14 @@ namespace AasSecurity
                         if (!string.IsNullOrEmpty(tokenExchange1) && !string.IsNullOrEmpty(tokenExchange2)
                             && iss == tokenExchange1)
                         {
+                            var audience = "fa3st";
+                            var audienceEnvVar = System.Environment.GetEnvironmentVariable("TOKENEXCHANGE_AUDIENCE");
+
+                            if (!string.IsNullOrEmpty(audienceEnvVar))
+                            {
+                                audience = audienceEnvVar;
+                            }
+
                             Console.WriteLine($"TOKENEXCHANGE1 = {tokenExchange1}");
                             Console.WriteLine($"TOKENEXCHANGE2 = {tokenExchange2}");
                             var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
@@ -589,7 +628,7 @@ namespace AasSecurity
                                 { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" },
                                 { "requested_token_type", "urn:ietf:params:oauth:token-type:access_token" },
                                 { "subject_token", bearerToken },
-                                { "audience", "fa3st" }
+                                { "audience", audience }
                             };
                             var request = new HttpRequestMessage(HttpMethod.Post, $"{tokenExchange2}/token")
                             {
@@ -606,14 +645,79 @@ namespace AasSecurity
                             if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
                             {
                                 bearerToken = tokenElement.GetString();
-                                Console.WriteLine("token exchange " + bearerToken);
+                                Console.WriteLine("token exchange 2 " + bearerToken);
                                 jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                 iss = "";
                                 issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
                                 if (issClaim.Any())
                                 {
-                                    iss = issClaim.First().Value;
+                                    var tokenExchange3 = System.Environment.GetEnvironmentVariable("TOKENEXCHANGE3");
+
+                                    if (!string.IsNullOrEmpty(tokenExchange3))
+                                    {
+                                        var clientId = issClaim.First().Value;
+                                        var audClaim = jwtSecurityToken.Claims.Where(c => c.Type == "aud");
+
+                                        var aud = audClaim.First().Value;
+
+                                        var tokenEndpoint = $"{tokenExchange3}/token";
+
+                                        try
+                                        {
+                                            var openIdConfig = client.GetStringAsync($"{aud}/.well-known/openid-configuration").Result;
+                                            var openIdConfigJson = JsonDocument.Parse(openIdConfig);
+
+                                            if (openIdConfigJson.RootElement.TryGetProperty("token_endpoint", out var propTokenEndpoint))
+                                            {
+                                                tokenEndpoint = propTokenEndpoint.GetString();
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogInformation($"Could not access well-known from {iss}");
+                                        }
+
+                                        parameters = new Dictionary<string, string>
+                                            {
+                                                { "grant_type", "client_credentials" },
+                                                { "client_id",clientId },
+                                                { "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+                                                { "client_assertion", bearerToken }
+                                            };
+                                        request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
+                                        {
+                                            Content = new FormUrlEncodedContent(parameters)
+                                        };
+                                        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+                                        response = client.SendAsync(request);
+                                        content = response.GetAwaiter().GetResult().Content.ContentToString();
+                                        doc = JsonDocument.Parse(content);
+
+                                        if (doc.RootElement.TryGetProperty("access_token", out var tokenElementFromLocalIdp))
+                                        {
+                                            bearerToken = "";
+                                            emailVerifierJwtSecurityToken = jwtSecurityToken;
+                                            jwtSecurityToken = null;
+
+                                            bearerToken = tokenElementFromLocalIdp.GetString();
+                                            Console.WriteLine("token exchange 3 (with local idP) " + bearerToken);
+                                            jwtSecurityToken = handler.ReadJwtToken(bearerToken);
+
+                                            issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
+
+                                            iss = issClaim.First().Value;
+                                        }
+                                        else
+                                        {
+                                            iss = issClaim.First().Value;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        iss = issClaim.First().Value;
+                                    }
                                 }
                             }
                             if (jwtSecurityToken == null)
@@ -630,14 +734,34 @@ namespace AasSecurity
                             user = "";
                             var jwksUrl = "";
                             var kid = jwtSecurityToken.Header["kid"].ToString();
+                            var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
+                            using var httpClient = new HttpClient(clientHandler);
+
                             if (kid != null)
                             {
                                 jwksUrl = SecurityHelper.FindServerJwksUrl(kid, iss, out domain);
                             }
-                            if (!jwksUrl.IsNullOrEmpty())
+                            if (jwksUrl.IsNullOrEmpty())
                             {
-                                var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
-                                using var httpClient = new HttpClient(clientHandler);
+                                jwksUrl = $"{iss}/jwks";
+
+                                try
+                                {
+                                    var openIdConfig = httpClient.GetStringAsync($"{iss}/.well-known/openid-configuration").Result;
+                                    var openIdConfigJson = JsonDocument.Parse(openIdConfig);
+
+                                    if (openIdConfigJson.RootElement.TryGetProperty("jwks_uri", out var propJwksUri))
+                                    {
+                                        jwksUrl = propJwksUri.GetString();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogInformation($"Could not access well-known from {iss}");
+                                }
+                            }
+                            try
+                            {
                                 var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
                                 var jwks = new JsonWebKeySet(jwksJson);
                                 var signingKeys = jwks.GetSigningKeys();
@@ -660,11 +784,12 @@ namespace AasSecurity
                                 }
                                 catch (Exception ex)
                                 {
+                                    _logger.LogError($"Error in validation of token {bearerToken}: {ex.Message}.");
                                 }
                             }
-                            else
+                            catch (Exception ex)
                             {
-
+                                _logger.LogError($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
                             }
                         }
                     }
@@ -703,8 +828,6 @@ namespace AasSecurity
                         }
                     }
 
-                    valid = true;
-
                     if (valid)
                     {
                         tokenClaims.AddRange(jwtSecurityToken.Claims);
@@ -723,6 +846,15 @@ namespace AasSecurity
                             emailClaim = jwtSecurityToken.Claims.Where(c => c.Type == "email");
                             if (emailClaim.Any())
                             {
+                                var email = emailClaim.First().Value;
+                                if (!string.IsNullOrEmpty(email))
+                                {
+                                    user = email.ToLower();
+                                }
+                            }
+                            else if (emailVerifierJwtSecurityToken != null)
+                            {
+                                emailClaim = emailVerifierJwtSecurityToken.Claims.Where(c => c.Type == "email");
                                 var email = emailClaim.First().Value;
                                 if (!string.IsNullOrEmpty(email))
                                 {

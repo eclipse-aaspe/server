@@ -20,7 +20,12 @@
         "EVENT2": "http://localhost:5002/submodels/aHR0cHM6Ly9pNGQuZGUvVC8zMjA5NTEwL3N1Ym1vZGVsL05hbWVwbGF0ZS9yZWNlaXZlcg/events/EventElement1",
         "AASX_MQTT": "1",
         "REGISTRYOFREGISTRY": "https://plugfest3.aas-voyager.com/registry-descriptors",
-        "GRAPHQL": "True"
+        "GRAPHQL": "True",
+        "TOKENEXCHANGE1": "https://iam-security-training.com/consumer/sts",
+        "TOKENEXCHANGE2": "https://iam-security-training.com/provider/sts",
+        "TOKENEXCHANGE_AUDIENCE": "fa3st",
+        "TRUST_LIST": "https://iam-security-training.com/trustlist/trustlist.xml",
+        "TRUST_LIIST_PUBLIC_KEY": "https://iam-security-training.com/trustlist/publickey.pem"
       },
       "applicationUrl": "http://localhost:5001",
       "jsWebView2Debugging": true

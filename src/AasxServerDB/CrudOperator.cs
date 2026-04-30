@@ -1559,12 +1559,23 @@ namespace AasxServerDB
             }
             if (smeDB != null)
             {
-                while (smeDB != null && smeDB.ParentSMEId != null)
+                while (smeDB != null && (smeDB.ParentSMEId != null || (smeDB.ParentSME != null && smeDB.ParentSME.Id != null)))
                 {
-                    smeDB = db.SMESets.Where(sme => sme.Id == smeDB.ParentSMEId).FirstOrDefault();
-                    if (smeDB != null)
+                    if (smeDB.ParentSMEId != null)
                     {
-                        smeDB.TimeStampTree = timeStamp;
+                        smeDB = db.SMESets.Where(sme => sme.Id == smeDB.ParentSMEId).FirstOrDefault();
+                        if (smeDB != null)
+                        {
+                            smeDB.TimeStampTree = timeStamp;
+                        }
+                    }
+                    else if (smeDB.ParentSME != null && smeDB.ParentSME.Id != null)
+                    {
+                        smeDB = db.SMESets.Where(sme => sme.Id == smeDB.ParentSME.Id).FirstOrDefault();
+                        if (smeDB != null)
+                        {
+                            smeDB.TimeStampTree = timeStamp;
+                        }
                     }
                 }
             }

@@ -11,14 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasxServer;
-using Extensions;
-using IdentityModel;
-using IdentityModel.Client;
-using IO.Swagger.Registry.Lib.V3.Interfaces;
-using IO.Swagger.Registry.Lib.V3.Models;
-using IO.Swagger.Registry.Lib.V3.Serializers;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -32,6 +24,14 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using AasxServer;
+using Extensions;
+using IdentityModel;
+using IdentityModel.Client;
+using IO.Swagger.Registry.Lib.V3.Interfaces;
+using IO.Swagger.Registry.Lib.V3.Models;
+using IO.Swagger.Registry.Lib.V3.Serializers;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IO.Swagger.Registry.Lib.V3.Services;
 
@@ -324,6 +324,40 @@ public class RegistryInitializerService : IRegistryInitializerService
                             var json = response.Content.ReadAsStringAsync().Result;
                             if (!string.IsNullOrEmpty(json))
                             {
+                                if (requestPath.EndsWith("/companies"))
+                                {
+                                    var root = JsonNode.Parse(json);
+                                    var dataArray = root?["data"]?.AsArray();
+
+                                    if (dataArray != null)
+                                    {
+                                        foreach (var entry in dataArray)
+                                        {
+                                            var endpoints = entry?["endpoints"]?.AsArray();
+                                            if (endpoints is not null)
+                                            {
+                                                foreach (var ep in endpoints)
+                                                {
+                                                    var type = ep?["interface"]?.GetValue<string>();
+                                                    if (string.Equals(type, "AAS-REGISTRY-3.1", StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(type, "AAS-REGISTRY-3.0", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        var url = ep?["protocolInformation"]?["href"]?.GetValue<string>()?.Trim();
+                                                        if (!string.IsNullOrWhiteSpace(url) &&
+                                                            !getRegistry.Contains(url, StringComparer.OrdinalIgnoreCase))
+                                                        {
+                                                            getRegistry.Add(url);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+
+                                }
+
+                                //experimental
                                 if (requestPath.EndsWith("/registry-descriptors"))
                                 {
                                     var jsonArray = JsonNode.Parse(json)?.AsArray();
@@ -340,6 +374,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                         }
                                     }
                                 }
+                                //deprecated
                                 if (requestPath.EndsWith("/company_endpoints"))
                                 {
                                     var root = JsonNode.Parse(json);
@@ -388,7 +423,11 @@ public class RegistryInitializerService : IRegistryInitializerService
                         submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
 
                         // basyx with Submodel Registry: read submodel descriptors
-                        requestPathGetReg = $"{submodelRegistryUrl}/submodel-descriptors";
+                        if (!submodelRegistryUrl.EndsWith("submodel-descriptors"))
+                        {
+                            requestPathGetReg = $"{submodelRegistryUrl}/submodel-descriptors";
+
+                        }
 
                         if (AasxCredentials.get(_aasxTaskService, cs.credentials, requestPathGetReg, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
                         {
@@ -470,7 +509,15 @@ public class RegistryInitializerService : IRegistryInitializerService
                         var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
                         string? json        = null;
                         string? accessToken = null;
-                        requestPathGetReg = $"{greg}/shell-descriptors";
+                        if (!greg.EndsWith("/shell-descriptors"))
+                        {
+                            requestPathGetReg = $"{greg}/shell-descriptors";
+                        }
+                        else
+                        {
+                            requestPathGetReg = greg;
+                        }
+
                         var userPW = "";
                         var urlEdcWrapper = "";
                         var replace = "";
@@ -1044,7 +1091,8 @@ public class RegistryInitializerService : IRegistryInitializerService
         var json = "";
         if (ad != null)
         {
-            if (!requestPath.Contains("?", StringComparison.InvariantCulture))
+            if (!requestPath.Contains("?", StringComparison.InvariantCulture)
+                && !requestPath.EndsWith("/shell-descriptors"))
             {
                 requestPath += "/shell-descriptors";
             }
@@ -1054,7 +1102,8 @@ public class RegistryInitializerService : IRegistryInitializerService
         {
             if (sd != null)
             {
-                if (!requestPath.Contains("?", StringComparison.InvariantCulture))
+                if (!requestPath.Contains("?", StringComparison.InvariantCulture)
+                    && !requestPath.EndsWith("/submodel-descriptors"))
                 {
                     requestPath += "/submodel-descriptors";
                 }
