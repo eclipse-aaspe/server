@@ -1,5 +1,6 @@
 namespace AasxServerDB.Tests;
 
+using System.Security.Claims;
 using Contracts.Pagination;
 using Contracts.QueryResult;
 using Contracts;
@@ -520,5 +521,191 @@ public sealed class QueryTests
         actualIdentifiers.Should().BeEquivalentTo(expected, options => options.WithStrictOrdering());
         actualIdentifiers.Should().NotBeEmpty();
         result.Select(sm => sm.IdShort).Distinct().Should().OnlyContain(idShort => idShort == "Nameplate" || idShort == "TechnicalData");
+    }
+
+    // -------------------------------------------------------------------------
+    // Access rule with $attribute(CLAIM(token:sub)) — regression cover for the
+    // CLAIM substitution that was lost when SecurityService.GetCondition was
+    // dropped (commit 4bef43ac). The parser must emit a deferred sentinel,
+    // and SqlConditions.SubstituteTokenClaims must replace it with the
+    // request's escaped token value.
+    // -------------------------------------------------------------------------
+    [Fact]
+    public void TokenClaim_AttributeInFormula_SubstitutesIntoSqlConditions()
+    {
+        const string expression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "token:sub" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$and": [
+                        {
+                          "$ends-with": [
+                            { "$attribute": { "CLAIM": "token:sub" } },
+                            { "$strVal": "xx.com" }
+                          ]
+                        },
+                        {
+                          "$eq": [
+                            { "$field": "$sm#idShort" },
+                            { "$strVal": "Nameplate" }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        var blazorDir = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "AasxServerBlazor"));
+        var grammar = new QueryGrammarJSON(new NoSecurityRules());
+        var originalCwd = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(blazorDir);
+            grammar.ParseAccessRules(expression);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalCwd);
+        }
+
+        var rule = QueryGrammarJSON._accessRules.Rules.Single();
+        rule._formula_sqlConditions.Should().NotBeNull();
+        var ruleSql = rule._formula_sqlConditions!;
+
+        // Parser must emit a deferred sentinel literal — not silently drop the CLAIM check.
+        ruleSql.FormulaConditions["all"].Should().Contain(
+            $"'{SqlConditions.ClaimSentinelPrefix}token:sub{SqlConditions.ClaimSentinelSuffix}'",
+            because: "$attribute(CLAIM(...)) must be deferred via a sentinel SQL literal, not dropped");
+        ruleSql.FormulaConditions["all"].Should().Contain(
+            "GLOB '*xx.com'",
+            because: "$ends-with translates to a GLOB pattern with leading wildcard");
+
+        // Cloning must isolate per-request mutations from the cached rule.
+        var perRequest = ruleSql.Clone();
+
+        var tokenClaims = new List<Claim> { new("token:sub", "andreas@xx.com") };
+        perRequest.SubstituteTokenClaims(tokenClaims);
+
+        perRequest.FormulaConditions["all"].Should().Contain("'andreas@xx.com'",
+            because: "the sentinel must be replaced with the SQL-escaped claim value");
+        perRequest.FormulaConditions["all"].Should().NotContain(SqlConditions.ClaimSentinelPrefix,
+            because: "no $$claim:* sentinel may survive after substitution");
+
+        // Cached rule must remain intact for the next request with different claims.
+        ruleSql.FormulaConditions["all"].Should().Contain(SqlConditions.ClaimSentinelPrefix,
+            because: "Clone() must protect the cached rule SqlConditions from per-request mutations");
+        ruleSql.FormulaConditions["all"].Should().NotContain("'andreas@xx.com'",
+            because: "Clone() must protect the cached rule SqlConditions from per-request mutations");
+    }
+
+    [Fact]
+    public void TokenClaim_QuoteInValue_GetsSqlEscaped()
+    {
+        const string expression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "token:sub" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$eq": [
+                        { "$attribute": { "CLAIM": "token:sub" } },
+                        { "$strVal": "any" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        var blazorDir = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "AasxServerBlazor"));
+        var grammar = new QueryGrammarJSON(new NoSecurityRules());
+        var originalCwd = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(blazorDir);
+            grammar.ParseAccessRules(expression);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalCwd);
+        }
+
+        var perRequest = QueryGrammarJSON._accessRules.Rules.Single()._formula_sqlConditions!.Clone();
+        perRequest.SubstituteTokenClaims(new List<Claim> { new("token:sub", "O'Connor") });
+
+        perRequest.FormulaConditions["all"].Should().Contain("'O''Connor'",
+            because: "single quotes in claim values must be SQL-escaped via doubling");
+        perRequest.FormulaConditions["all"].Should().NotContain("O'Connor'",
+            because: "an unescaped quote would terminate the SQL string literal early");
+    }
+
+    [Fact]
+    public void TokenClaim_MissingClaim_ResolvesToEmptyLiteral()
+    {
+        const string expression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "token:sub" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$ends-with": [
+                        { "$attribute": { "CLAIM": "token:sub" } },
+                        { "$strVal": "xx.com" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        var blazorDir = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "AasxServerBlazor"));
+        var grammar = new QueryGrammarJSON(new NoSecurityRules());
+        var originalCwd = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(blazorDir);
+            grammar.ParseAccessRules(expression);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalCwd);
+        }
+
+        var perRequest = QueryGrammarJSON._accessRules.Rules.Single()._formula_sqlConditions!.Clone();
+        // No tokenClaims — sentinel must collapse to empty literal so SQLite evaluates
+        // ('' GLOB '*xx.com') = 0 (false), keeping the rule fail-closed.
+        perRequest.SubstituteTokenClaims(tokenClaims: null);
+
+        perRequest.FormulaConditions["all"].Should().Contain("('' GLOB '*xx.com')",
+            because: "missing claims must produce an empty SQL literal, not leave the sentinel in place");
+        perRequest.FormulaConditions["all"].Should().NotContain(SqlConditions.ClaimSentinelPrefix);
     }
 }

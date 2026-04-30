@@ -1783,6 +1783,20 @@ public class QueryGrammarJSON : Grammar
                      : leftNode.ExpressionType == "$hexVal" || rightNode.ExpressionType == "$hexVal" ? "mvalue"
                      : "";
 
+        // $attribute(CLAIM(...)) operands resolve to a token-claim value — not a column. Emit a
+        // sentinel SQL string literal so the comparison is well-formed; per-request substitution
+        // in SqlConditions.SubstituteTokenClaims replaces the sentinel with the real claim value
+        // before SQL execution. Skipping the branch (as the previous code did) silently dropped
+        // the CLAIM check and made CLAIM-gated rules permissive — see SecurityService refactor 4bef43ac.
+        if (leftNode.ExpressionType == "$attribute" || rightNode.ExpressionType == "$attribute")
+        {
+            var leftSqlClaim  = BuildOverallClaimOrLiteralSql(leftNode, smeValue);
+            if (leftSqlClaim == "$SKIP" || leftSqlClaim == null) return "$SKIP";
+            var rightSqlClaim = BuildOverallClaimOrLiteralSql(rightNode, smeValue);
+            if (rightSqlClaim == "$SKIP" || rightSqlClaim == null) return "$SKIP";
+            return CombineComparisonSql(leftSqlClaim, type, rightSqlClaim);
+        }
+
         // Check for path condition ($sme.idShortPath)
         if (leftNode.ExpressionType == "$field" && leftNode.ExpressionValue is string rawField
             && rawField.Contains("$sme."))
@@ -1799,6 +1813,26 @@ public class QueryGrammarJSON : Grammar
         if (rightSql == "$SKIP" || rightSql == null) return "$SKIP";
 
         return CombineComparisonSql(leftSql, type, rightSql);
+    }
+
+    /// <summary>
+    /// Maps a comparison operand to overall-SQL: a literal for <c>$strVal</c>/<c>$numVal</c>/...,
+    /// or a deferred claim sentinel literal for <c>$attribute(CLAIM(&lt;type&gt;))</c>.
+    /// </summary>
+    private static string? BuildOverallClaimOrLiteralSql(LogicalExpression node, string smeValue)
+    {
+        if (node.ExpressionType == "$attribute")
+        {
+            if (node.ExpressionValue is LogicalExpression inner
+                && inner.ExpressionType == "CLAIM"
+                && inner.ExpressionValue is string claimType
+                && !string.IsNullOrEmpty(claimType))
+            {
+                return SqlConditions.BuildClaimSentinelSqlLiteral(claimType);
+            }
+            return "$SKIP";
+        }
+        return BuildScopeLiteralSql(node, smeValue);
     }
 
     /// <summary>Builds a standalone path placeholder in FormulaConditions["all"], adds PathJoin to Sc.Paths.</summary>

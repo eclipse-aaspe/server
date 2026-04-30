@@ -6,6 +6,10 @@
 
 namespace Contracts;
 
+using System.Security.Claims;
+using System.Text;
+using Newtonsoft.Json;
+
 /// <summary>
 /// Structured SQL conditions produced by <see cref="QueryGrammarJSON.CreateSqlConditions"/>.
 /// Replaces the LINQ-string <c>conditionsExpression</c> dictionary fed into <c>CombineTablesLEFT</c>.
@@ -14,6 +18,26 @@ namespace Contracts;
 public class SqlConditions
 {
     private static readonly string[] ConditionKeys = ["all", "aas", "sm", "sme", "value"];
+
+    /// <summary>
+    /// Prefix of the inline placeholder emitted by <see cref="QueryGrammarJSON.CreateSqlConditions"/>
+    /// for a <c>$attribute</c>(<c>CLAIM</c>) operand — substituted with the real token-claim value
+    /// per request via <see cref="SubstituteTokenClaims"/>. Lives inside a SQL string literal,
+    /// e.g. <c>'$$claim:token:sub$$'</c>.
+    /// </summary>
+    public const string ClaimSentinelPrefix = "$$claim:";
+
+    /// <summary>Suffix of the claim sentinel; see <see cref="ClaimSentinelPrefix"/>.</summary>
+    public const string ClaimSentinelSuffix = "$$";
+
+    /// <summary>
+    /// SQL string literal carrying a deferred token-claim reference, e.g.
+    /// <c>BuildClaimSentinelSqlLiteral("token:sub") == "'$$claim:token:sub$$'"</c>.
+    /// <see cref="SubstituteTokenClaims"/> resolves the sentinel against a request's
+    /// <see cref="System.Security.Claims.Claim"/> list at execution time.
+    /// </summary>
+    public static string BuildClaimSentinelSqlLiteral(string claimType)
+        => $"'{ClaimSentinelPrefix}{(claimType ?? string.Empty).Replace("'", "''")}{ClaimSentinelSuffix}'";
 
     public SqlConditions()
     {
@@ -76,6 +100,136 @@ public class SqlConditions
     /// ExistsConditions[i] corresponds to placeholder <c>$$exists{i}$$</c> in <c>FormulaConditions["all"]</c>.
     /// </summary>
     public List<ExistsCondition> ExistsConditions { get; } = new();
+
+    /// <summary>
+    /// Returns a deep copy that owns its own dictionaries and join lists so per-request mutations
+    /// (e.g. <see cref="SubstituteTokenClaims"/>, single-row Allow-checks) cannot leak into cached
+    /// <c>AccessPermissionRule._formula_sqlConditions</c> instances shared across requests.
+    /// </summary>
+    public SqlConditions Clone()
+    {
+        var dst = new SqlConditions { Select = Select };
+        foreach (var kv in FormulaConditions)
+            dst.FormulaConditions[kv.Key] = kv.Value;
+        foreach (var kv in FilterConditions)
+            dst.FilterConditions[kv.Key] = kv.Value;
+        foreach (var kv in FormulaConditionsCSharp)
+            dst.FormulaConditionsCSharp[kv.Key] = kv.Value;
+        foreach (var p in Paths)
+            dst.Paths.Add(new PathJoin { Placeholder = p.Placeholder, SubquerySql = p.SubquerySql, IdShortPath = p.IdShortPath });
+        foreach (var m in Matches)
+        {
+            var nm = new MatchJoin { Placeholder = m.Placeholder, JoinConditionSql = m.JoinConditionSql };
+            foreach (var p in m.Paths)
+                nm.Paths.Add(new PathJoin { Placeholder = p.Placeholder, SubquerySql = p.SubquerySql, IdShortPath = p.IdShortPath });
+            dst.Matches.Add(nm);
+        }
+        foreach (var e in ExistsConditions)
+            dst.ExistsConditions.Add(new ExistsCondition { Placeholder = e.Placeholder, PredicateSql = e.PredicateSql });
+        return dst;
+    }
+
+    /// <summary>
+    /// Replaces every <see cref="ClaimSentinelPrefix"/>…<see cref="ClaimSentinelSuffix"/> placeholder
+    /// produced by <c>$attribute(CLAIM(...))</c> with the matching token-claim value (SQL-escaped),
+    /// in every SQL fragment carried by this instance. Mirrors the substitution loop the legacy
+    /// <c>SecurityService.GetCondition</c> performed before commit <c>4bef43ac</c> dropped it.
+    /// <para>
+    /// Missing claims resolve to an empty string (the surrounding string literal becomes <c>''</c>),
+    /// so a CLAIM-gated rule cannot accidentally widen access for users without that claim.
+    /// JSON-formatted claim values (<c>{"key": [...]}</c>) are flattened with a single-space
+    /// separator — matches <c>SecurityService.HandleJsonFormatedTokenClaim</c>.
+    /// </para>
+    /// <para>
+    /// Caller is expected to <see cref="RefreshFormulaConditionsCSharpFromFormulaSql"/> afterwards
+    /// so the C# mirror reflects the substituted SQL.
+    /// </para>
+    /// </summary>
+    public void SubstituteTokenClaims(IEnumerable<Claim>? tokenClaims)
+    {
+        var claimList = tokenClaims as IList<Claim> ?? tokenClaims?.ToList();
+        foreach (var key in FormulaConditions.Keys.ToList())
+            FormulaConditions[key] = ReplaceClaimSentinels(FormulaConditions[key], claimList);
+        foreach (var key in FilterConditions.Keys.ToList())
+            FilterConditions[key] = ReplaceClaimSentinels(FilterConditions[key], claimList);
+        foreach (var p in Paths)
+            p.SubquerySql = ReplaceClaimSentinels(p.SubquerySql, claimList);
+        foreach (var m in Matches)
+        {
+            m.JoinConditionSql = ReplaceClaimSentinels(m.JoinConditionSql, claimList);
+            foreach (var p in m.Paths)
+                p.SubquerySql = ReplaceClaimSentinels(p.SubquerySql, claimList);
+        }
+        foreach (var e in ExistsConditions)
+            e.PredicateSql = ReplaceClaimSentinels(e.PredicateSql, claimList);
+    }
+
+    private static string ReplaceClaimSentinels(string? sql, IList<Claim>? claims)
+    {
+        if (string.IsNullOrEmpty(sql) || sql!.IndexOf(ClaimSentinelPrefix, StringComparison.Ordinal) < 0)
+            return sql ?? string.Empty;
+
+        var sb = new StringBuilder(sql.Length);
+        var idx = 0;
+        while (idx < sql.Length)
+        {
+            var start = sql.IndexOf(ClaimSentinelPrefix, idx, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                sb.Append(sql, idx, sql.Length - idx);
+                break;
+            }
+            // Sentinel is always wrapped in a SQL string literal (single quotes) — the surrounding
+            // quotes stay; we only replace the placeholder body with the escaped claim value.
+            var typeStart = start + ClaimSentinelPrefix.Length;
+            var end = sql.IndexOf(ClaimSentinelSuffix, typeStart, StringComparison.Ordinal);
+            if (end < 0)
+            {
+                sb.Append(sql, idx, sql.Length - idx);
+                break;
+            }
+            sb.Append(sql, idx, start - idx);
+            var claimType = sql.Substring(typeStart, end - typeStart);
+            var resolved = ResolveClaimValue(claims, claimType);
+            sb.Append(resolved.Replace("'", "''"));
+            idx = end + ClaimSentinelSuffix.Length;
+        }
+        return sb.ToString();
+    }
+
+    private static string ResolveClaimValue(IList<Claim>? claims, string claimType)
+    {
+        if (claims == null || claims.Count == 0 || string.IsNullOrEmpty(claimType))
+            return string.Empty;
+        var raw = claims.FirstOrDefault(c => c.Type == claimType)?.Value;
+        if (string.IsNullOrEmpty(raw))
+            return string.Empty;
+        if (raw[0] == '{')
+            return FlattenJsonClaimValue(raw);
+        return raw;
+    }
+
+    /// <summary>
+    /// Flattens JSON-formatted token-claim values like <c>{"sub": ["a", "b"]}</c> into a
+    /// single space-separated string — matches the legacy <c>HandleJsonFormatedTokenClaim</c>.
+    /// </summary>
+    private static string FlattenJsonClaimValue(string value)
+    {
+        try
+        {
+            var dict = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(value);
+            if (dict == null || dict.Count == 0)
+                return value;
+            var first = dict.First();
+            return first.Value == null || first.Value.Count == 0
+                ? value
+                : string.Join(" ", first.Value);
+        }
+        catch
+        {
+            return value;
+        }
+    }
 }
 
 /// <summary>

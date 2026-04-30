@@ -162,8 +162,11 @@ namespace AasSecurity
             {
                 if (rule._formula_sqlConditions != null)
                 {
+                    // Clone on first use: per-request mutations (token-claim substitution, FILTER
+                    // accumulation below) must not bleed into the cached rule SqlConditions used
+                    // across requests.
                     merged = merged == null
-                        ? rule._formula_sqlConditions
+                        ? rule._formula_sqlConditions.Clone()
                         : SqlConditionsMerger.OrMerge(merged, rule._formula_sqlConditions);
                 }
 
@@ -199,6 +202,9 @@ namespace AasSecurity
 
             if (merged != null)
             {
+                // Resolve $attribute(CLAIM(...)) sentinels with the request's token claims before
+                // deriving the C# mirror — see SqlConditions.SubstituteTokenClaims for the contract.
+                merged.SubstituteTokenClaims(tokenClaims);
                 SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
             }
 
