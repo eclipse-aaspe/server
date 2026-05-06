@@ -52,27 +52,13 @@ public sealed class QueryTests
         SqlConditions? merged = null;
         foreach (var rule in matchingRules)
         {
-            if (rule._formula_sqlConditions != null)
-            {
-                merged = merged == null
-                    ? rule._formula_sqlConditions
-                    : SqlConditionsMerger.OrMerge(merged, rule._formula_sqlConditions);
-            }
-
-            if (rule._filter_sqlConditions == null)
+            var ruleConditions = SqlConditionsMerger.Merge(rule._formula_sqlConditions, rule._filter_sqlConditions);
+            if (ruleConditions == null)
                 continue;
 
-            merged ??= new SqlConditions();
-            foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
-            {
-                if (string.IsNullOrWhiteSpace(filterScope.Value))
-                    continue;
-
-                var existing = merged.FilterConditions.GetValueOrDefault(filterScope.Key, "");
-                merged.FilterConditions[filterScope.Key] = string.IsNullOrWhiteSpace(existing)
-                    ? filterScope.Value
-                    : $"({existing}) OR ({filterScope.Value})";
-            }
+            merged = merged == null
+                ? ruleConditions.Clone()
+                : SqlConditionsMerger.OrMerge(merged, ruleConditions);
         }
 
         merged.Should().NotBeNull();

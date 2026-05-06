@@ -147,7 +147,7 @@ namespace AasSecurity
 
         /// <summary>
         /// Effective SQL conditions for the current request: same rule filtering as <see cref="GetAccessRules"/>,
-        /// merged like <see cref="QueryGrammarJSON.ParseAccessRules"/> (formula OR across rules, filter OR per scope into <see cref="SqlConditions.FilterConditions"/>).
+        /// merged like <see cref="QueryGrammarJSON.ParseAccessRules"/>: each rule is <c>FORMULA AND FILTER</c>, then rules are OR-combined.
         /// </summary>
         public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
@@ -163,44 +163,14 @@ namespace AasSecurity
             SqlConditions? merged = null;
             foreach (var rule in rules)
             {
-                if (rule._formula_sqlConditions != null)
-                {
-                    // Clone on first use: per-request mutations (token-claim substitution, FILTER
-                    // accumulation below) must not bleed into the cached rule SqlConditions used
-                    // across requests.
-                    merged = merged == null
-                        ? rule._formula_sqlConditions.Clone()
-                        : SqlConditionsMerger.OrMerge(merged, rule._formula_sqlConditions);
-                }
+                var ruleConditions = CombineAccessRuleFormulaAndFilter(rule);
+                if (ruleConditions == null)
+                    continue;
 
-                if (rule._filter_sqlConditions != null)
-                {
-                    merged ??= new SqlConditions();
-                    foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
-                    {
-                        var incoming = SqlConditionsMerger.NormalizeNeutralCondition(filterScope.Value);
-                        if (string.IsNullOrWhiteSpace(incoming))
-                        {
-                            continue;
-                        }
-
-                        var existing = SqlConditionsMerger.NormalizeNeutralCondition(
-                            merged.FilterConditions.GetValueOrDefault(filterScope.Key, ""));
-                        if (string.IsNullOrWhiteSpace(existing))
-                        {
-                            merged.FilterConditions[filterScope.Key] = incoming;
-                            continue;
-                        }
-
-                        // Same SQL from several identical/overlapping rules — do not build (A) OR (A) OR …
-                        if (string.Equals(existing, incoming, StringComparison.Ordinal))
-                        {
-                            continue;
-                        }
-
-                        merged.FilterConditions[filterScope.Key] = $"({existing}) OR ({incoming})";
-                    }
-                }
+                var perRequestRuleConditions = ruleConditions.Clone();
+                merged = merged == null
+                    ? perRequestRuleConditions
+                    : SqlConditionsMerger.OrMerge(merged, perRequestRuleConditions);
             }
 
             if (merged != null)

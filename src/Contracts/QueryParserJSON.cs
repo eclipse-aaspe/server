@@ -1159,29 +1159,13 @@ public class QueryGrammarJSON : Grammar
             ParseAccessRule(rule, accessRuleExpression);
             allAccessRuleExpressions.Add(accessRuleExpression);
 
-            // Accumulate SQL access conditions across all rules. FILTER stays separate, like the C# condition["filter"] path.
-            if (rule._formula_sqlConditions != null)
+            // Accumulate SQL access conditions across all rules as OR(rule FORMULA AND rule FILTER).
+            var ruleSqlConditions = SqlConditionsMerger.Merge(rule._formula_sqlConditions, rule._filter_sqlConditions);
+            if (ruleSqlConditions != null)
             {
-                if (allAccessRuleSqlConditions == null)
-                    allAccessRuleSqlConditions = rule._formula_sqlConditions;
-                else
-                    allAccessRuleSqlConditions = SqlConditionsMerger.OrMerge(allAccessRuleSqlConditions, rule._formula_sqlConditions);
-            }
-
-            if (rule._filter_sqlConditions != null)
-            {
-                allAccessRuleSqlConditions ??= new SqlConditions();
-                foreach (var filterScope in rule._filter_sqlConditions.FormulaConditions)
-                {
-                    if (string.IsNullOrWhiteSpace(filterScope.Value))
-                        continue;
-
-                    var existing = allAccessRuleSqlConditions.FilterConditions.GetValueOrDefault(filterScope.Key, "");
-                    allAccessRuleSqlConditions.FilterConditions[filterScope.Key] =
-                        string.IsNullOrWhiteSpace(existing)
-                            ? filterScope.Value
-                            : $"({existing}) OR ({filterScope.Value})";
-                }
+                allAccessRuleSqlConditions = allAccessRuleSqlConditions == null
+                    ? ruleSqlConditions.Clone()
+                    : SqlConditionsMerger.OrMerge(allAccessRuleSqlConditions, ruleSqlConditions);
             }
         }
     }

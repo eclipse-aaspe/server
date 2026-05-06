@@ -121,6 +121,80 @@ public sealed class SqlConditionsClaimScopeTests
         sc.FormulaConditions["sme"].Should().Contain("\"IdShort\" GLOB 'Manufacturer*'");
     }
 
+    [Fact]
+    public void ParseAccessRules_CombinesFormulaAndFilterPerRuleBeforeOrMergingRules()
+    {
+        const string expression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "isNotAuthenticated" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$eq": [
+                        { "$field": "$sm#idShort" },
+                        { "$strVal": "RuleOne" }
+                      ]
+                    },
+                    "FILTER": {
+                      "FRAGMENT": "xxx",
+                      "CONDITION": {
+                        "$starts-with": [
+                          { "$field": "$sme#idShort" },
+                          { "$strVal": "FilterOne" }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "isNotAuthenticated" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$eq": [
+                        { "$field": "$sm#idShort" },
+                        { "$strVal": "RuleTwo" }
+                      ]
+                    },
+                    "FILTER": {
+                      "FRAGMENT": "xxx",
+                      "CONDITION": {
+                        "$starts-with": [
+                          { "$field": "$sme#idShort" },
+                          { "$strVal": "FilterTwo" }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        ParseAccessRules(expression);
+
+        var merged = QueryGrammarJSON.allAccessRuleSqlConditions;
+        merged.Should().NotBeNull();
+        var overall = merged!.FormulaConditions["all"];
+
+        overall.Should().Contain("\"t\".\"IdShort\" = 'RuleOne'");
+        overall.Should().Contain("\"s1\".\"IdShort\" GLOB 'FilterOne*'");
+        overall.Should().Contain("\"t\".\"IdShort\" = 'RuleTwo'");
+        overall.Should().Contain("\"s1\".\"IdShort\" GLOB 'FilterTwo*'");
+        overall.IndexOf("RuleOne", StringComparison.Ordinal).Should().BeLessThan(overall.IndexOf("FilterOne", StringComparison.Ordinal));
+        overall.IndexOf("FilterOne", StringComparison.Ordinal).Should().BeLessThan(overall.IndexOf("RuleTwo", StringComparison.Ordinal));
+        overall.IndexOf("RuleTwo", StringComparison.Ordinal).Should().BeLessThan(overall.IndexOf("FilterTwo", StringComparison.Ordinal));
+        merged.FilterConditions.Values.Should().OnlyContain(value => string.IsNullOrWhiteSpace(value));
+    }
+
     private static LogicalExpression ClaimAttribute(string claimType)
         => new()
         {
@@ -141,4 +215,21 @@ public sealed class SqlConditionsClaimScopeTests
 
     private static LogicalExpression StartsWith(LogicalExpression left, LogicalExpression right)
         => new() { ExpressionType = "$starts-with", ExpressionValue = new List<LogicalExpression> { left, right } };
+
+    private static void ParseAccessRules(string expression)
+    {
+        var blazorDir = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "AasxServerBlazor"));
+        var grammar = new QueryGrammarJSON(new NoSecurityRules());
+        var originalCwd = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(blazorDir);
+            grammar.ParseAccessRules(expression);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalCwd);
+        }
+    }
 }
