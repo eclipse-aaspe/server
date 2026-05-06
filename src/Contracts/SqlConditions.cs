@@ -352,7 +352,6 @@ public static class SqlConditionsMerger
             });
         }
 
-        SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
         // Projection ($select: id | match) lives on the user query; security fragments usually omit it.
         merged.Select = !string.IsNullOrWhiteSpace(query.Select)
             ? query.Select
@@ -428,7 +427,6 @@ public static class SqlConditionsMerger
             });
         }
 
-        SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
         merged.Select = !string.IsNullOrWhiteSpace(left.Select)
             ? left.Select
             : right.Select ?? "";
@@ -577,8 +575,9 @@ public static class SqlToLinqConverter
 
         public string Parse()
         {
-            var result = ParseExpr();
-            return result;
+            var result = ParseBoolChain();
+            SkipWs();
+            return _pos == input.Length ? result : "$ERROR";
         }
 
         /// <summary>
@@ -601,7 +600,7 @@ public static class SqlToLinqConverter
             {
                 SkipWs();
                 string result;
-                if (Peek() == '"')
+                if (IsComparisonStart(Peek()))
                     result = ParseComparison();
                 else
                     result = ParseBoolChain();
@@ -634,8 +633,7 @@ public static class SqlToLinqConverter
         /// <summary>comparison = "col" (IS [NOT] NULL | GLOB pattern | op literal)</summary>
         private string ParseComparison()
         {
-            var col = ParseQuotedIdentifier();
-            var prop = MapColumn(col);
+            var prop = ParseComparisonOperand();
             SkipWs();
 
             // IS NULL / IS NOT NULL
@@ -664,6 +662,19 @@ public static class SqlToLinqConverter
             var literal = ParseLiteral();
             var csOp = sqlOp switch { "=" => "==", "<>" => "!=", _ => sqlOp };
             return $"({prop} {csOp} {literal})";
+        }
+
+        private string ParseComparisonOperand()
+        {
+            SkipWs();
+            if (Peek() == '"')
+                return MapColumn(ParseQuotedIdentifier());
+            if (Peek() == '\'')
+            {
+                var s = ParseSqlString();
+                return $"\"{EscCs(s)}\"";
+            }
+            return ParseLiteral();
         }
 
         // ---------------------------------------------------------------
@@ -802,6 +813,8 @@ public static class SqlToLinqConverter
             SkipWs();
             return _pos < input.Length ? input[_pos] : '\0';
         }
+
+        private static bool IsComparisonStart(char c) => c is '"' or '\'' or '-' || char.IsDigit(c);
 
         private void SkipWs()
         {

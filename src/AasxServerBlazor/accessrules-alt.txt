@@ -1,537 +1,286 @@
 {
-
   "AllAccessPermissionRules": {
-
     "rules": [
-
-                {
-
-                "ACL": {
-
-                    "ATTRIBUTES": [
-
-                        {
-
-                            "CLAIM": "token:realm_access"
-
-                        }
-
-                    ],
-
-                    "RIGHTS": [
-
-                        "READ",
-
-                        "CREATE",
-
-                        "UPDATE",
-
-                        "DELETE"
-
-                    ],
-
-                    "ACCESS": "ALLOW"
-
-                },
-
-                "OBJECTS": [
-
-                    {
-
-                        "ROUTE": "*"
-
-                    }
-
-                ],
-
-                "FORMULA": {
-
-                    "$contains": [
-
-                        {
-
-                            "$attribute": {
-
-                                "CLAIM": "token:realm_access"
-
-                            }
-
-                        },
-
-                        {
-
-                            "$strVal": "isSuperDuperUser"
-
-                        }
-
-                    ]
-
-                }
-
-            }
-
-,
-
       {
-
         "ACL": {
-
           "ATTRIBUTES": [
-
             {
-
               "CLAIM": "__Albert__Alb"
-
             }
-
           ],
-
           "RIGHTS": [
-
             "READ",
-
             "CREATE",
-
             "UPDATE",
-
             "DELETE"
-
           ],
-
           "ACCESS": "ALLOW"
-
         },
-
         "OBJECTS": [
-
           {
-
             "ROUTE": "*"
-
           }
-
         ],
-
         "FORMULA": {
-
           "$boolean": true
-
         }
-
       },
-
       {
-
         "ACL": {
-
           "ATTRIBUTES": [
-
             {
-
               "CLAIM": "isSuperDuperUser"
-
             }
-
           ],
-
           "RIGHTS": [
-
             "READ",
-
             "CREATE",
-
             "UPDATE",
-
             "DELETE"
-
           ],
-
           "ACCESS": "ALLOW"
-
         },
-
         "OBJECTS": [
-
           {
-
             "ROUTE": "*"
-
           }
-
         ],
-
         "FORMULA": {
-
           "$boolean": true
-
         }
-
       },
-
       {
-
         "ACL": {
-
           "ATTRIBUTES": [
-
             {
-
               "CLAIM": "isNotAuthenticated"
-
             }
-
           ],
-
           "RIGHTS": [
-
             "READ"
-
           ],
-
           "ACCESS": "ALLOW"
-
         },
-
         "OBJECTS": [
-
           {
-
             "ROUTE": "/shells"
-
           },
-
           {
-
             "ROUTE": "/submodels"
-
           },
-
           {
-
             "ROUTE": "/query/submodels"
-
           },
-
           {
-
             "ROUTE": "/packages"
-
           },
-
           {
-
             "ROUTE": "/serialization"
-
           },
-
           {
-
             "ROUTE": "/concept-descriptions"
-
           }
-
         ],
-
         "FORMULA": {
-
           "$or": [
-
             {
-
               "$and": [
-
                 {
-
                   "$eq": [
-
                     {
-
                       "$field": "$sm#idShort"
-
                     },
-
                     {
-
                       "$strVal": "Nameplate"
-
                     }
-
                   ]
-
                 }
-
               ]
-
             },
-
             {
-
               "$and": [
-
                 {
-
                   "$eq": [
-
                     {
-
                       "$field": "$sm#idShort"
-
                     },
-
                     {
-
                       "$strVal": "TechnicalData"
-
                     }
-
                   ]
-
                 }
-
               ]
-
             }
-
           ]
-
         },
-
        "FILTER": {
-
          "FRAGMENT": "xxx",
-
          "CONDITION": {
-
               "$or": [
-
                 {
-
                   "$starts-with": [
-
                     {
-
                       "$field": "$sme#idShort"
-
                     },
-
                     {
-
                       "$strVal": "General"
-
                     }
-
                   ]
-
                 },
-
                 {
-
                   "$starts-with": [
-
                     {
-
                       "$field": "$sme#idShort"
-
                     },
-
                     {
-
                       "$strVal": "Manufacturer"
-
                     }
-
                   ]
-
                 }
-
               ]
-
             }
-
          }
-
       },
-
       {
-
         "ACL": {
-
           "ATTRIBUTES": [
-
             {
-
-              "CLAIM": "token:sub"
-
+              "CLAIM": "isNotAuthenticated"
             }
-
           ],
-
           "RIGHTS": [
-
             "READ"
-
           ],
-
           "ACCESS": "ALLOW"
-
         },
-
         "OBJECTS": [
-
           {
-
             "ROUTE": "/shells"
-
           },
-
           {
-
             "ROUTE": "/submodels"
-
           },
-
           {
-
             "ROUTE": "/query/submodels"
-
           },
-
           {
-
             "ROUTE": "/packages"
-
           },
-
           {
-
             "ROUTE": "/serialization"
-
           },
-
           {
-
             "ROUTE": "/concept-descriptions"
-
           }
-
         ],
-
         "FORMULA": {
-
           "$or": [
-
             {
-
               "$and": [
-
                 {
-
-                  "$ends-with": [
-
-                    {
-
-                      "$attribute": {
-
-                        "CLAIM": "token:sub"
-
-                      }
-
-                    },
-
-                    {
-
-                      "$strVal": "xx.com"
-
-                    }
-
-                  ]
-
-                },
-
-                {
-
                   "$eq": [
-
                     {
-
                       "$field": "$sm#idShort"
-
                     },
-
                     {
-
-                      "$strVal": "Nameplate"
-
+                      "$strVal": "HandoverDocumentation"
                     }
-
                   ]
-
                 }
-
               ]
-
-            },
-
-            {
-
-              "$and": [
-
-                {
-
-                  "$ends-with": [
-
-                    {
-
-                      "$attribute": {
-
-                        "CLAIM": "token:sub"
-
-                      }
-
-                    },
-
-                    {
-
-                      "$strVal": "xx.com"
-
-                    }
-
-                  ]
-
-                },
-
-                {
-
-                  "$eq": [
-
-                    {
-
-                      "$field": "$sm#idShort"
-
-                    },
-
-                    {
-
-                      "$strVal": "TechnicalData"
-
-                    }
-
-                  ]
-
-                }
-
-              ]
-
             }
-
           ]
-
         }
-
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "token:sub"
+            }
+          ],
+          "RIGHTS": [
+            "READ"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "/shells"
+          },
+          {
+            "ROUTE": "/submodels"
+          },
+          {
+            "ROUTE": "/query/submodels"
+          },
+          {
+            "ROUTE": "/packages"
+          },
+          {
+            "ROUTE": "/serialization"
+          },
+          {
+            "ROUTE": "/concept-descriptions"
+          }
+        ],
+        "FORMULA": {
+          "$or": [
+            {
+              "$and": [
+                {
+                  "$ends-with": [
+                    {
+                      "$attribute": {
+                        "CLAIM": "token:sub"
+                      }
+                    },
+                    {
+                      "$strVal": "xx.com"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "Nameplate"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$ends-with": [
+                    {
+                      "$attribute": {
+                        "CLAIM": "token:sub"
+                      }
+                    },
+                    {
+                      "$strVal": "xx.com"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "TechnicalData"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
       }
-
     ]
-
   }
-
 }

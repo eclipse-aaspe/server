@@ -1270,7 +1270,6 @@ public class QueryGrammarJSON : Grammar
         // Overall condition with path/match placeholders
         sc.FormulaConditions["all"] = BuildOverallSql(le, ctx);
 
-        SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(sc);
         return sc;
     }
 
@@ -1348,7 +1347,7 @@ public class QueryGrammarJSON : Grammar
                         .Select(e => BuildScopeSqlNode(e, scope, smeValue))
                         .ToList();
                     if (branchResults.Any(p => p == "$ERROR")) return "$ERROR";
-                    if (scope is not (SqlScope.Sme or SqlScope.Value) && branchResults.Any(p => p == "$SKIP" || p == null || p == SqlBoolTrue))
+                    if (branchResults.Any(p => p == "$SKIP" || p == null || p == SqlBoolTrue))
                         return SqlBoolTrue;
                     var parts = branchResults
                         .Where(p => p != null && p != "$SKIP" && p != SqlBoolTrue && p != SqlBoolFalse)
@@ -1390,6 +1389,18 @@ public class QueryGrammarJSON : Grammar
                      : leftNode.ExpressionType == "$dateTimeVal" || rightNode.ExpressionType == "$dateTimeVal" ? "dtvalue"
                      : leftNode.ExpressionType == "$hexVal" || rightNode.ExpressionType == "$hexVal" ? "mvalue"
                      : "";
+
+        if (leftNode.ExpressionType == "$attribute" || rightNode.ExpressionType == "$attribute")
+        {
+            if (scope != SqlScope.Sm)
+                return "$SKIP";
+
+            var leftClaimSql = BuildClaimOrLiteralSql(leftNode, smeValue);
+            if (leftClaimSql == "$SKIP" || leftClaimSql == null) return "$SKIP";
+            var rightClaimSql = BuildClaimOrLiteralSql(rightNode, smeValue);
+            if (rightClaimSql == "$SKIP" || rightClaimSql == null) return "$SKIP";
+            return CombineComparisonSql(leftClaimSql, type, rightClaimSql);
+        }
 
         var leftSql  = BuildScopeFieldSql(leftNode, scope, smeValue);
         if (leftSql == "$SKIP" || leftSql == null) return "$SKIP";
@@ -1790,9 +1801,9 @@ public class QueryGrammarJSON : Grammar
         // the CLAIM check and made CLAIM-gated rules permissive — see SecurityService refactor 4bef43ac.
         if (leftNode.ExpressionType == "$attribute" || rightNode.ExpressionType == "$attribute")
         {
-            var leftSqlClaim  = BuildOverallClaimOrLiteralSql(leftNode, smeValue);
+            var leftSqlClaim  = BuildClaimOrLiteralSql(leftNode, smeValue);
             if (leftSqlClaim == "$SKIP" || leftSqlClaim == null) return "$SKIP";
-            var rightSqlClaim = BuildOverallClaimOrLiteralSql(rightNode, smeValue);
+            var rightSqlClaim = BuildClaimOrLiteralSql(rightNode, smeValue);
             if (rightSqlClaim == "$SKIP" || rightSqlClaim == null) return "$SKIP";
             return CombineComparisonSql(leftSqlClaim, type, rightSqlClaim);
         }
@@ -1819,7 +1830,7 @@ public class QueryGrammarJSON : Grammar
     /// Maps a comparison operand to overall-SQL: a literal for <c>$strVal</c>/<c>$numVal</c>/...,
     /// or a deferred claim sentinel literal for <c>$attribute(CLAIM(&lt;type&gt;))</c>.
     /// </summary>
-    private static string? BuildOverallClaimOrLiteralSql(LogicalExpression node, string smeValue)
+    private static string? BuildClaimOrLiteralSql(LogicalExpression node, string smeValue)
     {
         if (node.ExpressionType == "$attribute")
         {

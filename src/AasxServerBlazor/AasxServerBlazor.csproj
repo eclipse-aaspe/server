@@ -92,7 +92,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="accessrules - Kopieren.txt">
+        <None Update="accessrules-alt.txt">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="accessrules.txt">

@@ -151,6 +151,9 @@ namespace AasSecurity
         /// </summary>
         public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
+            // Debug
+            tokenClaims?.Add(new Claim("token:realm_access", "xxx isSuperDuperUser yyy"));
+
             var rules = GetAccessRules(accessRole, neededRightsClaim, httpRoute, tokenClaims);
             if (rules == null || rules.Count == 0)
             {
@@ -244,6 +247,8 @@ namespace AasSecurity
                     continue;
                 }
 
+                combined = combined.Clone();
+                combined.SubstituteTokenClaims(tokenClaims);
                 SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(combined);
                 if (evaluateCombined(combined))
                 {

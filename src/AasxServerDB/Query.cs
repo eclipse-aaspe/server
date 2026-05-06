@@ -2361,7 +2361,7 @@ public partial class Query
         if (expression == "$all")
         {
             sqlConditionsOut = new SqlConditions();
-            sqlConditionsOut.FormulaConditions["all"] = "true";
+            sqlConditionsOut.FormulaConditions["all"] = "1=1";
             SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(sqlConditionsOut);
             return true;
         }
