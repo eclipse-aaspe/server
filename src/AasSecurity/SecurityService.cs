@@ -152,7 +152,7 @@ namespace AasSecurity
         public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
             // Debug
-            tokenClaims?.Add(new Claim("token:realm_access", "xxx isSuperDuperUser yyy"));
+            // tokenClaims?.Add(new Claim("token:realm_access", "xxx isSuperDuperUser yyy"));
 
             var rules = GetAccessRules(accessRole, neededRightsClaim, httpRoute, tokenClaims);
             if (rules == null || rules.Count == 0)
