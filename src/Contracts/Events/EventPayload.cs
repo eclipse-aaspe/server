@@ -57,19 +57,29 @@ public class EventPayload : IComparable<EventPayload>
     public string type { get; set; } // Created, Updated, Deleted
     public string source { get; set; } // link to source
     public JsonObject data { get; set; } // JSON Serialization
-    public string dataschema { get; set; } // SCHEMA_URL + model type
+    public string dataSchema { get; set; } // SCHEMA_URL + model type
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
     public string semanticid { get; set; }
+    public string subject { get; set; }
 
 
     public EventPayload(bool isREST)
     {
         specversion = SPEC_VERSION;
-        datacontenttype = DATA_CONTENT_TYPE;
-        id = null;
+
+        if (isREST)
+        {
+            id = Guid.NewGuid().ToString();
+            domain = null;
+        }
+        else
+        {
+            id = null;
+            datacontenttype = DATA_CONTENT_TYPE;
+            domain = "";
+        }
 
         time = "";
-        domain = "";
     }
 
     public void SetType(EventPayloadType type)
@@ -126,7 +136,7 @@ public class EventPayload : IComparable<EventPayload>
 
     public string GetModelType()
     {
-        return dataschema.Split("/")?.Last();
+        return dataSchema.Split("/")?.Last();
     }
 
     public int CompareTo(EventPayload other)
@@ -135,8 +145,8 @@ public class EventPayload : IComparable<EventPayload>
 
         if (result == 0)
         {
-            var typeInSchema = this.dataschema.Split('/')?.Last().ToLower();
-            var otherTypeInSchema = other.dataschema.Split('/')?.Last().ToLower();
+            var typeInSchema = this.dataSchema.Split('/')?.Last().ToLower();
+            var otherTypeInSchema = other.dataSchema.Split('/')?.Last().ToLower();
 
             bool isBothSubmodel = typeInSchema == "submodel" && otherTypeInSchema == "submodel";
             bool isBothSubmodelElement = typeInSchema != "submodel" && otherTypeInSchema != "submodel";

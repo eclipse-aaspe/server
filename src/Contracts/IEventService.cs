@@ -29,6 +29,8 @@ public interface IEventService
 
     public void PublishMqttMessage(EventDto eventDto, string submodelId, string idShortPath);
 
+    public void PublishRestApiMessage(EventDto eventDto, string submodelId, string idShortPath);
+
     public void NotifyDeleted(ISubmodel submodel, string idShortPath = "", string smeModelType = "", string smeSemanticId = "");
 
     public List<Events.EventPayload> CollectPayload(SqlConditions? securitySqlConditions, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,
