@@ -472,11 +472,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.UpdateSubmodelById:
                         throw new NotImplementedException();
                     case DbRequestOp.ReplaceSubmodelById:
-                        found = IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out _, out _, securitySqlConditions);
+                        found = IsSubmodelPresent(db, aasIdentifier, submodelIdentifier, false, false, out SMSet smDb, out _, securitySqlConditions);
 
                         if (found)
                         {
-                            CrudOperator.ReplaceSubmodelById(db, aasIdentifier, submodelIdentifier, dbRequest.Context.Params.SubmodelBody);
+                            var replaceSubmodel = dbRequest.Context.Params.SubmodelBody;
+                            replaceSubmodel.TimeStampCreate = smDb.TimeStampCreate;
+
+                            CrudOperator.ReplaceSubmodelById(db, aasIdentifier, submodelIdentifier, replaceSubmodel);
 
                             if(dbRequest.Context.Params.IsSigned)
                             {

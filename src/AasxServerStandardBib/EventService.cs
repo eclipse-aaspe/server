@@ -39,34 +39,6 @@ using IdentityModel.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-public class EventRecord
-{
-    [JsonPropertyName("specversion")]
-    public string SpecVersion { get; set; }
-
-    [JsonPropertyName("id")]
-    public string Id { get; set; }
-
-    [JsonPropertyName("time")]
-    public string Time { get; set; }
-
-    [JsonPropertyName("subject")]
-    public string Subject { get; set; }
-
-    [JsonPropertyName("type")]
-    public string Type { get; set; }
-
-    [JsonPropertyName("source")]
-    public string Source { get; set; }
-
-    [JsonPropertyName("dataschema")]
-    public string DataSchema { get; set; }
-
-    [JsonPropertyName("data")]
-    public JsonObject Data { get; set; }
-}
-
-
 public class EventService : IEventService
 {
     public EventService(MqttClientService mqttClientService)
@@ -572,23 +544,6 @@ public class EventService : IEventService
         {
             var payloadObjString = JsonSerializer.Serialize(e, options);
 
-            //foreach (var eventElement in e)
-            //{
-            //var eventRecord = new EventRecord()
-            //{
-            //    Data = eventElement.data,
-            //    DataSchema = eventElement.dataschema,
-            //    Id = eventElement.id,
-            //    Source = eventElement.source,
-            //    SpecVersion = eventElement.specversion,
-            //    Subject = eventElement.subject,
-            //    Time = eventElement.time,
-            //    Type = eventElement.type,
-            //};
-
-
-            //var payloadObjString = JsonSerializer.Serialize(eventElement, options);
-
             try
             {
                 HttpClientHandler handler = new HttpClientHandler()
@@ -599,7 +554,8 @@ public class EventService : IEventService
 
                 HttpClient client = new HttpClient(handler);
 
-                var user = "John Doe";
+                string user = "John Doe";
+                string password = null;
 
                 if (eventData.AccessToken != null && eventData.AccessToken.Value != null && eventData.AccessToken.Value != "")
                 {
@@ -609,8 +565,8 @@ public class EventService : IEventService
                 {
                     if (eventData.UserName != null && eventData.PassWord != null)
                     {
-                        //requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.UserName.Value, eventData.PassWord.Value);
                         user = eventData.UserName.Value;
+                        password = eventData.PassWord.Value;
                     }
                 }
 
@@ -620,6 +576,12 @@ public class EventService : IEventService
                 {
                     var content = new StringContent(payloadObjString, System.Text.Encoding.UTF8, "application/json");
                     requestMessage.Content = content;
+
+                    if (!user.IsNullOrEmpty()
+                         && !password.IsNullOrEmpty())
+                    {
+                        requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, eventData.PassWord.Value);
+                    }
 
                     client.DefaultRequestHeaders.Add("user", user);
 
@@ -948,11 +910,11 @@ public class EventService : IEventService
                 smSearchSet = smSearchSet.Where(searchSM);
             }
 
-            var smSearchSet2 = smSearchSet.Where(sm => sm.TimeStampCreate > diffTime);
-            smSearchSet = smSearchSet.Where(sm => (sm.TimeStampTree != sm.TimeStampCreate) && (sm.TimeStampTree > diffTime) && (sm.TimeStampCreate <= diffTime)); ;
+            smSearchSet = smSearchSet.Where(sm => (sm.TimeStampCreate > diffTime) ||
+                ((sm.TimeStampTree != sm.TimeStampCreate) && (sm.TimeStampTree > diffTime) && (sm.TimeStampCreate <= diffTime)));
 
-            smSearchSet2 = smSearchSet2.OrderBy(sm => sm.TimeStampTree).Skip(offsetSm).Take(limitSm);
-            var smSearchList = smSearchSet2.ToList();
+            smSearchSet = smSearchSet.OrderBy(sm => sm.TimeStampTree).Skip(offsetSm).Take(limitSm);
+            var smSearchList = smSearchSet.ToList();
 
             foreach (var sm in smSearchList)
             {
