@@ -82,10 +82,10 @@ public class EventPayload : IComparable<EventPayload>
         time = "";
     }
 
-    public void SetType(EventPayloadType type)
+    public void SetSubmodelType(EventPayloadType type)
     {
         this.eventPayloadEntryType = type;
-        this.type = $"io.admin-shell.events.v1.{type.ToString()?.ToLower()}";
+        this.type = $"io.admin-shell.submodel.{type.ToString()?.ToLower()}.v1";
 
     }
 

@@ -934,7 +934,7 @@ public class EventService : IEventService
                 var entry = new EventPayload(isREST);
 
                 entry.source = sourceString;
-                entry.SetType(entryType);
+                entry.SetSubmodelType(entryType);
                 entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
                 entry.dataSchema = EventPayload.SCHEMA_URL + "submodel";
@@ -1264,7 +1264,7 @@ public class EventService : IEventService
                                 sourceString += "/submodel-elements/" + idShortPath;
 
 
-                                entry.SetType(entryType);
+                                entry.SetSubmodelType(entryType);
                                 entry.time = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
 
                                 entry.source = sourceString;
@@ -1324,7 +1324,7 @@ public class EventService : IEventService
                     entry.domain = eventPayload.domain;
 
                     entry.source = sourceString;
-                    entry.SetType(entryType);
+                    entry.SetSubmodelType(entryType);
                     entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
                     entry.dataSchema = EventPayload.SCHEMA_URL + "submodel";
@@ -1417,7 +1417,7 @@ public class EventService : IEventService
             eventPayload.cursor = "0";
             eventPayload.id = CreateIdString(eventPayload);
 
-            eventPayload.SetType(EventPayloadType.Updated);
+            eventPayload.SetSubmodelType(EventPayloadType.Updated);
             eventPayload.source = basicEventElementSourceString;
             eventPayload.semanticid = basicEventElementSemanticId;
         };
