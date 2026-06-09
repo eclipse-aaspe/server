@@ -32,6 +32,7 @@ public enum EventPayloadType
 public class EventPayload : IComparable<EventPayload>
 {
     public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
+    public const string REST_API_SM_SCHEMA_URL = "https://admin-shell.io/events/schemas/metamodel-submodelChangeEvent.v1.schema.json";
 
     //ToDo: Delete, when db request handler is used for the events?
     public static object EventLock = new object();
