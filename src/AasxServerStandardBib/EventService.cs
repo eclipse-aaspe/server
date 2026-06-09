@@ -982,7 +982,7 @@ public class EventService : IEventService
         if (jSemanticId != null)
         {
             var restApiSemanticId = new JsonObject();
-            restApiSemanticId["_type"] = jSemanticId["type"]?.DeepClone();
+            restApiSemanticId.TryAdd("_type", jSemanticId["type"]?.DeepClone());
 
             var jKeys = jSemanticId["keys"] as JsonArray;
             var restApiSemanticIdKeys = new JsonArray();
@@ -996,6 +996,7 @@ public class EventService : IEventService
 
                 restApiSemanticIdKeys.Add(restApiSemanticKey);
             }
+            restApiSemanticId.TryAdd("keys", restApiSemanticIdKeys);
 
             restApiSubmodel.TryAdd("semanticId", restApiSemanticId);
         }
