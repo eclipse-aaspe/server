@@ -41,7 +41,11 @@ public class EventPayload : IComparable<EventPayload>
     private const string DATA_CONTENT_TYPE = "application/json";
 
     public string specversion { get; set; } //current spec version, to be changed in static variable
-    public string time { get; set; } //latest timeStamp for all entries
+
+    public string time { get; private set; } //latest timeStamp
+    [JsonIgnore]
+    public DateTime lastUpdate { get; private set; } //latest timeStamp
+
     public string transmitted { get; set; } // timestamp of GET or PUT
     public string domain { get; set; } // domain (like phoenixcontact.com)
     public string id { get; set; } // message id
@@ -51,6 +55,9 @@ public class EventPayload : IComparable<EventPayload>
     public string cursor { get; set; }
 
     public JsonObject statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
+
+    [JsonIgnore]
+    public bool IsREST { get; set; }
 
     //Event payload entry
     [JsonIgnore]
@@ -80,6 +87,8 @@ public class EventPayload : IComparable<EventPayload>
             domain = "";
         }
 
+        IsREST = isREST;
+
         time = "";
     }
 
@@ -87,7 +96,26 @@ public class EventPayload : IComparable<EventPayload>
     {
         this.eventPayloadEntryType = type;
         this.type = $"io.admin-shell.submodel.{type.ToString()?.ToLower()}.v1";
+    }
 
+    public void SetTime(DateTime dateTime)
+    {
+        if (IsREST)
+        {
+            this.time = DateTimeToRFC3339String(dateTime);
+        }
+        else
+        {
+            this.time = TimeStamp.TimeStamp.DateTimeToString(dateTime);
+        }
+
+        this.lastUpdate = dateTime;
+    }
+    private string DateTimeToRFC3339String(DateTime dateTime)
+    {
+        var FormatString = "yyyy-MM-ddTHH:mm:ssZ";
+
+        return dateTime.ToString(FormatString);
     }
 
     public string GetSubdmodelId()

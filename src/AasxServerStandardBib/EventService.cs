@@ -616,13 +616,12 @@ public class EventService : IEventService
                                 eventData.Transmitted.Value = e[0].transmitted;
                                 eventData.Transmitted.SetTimeStamp(now);
                             }
-                            var maxTime = e.Max(e => e.time);
-                            var dt = DateTime.ParseExact(maxTime, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            var maxTimeDt = e.Max(e => e.lastUpdate);
 
                             if (eventData.LastUpdate != null)
                             {
-                                eventData.LastUpdate.Value = maxTime;
-                                eventData.LastUpdate.SetTimeStamp(dt);
+                                eventData.LastUpdate.Value = TimeStamp.TimeStamp.DateTimeToString(maxTimeDt);
+                                eventData.LastUpdate.SetTimeStamp(maxTimeDt);
                             }
                         }
                     });
@@ -904,7 +903,7 @@ public class EventService : IEventService
                 }
             }
 
-            eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+            eventPayload.SetTime(timeStampMax);
 
             IQueryable<SMSet> smSearchSet = db.SMSets;
             if (!searchSM.IsNullOrEmpty() && searchSM != "*")
@@ -937,7 +936,9 @@ public class EventService : IEventService
 
                 entry.source = sourceString;
                 entry.SetSubmodelType(entryType);
-                entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+                entry.SetTime(sm.TimeStampTree);
+
+                //entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
                 entry.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
 
@@ -1040,7 +1041,7 @@ public class EventService : IEventService
             eventPayload.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
         }
 
-        eventPayload.time = "";
+        eventPayload.SetTime(DateTime.MinValue);
         eventPayload.domain = domain;
 
         //ToDo: Currently statusData parameter is set to null in every call, to be deleted?
@@ -1121,7 +1122,8 @@ public class EventService : IEventService
                 }
             }
 
-            eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+            eventPayload.SetTime(timeStampMax);
+
             if (diff == "status")
             {
                 //ToDo: What should happen here?
@@ -1299,7 +1301,7 @@ public class EventService : IEventService
 
 
                                 entry.SetSubmodelType(entryType);
-                                entry.time = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
+                                entry.SetTime(sme.TimeStampTree);
 
                                 entry.source = sourceString;
 
@@ -1359,7 +1361,7 @@ public class EventService : IEventService
 
                     entry.source = sourceString;
                     entry.SetSubmodelType(entryType);
-                    entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+                    entry.SetTime(sm.TimeStampTree);
 
                     entry.dataSchema = EventPayload.SCHEMA_URL + "submodel";
 
@@ -1405,7 +1407,7 @@ public class EventService : IEventService
                 {
                     timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).DefaultIfEmpty().Max();
                 }
-                eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+                eventPayload.SetTime(timeStampMax);
 
                 eventPayloadList.Add(eventPayload);
             }
@@ -2370,7 +2372,7 @@ public class EventService : IEventService
                         eventPayload.domain = mqttEventDto.Domain.Value;
                     }
 
-                    eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+                    eventPayload.SetTime(DateTime.UtcNow);
 
                     bool isPublishEventElement = mqttEventDto.PublishBasicEventElement != null
                         && mqttEventDto.PublishBasicEventElement.Value != null && mqttEventDto.PublishBasicEventElement.Value == "true";
@@ -2539,7 +2541,7 @@ public class EventService : IEventService
 
                     eventPayload.source = sourceString;
                     eventPayload.SetSubmodelType(EventPayloadType.Deleted);
-                    eventPayload.time = TimeStamp.TimeStamp.DateTimeToString(submodel.TimeStampTree);
+                    eventPayload.SetTime(submodel.TimeStampTree);
 
                     eventPayload.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
 
