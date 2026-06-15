@@ -2340,6 +2340,10 @@ public class EventService : IEventService
                 //    }
                 //}
             }
+            else
+            {
+                notificationEventDtos.Add(outEventDto);
+            }
         }
 
         var mqttEventDtos = notificationEventDtos.Where(ne => ne.Mode.Value == "MQTT");
