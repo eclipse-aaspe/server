@@ -51,8 +51,6 @@ namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
-        public static List<Dictionary<string, string>>? _condition = new List<Dictionary<string, string>>();
-
         public static AllAccessPermissionRules? _accessRules = null;
 
         public SecurityService()
@@ -85,7 +83,6 @@ namespace AasSecurity
             ClearSecurityRules();
             grammar.ParseAccessRules(expression);
             _accessRules = QueryGrammarJSON._accessRules;
-            _condition = QueryGrammarJSON.allAccessRuleExpressions;
         }
 
         public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null,
@@ -358,7 +355,6 @@ namespace AasSecurity
 
         public void ClearSecurityRules()
         {
-            _condition.Clear();
             _accessRules = null;
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
@@ -1361,14 +1357,8 @@ namespace AasSecurity
             return true;
         }
 
-        public string GetSecurityRules(out List<Dictionary<string, string>> condition)
+        public string GetSecurityRules()
         {
-            condition = new List<Dictionary<string, string>>();
-            if (_condition != null)
-            {
-                condition = _condition;
-            }
-
             string rules = "";
 
             foreach (var r in GlobalSecurityVariables.SecurityRoles)

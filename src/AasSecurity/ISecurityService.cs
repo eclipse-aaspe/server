@@ -52,6 +52,6 @@ namespace AasSecurity
                               string? policy = null,
                               List<Claim> tokenClaims = null);
 
-        string GetSecurityRules(out List<Dictionary<string, string>> condition);
+        string GetSecurityRules();
     }
 }

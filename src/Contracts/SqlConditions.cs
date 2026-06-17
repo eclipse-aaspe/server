@@ -44,7 +44,6 @@ public class SqlConditions
         foreach (var key in ConditionKeys)
         {
             FormulaConditions[key] = "";
-            FilterConditions[key] = "";
         }
     }
 
@@ -54,12 +53,6 @@ public class SqlConditions
     /// Empty string means no restriction for that scope.
     /// </summary>
     public Dictionary<string, string> FormulaConditions { get; } = new();
-
-    /// <summary>
-    /// Per-scope SQL predicates from access-rule FILTER blocks.
-    /// Keys: "all", "aas", "sm", "sme", "value".
-    /// </summary>
-    public Dictionary<string, string> FilterConditions { get; } = new();
 
     /// <summary>
     /// Query projection hint from the parsed request, e.g. <c>"id"</c> or <c>"match"</c>.
@@ -111,8 +104,6 @@ public class SqlConditions
         var dst = new SqlConditions { Select = Select };
         foreach (var kv in FormulaConditions)
             dst.FormulaConditions[kv.Key] = kv.Value;
-        foreach (var kv in FilterConditions)
-            dst.FilterConditions[kv.Key] = kv.Value;
         foreach (var kv in FormulaConditionsCSharp)
             dst.FormulaConditionsCSharp[kv.Key] = kv.Value;
         foreach (var p in Paths)
@@ -150,8 +141,6 @@ public class SqlConditions
         var claimList = tokenClaims as IList<Claim> ?? tokenClaims?.ToList();
         foreach (var key in FormulaConditions.Keys.ToList())
             FormulaConditions[key] = ReplaceClaimSentinels(FormulaConditions[key], claimList);
-        foreach (var key in FilterConditions.Keys.ToList())
-            FilterConditions[key] = ReplaceClaimSentinels(FilterConditions[key], claimList);
         foreach (var p in Paths)
             p.SubquerySql = ReplaceClaimSentinels(p.SubquerySql, claimList);
         foreach (var m in Matches)
@@ -285,7 +274,6 @@ public static class SqlConditionsMerger
 
         // --- FormulaConditions: AND per key ---
         MergeConditions(query.FormulaConditions, security.FormulaConditions, merged.FormulaConditions, "AND", skipAll: true);
-        MergeConditions(query.FilterConditions, security.FilterConditions, merged.FilterConditions, "AND");
 
         // --- Renumber security placeholders ---
         int pathOffset  = query.Paths.Count;
@@ -375,7 +363,6 @@ public static class SqlConditionsMerger
 
         // --- FormulaConditions: OR per key ---
         MergeConditions(left.FormulaConditions, right.FormulaConditions, merged.FormulaConditions, "OR", skipAll: true);
-        MergeConditions(left.FilterConditions, right.FilterConditions, merged.FilterConditions, "OR");
 
         // --- Renumber right placeholders ---
         int pathOffset  = left.Paths.Count;

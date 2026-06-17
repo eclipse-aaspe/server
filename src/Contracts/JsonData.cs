@@ -106,12 +106,8 @@ public class Query
     [JsonProperty("$condition")]
     public LogicalExpression Condition { get; set; }
 
-    public Dictionary<string, string> _query_conditions = [];
-
     [JsonProperty("$filter")]
     public LogicalExpression Filter { get; set; }
-
-    public Dictionary<string, string> _filter_conditions = [];
 }
 
 public class LogicalExpression
@@ -120,8 +116,6 @@ public class LogicalExpression
     [JsonIgnore] public object ExpressionValue { get; set; }
 
     [JsonExtensionData] private IDictionary<string, JToken> _data;
-
-    public string _expression = "";
 
     [OnDeserialized]
     private void OnDeserialized(StreamingContext context)
@@ -250,12 +244,9 @@ public class AccessPermissionRule
     [JsonProperty("USEFILTER")]
     public string? UseFilter { get; set; }
 
-    public Dictionary<string, string> _formula_conditions = [];
-    public Dictionary<string, string> _filter_conditions = [];
-
-    /// <summary>Direct SQL equivalent of <see cref="_formula_conditions"/> — populated by <see cref="QueryGrammarJSON.ParseAccessRules"/> alongside the LINQ strings.</summary>
+    /// <summary>SQL conditions produced from <see cref="Formula"/>.</summary>
     public SqlConditions? _formula_sqlConditions;
-    /// <summary>Direct SQL equivalent of <see cref="_filter_conditions"/> — populated by <see cref="QueryGrammarJSON.ParseAccessRules"/> alongside the LINQ strings.</summary>
+    /// <summary>SQL conditions produced from <see cref="Filter"/>.</summary>
     public SqlConditions? _filter_sqlConditions;
 }
 public class Filter

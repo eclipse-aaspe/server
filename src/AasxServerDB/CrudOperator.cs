@@ -626,8 +626,8 @@ namespace AasxServerDB
             try
             {
                 var single = CloneSqlConditions(sqlConditions);
-                var existing = single.FilterConditions.GetValueOrDefault("sm", "");
-                single.FilterConditions["sm"] = AppendSqlAnd(existing, $"\"Id\" = {smSet.Id}");
+                var existing = single.FormulaConditions.GetValueOrDefault("sm", "");
+                single.FormulaConditions["sm"] = AppendSqlAnd(existing, $"\"Id\" = {smSet.Id}");
 
                 var raw = Query.BuildRawSqlFromSqlConditions(
                     single,
@@ -654,7 +654,6 @@ namespace AasxServerDB
         {
             var dst = new SqlConditions { Select = src.Select };
             foreach (var kv in src.FormulaConditions) dst.FormulaConditions[kv.Key] = kv.Value;
-            foreach (var kv in src.FilterConditions) dst.FilterConditions[kv.Key] = kv.Value;
             foreach (var kv in src.FormulaConditionsCSharp) dst.FormulaConditionsCSharp[kv.Key] = kv.Value;
             dst.Paths.AddRange(src.Paths);
             dst.Matches.AddRange(src.Matches);
@@ -692,9 +691,7 @@ namespace AasxServerDB
                 return null;
 
             IQueryable<ValueSet> valueSets = db.ValueSets;
-            var valueSql = AppendSqlAnd(
-                sqlConditions?.FormulaConditions.GetValueOrDefault("value", ""),
-                sqlConditions?.FilterConditions.GetValueOrDefault("value", ""));
+            var valueSql = sqlConditions?.FormulaConditions.GetValueOrDefault("value", "");
             if (!string.IsNullOrWhiteSpace(valueSql))
             {
                 valueSets = QueryValueRaw(db, valueSql).AsQueryable();

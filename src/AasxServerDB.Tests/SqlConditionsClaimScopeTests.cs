@@ -192,7 +192,6 @@ public sealed class SqlConditionsClaimScopeTests
         overall.IndexOf("RuleOne", StringComparison.Ordinal).Should().BeLessThan(overall.IndexOf("FilterOne", StringComparison.Ordinal));
         overall.IndexOf("FilterOne", StringComparison.Ordinal).Should().BeLessThan(overall.IndexOf("RuleTwo", StringComparison.Ordinal));
         overall.IndexOf("RuleTwo", StringComparison.Ordinal).Should().BeLessThan(overall.IndexOf("FilterTwo", StringComparison.Ordinal));
-        merged.FilterConditions.Values.Should().OnlyContain(value => string.IsNullOrWhiteSpace(value));
     }
 
     private static LogicalExpression ClaimAttribute(string claimType)

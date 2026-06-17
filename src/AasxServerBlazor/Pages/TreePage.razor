@@ -135,8 +135,7 @@
 							text = text.Replace("%BLAZOR%", Program.externalBlazor);
 							if (text.Contains("%ACCESSRULES%"))
 							{
-								List<Dictionary<string, string>> condition = [];
-								var accessRules = SecService.GetSecurityRules(out condition);
+								var accessRules = SecService.GetSecurityRules();
 								<span><b>AAS API</b></span>
 								<br />
 								<table class="table table-bordered table-sm">
@@ -177,22 +176,6 @@
 										}
 									</tbody>
 								</table>
-								<br />
-								<span><b>AAS Data</b></span>
-								<br />
-								@foreach (var dict in condition)
-								{
-									<table class="table table-bordered table-sm">
-										@foreach (var kvp in dict)
-										{
-											<tr>
-												<td>@kvp.Key</td>
-												<td>@kvp.Value</td>
-											</tr>
-										}
-									</table>
-									<br />
-								}
 							}
 							else
 							{

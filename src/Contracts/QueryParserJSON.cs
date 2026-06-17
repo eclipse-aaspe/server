@@ -368,8 +368,7 @@ public class QueryGrammarJSON : Grammar
                     createExpression(mode, q.Condition);
                     break;
                 case LogicalExpression le:
-                    le._expression = createExpression(mode, le.ExpressionValue, le.ExpressionType, smeValue);
-                    return le._expression;
+                    return createExpression(mode, le.ExpressionValue, le.ExpressionType, smeValue);
                 default:
                     break;
             }
@@ -1004,16 +1003,10 @@ public class QueryGrammarJSON : Grammar
     }
 
     public static AllAccessPermissionRules _accessRules = null;
-    public static new List<Dictionary<string, string>> allAccessRuleExpressions = [];
-    public static new Dictionary<string, string> accessRuleExpression = [];
     public static SqlConditions? allAccessRuleSqlConditions = null;
-    // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
-    // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
     public void ParseAccessRules(string expression)
     {
         // mySecurityRules.ClearSecurityRules();
-        allAccessRuleExpressions = new List<Dictionary<string, string>>();
-        accessRuleExpression = new Dictionary<string, string>();
         allAccessRuleSqlConditions = null;
         Root deserializedData = null;
 
@@ -1118,15 +1111,11 @@ public class QueryGrammarJSON : Grammar
         _accessRules = allRules;
         foreach (var rule in allRules.Rules)
         {
-            // mode: all, sm., sme., svalue, mvalue
             List<LogicalExpression?> logicalExpressions = [];
-            List<Dictionary<string, string>> conditions = [];
             logicalExpressions.Add(rule.Formula);
-            conditions.Add(rule._formula_conditions);
             if (rule.Filter != null)
             {
                 logicalExpressions.Add(rule.Filter.Condition);
-                conditions.Add(rule._filter_conditions);
             }
             if (logicalExpressions.Count != 0)
             {
@@ -1135,16 +1124,6 @@ public class QueryGrammarJSON : Grammar
                     var le = logicalExpressions[i];
                     if (le != null)
                     {
-                        createExpression("all", le);
-                        conditions[i].Add("all", le._expression);
-                        createExpression("value", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        conditions[i].Add("value", le._expression);
-
-                        // SQL generation + C# sm./sme. expressions in one pass
                         var sc = CreateSqlConditions(le);
                         if (i == 0)
                             rule._formula_sqlConditions = sc;
@@ -1155,9 +1134,7 @@ public class QueryGrammarJSON : Grammar
                 }
             }
 
-            var accessRuleExpression = new Dictionary<string, string>();
-            ParseAccessRule(rule, accessRuleExpression);
-            allAccessRuleExpressions.Add(accessRuleExpression);
+            RegisterAccessRuleRoutes(rule);
 
             // Accumulate SQL access conditions across all rules as OR(rule FORMULA AND rule FILTER).
             var ruleSqlConditions = SqlConditionsMerger.Merge(rule._formula_sqlConditions, rule._filter_sqlConditions);
@@ -1170,40 +1147,20 @@ public class QueryGrammarJSON : Grammar
         }
     }
 
-    List<string> Names = new List<string>();
-    string access = "";
     string rights = "";
-    string global = "";
-    bool isClaim = false;
     string claim = "";
-    bool filter = false;
-    bool route = false;
-    void ParseAccessRule(AccessPermissionRule rule, Dictionary<string, string> accessRuleExpression)
+    void RegisterAccessRuleRoutes(AccessPermissionRule rule)
     {
-        foreach (var c in rule._formula_conditions)
-        {
-            accessRuleExpression.Add(c.Key, c.Value);
-        }
-        if (rule._filter_conditions != null && rule._filter_conditions.Count != 0)
-        {
-            accessRuleExpression["filter"] = rule._filter_conditions["all"];
-        }
         var attributes = rule.Acl?.Attributes;
         if (attributes != null && attributes.Count != 0)
         {
-            var claimList = "";
             foreach (var a in attributes)
             {
                 if (a.ItemType == "CLAIM")
                 {
                     claim = a.Value;
-                    if (!claimList.Contains(claim + " "))
-                    {
-                        claimList += claim + " ";
-                    }
                 }
             }
-            accessRuleExpression["claim"] = claimList;
         }
         var routes = rule.Objects?.Where(o => o.ItemType == "ROUTE").ToList();
         var rightList = rule.Acl?.Rights?.ToList();
@@ -1229,7 +1186,6 @@ public class QueryGrammarJSON : Grammar
                 }
             }
         }
-        accessRuleExpression["right"] = rights;
     }
 
     // -------------------------------------------------------------------------

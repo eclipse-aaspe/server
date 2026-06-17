@@ -509,6 +509,71 @@ public sealed class QueryTests
         result.Select(sm => sm.IdShort).Distinct().Should().OnlyContain(idShort => idShort == "Nameplate" || idShort == "TechnicalData");
     }
 
+    /// <summary>
+    /// Regression for the single-submodel GET path (<see cref="CrudOperator.ReadSubmodel"/>): the
+    /// element-level access-rule FILTER (sme idShort) must be applied there too, not only by the paged
+    /// list path. Guards the bug where <c>ApplySmeSqlFilterConditions</c> read the always-empty
+    /// <c>FilterConditions</c> bucket instead of <c>FormulaConditions</c>, so GET /submodels/{id}
+    /// returned all elements unfiltered while the tree view filtered correctly.
+    /// </summary>
+    [Fact]
+    public void ReadSubmodelById_NoAuthSecurityFilter_FiltersSubmodelElements()
+    {
+        const string expression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "isNotAuthenticated" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$or": [
+                        { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "Nameplate" } ] },
+                        { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "TechnicalData" } ] }
+                      ]
+                    },
+                    "FILTER": {
+                      "FRAGMENT": "xxx",
+                      "CONDITION": {
+                        "$or": [
+                          { "$starts-with": [ { "$field": "$sme#idShort" }, { "$strVal": "General" } ] },
+                          { "$starts-with": [ { "$field": "$sme#idShort" }, { "$strVal": "Manufacturer" } ] }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        const string nameplateId = "https://i4d.de/T/2900542/submodel/Nameplate";
+
+        using var db = _fixture.CreateDbContext();
+        var securitySqlConditions = LoadSubmodelAccessRuleSqlConditions(expression);
+
+        // Baseline: full submodel without security — must contain elements the FILTER is meant to drop.
+        var full = CrudOperator.ReadSubmodel(db, submodelIdentifier: nameplateId, securitySqlConditions: null, skipAllowCheck: true);
+        full.Should().NotBeNull("the Nameplate submodel exists in the test database");
+        var fullIdShorts = full!.SubmodelElements!.Select(e => e.IdShort).ToList();
+        fullIdShorts.Should().Contain(s => !(s!.StartsWith("General") || s.StartsWith("Manufacturer")),
+            "the baseline must include elements the FILTER is expected to remove");
+
+        // With security: only top-level elements allowed by the FILTER (idShort General*/Manufacturer*) remain.
+        var filtered = CrudOperator.ReadSubmodel(db, submodelIdentifier: nameplateId, securitySqlConditions: securitySqlConditions);
+        filtered.Should().NotBeNull("Nameplate is allowed by the FORMULA");
+        var filteredIdShorts = filtered!.SubmodelElements!.Select(e => e.IdShort).ToList();
+
+        filteredIdShorts.Should().NotBeEmpty();
+        filteredIdShorts.Should().OnlyContain(s => s!.StartsWith("General") || s.StartsWith("Manufacturer"));
+        filteredIdShorts.Count.Should().BeLessThan(fullIdShorts.Count,
+            "the element-level FILTER must remove non-matching elements on the single-submodel GET path");
+    }
+
     // -------------------------------------------------------------------------
     // Access rule with $attribute(CLAIM(token:sub)) — regression cover for the
     // CLAIM substitution that was lost when SecurityService.GetCondition was

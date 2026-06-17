@@ -381,16 +381,6 @@ public partial class Query
                         {
                             var aasDB = aasList[i];
                             var aas = ReadAssetAdministrationShell(db, aasDB: ref aasDB);
-                            var filterAas = effectiveSqlConditions?.FilterConditions.GetValueOrDefault("aas", "");
-                            if (!string.IsNullOrWhiteSpace(filterAas) && filterAas != "$SKIP")
-                            {
-                                if (filterAas.Contains("globalAssetId"))
-                                {
-                                    aas.Submodels = null;
-                                    aas.Description = null;
-                                    aas.DisplayName = null;
-                                }
-                            }
                             if (aas != null)
                             {
                                 shells.Add(aas);
@@ -1570,13 +1560,10 @@ public partial class Query
         if (sqlConditions == null)
             throw new InvalidOperationException("CombineTablesLEFT requires SqlConditions.");
 
-        var sqlAasMerged = AppendAndCondition(
-            NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("aas", "")),
-            NormalizeSqlAliases(sqlConditions.FilterConditions.GetValueOrDefault("aas", "")));
+        var sqlAasMerged = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("aas", ""));
         var sqlOverallCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("all", ""));
-        var sqlFilterAllCondition = NormalizeSqlAliases(sqlConditions.FilterConditions.GetValueOrDefault("all", ""));
 
-        var overallFieldCondition = AppendAndCondition(sqlOverallCondition, sqlFilterAllCondition);
+        var overallFieldCondition = sqlOverallCondition;
 
         // Do not join AASSets when the AAS scope is only a tautology (e.g. (1=1) from folding) — same idea as "all" without "aas".
         var restrictAAS = !SqlConditionIsPureTautology(sqlAasMerged);
@@ -1648,21 +1635,10 @@ public partial class Query
         int pageSize,
         IReadOnlyList<string>? queryFlags = null)
     {
-        // Inner AAS/SM subquery WHERE: Formula + per-scope Filter (e.g. security), same pattern as sme/value.
-        var whereAas = AppendAndCondition(
-            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("aas", "")),
-            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("aas", "")));
-        var whereSm = AppendAndCondition(
-            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sm", "")),
-            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("sm", "")));
-        // Per-scope FILTER (e.g. security); inner SME/Value JOIN Vorfilter must not use Formula["sme"] alone.
-        var whereSme = AppendAndCondition(
-            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sme", "")),
-            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("sme", "")));
-        var whereVal = AppendAndCondition(
-            NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("value", "")),
-            NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("value", "")));
-        var filterAll = NormalizeSqlAliases(sc.FilterConditions.GetValueOrDefault("all", ""));
+        var whereAas = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("aas", ""));
+        var whereSm = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sm", ""));
+        var whereSme = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("sme", ""));
+        var whereVal = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("value", ""));
 
         var withUnion = queryFlags != null && queryFlags.Contains("$UNION");
         var withTemp  = queryFlags != null && queryFlags.Contains("$TEMPTABLE");
@@ -1671,7 +1647,7 @@ public partial class Query
         var useLegacySmeJoin = queryFlags != null && queryFlags.Contains("$LEGACYSMEJOIN");
 
         // Resolve placeholder references
-        var overall = AppendAndCondition(NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("all", "")), filterAll);
+        var overall = NormalizeSqlAliases(sc.FormulaConditions.GetValueOrDefault("all", ""));
         var pathNum  = 1;
         var matchNum = 1;
         foreach (var path  in sc.Paths)    overall = overall.Replace($"$${path.Placeholder}$$",  $"(p{pathNum++}.SMId IS NOT NULL)");
