@@ -590,8 +590,8 @@ namespace AasxServerDB
             if (sqlConditions == null)
                 return smeQuery;
 
-            sqlConditions.FilterConditions.TryGetValue("sme", out var smeSql);
-            sqlConditions.FilterConditions.TryGetValue("value", out var valueSql);
+            sqlConditions.FormulaConditions.TryGetValue("sme", out var smeSql);
+            sqlConditions.FormulaConditions.TryGetValue("value", out var valueSql);
             if (string.IsNullOrWhiteSpace(smeSql) && string.IsNullOrWhiteSpace(valueSql))
                 return smeQuery;
 
