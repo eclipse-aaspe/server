@@ -1660,6 +1660,13 @@ namespace AasxServer
 
             if (eventData.Direction != null && eventData.Mode != null)
             {
+
+                if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "REST_API")
+                {
+                    _eventService.PublishRestApiMessage(eventData, submodelId, idShortPath);
+                    return;
+                }
+
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
                     _eventService.PublishMqttMessage(eventData, submodelId, idShortPath);

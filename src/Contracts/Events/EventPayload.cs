@@ -32,6 +32,7 @@ public enum EventPayloadType
 public class EventPayload : IComparable<EventPayload>
 {
     public const string SCHEMA_URL = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/";
+    public const string REST_API_SM_SCHEMA_URL = "https://admin-shell.io/events/schemas/metamodel-submodelChangeEvent.v1.schema.json";
 
     //ToDo: Delete, when db request handler is used for the events?
     public static object EventLock = new object();
@@ -40,7 +41,11 @@ public class EventPayload : IComparable<EventPayload>
     private const string DATA_CONTENT_TYPE = "application/json";
 
     public string specversion { get; set; } //current spec version, to be changed in static variable
-    public string time { get; set; } //latest timeStamp for all entries
+
+    public string time { get; private set; } //latest timeStamp
+    [JsonIgnore]
+    public DateTime lastUpdate { get; private set; } //latest timeStamp
+
     public string transmitted { get; set; } // timestamp of GET or PUT
     public string domain { get; set; } // domain (like phoenixcontact.com)
     public string id { get; set; } // message id
@@ -51,32 +56,66 @@ public class EventPayload : IComparable<EventPayload>
 
     public JsonObject statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
 
+    [JsonIgnore]
+    public bool IsREST { get; set; }
+
     //Event payload entry
     [JsonIgnore]
     public EventPayloadType eventPayloadEntryType { get; private set; } // eventPayloadEntryType
     public string type { get; set; } // Created, Updated, Deleted
     public string source { get; set; } // link to source
     public JsonObject data { get; set; } // JSON Serialization
-    public string dataschema { get; set; } // SCHEMA_URL + model type
+    public string dataSchema { get; set; } // SCHEMA_URL + model type
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
     public string semanticid { get; set; }
+    public string subject { get; set; }
 
 
     public EventPayload(bool isREST)
     {
         specversion = SPEC_VERSION;
-        datacontenttype = DATA_CONTENT_TYPE;
-        id = null;
+
+        if (isREST)
+        {
+            id = Guid.NewGuid().ToString();
+            domain = null;
+        }
+        else
+        {
+            id = null;
+            datacontenttype = DATA_CONTENT_TYPE;
+            domain = "";
+        }
+
+        IsREST = isREST;
 
         time = "";
-        domain = "";
     }
 
-    public void SetType(EventPayloadType type)
+    public void SetSubmodelType(EventPayloadType type)
     {
         this.eventPayloadEntryType = type;
-        this.type = $"io.admin-shell.events.v1.{type.ToString()?.ToLower()}";
+        this.type = $"io.admin-shell.submodel.{type.ToString()?.ToLower()}.v1";
+    }
 
+    public void SetTime(DateTime dateTime)
+    {
+        if (IsREST)
+        {
+            this.time = DateTimeToRFC3339String(dateTime);
+        }
+        else
+        {
+            this.time = TimeStamp.TimeStamp.DateTimeToString(dateTime);
+        }
+
+        this.lastUpdate = dateTime;
+    }
+    private string DateTimeToRFC3339String(DateTime dateTime)
+    {
+        var FormatString = "yyyy-MM-ddTHH:mm:ssZ";
+
+        return dateTime.ToString(FormatString);
     }
 
     public string GetSubdmodelId()
@@ -126,7 +165,7 @@ public class EventPayload : IComparable<EventPayload>
 
     public string GetModelType()
     {
-        return dataschema.Split("/")?.Last();
+        return dataSchema.Split("/")?.Last();
     }
 
     public int CompareTo(EventPayload other)
@@ -135,8 +174,8 @@ public class EventPayload : IComparable<EventPayload>
 
         if (result == 0)
         {
-            var typeInSchema = this.dataschema.Split('/')?.Last().ToLower();
-            var otherTypeInSchema = other.dataschema.Split('/')?.Last().ToLower();
+            var typeInSchema = this.dataSchema.Split('/')?.Last().ToLower();
+            var otherTypeInSchema = other.dataSchema.Split('/')?.Last().ToLower();
 
             bool isBothSubmodel = typeInSchema == "submodel" && otherTypeInSchema == "submodel";
             bool isBothSubmodelElement = typeInSchema != "submodel" && otherTypeInSchema != "submodel";
