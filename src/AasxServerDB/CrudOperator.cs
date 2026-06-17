@@ -19,7 +19,7 @@ namespace AasxServerDB
     using System.Linq.Dynamic.Core;
     using System.Runtime.Intrinsics.X86;
     using System.Text;
-    using AasCore.Aas3_0;
+    using AasCore.Aas3_1;
     using AasxServerDB.Entities;
     using AdminShellNS;
     using AdminShellNS.Models;
@@ -386,7 +386,7 @@ namespace AasxServerDB
             foreach (var sm in smDBList.Where(sm => sm.AASId == aasDBId))
             {
                 aas?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                    keys: new List<IKey>() { new AasCore.Aas3_0.Key(KeyTypes.Submodel, sm.Identifier) }
+                    keys: new List<IKey>() { new AasCore.Aas3_1.Key(KeyTypes.Submodel, sm.Identifier) }
                 ));
             }
 
@@ -1819,7 +1819,7 @@ namespace AasxServerDB
                         annotations: new List<IDataElement>());
                     break;
                 case "Prop":
-                    sme = new AasCore.Aas3_0.Property(
+                    sme = new AasCore.Aas3_1.Property(
                         value: value.First()[0],
                         valueType: Serializer.DeserializeElement<DataTypeDefXsd>(value.First()[1], true),
                         valueId: Serializer.DeserializeElement<IReference>(oValue.ContainsKey("ValueId") ? oValue["ValueId"] : null));
@@ -1830,7 +1830,7 @@ namespace AasxServerDB
                         valueId: Serializer.DeserializeElement<IReference>(oValue.ContainsKey("ValueId") ? oValue["ValueId"] : null));
                     break;
                 case "Range":
-                    sme = new AasCore.Aas3_0.Range(
+                    sme = new AasCore.Aas3_1.Range(
                         valueType: Serializer.DeserializeElement<DataTypeDefXsd>(oValue["ValueType"], true),
                         min: value.Find(val => val[1].Equals("Min")).FirstOrDefault(string.Empty),
                         max: value.Find(val => val[1].Equals("Max")).FirstOrDefault(string.Empty));
@@ -1841,7 +1841,7 @@ namespace AasxServerDB
                         contentType: value.First()[1]);
                     break;
                 case "File":
-                    sme = new AasCore.Aas3_0.File(
+                    sme = new AasCore.Aas3_1.File(
                         value: value.First()[0],
                         contentType: value.First()[1]);
                     break;
@@ -1867,7 +1867,7 @@ namespace AasxServerDB
                 case "Ent":
                     sme = new Entity(
                         statements: new List<ISubmodelElement>(),
-                        entityType: Serializer.DeserializeElement<AasCore.Aas3_0.EntityType>(value.First()[1], true),
+                        entityType: Serializer.DeserializeElement<AasCore.Aas3_1.EntityType>(value.First()[1], true),
                         globalAssetId: value.First()[0],
                         specificAssetIds: Serializer.DeserializeList<ISpecificAssetId>(oValue.ContainsKey("SpecificAssetIds") ? oValue["SpecificAssetIds"] : null));
                     break;
@@ -1898,7 +1898,7 @@ namespace AasxServerDB
             sme.Category = smeSet.Category;
             sme.Description = Serializer.DeserializeList<ILangStringTextType>(smeSet.Description);
             sme.Extensions = Serializer.DeserializeList<IExtension>(smeSet.Extensions);
-            sme.SemanticId = !smeSet.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new AasCore.Aas3_0.Key(KeyTypes.GlobalReference, smeSet.SemanticId) }) : null;
+            sme.SemanticId = !smeSet.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new AasCore.Aas3_1.Key(KeyTypes.GlobalReference, smeSet.SemanticId) }) : null;
             sme.SupplementalSemanticIds = Serializer.DeserializeList<IReference>(smeSet.SupplementalSemanticIds);
             sme.Qualifiers = Serializer.DeserializeList<IQualifier>(smeSet.Qualifiers);
             sme.EmbeddedDataSpecifications = Serializer.DeserializeList<IEmbeddedDataSpecification>(smeSet.EmbeddedDataSpecifications);

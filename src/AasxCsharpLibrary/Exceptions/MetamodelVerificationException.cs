@@ -13,7 +13,7 @@
 
 using System;
 using System.Collections.Generic;
-using static AasCore.Aas3_0.Reporting;
+using static AasCore.Aas3_1.Reporting;
 
 namespace AdminShellNS.Exceptions
 {

@@ -5,7 +5,7 @@
 @inject AasxTaskService AasxTaskService
 @using Contracts
 @using MW.Blazor
-@using AasCore.Aas3_0
+@using AasCore.Aas3_1
 @using AasSecurity;
 @using AasSecurity.Models;
 @using Extensions
@@ -16,7 +16,7 @@
 @using AasxServerBlazor.Data
 @using TimeStamp
 @using static AasxServerStandardBib.TimeSeriesPlotting;
-@using Range = AasCore.Aas3_0.Range
+@using Range = AasCore.Aas3_1.Range
 @inject NavigationManager NavMan
 @implements IDisposable
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
@@ -1276,7 +1276,7 @@
 
 					break;
 				}
-			case AasCore.Aas3_0.File f:
+			case AasCore.Aas3_1.File f:
 				{
 					// Test for /aasx/
 					if (!string.IsNullOrEmpty(f.Value))
@@ -1491,7 +1491,7 @@
                 {
                     var value = itemTag switch
                     {
-                        AasCore.Aas3_0.File file => file.Value,
+                        AasCore.Aas3_1.File file => file.Value,
                         Property property => property.Value,
                         _ => string.Empty
                     };
@@ -1785,7 +1785,7 @@
 
         switch (itemTag)
         {
-            case AasCore.Aas3_0.File f:
+            case AasCore.Aas3_1.File f:
                 ret = string.Empty;
                 ret += f.IdShort;
                 break;
@@ -1887,7 +1887,7 @@
 
                     break;
                 }
-                case AasCore.Aas3_0.File f:
+                case AasCore.Aas3_1.File f:
                 {
                     if (f.Value != null)
                         ret = $" = {f.Value}";
@@ -1903,7 +1903,7 @@
 
         switch (itemTag)
         {
-            case AasCore.Aas3_0.Range range:
+            case AasCore.Aas3_1.Range range:
             {
                 if (range.Min != null && range.Max != null)
                     ret = $" = {range.Min} .. {range.Max}";
@@ -2239,7 +2239,7 @@
 
                 return ret;
             }
-            case AasCore.Aas3_0.File f:
+            case AasCore.Aas3_1.File f:
                 ret += $", {f.Value}";
                 switch (line)
                 {

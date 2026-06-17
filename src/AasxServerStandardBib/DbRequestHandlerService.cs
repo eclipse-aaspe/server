@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AasxServer;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Models;

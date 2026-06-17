@@ -5,7 +5,7 @@
 ********************************************************************************/
 
 using System.Linq;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 
 namespace Contracts;
 

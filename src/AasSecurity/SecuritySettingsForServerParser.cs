@@ -371,7 +371,7 @@ namespace AasSecurity
                     }
                     case "publiccertificate":
                     {
-                        if (submodelElement is AasCore.Aas3_0.File publicCert)
+                        if (submodelElement is AasCore.Aas3_1.File publicCert)
                         {
                             var certStream = env.GetLocalStreamFromPackage(publicCert.Value, init: true);
                             if (certStream != null)

@@ -20,7 +20,7 @@ internal sealed class NoSecurityRules : IContractSecurityRules
         string accessRole, string httpRoute, AccessRights neededRights,
         out string error, out bool withAllow, out string? getPolicy,
         string objPath = null!, string? aasResourceType = null,
-        AasCore.Aas3_0.IClass? aasResource = null, string? policy = null,
+        AasCore.Aas3_1.IClass? aasResource = null, string? policy = null,
         List<Claim>? tokenClaims = null)
     {
         error = string.Empty;

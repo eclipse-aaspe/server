@@ -14,7 +14,7 @@
 namespace Contracts;
 using System;
 using System.Collections.Generic;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AdminShellNS;
 using Contracts.Events;
 
@@ -32,7 +32,7 @@ public interface IEventService
     public void NotifyDeleted(ISubmodel submodel, string idShortPath = "", string smeModelType = "", string smeSemanticId = "");
 
     public List<Events.EventPayload> CollectPayload(SqlConditions? securitySqlConditions, bool isRest, string basicEventElementSourceString, string basicEventElementSemanticId,
-        string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
+        string domain, AasCore.Aas3_1.Property conditionSM, AasCore.Aas3_1.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval, bool withPayload,
         bool smOnly, int limitSm, int offsetSm, bool showTransmitted, SubmodelElementCollection statusData = null);
 

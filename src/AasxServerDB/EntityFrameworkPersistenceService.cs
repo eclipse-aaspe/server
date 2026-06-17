@@ -22,7 +22,7 @@ using AdminShellNS.Extensions;
 using AdminShellNS;
 using Contracts;
 using Microsoft.IdentityModel.Tokens;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using Extensions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -1063,7 +1063,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
-    private static void AddPackageFilesToAdd(AasContext db, AasCore.Aas3_0.Environment environment, AdminShellPackageEnv requestedPackage)
+    private static void AddPackageFilesToAdd(AasContext db, AasCore.Aas3_1.Environment environment, AdminShellPackageEnv requestedPackage)
     {
         if (environment.AssetAdministrationShells != null)
         {
@@ -1113,7 +1113,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                 submodelInEnv.RecurseOnSubmodelElements(null, (state, parents, sme) =>
                 {
-                    if (sme is AasCore.Aas3_0.File file
+                    if (sme is AasCore.Aas3_1.File file
                         && file.Value != null)
                     {
                         if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
@@ -1408,7 +1408,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                     string fileName = null;
 
-                    if (fileElement is AasCore.Aas3_0.File file)
+                    if (fileElement is AasCore.Aas3_1.File file)
                     {
                         var envFileName = string.Empty;
 
@@ -1460,7 +1460,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 {
                     var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
 
-                    if (fileElement is AasCore.Aas3_0.File file)
+                    if (fileElement is AasCore.Aas3_1.File file)
                     {
                         var envFileName = string.Empty;
 
@@ -1510,7 +1510,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
                     scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
 
-                    if (fileElement is AasCore.Aas3_0.File file)
+                    if (fileElement is AasCore.Aas3_1.File file)
                     {
                         var envFileName = string.Empty;
 

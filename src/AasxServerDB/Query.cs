@@ -21,7 +21,7 @@ using System.Linq.Dynamic.Core;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Text.RegularExpressions;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AasxServerDB.Entities;
 using Contracts;
 using Contracts.QueryResult;
@@ -44,7 +44,7 @@ public class CombinedValue
     public String? SValue { get; set; }
     public Double? MValue { get; set; }
     public DateTime? DTValue { get; set; }
-    /// <summary>Serialized <see cref="AasCore.Aas3_0.DataTypeDefXsd"/> (property) or language (MLP), same as DB <c>ValueSet.Annotation</c>.</summary>
+    /// <summary>Serialized <see cref="AasCore.Aas3_1.DataTypeDefXsd"/> (property) or language (MLP), same as DB <c>ValueSet.Annotation</c>.</summary>
     public String? Annotation { get; set; }
 }
 

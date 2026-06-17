@@ -26,7 +26,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerBlazor", "AasxSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Lib.V3", "IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj", "{1C237091-3C10-4D14-956B-35740AC03BA6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasCore.Aas3_0", "AasCore.Aas3_0\AasCore.Aas3_0.csproj", "{02E9FAE5-A358-4D44-82FD-F864E868B135}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasCore.Aas3_1", "AasCore.Aas3_1\AasCore.Aas3_1.csproj", "{02E9FAE5-A358-4D44-82FD-F864E868B135}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataTransferObjects", "DataTransferObjects\DataTransferObjects.csproj", "{136D762B-33E1-4350-B2A3-00FE0D170CAE}"
 EndProject

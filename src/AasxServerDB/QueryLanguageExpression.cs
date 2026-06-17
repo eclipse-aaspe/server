@@ -5,7 +5,7 @@
 ********************************************************************************/
 
 using System.Text.RegularExpressions;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 
 namespace AasxServerDB;
 

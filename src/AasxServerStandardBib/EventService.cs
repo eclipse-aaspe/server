@@ -670,7 +670,7 @@ public class EventService : IEventService
     }
 
     public List<EventPayload> CollectPayload(SqlConditions? securitySqlConditions, bool isREST, string basicEventElementSourceString,
-        string basicEventElementSemanticId, string domain, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
+        string basicEventElementSemanticId, string domain, AasCore.Aas3_1.Property conditionSM, AasCore.Aas3_1.Property conditionSME,
         string diff, List<String> diffEntry, DateTime transmitted, TimeSpan minInterval, TimeSpan maxInterval,
         bool withPayload, bool smOnly, int limitSm, int offsetSm, bool showTransmitted, SubmodelElementCollection statusData = null)
     {
@@ -1140,7 +1140,7 @@ public class EventService : IEventService
             MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload[0].statusData.ToJsonString()));
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-            if (receiveSme is AasCore.Aas3_0.SubmodelElementCollection smc)
+            if (receiveSme is AasCore.Aas3_1.SubmodelElementCollection smc)
             {
                 statusData.Value = new List<ISubmodelElement>();
                 statusData.Add(smc);
@@ -1151,14 +1151,14 @@ public class EventService : IEventService
             }
         }
 
-        AasCore.Aas3_0.Environment aasEnv = null;
+        AasCore.Aas3_1.Environment aasEnv = null;
         int index = -1;
         ISubmodelElementCollection dataCollection = null;
         List<ISubmodelElement> data = new List<ISubmodelElement>();
         SubmodelElementCollection status = null;
-        AasCore.Aas3_0.Property message = null;
-        AasCore.Aas3_0.Property transmitted = null;
-        AasCore.Aas3_0.Property lastUpdate = null;
+        AasCore.Aas3_1.Property message = null;
+        AasCore.Aas3_1.Property transmitted = null;
+        AasCore.Aas3_1.Property lastUpdate = null;
         SubmodelElementCollection diff = null;
 
         // sort by submodelID + entryType + idShortPath by CompareTo(EventPayloadEntry)
@@ -1609,7 +1609,7 @@ public class EventService : IEventService
         SubmodelElementCollection smec = null;
         SubmodelElementList smel = null;
         Submodel sm = null;
-        AasCore.Aas3_0.Property p = null;
+        AasCore.Aas3_1.Property p = null;
         EventDto eventDto = new EventDto();
 
         eventDto.env = env;
@@ -1623,9 +1623,9 @@ public class EventService : IEventService
             sm = null;
             p = null;
             var inputRef = input.Value;
-            if (inputRef is AasCore.Aas3_0.Property)
+            if (inputRef is AasCore.Aas3_1.Property)
             {
-                p = (inputRef as AasCore.Aas3_0.Property);
+                p = (inputRef as AasCore.Aas3_1.Property);
                 if (p.Value == null)
                 {
                     p = null;
@@ -1775,7 +1775,7 @@ public class EventService : IEventService
         if (dataMaxSize == null)
         {
             var timeStamp = DateTime.UtcNow;
-            dataMaxSize = new AasCore.Aas3_0.Property(DataTypeDefXsd.String, idShort: "dataMaxSize", value: "");
+            dataMaxSize = new AasCore.Aas3_1.Property(DataTypeDefXsd.String, idShort: "dataMaxSize", value: "");
             var dataMaxSizeOp = new OperationVariable(dataMaxSize);
             dataMaxSize.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
             op.InputVariables.Add(dataMaxSizeOp);
@@ -1788,9 +1788,9 @@ public class EventService : IEventService
             sm = null;
             p = null;
             var outputRef = output.Value;
-            if (outputRef is AasCore.Aas3_0.Property)
+            if (outputRef is AasCore.Aas3_1.Property)
             {
-                p = (outputRef as AasCore.Aas3_0.Property);
+                p = (outputRef as AasCore.Aas3_1.Property);
             }
 
             if (outputRef is SubmodelElementCollection)
@@ -1835,21 +1835,21 @@ public class EventService : IEventService
                 switch (sme.IdShort.ToLower())
                 {
                     case "message":
-                        if (sme is AasCore.Aas3_0.Property)
+                        if (sme is AasCore.Aas3_1.Property)
                         {
-                            eventDto.Message = sme as AasCore.Aas3_0.Property;
+                            eventDto.Message = sme as AasCore.Aas3_1.Property;
                         }
                         break;
                     case "transmitted":
-                        if (sme is AasCore.Aas3_0.Property)
+                        if (sme is AasCore.Aas3_1.Property)
                         {
-                            eventDto.Transmitted = sme as AasCore.Aas3_0.Property;
+                            eventDto.Transmitted = sme as AasCore.Aas3_1.Property;
                         }
                         break;
                     case "lastupdate":
-                        if (sme is AasCore.Aas3_0.Property)
+                        if (sme is AasCore.Aas3_1.Property)
                         {
-                            eventDto.LastUpdate = sme as AasCore.Aas3_0.Property;
+                            eventDto.LastUpdate = sme as AasCore.Aas3_1.Property;
                         }
                         break;
                     case "diff":
@@ -1874,73 +1874,73 @@ public class EventService : IEventService
                 switch (idShort)
                 {
                     case "authtype":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.AuthType = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.AuthType = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;
 
                     case "accesstoken":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.AccessToken = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.AccessToken = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;
 
                     case "clienttoken":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.ClientToken = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.ClientToken = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;
 
                     case "username":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.UserName = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.UserName = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;
 
                     case "password":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.PassWord = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.PassWord = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;
 
                     case "authservercertificate":
-                        if (sme2 is AasCore.Aas3_0.File)
+                        if (sme2 is AasCore.Aas3_1.File)
                         {
-                            eventDto.AuthServerCertificate = sme2 as AasCore.Aas3_0.File;
+                            eventDto.AuthServerCertificate = sme2 as AasCore.Aas3_1.File;
                         }
 
                         break;
 
                     case "authserverendpoint":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.AuthServerEndPoint = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.AuthServerEndPoint = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;
 
                     case "clientcertificate":
-                        if (sme2 is AasCore.Aas3_0.File)
+                        if (sme2 is AasCore.Aas3_1.File)
                         {
-                            eventDto.ClientCertificate = sme2 as AasCore.Aas3_0.File;
+                            eventDto.ClientCertificate = sme2 as AasCore.Aas3_1.File;
                         }
 
                         break;
 
                     case "clientcertificatepassword":
-                        if (sme2 is AasCore.Aas3_0.Property)
+                        if (sme2 is AasCore.Aas3_1.Property)
                         {
-                            eventDto.ClientCertificatePassWord = sme2 as AasCore.Aas3_0.Property;
+                            eventDto.ClientCertificatePassWord = sme2 as AasCore.Aas3_1.Property;
                         }
 
                         break;

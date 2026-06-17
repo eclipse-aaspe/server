@@ -13,9 +13,9 @@
 
 namespace AasxServerDB
 {
-    using AasCore.Aas3_0;
+    using AasCore.Aas3_1;
     using AdminShellNS;
-    using static AasCore.Aas3_0.Visitation;
+    using static AasCore.Aas3_1.Visitation;
     using Extensions;
     using System.IO.Compression;
     using Microsoft.IdentityModel.Tokens;

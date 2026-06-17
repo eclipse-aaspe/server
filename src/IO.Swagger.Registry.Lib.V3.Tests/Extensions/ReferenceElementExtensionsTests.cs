@@ -13,7 +13,7 @@
 
 namespace IO.Swagger.Registry.Lib.V3.Tests.Extensions;
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using V3.Extensions;
 
 public class ReferenceElementExtensionsTests

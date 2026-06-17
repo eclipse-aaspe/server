@@ -17,7 +17,7 @@ namespace AdminShellNS.Extensions
 {
     public static class ExtendCollection
     {
-        public static bool IsNullOrEmpty<T>(this List<T> list)
+        public static bool IsNullOrEmpty<T>(this ICollection<T> list)
         {
             if (list != null && list.Count != 0)
             {

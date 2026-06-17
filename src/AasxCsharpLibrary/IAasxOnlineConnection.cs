@@ -25,7 +25,7 @@ namespace AasxIntegrationBase
         string GetInfo();
         Stream GetThumbnailStream();
         string UpdatePropertyValue(
-            AasCore.Aas3_0.Environment env, Submodel submodel, ISubmodelElement sme);
+            AasCore.Aas3_1.Environment env, Submodel submodel, ISubmodelElement sme);
     }
 }
 

@@ -14,7 +14,7 @@
 namespace Contracts;
 
 using System.Collections.Generic;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AdminShellNS;
 using Contracts.DbRequests;
 using Contracts.Pagination;

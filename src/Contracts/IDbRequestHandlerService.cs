@@ -19,7 +19,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AdminShellNS;
 using AdminShellNS.Models;
 using Contracts.DbRequests;

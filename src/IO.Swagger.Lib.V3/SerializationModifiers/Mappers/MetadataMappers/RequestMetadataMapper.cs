@@ -91,7 +91,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 
         private static IRange Transform(RangeMetadata metadata)
         {
-            return new AasCore.Aas3_0.Range(metadata.ValueType, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications));
+            return new AasCore.Aas3_1.Range(metadata.ValueType, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications));
         }
 
         private static IFile Transform(FileMetadata metadata)

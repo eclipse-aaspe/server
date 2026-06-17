@@ -11,7 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 
 namespace DataTransferObjects.CommonDTOs
 {

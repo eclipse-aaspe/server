@@ -16,7 +16,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;
 using Contracts.Exceptions;
@@ -158,7 +158,7 @@ public class FileService
         return Path.Combine(AasContext.DataPath, FilesFolderName, zipFileName);
     }
 
-    internal static bool ReadFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, AasCore.Aas3_0.File file, out byte[] content,
+    internal static bool ReadFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, AasCore.Aas3_1.File file, out byte[] content,
         out long fileSize, out string fileName)
     {
         bool isFileOperationSuceeded = false;
@@ -219,7 +219,7 @@ public class FileService
         return isFileOperationSuceeded;
     }
 
-    internal static bool ReplaceFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, ref AasCore.Aas3_0.File file, string fileName, string contentType, MemoryStream stream)
+    internal static bool ReplaceFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, ref AasCore.Aas3_1.File file, string fileName, string contentType, MemoryStream stream)
     {
         bool isFileOperationSuceeded = false;
 
@@ -310,7 +310,7 @@ public class FileService
         return isFileOperationSuceeded;
     }
 
-    internal static bool DeleteFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, ref AasCore.Aas3_0.File file)
+    internal static bool DeleteFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, ref AasCore.Aas3_1.File file)
     {
         bool isFileOperationSuceeded = false;
 

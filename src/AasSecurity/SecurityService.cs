@@ -45,7 +45,7 @@ using Namotion.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static QRCoder.PayloadGenerator;
-using File = AasCore.Aas3_0.File;
+using File = AasCore.Aas3_1.File;
 
 namespace AasSecurity
 {
@@ -1252,7 +1252,7 @@ namespace AasSecurity
                         pPolicy = sme as Property;
                         break;
                     case "license":
-                        fPolicy = sme as AasCore.Aas3_0.File;
+                        fPolicy = sme as AasCore.Aas3_1.File;
                         break;
                     case "policyRequestedResource":
                         break;

@@ -15,7 +15,7 @@
 
 //namespace AasxServerBlazorTests.Models;
 
-//using AasCore.Aas3_0;
+//using AasCore.Aas3_1;
 //using Contracts.Pagination;
 //using JetBrains.Annotations;
 

@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AdminShellNS;
 using AdminShellNS.Models;
 using Contracts.QueryResult;
@@ -36,7 +36,7 @@ public class DbRequestResult
 
     public List<IClass> ResultData { get; set; }
 
-    public AasCore.Aas3_0.Environment Environment { get; set; }
+    public AasCore.Aas3_1.Environment Environment { get; set; }
 
     public DbFileRequestResult FileRequestResult { get; set; }
 

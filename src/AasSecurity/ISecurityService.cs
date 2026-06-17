@@ -12,7 +12,7 @@
 ********************************************************************************/
 
 using System.Security.Claims;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AasSecurity.Models;
 using Contracts;
 using Microsoft.AspNetCore.Authentication;

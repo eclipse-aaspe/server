@@ -260,10 +260,10 @@ public static class ServerConfiguration
                                {
                                    swaggerGenOptions.SwaggerDoc("Final-Draft", new OpenApiInfo
                                                                                {
-                                                                                   Version = "Final-Draft",
+                                                                                   Version = "V3.1",
                                                                                    Title   = HttpRestAssetAdministrationShellRepository,
                                                                                    Description =
-                                                                                       "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository (ASP.NET Core 3.1)",
+                                                                                       "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository (V3.1)",
                                                                                    Contact = new OpenApiContact()
                                                                                              {
                                                                                                  Name

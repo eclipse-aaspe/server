@@ -18,7 +18,7 @@ using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using Contracts.Pagination;
 using Contracts.LevelExtent;
 

@@ -16,7 +16,7 @@ using AdminShellNS;
 
 namespace AasxCsharpLibary.Tests;
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 
 public class JsonAasxConverterTests
 {

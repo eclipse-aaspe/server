@@ -16,7 +16,7 @@ namespace Contracts
     using System.Diagnostics.Contracts;
     using System.Security.AccessControl;
     using System.Security.Claims;
-    using AasCore.Aas3_0;
+    using AasCore.Aas3_1;
     using AasSecurity.Models;
 
     public interface IContractSecurityRules
