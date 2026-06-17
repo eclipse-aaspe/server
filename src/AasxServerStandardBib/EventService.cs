@@ -833,7 +833,7 @@ public class EventService : IEventService
     }
 
     private List<EventPayload> CollectPayloadForRestApi(SqlConditions? securitySqlConditions,
-    AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME, TimeSpan minInterval, TimeSpan maxInterval,
+    AasCore.Aas3_1.Property conditionSM, AasCore.Aas3_1.Property conditionSME, TimeSpan minInterval, TimeSpan maxInterval,
     bool withPayload, DateTime diffTime)
     {
         bool isREST = true;
