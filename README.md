@@ -6,6 +6,20 @@
 
 # Eclipse AASX Server
 
+## ⚠️ Notice: Legacy Support Branch
+This branch is maintained to support an older version of the system.
+
+It exists to ensure continued operation of existing integrations and deployments that still depend on this version. **No new features** are actively developed in this branch.
+
+### Purpose
+- Maintenance and stabilization of a legacy version  
+- Application of critical bug fixes, if necessary  
+- Ensuring compatibility for existing users  
+
+### For Developers
+For new development, features, and improvements, please use the main branches (e.g., `main` or `develop`).
+
+
 > ### Status
 > [![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
 > [![Draft Release on Merge to Release Branch](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml/badge.svg?branch=release)](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml)<br>
