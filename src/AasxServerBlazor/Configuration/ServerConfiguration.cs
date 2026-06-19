@@ -15,6 +15,7 @@ namespace AasxServerBlazor.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using AasSecurity;
 using AasxServerStandardBib.ServiceExtensions;
 using IO.Swagger.Controllers;
@@ -80,9 +81,45 @@ public static class ServerConfiguration
 #endif
 
         // MCP-Server (Streamable HTTP) als dünner Adapter über die Query-Pipeline. Immer aktiv.
+        // Zwei Endpunkte: /mcp (voll, alle Tools) und /mcp-basic (nur aas_find_product, für schwache Modelle).
+        // Die Aufteilung erfolgt über Request-Filter, die den Request-Pfad prüfen.
+        services.AddHttpContextAccessor();
         services.AddMcpServer()
             .WithHttpTransport()
-            .WithTools<McpQueryTools>();
+            .WithTools<McpQueryTools>()
+            .WithRequestFilters(filters =>
+            {
+                filters.AddListToolsFilter(next => async (context, ct) =>
+                {
+                    var result = await next(context, ct);
+                    if (IsBasicMcpEndpoint(context.Services) && result.Tools is not null)
+                    {
+                        result.Tools = result.Tools.Where(t => McpQueryTools.BasicToolNames.Contains(t.Name)).ToList();
+                    }
+
+                    return result;
+                });
+
+                filters.AddCallToolFilter(next => (context, ct) =>
+                {
+                    if (IsBasicMcpEndpoint(context.Services)
+                        && context.Params is not null
+                        && !McpQueryTools.BasicToolNames.Contains(context.Params.Name))
+                    {
+                        throw new InvalidOperationException(
+                            $"Tool '{context.Params.Name}' ist auf dem Endpunkt /mcp-basic nicht verfügbar. Nutze aas_find_product.");
+                    }
+
+                    return next(context, ct);
+                });
+            });
+    }
+
+    // True, wenn der aktuelle Request über den reduzierten Endpunkt /mcp-basic kam.
+    private static bool IsBasicMcpEndpoint(IServiceProvider? services)
+    {
+        var path = services?.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?.HttpContext?.Request.Path.Value;
+        return path is not null && path.Contains("mcp-basic", StringComparison.OrdinalIgnoreCase);
     }
 
         /// <summary>
@@ -175,8 +212,10 @@ public static class ServerConfiguration
             Tool = { Enable = true }
         });
 #endif
-        // MCP-Endpoint (Streamable HTTP). Hinweis: PathBase ist "/api/v3.0", der Endpoint ist also "/api/v3.0/mcp".
+        // MCP-Endpoints (Streamable HTTP). PathBase ist "/api/v3.0", real also "/api/v3.0/mcp" bzw. "/api/v3.0/mcp-basic".
+        // /mcp = voller Toolsatz (starke Modelle), /mcp-basic = nur aas_find_product (schwache Modelle); Filter s. ConfigureMcp.
         endpoints.MapMcp("/mcp");
+        endpoints.MapMcp("/mcp-basic");
     }
 
 #endregion

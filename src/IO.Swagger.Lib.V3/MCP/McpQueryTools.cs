@@ -64,6 +64,13 @@ public sealed class McpQueryTools
 {
     private const int MaxPageSize = 500;
 
+    // Tools, die auf dem reduzierten Endpunkt /mcp-basic sichtbar sind (für schwache Modelle).
+    public static readonly HashSet<string> BasicToolNames = new(StringComparer.Ordinal) { "aas_find_product" };
+
+    // Obergrenze für aas_get_product: max. so viele Submodelle pro AAS werden geladen (Schutz gegen
+    // pathologisch große Shells). Reale Produkte haben i.d.R. <10 Submodelle.
+    private const int MaxProductSubmodels = 50;
+
     private static readonly HashSet<string> AllowedScopes = new(StringComparer.Ordinal) { "aas", "sm", "sme" };
 
     // Slot-Operator -> AASQL-JSON-Schlüssel
@@ -104,7 +111,8 @@ public sealed class McpQueryTools
         "(1) eine Bedingung: target=\"submodels\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"}]. " +
         "(2) UND: combine=\"and\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"},{scope:\"sme\",field:\"value\",op:\"lt\",value:\"100\"}]. " +
         "(3) ODER: combine=\"or\", conditions=[{scope:\"sme\",field:\"value\",op:\"eq\",value:\"A\"},{scope:\"sme\",field:\"value\",op:\"eq\",value:\"B\"}]. " +
-        "Bei großen Treffermengen vorher aas_count aufrufen.")]
+        "Bei großen Treffermengen vorher aas_count aufrufen. " +
+        "Wichtig: aas_query liefert nur Identifier. Danach den Inhalt mit aas_get_submodel lesen — oder, wenn die Frage mehrere Submodelle eines Produkts betrifft (z.B. technische Daten + Hersteller + CO2), in EINEM Schritt mit aas_get_product(identifier).")]
     public async Task<object> AasQuery(
         [Description("Zielobjekt: \"submodels\" oder \"shells\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
@@ -149,6 +157,9 @@ public sealed class McpQueryTools
             count = identifiers.Count,
             identifiers,
             nextCursor,
+            nextStep = identifiers.Count > 0
+                ? "Dies sind nur Identifier. Inhalte lesen: aas_get_submodel(identifier). Für ALLE Daten des Produkts auf einmal (technische Daten + Hersteller + CO2 usw.) ohne einzeln zu navigieren: aas_get_product(identifier)."
+                : "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq), Groß-/Kleinschreibung des idShort prüfen oder breiter suchen.",
         };
     }
 
@@ -197,7 +208,7 @@ public sealed class McpQueryTools
         // kann höher sein (kein exakter COUNT in dieser Version).
         var capped = totalCount >= MaxPageSize;
 
-        return new { target, totalCount, capped };
+        return new { target, totalCount, capped, nextStep = "Treffer abrufen mit aas_query (gleiche Bedingung); danach aas_get_submodel oder aas_get_product für die Inhalte." };
     }
 
     [McpServerTool(Name = "aas_get_submodel")]
@@ -411,6 +422,99 @@ public sealed class McpQueryTools
         };
     }
 
+    [McpServerTool(Name = "aas_get_product")]
+    [Description(
+        "Liefert in EINEM Aufruf ein komplettes Produkt: die AAS (assetInformation) PLUS die Werte ALLER ihrer Submodelle " +
+        "(z.B. TechnicalData + Nameplate + CarbonFootprint zusammen). " +
+        "BENUTZE DIES, wenn eine Frage Daten aus mehreren Submodellen braucht — etwa technische Daten UND Hersteller UND CO2-Fußabdruck — " +
+        "damit du NICHT einzeln navigieren musst. " +
+        "identifier kann eine AAS-id ODER eine Submodel-id sein (z.B. ein Treffer aus aas_query); die zugehörige Shell wird automatisch ermittelt. " +
+        "Typischer Ablauf: aas_query findet ein Submodel -> dessen id hier übergeben -> alles zum Produkt kommt zurück. " +
+        "Hinweis: bei vielen/großen Submodellen kann das Ergebnis umfangreich werden.")]
+    public async Task<object> AasGetProduct(
+        [Description("AAS-Identifier ODER Submodel-Identifier (vollständige id, NICHT Base64-kodiert). Ein Submodel-Treffer aus aas_query genügt — die Shell wird automatisch aufgelöst.")] string identifier,
+        [Description("Ausgabeformat je Submodel: \"value\" (kompakt, Default, nur idShort->Wert) oder \"full\" (vollständiges AAS-JSON inkl. semanticId, valueType, Qualifier). Nutze \"full\", wenn nach semanticId, Einheiten oder Datentyp gefragt wird.")] string format = "value")
+    {
+        LogCall($"aas_get_product id={identifier} format={format}");
+        if (string.IsNullOrWhiteSpace(identifier))
+        {
+            return new { error = "identifier darf nicht leer sein." };
+        }
+
+        var fmt = (format ?? "value").Trim().ToLowerInvariant();
+        if (fmt != "value" && fmt != "full")
+        {
+            return new { error = $"Unbekanntes format \"{format}\". Erlaubt: \"value\" oder \"full\"." };
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var shell = await ResolveShellForIdentifier(securityConfig, identifier.Trim());
+        if (shell is null)
+        {
+            return new { identifier, found = false, message = "Identifier ist weder eine bekannte AAS noch ein bekanntes Submodel." };
+        }
+
+        return await BuildProductObject(securityConfig, shell, fmt);
+    }
+
+    [McpServerTool(Name = "aas_find_product")]
+    [Description(
+        "Sucht ein Produkt anhand von Bedingungen UND liefert es in EINEM Aufruf komplett zurück — ohne Verkettung. " +
+        "Das richtige Tool für Fragen wie 'finde das Ventil mit flowMax 80 und nenne Hersteller, technische Daten und CO2-Fußabdruck'. " +
+        "Bedingungslogik identisch zu aas_query (conditions/combine, Slots scope/field/idShortPath/op/value). " +
+        "Liefert zum ERSTEN Treffer die AAS (assetInformation) plus die Werte ALLER ihrer Submodelle (TechnicalData + Nameplate + CarbonFootprint usw.). " +
+        "format=\"value\" (Default, kompakt) oder \"full\" (vollständiges AAS-JSON je Submodel). " +
+        "totalMatches zeigt, wie viele Produkte insgesamt passen (geliefert wird das erste).")]
+    public async Task<object> AasFindProduct(
+        [Description("Liste von Suchbedingungen (mindestens eine), gleiche Slots wie aas_query: scope/field/idShortPath/op/value.")] McpQueryCondition[] conditions,
+        [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and",
+        [Description("Ausgabeformat je Submodel: \"value\" (kompakt, Default, nur idShort->Wert) oder \"full\" (vollständiges AAS-JSON inkl. semanticId, valueType, Qualifier). Nutze \"full\", wenn nach semanticId, Einheiten oder Datentyp gefragt wird.")] string format = "value")
+    {
+        LogCall($"aas_find_product {DescribeConditions(conditions, combine)} format={format}");
+
+        var fmt = (format ?? "value").Trim().ToLowerInvariant();
+        if (fmt != "value" && fmt != "full")
+        {
+            return new { error = $"Unbekanntes format \"{format}\". Erlaubt: \"value\" oder \"full\"." };
+        }
+
+        string expression;
+        try
+        {
+            expression = BuildExpression(conditions, combine);
+        }
+        catch (ArgumentException ex)
+        {
+            return new { error = ex.Message };
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var pagination = new PaginationParameters(null, MaxPageSize);
+        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, ResultType.Submodel, expression);
+        var ids = (list ?? new List<object>())
+            .OfType<IIdentifiable>()
+            .Select(x => x.Id)
+            .Where(s => !string.IsNullOrEmpty(s))
+            .ToList();
+
+        if (ids.Count == 0)
+        {
+            return new { found = false, totalMatches = 0, message = "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq) oder Schreibweise/Groß-Kleinschreibung prüfen." };
+        }
+
+        var firstId = ids[0];
+        var shell = await ResolveShellForIdentifier(securityConfig, firstId);
+        if (shell is null)
+        {
+            return new { found = false, matchedSubmodel = firstId, totalMatches = ids.Count, message = "Treffer gefunden, aber keine zugehörige Shell auflösbar." };
+        }
+
+        var product = await BuildProductObject(securityConfig, shell, fmt);
+        product["matchedSubmodel"] = firstId;
+        product["totalMatches"] = ids.Count;
+        return product;
+    }
+
     // --------------- Helfer ---------------
 
     // Kompaktes Console-Log jedes MCP-Aufrufs (eine Zeile), passend zum übrigen Server-Log.
@@ -446,6 +550,128 @@ public sealed class McpQueryTools
 
         var dto = _mappingService.Map(obj, "value");
         return dto is IValueDTO valueDto ? ValueOnlyJsonSerializer.ToJsonObject(valueDto) : null;
+    }
+
+    private async Task<IAssetAdministrationShell?> TryReadShell(SecurityConfig securityConfig, string aasId)
+    {
+        try
+        {
+            return await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, aasId);
+        }
+        catch (NotFoundException)
+        {
+            return null;
+        }
+    }
+
+    // Ermittelt die AAS-id, zu der ein Submodel gehört (Query: Shells, die ein Submodel mit dieser id haben).
+    private async Task<string?> ResolveShellOfSubmodel(SecurityConfig securityConfig, string submodelId)
+    {
+        var condition = new JsonObject
+        {
+            ["$eq"] = new JsonArray(
+                new JsonObject { ["$field"] = "$sm#id" },
+                new JsonObject { ["$strVal"] = submodelId }),
+        };
+        var expression = "$JSONGRAMMAR " + new JsonObject
+        {
+            ["Query"] = new JsonObject { ["$condition"] = condition },
+        }.ToJsonString();
+
+        var pagination = new PaginationParameters(null, 1);
+        var shells = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, ResultType.AssetAdministrationShell, expression);
+
+        return (shells ?? new List<object>())
+            .OfType<IIdentifiable>()
+            .Select(x => x.Id)
+            .FirstOrDefault(x => !string.IsNullOrEmpty(x));
+    }
+
+    // Löst eine id (AAS-Identifier ODER Submodel-Identifier) zur zugehörigen Shell auf.
+    private async Task<IAssetAdministrationShell?> ResolveShellForIdentifier(SecurityConfig securityConfig, string id)
+    {
+        var shell = await TryReadShell(securityConfig, id);
+        if (shell is null)
+        {
+            var aasId = await ResolveShellOfSubmodel(securityConfig, id);
+            if (aasId != null)
+            {
+                shell = await TryReadShell(securityConfig, aasId);
+            }
+        }
+
+        return shell;
+    }
+
+    // Baut das Produkt-Objekt: AssetInformation + Werte ALLER Submodelle der Shell im gewählten Format.
+    // Jeder Submodel-Read ist indexiert (SMSet.Identifier, SMESet.SMId) und auf die Größe DIESES Submodels begrenzt.
+    private async Task<JsonObject> BuildProductObject(SecurityConfig securityConfig, IAssetAdministrationShell shell, string fmt)
+    {
+        var ai = shell.AssetInformation;
+        var specificAssetIds = new JsonArray();
+        if (ai?.SpecificAssetIds != null)
+        {
+            foreach (var said in ai.SpecificAssetIds)
+            {
+                specificAssetIds.Add(new JsonObject { ["name"] = said.Name, ["value"] = said.Value });
+            }
+        }
+
+        var assetInformation = new JsonObject
+        {
+            ["assetKind"] = ai != null ? ai.AssetKind.ToString() : null,
+            ["globalAssetId"] = ai?.GlobalAssetId,
+            ["specificAssetIds"] = specificAssetIds,
+        };
+
+        var submodels = new JsonArray();
+        var truncated = false;
+        if (shell.Submodels != null)
+        {
+            foreach (var smRef in shell.Submodels)
+            {
+                if (submodels.Count >= MaxProductSubmodels)
+                {
+                    truncated = true;
+                    break;
+                }
+
+                var smId = smRef?.Keys?.LastOrDefault()?.Value;
+                if (string.IsNullOrEmpty(smId))
+                {
+                    continue;
+                }
+
+                IClass? sm = null;
+                try
+                {
+                    sm = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, smId, level: null, extent: null);
+                }
+                catch (NotFoundException)
+                {
+                    sm = null;
+                }
+
+                var entry = new JsonObject { ["id"] = smId };
+                if (sm is ISubmodel s)
+                {
+                    entry["idShort"] = s.IdShort;
+                }
+
+                entry["value"] = sm != null ? SerializeValueOrFull(sm, fmt) : null;
+                submodels.Add(entry);
+            }
+        }
+
+        return new JsonObject
+        {
+            ["aasId"] = shell.Id,
+            ["idShort"] = shell.IdShort,
+            ["format"] = fmt,
+            ["assetInformation"] = assetInformation,
+            ["submodels"] = submodels,
+            ["truncated"] = truncated,
+        };
     }
 
     // Rekursive Suche nach allen SubmodelElementen mit passendem idShort; baut dabei den vollen idShortPath.
