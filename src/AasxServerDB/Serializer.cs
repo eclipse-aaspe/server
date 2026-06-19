@@ -15,7 +15,7 @@ namespace AasxServerDB;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using Microsoft.IdentityModel.Tokens;
 
 public static class Serializer

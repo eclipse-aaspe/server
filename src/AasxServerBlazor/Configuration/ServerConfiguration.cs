@@ -11,37 +11,34 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+namespace AasxServerBlazor.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using AasSecurity;
 using AasxServerStandardBib.ServiceExtensions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.Connections;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
 using IO.Swagger.Controllers;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Middleware;
 using IO.Swagger.Registry.Lib.V3.Formatters;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
-namespace AasxServerBlazor.Configuration;
+using Microsoft.OpenApi.Models;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AdminShellNS;
-using Contracts;
 #if GRAPHQL
 using HotChocolate.AspNetCore;
 #endif
-using IO.Swagger.Lib.V3.GraphQL;
 
 public static class ServerConfiguration
 {
@@ -97,7 +94,7 @@ public static class ServerConfiguration
                 .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>(AuthenticationScheme, null);
 
         AddAuthorization(services);
-    }
+        }
 
     /// <summary>
     /// Configures Swagger UI for API documentation.
@@ -126,7 +123,7 @@ public static class ServerConfiguration
     /// </summary>
     /// <param name="app">The application builder used to configure the middleware pipeline.</param>
     /// <param name="env">The hosting environment the application is running in.</param>
-    public static void ConfigureEnvironment(IApplicationBuilder app, IWebHostEnvironment env)
+    public static void ConfigureEnvironment(IApplicationBuilder app, IWebHostEnvironment env, IConfiguration configuration)
     {
         if (env.IsDevelopment())
         {
@@ -144,6 +141,11 @@ public static class ServerConfiguration
         app.UseRouting();
         app.UseAuthorization();
         app.UseCors(CorsPolicyName);
+
+        // Swagger must be registered BEFORE UseEndpoints: the Blazor fallback
+        // endpoint (MapFallbackToPage("/_Host")) matches every unmatched route
+        // and would otherwise swallow "/swagger" / "/swagger/index.html".
+        ConfigureSwagger(app, configuration);
 
         app.UseEndpoints(ConfigureEndpoints);
     }
@@ -258,10 +260,10 @@ public static class ServerConfiguration
                                {
                                    swaggerGenOptions.SwaggerDoc("Final-Draft", new OpenApiInfo
                                                                                {
-                                                                                   Version = "Final-Draft",
+                                                                                   Version = "V3.1",
                                                                                    Title   = HttpRestAssetAdministrationShellRepository,
                                                                                    Description =
-                                                                                       "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository (ASP.NET Core 3.1)",
+                                                                                       "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository (V3.1)",
                                                                                    Contact = new OpenApiContact()
                                                                                              {
                                                                                                  Name

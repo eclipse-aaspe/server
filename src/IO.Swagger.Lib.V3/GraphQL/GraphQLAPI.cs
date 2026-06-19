@@ -103,16 +103,4 @@ public class GraphQLAPI
         return qresult;
     }
 
-    public async Task<int> CountSMEs(
-        string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
-        string pageFrom = "", string contains = "", string equal = "",
-        string lower = "", string upper = "", string expression = "")
-    {
-        var paginationParameters = new PaginationParameters(pageFrom, MAX_PAGE_SIZE);
-
-        var securityConfig = new SecurityConfig(Program.noSecurity, null);
-        var result = await _dbRequestHandlerService.QueryCountSMEs(securityConfig, smSemanticId, smIdentifier, semanticId,
-            diff, contains, equal, lower, upper, paginationParameters, expression);
-        return result;
-    }
 }

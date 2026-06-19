@@ -11,25 +11,35 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasSecurity.Models;
-using Irony.Parsing;
-using Contracts;
-using System.Linq.Expressions;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using static System.Net.Mime.MediaTypeNames;
+using System.Collections.Generic;
 // using Newtonsoft.Json.Schema;
 // using NJsonSchema;
 // using NJsonSchema.Validation;
 // using Json.Schema;
 using System.Data;
-using System.Xml.Linq;
+using System.Globalization;
+using System.Linq.Expressions;
 using System.Text.Json;
-using NJsonSchema.Validation;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using AasSecurity.Models;
+using Contracts;
+using Irony.Parsing;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using NJsonSchema.Validation;
+using static System.Net.Mime.MediaTypeNames;
 
 public class QueryGrammarJSON : Grammar
 {
+    /// <summary>SQL boolean literals for constant folding ($boolean → overall / scope SQL).</summary>
+    private const string SqlBoolTrue = "(1=1)";
+    private const string SqlBoolFalse = "(0=1)";
+
+    /// <summary>While evaluating the RHS of a comparison in <c>value</c> mode, indicates Annotation is valueType vs language.</summary>
+    private static readonly Stack<SmeSemanticKind> _pendingValueStrSemantic = new();
+
     public QueryGrammarJSON(IContractSecurityRules contractSecurityRules) : base(caseSensitive: true)
     {
         mySecurityRules = contractSecurityRules;
@@ -269,6 +279,72 @@ public class QueryGrammarJSON : Grammar
 
     public string idShortPath = "";
 
+    public static string optimizeTrueFalse(string expression)
+    {
+        while (
+            expression.Contains("(True)") ||
+            expression.Contains("True || True") ||
+            expression.Contains("True && True") ||
+            expression.Contains("(False)") ||
+            expression.Contains("False || False") ||
+            expression.Contains("False && False") ||
+            expression.Contains("True || False") ||
+            expression.Contains("True && False") ||
+            expression.Contains("False || True") ||
+            expression.Contains("False && True")
+            )
+        {
+            expression = expression.Replace("(True)", "True");
+            expression = expression.Replace("True || True", "True");
+            expression = expression.Replace("True && True", "True");
+            expression = expression.Replace("(False)", "False");
+            expression = expression.Replace("False || False", "False");
+            expression = expression.Replace("False && False", "False");
+            expression = expression.Replace("True || False", "True");
+            expression = expression.Replace("True && False", "False");
+            expression = expression.Replace("False || True", "True");
+            expression = expression.Replace("False && True", "False");
+        }
+        return expression;
+    }
+
+    private static bool IsSmeValueTypeField(string fv)
+    {
+        if (string.IsNullOrEmpty(fv))
+            return false;
+        if (fv.Contains("$sme.", StringComparison.Ordinal))
+        {
+            var without = fv.Replace("$sme.", "", StringComparison.Ordinal);
+            var parts = without.Split('#');
+            return parts.Length >= 2 && parts[1] == "valueType";
+        }
+        return fv.Replace("$sme#", "sme.", StringComparison.Ordinal) == "sme.valueType";
+    }
+
+    private static bool IsSmeLanguageField(string fv)
+    {
+        if (string.IsNullOrEmpty(fv))
+            return false;
+        if (fv.Contains("$sme.", StringComparison.Ordinal))
+        {
+            var without = fv.Replace("$sme.", "", StringComparison.Ordinal);
+            var parts = without.Split('#');
+            return parts.Length >= 2 && parts[1] == "language";
+        }
+        return fv.Replace("$sme#", "sme.", StringComparison.Ordinal) == "sme.language";
+    }
+
+    private static SmeSemanticKind GetSemanticKindFromFieldExpr(LogicalExpression? e)
+    {
+        if (e?.ExpressionType != "$field" || e.ExpressionValue is not string s)
+            return SmeSemanticKind.None;
+        if (IsSmeValueTypeField(s))
+            return SmeSemanticKind.ValueType;
+        if (IsSmeLanguageField(s))
+            return SmeSemanticKind.Language;
+        return SmeSemanticKind.None;
+    }
+
     public static string createExpression(string mode, object? obj, string type = "", string smeValue = "")
     {
         if (obj == null)
@@ -292,8 +368,7 @@ public class QueryGrammarJSON : Grammar
                     createExpression(mode, q.Condition);
                     break;
                 case LogicalExpression le:
-                    le._expression = createExpression(mode, le.ExpressionValue, le.ExpressionType, smeValue);
-                    return le._expression;
+                    return createExpression(mode, le.ExpressionValue, le.ExpressionType, smeValue);
                 default:
                     break;
             }
@@ -423,6 +498,20 @@ public class QueryGrammarJSON : Grammar
                                     if (par[i] != null && par[i] != "$SKIP")
                                     {
                                         count++;
+                                        if (type == "$or")
+                                        {
+                                            if (par[i] == "True")
+                                            {
+                                                return "True";
+                                            }
+                                        }
+                                        if (type == "$and")
+                                        {
+                                            if (par[i] == "False")
+                                            {
+                                                return "False";
+                                            }
+                                        }
                                         if (result == "")
                                         {
                                             result = par[i];
@@ -467,33 +556,54 @@ public class QueryGrammarJSON : Grammar
                 case "$le":
                     if (eList != null)
                     {
-                        if (eList[0].ExpressionType == "$numVal" || eList[1].ExpressionType == "$numVal")
-                        {
-                            smeValue = "mvalue";
-                        }
-                        else if (eList[0].ExpressionType == "$strVal" || eList[1].ExpressionType == "$strVal")
+                        if (eList[0].ExpressionType == "$strVal" || eList[1].ExpressionType == "$strVal")
                         {
                             smeValue = "svalue";
                         }
+                        else if (eList[0].ExpressionType == "$numVal" || eList[1].ExpressionType == "$numVal")
+                        {
+                            smeValue = "mvalue";
+                        }
+                        else if (eList[0].ExpressionType == "$dateTimeVal" || eList[1].ExpressionType == "$dateTimeVal")
+                        {
+                            smeValue = "dtvalue";
+                        }
+                        else if (eList[0].ExpressionType == "$hexVal" || eList[1].ExpressionType == "$hexVal")
+                        {
+                            smeValue = "mvalue";
+                        }
+                        var sem = GetSemanticKindFromFieldExpr(eList[0]);
                         string left = createExpression(mode, eList[0], smeValue: smeValue);
-                        string right = createExpression(mode, eList[1], smeValue: smeValue);
-                        if (left != "$SKIP" && right != "$SKIP")
+                        if (mode == "value" && sem != SmeSemanticKind.None)
+                            _pendingValueStrSemantic.Push(sem);
+                        string right;
+                        try
                         {
-                            if (right.StartsWith("$$tag$$"))
-                            {
-                                return "$ERROR";
-                            }
-                            if (left.StartsWith("$$tag$$"))
-                            {
-                                return $"{left} {op} {right}$$";
-                            }
+                            right = createExpression(mode, eList[1], smeValue: smeValue);
+                        }
+                        finally
+                        {
+                            if (mode == "value" && sem != SmeSemanticKind.None)
+                                _pendingValueStrSemantic.Pop();
+                        }
 
-                            return "(" + left + " " + op + " " + right + ")";
-                        }
-                        else
-                        {
+                        // Platzhalter / vtvalue-langvalue-Auflösung erst nach $SKIP: sonst wird z. B. mit "$SKIP" unquotet.
+                        if (left == "$SKIP" || right == "$SKIP")
                             return "$SKIP";
+
+                        if (TryResolveSmeValueTypeLanguage(mode, type, left, right, out var resolvedVtLang))
+                            return resolvedVtLang;
+
+                        if (right.StartsWith("$$tag$$"))
+                        {
+                            return "$ERROR";
                         }
+                        if (left.StartsWith("$$tag$$"))
+                        {
+                            return $"{left} {op} {right}$$";
+                        }
+
+                        return "(" + left + " " + op + " " + right + ")";
                     }
                     break;
                 case "$starts-with":
@@ -503,23 +613,22 @@ public class QueryGrammarJSON : Grammar
                     {
                         var left = createExpression(mode, eList[0], smeValue: "svalue");
                         var right = createExpression(mode, eList[1], smeValue: "svalue");
-                        if (left != "$SKIP" && right != "$SKIP")
-                        {
-                            if (right.StartsWith("$$tag$$"))
-                            {
-                                return "$ERROR";
-                            }
-                            if (left.StartsWith("$$tag$$"))
-                            {
-                                return $"{left}.{op}({right})$$";
-                            }
-
-                            return left + "." + op + "(" + right + ")";
-                        }
-                        else
-                        {
+                        if (left == "$SKIP" || right == "$SKIP")
                             return "$SKIP";
+
+                        if (TryResolveSmeValueTypeLanguage(mode, type, left, right, out var resolvedVtLangStr))
+                            return resolvedVtLangStr;
+
+                        if (right.StartsWith("$$tag$$"))
+                        {
+                            return "$ERROR";
                         }
+                        if (left.StartsWith("$$tag$$"))
+                        {
+                            return $"{left}.{op}({right})$$";
+                        }
+
+                        return left + "." + op + "(" + right + ")";
                     }
                     break;
                 case "$boolean":
@@ -575,10 +684,25 @@ public class QueryGrammarJSON : Grammar
                         {
                             return "null";
                         }
-                        else
+                        if (mode == "value" && _pendingValueStrSemantic.Count > 0)
                         {
-                            return "\"" + v + "\"";
+                            var k = _pendingValueStrSemantic.Peek();
+                            if (k == SmeSemanticKind.ValueType)
+                            {
+                                if (!SmeQueryPrefilter.TrySerializeDataTypeAnnotation(v, out var ann))
+                                    return "$ERROR";
+                                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(ann);
+                                return "\"" + esc + "\"";
+                            }
+                            if (k == SmeSemanticKind.Language)
+                            {
+                                if (!LanguageQueryPrefilter.TryValidateLanguageLiteral(v, out var lang))
+                                    return "$ERROR";
+                                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(lang);
+                                return "\"" + esc + "\"";
+                            }
                         }
+                        return "\"" + v + "\"";
                     }
                     break;
                 case "$numVal":
@@ -588,7 +712,31 @@ public class QueryGrammarJSON : Grammar
                     }
                     if (obj is int or long or double)
                     {
-                        return obj.ToString();
+                        return Convert.ToString(obj, CultureInfo.InvariantCulture);
+                    }
+                    break;
+                case "$dateTimeVal":
+                    if (mode == "svalue")
+                    {
+                        return "$SKIP";
+                    }
+                    if (obj is string)
+                    {
+                        var v = obj as string;
+                        return "\"" + v + "\"";
+                    }
+                    break;
+                case "$hexVal":
+                    if (mode == "svalue")
+                    {
+                        return "$SKIP";
+                    }
+                    if (obj is string)
+                    {
+                        var v = obj as string;
+                        v = v.Replace("16#", "");
+                        var value = Convert.ToInt64(v, 16);
+                        return value.ToString();
                     }
                     break;
                 default:
@@ -600,13 +748,36 @@ public class QueryGrammarJSON : Grammar
 
     public static string ReplaceField(string mode, string value, string smeValue)
     {
+        // Semantic SME fields: map before $aas# / $sm# / $sme# rewrites (same layer as sme.value in the switch below).
+        var vNorm = value.Contains("$sme#", StringComparison.Ordinal) ? value.Replace("$sme#", "sme.") : value;
+        if (vNorm == "sme.valueType")
+        {
+            if (mode == "all" || mode == "all-aas" || mode == "sme.")
+                return "vtvalue";
+            if (mode == "value")
+                return "Annotation";
+        }
+        else if (vNorm == "sme.language")
+        {
+            if (mode == "all" || mode == "all-aas" || mode == "sme.")
+                return "langvalue";
+            if (mode == "value")
+                return "Annotation";
+        }
+
+        if (value == "$aas#id")
+        {
+            value = "$aas#identifier";
+        }
+        if (value == "$sm#id")
+        {
+            value = "$sm#identifier";
+        }
+
         value = value.Replace("$aas#", "aas.");
         value = value.Replace("$sm#", "sm.");
         value = value.Replace("$sme#", "sme.");
-        if (value == "sm.Id")
-        {
-            value = value.Replace("sm.Id", "sm.Identifier");
-        }
+
         switch (mode)
         {
             case "all":
@@ -625,9 +796,12 @@ public class QueryGrammarJSON : Grammar
                         value = "mvalue";
                     }
                 }
-                if (mode == "all" && value.StartsWith("aas."))
+                if (smeValue == "dtvalue")
                 {
-                    value = "$SKIP";
+                    if (value == "sme.value")
+                    {
+                        value = "dtvalue";
+                    }
                 }
                 break;
             case "sm.":
@@ -672,6 +846,16 @@ public class QueryGrammarJSON : Grammar
                     value = "$SKIP";
                 }
                 break;
+            case "value":
+                if (value == "sme.value")
+                {
+                    value = smeValue;
+                }
+                else
+                {
+                    value = "$SKIP";
+                }
+                break;
             default:
                 value = "$ERROR";
                 break;
@@ -679,16 +863,151 @@ public class QueryGrammarJSON : Grammar
         return value;
     }
 
+    private static bool TryUnquoteDynamicStrVal(string quoted, out string inner)
+    {
+        inner = "";
+        quoted = quoted.Trim();
+        if (quoted.Length < 2 || !quoted.StartsWith('"') || !quoted.EndsWith('"'))
+            return false;
+        inner = Regex.Unescape(quoted.Substring(1, quoted.Length - 2));
+        return true;
+    }
+
+    /// <summary>
+    /// Resolves SME valueType/language field placeholders using
+    /// grammar <paramref name="queryType"/> (e.g. <c>$eq</c>, <c>$contains</c>), not Dynamic LINQ operators.
+    /// </summary>
+    private static bool TryResolveSmeValueTypeLanguage(
+        string mode, string queryType, string left, string right, out string result)
+    {
+        result = "";
+        switch (queryType)
+        {
+            case "$eq":
+            case "$ne":
+                if (!TryUnquoteDynamicStrVal(right, out var strLit))
+                    return false;
+                return TryResolveSmeVtLangComparison(mode, queryType, left, strLit, out result);
+
+            case "$contains":
+            case "$starts-with":
+            case "$ends-with":
+                if (!TryUnquoteDynamicStrVal(right, out var needle))
+                    return false;
+                return TryResolveSmeVtLangStringMethod(mode, queryType, left, needle, out result);
+
+            default:
+                return false;
+        }
+    }
+
+    private static bool TryResolveSmeVtLangComparison(
+        string mode, string queryType, string left, string strLit, out string result)
+    {
+        result = "";
+        var isEq = queryType == "$eq";
+
+        if (left == "vtvalue")
+        {
+            if (mode == "all" || mode == "all-aas")
+            {
+                if (!SmeQueryPrefilter.TryGetTValueForValueTypeLiteral(strLit, out var disc))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                if (!SmeQueryPrefilter.TrySerializeDataTypeAnnotation(strLit, out var ann))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(ann);
+                result = isEq
+                    ? $"(sme.TValue == \"{disc}\" && valueAnnotation == \"{esc}\")"
+                    : $"(sme.TValue != \"{disc}\" || valueAnnotation != \"{esc}\")";
+                return true;
+            }
+            if (mode == "sme.")
+            {
+                if (!SmeQueryPrefilter.TryGetTValueForValueTypeLiteral(strLit, out var disc))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                result = isEq ? $"(TValue == \"{disc}\")" : $"(TValue != \"{disc}\")";
+                return true;
+            }
+            return false;
+        }
+
+        if (left == "langvalue")
+        {
+            if (mode == "all" || mode == "all-aas")
+            {
+                if (!LanguageQueryPrefilter.TryValidateLanguageLiteral(strLit, out var lang))
+                {
+                    result = "$ERROR";
+                    return true;
+                }
+                var esc = SmeQueryPrefilter.EscapeForDynamicLinq(lang);
+                result = isEq
+                    ? $"(sme.TValue == \"S\" && valueAnnotation == \"{esc}\")"
+                    : $"(sme.TValue != \"S\" || valueAnnotation != \"{esc}\")";
+                return true;
+            }
+            if (mode == "sme.")
+            {
+                result = isEq ? "(TValue == \"S\")" : "(TValue != \"S\")";
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    private static bool TryResolveSmeVtLangStringMethod(
+        string mode, string queryType, string left, string needle, out string result)
+    {
+        result = "";
+        var esc = SmeQueryPrefilter.EscapeForDynamicLinq(needle);
+
+        if (left == "vtvalue")
+        {
+            result = "$ERROR";
+            return true;
+        }
+
+        if (left == "langvalue")
+        {
+            if (mode == "all" || mode == "all-aas")
+            {
+                result = queryType switch
+                {
+                    "$contains" => $"(sme.TValue == \"S\" && valueAnnotation.Contains(\"{esc}\"))",
+                    "$starts-with" => $"(sme.TValue == \"S\" && valueAnnotation.StartsWith(\"{esc}\"))",
+                    "$ends-with" => $"(sme.TValue == \"S\" && valueAnnotation.EndsWith(\"{esc}\"))",
+                    _ => ""
+                };
+                return result != "";
+            }
+            if (mode == "sme.")
+            {
+                result = "(TValue == \"S\")";
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
     public static AllAccessPermissionRules _accessRules = null;
-    public static new List<Dictionary<string, string>> allAccessRuleExpressions = [];
-    public static new Dictionary<string, string> accessRuleExpression = [];
-    // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
-    // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
+    public static SqlConditions? allAccessRuleSqlConditions = null;
     public void ParseAccessRules(string expression)
     {
         // mySecurityRules.ClearSecurityRules();
-        allAccessRuleExpressions = new List<Dictionary<string, string>>();
-        accessRuleExpression = new Dictionary<string, string>();
+        allAccessRuleSqlConditions = null;
         Root deserializedData = null;
 
         var jsonSchema = "";
@@ -766,7 +1085,7 @@ public class QueryGrammarJSON : Grammar
             }
             if (!isValid)
             {
-                Console.WriteLine("âŒ JSON not valid:");
+                Console.WriteLine("JSON not valid:");
                 /*
                 foreach (var error in validationErrors)
                 {
@@ -779,7 +1098,7 @@ public class QueryGrammarJSON : Grammar
         }
         else
         {
-            Console.WriteLine("âŒ jsonschema-access.txt not found.");
+            Console.WriteLine("jsonschema-access.txt not found.");
             return;
         }
 
@@ -792,15 +1111,11 @@ public class QueryGrammarJSON : Grammar
         _accessRules = allRules;
         foreach (var rule in allRules.Rules)
         {
-            // mode: all, sm., sme., svalue, mvalue
             List<LogicalExpression?> logicalExpressions = [];
-            List<Dictionary<string, string>> conditions = [];
             logicalExpressions.Add(rule.Formula);
-            conditions.Add(rule._formula_conditions);
             if (rule.Filter != null)
             {
                 logicalExpressions.Add(rule.Filter.Condition);
-                conditions.Add(rule._filter_conditions);
             }
             if (logicalExpressions.Count != 0)
             {
@@ -809,86 +1124,43 @@ public class QueryGrammarJSON : Grammar
                     var le = logicalExpressions[i];
                     if (le != null)
                     {
-                        createExpression("all", le);
-                        conditions[i].Add("all", le._expression);
-                        createExpression("sm.", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
+                        var sc = CreateSqlConditions(le);
+                        if (i == 0)
+                            rule._formula_sqlConditions = sc;
                         else
-                        {
-                            le._expression = le._expression.Replace("sm.", "");
-                        }
-                        conditions[i].Add("sm.", le._expression);
-                        createExpression("sme.", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        else
-                        {
-                            le._expression = le._expression.Replace("sme.", "");
-                        }
-                        conditions[i].Add("sme.", le._expression);
-                        createExpression("svalue", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        le._expression = le._expression.Replace("svalue", "Value");
-                        conditions[i].Add("svalue", le._expression);
-                        createExpression("mvalue", le);
-                        if (le._expression == "$SKIP")
-                        {
-                            le._expression = "";
-                        }
-                        le._expression = le._expression.Replace("mvalue", "Value");
-                        conditions[i].Add("mvalue", le._expression);
+                            rule._filter_sqlConditions = sc;
+
                     }
                 }
             }
 
-            var accessRuleExpression = new Dictionary<string, string>();
-            ParseAccessRule(rule, accessRuleExpression);
-            allAccessRuleExpressions.Add(accessRuleExpression);
+            RegisterAccessRuleRoutes(rule);
+
+            // Accumulate SQL access conditions across all rules as OR(rule FORMULA AND rule FILTER).
+            var ruleSqlConditions = SqlConditionsMerger.Merge(rule._formula_sqlConditions, rule._filter_sqlConditions);
+            if (ruleSqlConditions != null)
+            {
+                allAccessRuleSqlConditions = allAccessRuleSqlConditions == null
+                    ? ruleSqlConditions.Clone()
+                    : SqlConditionsMerger.OrMerge(allAccessRuleSqlConditions, ruleSqlConditions);
+            }
         }
     }
 
-    List<string> Names = new List<string>();
-    string access = "";
     string rights = "";
-    string global = "";
-    bool isClaim = false;
     string claim = "";
-    bool filter = false;
-    bool route = false;
-    void ParseAccessRule(AccessPermissionRule rule, Dictionary<string, string> accessRuleExpression)
+    void RegisterAccessRuleRoutes(AccessPermissionRule rule)
     {
-        foreach (var c in rule._formula_conditions)
-        {
-            accessRuleExpression.Add(c.Key, c.Value);
-        }
-        if (rule._filter_conditions != null && rule._filter_conditions.Count != 0)
-        {
-            accessRuleExpression["filter"] = rule._filter_conditions["all"];
-        }
         var attributes = rule.Acl?.Attributes;
         if (attributes != null && attributes.Count != 0)
         {
-            var claimList = "";
             foreach (var a in attributes)
             {
                 if (a.ItemType == "CLAIM")
                 {
                     claim = a.Value;
-                    if (!claimList.Contains(claim + " "))
-                    {
-                        claimList += claim + " ";
-                    }
                 }
             }
-            accessRuleExpression["claim"] = claimList;
         }
         var routes = rule.Objects?.Where(o => o.ItemType == "ROUTE").ToList();
         var rightList = rule.Acl?.Rights?.ToList();
@@ -914,7 +1186,928 @@ public class QueryGrammarJSON : Grammar
                 }
             }
         }
-        accessRuleExpression["right"] = rights;
+    }
+
+    // -------------------------------------------------------------------------
+    // Direct SQL generation — replaces the LINQ-string conditionsExpression path
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Traverses the AST rooted at <paramref name="le"/> and produces a <see cref="SqlConditions"/>
+    /// that <c>CombineTablesLEFT</c> can assemble into raw SQL without any EF Core / LINQ involvement.
+    /// </summary>
+    public static SqlConditions CreateSqlConditions(LogicalExpression le)
+    {
+        var sc = new SqlConditions();
+        var ctx = new SqlBuildContext(sc);
+
+        // Scope filters — one pass per scope (mirrors createExpression modes)
+        sc.FormulaConditions["aas"]   = BuildScopeSql(le, SqlScope.Aas)   ?? "";
+        sc.FormulaConditions["sm"]    = BuildScopeSql(le, SqlScope.Sm)     ?? "";
+        sc.FormulaConditions["sme"]   = BuildScopeSql(le, SqlScope.Sme)    ?? "";
+        sc.FormulaConditions["value"] = BuildScopeSql(le, SqlScope.Value)  ?? "";
+
+        // Overall condition with path/match placeholders
+        sc.FormulaConditions["all"] = BuildOverallSql(le, ctx);
+
+        return sc;
+    }
+
+    // ------------------------------------------------------------------
+    // Internal context threaded through the recursive build
+    // ------------------------------------------------------------------
+    private class SqlBuildContext(SqlConditions sc)
+    {
+        public SqlConditions Sc { get; } = sc;
+        public int PathIndex { get; set; } = 0;
+        public int MatchIndex { get; set; } = 0;
+        public int ExistsIndex { get; set; } = 0;
+    }
+
+    private enum SqlScope { Aas, Sm, Sme, Value }
+
+    // ------------------------------------------------------------------
+    // Scope-filter builder (produces a WHERE predicate for one DbSet)
+    // ------------------------------------------------------------------
+    private static string? BuildScopeSql(LogicalExpression le, SqlScope scope)
+    {
+        var result = BuildScopeSqlNode(le.ExpressionValue, le.ExpressionType, scope, "");
+        if (result == "$SKIP" || result == "$ERROR" || result == null)
+            return "";
+        return result == "true" || result == SqlBoolTrue ? "" : result;
+    }
+
+    private static string? BuildScopeSqlNode(object? obj, string type, SqlScope scope, string smeValue)
+    {
+        if (obj == null) return "$SKIP";
+
+        if (obj is bool boolLit)
+            return boolLit ? SqlBoolTrue : SqlBoolFalse;
+
+        // Recurse through LogicalExpression wrapper
+        if (obj is LogicalExpression le)
+            return BuildScopeSqlNode(le.ExpressionValue, le.ExpressionType, scope, smeValue);
+
+        if (obj is List<LogicalExpression> eList)
+        {
+            switch (type)
+            {
+                case "$not":
+                    if (eList.Count == 1)
+                    {
+                        var inner = BuildScopeSqlNode(eList[0], scope, smeValue);
+                        return inner == "$SKIP" ? "$SKIP" : inner == null ? null : $"NOT ({inner})";
+                    }
+                    return "$SKIP";
+
+                case "$and":
+                {
+                    var parts = eList
+                        .Select(e => BuildScopeSqlNode(e, scope, smeValue))
+                        .Where(s => s != null && s != "$SKIP" && s != "$ERROR")
+                        .ToList();
+                    if (parts.Count == 0) return "$SKIP";
+                    if (parts.Any(p => p == "$ERROR")) return "$ERROR";
+                    parts = FoldBooleanAndParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    // Value-scope → inner ValueSets Vorfilter only: never AND (one row cannot combine arbitrary
+                    // leaves); outer WHERE + path joins keep full semantics.
+                    var joiner = scope == SqlScope.Value ? " OR " : " AND ";
+                    return "(" + string.Join(joiner, parts) + ")";
+                }
+
+                case "$or":
+                {
+                    // Most scope prefilters must stay conservative across OR:
+                    // if any satisfiable branch has no predicate for that scope, that scope cannot be restricted.
+                    // Example: (aas=A) OR (aas=B) OR (sm=TechnicalData AND sme.value=X) must yield no AAS
+                    // prefilter; otherwise the third branch is filtered out before the overall condition can match.
+                    var branchResults = eList
+                        .Select(e => BuildScopeSqlNode(e, scope, smeValue))
+                        .ToList();
+                    if (branchResults.Any(p => p == "$ERROR")) return "$ERROR";
+                    if (branchResults.Any(p => p == "$SKIP" || p == null || p == SqlBoolTrue))
+                        return SqlBoolTrue;
+                    var parts = branchResults
+                        .Where(p => p != null && p != "$SKIP" && p != SqlBoolTrue && p != SqlBoolFalse)
+                        .Select(p => p!)
+                        .ToList();
+                    if (parts.Count == 0)
+                        return branchResults.All(p => p == SqlBoolFalse) ? SqlBoolFalse : "$SKIP";
+                    parts = FoldBooleanOrParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    return "(" + string.Join(" OR ", parts) + ")";
+                }
+
+                case "$match":
+                    // $match conditions only appear in the overall condition, not in scope filters
+                    return "$SKIP";
+
+                case "$eq": case "$ne": case "$gt": case "$ge": case "$lt": case "$le":
+                case "$starts-with": case "$ends-with": case "$contains":
+                    return BuildScopeComparisonSql(eList, type, scope);
+            }
+        }
+
+        return "$SKIP";
+    }
+
+    private static string? BuildScopeSqlNode(LogicalExpression le, SqlScope scope, string smeValue)
+        => BuildScopeSqlNode(le.ExpressionValue, le.ExpressionType, scope, smeValue);
+
+    private static string? BuildScopeComparisonSql(List<LogicalExpression> eList, string type, SqlScope scope)
+    {
+        if (eList.Count < 2) return "$SKIP";
+        var leftNode  = eList[0];
+        var rightNode = eList[1];
+
+        // Determine smeValue context from rhs type
+        var smeValue = leftNode.ExpressionType == "$strVal" || rightNode.ExpressionType == "$strVal" ? "svalue"
+                     : leftNode.ExpressionType == "$numVal" || rightNode.ExpressionType == "$numVal" ? "mvalue"
+                     : leftNode.ExpressionType == "$dateTimeVal" || rightNode.ExpressionType == "$dateTimeVal" ? "dtvalue"
+                     : leftNode.ExpressionType == "$hexVal" || rightNode.ExpressionType == "$hexVal" ? "mvalue"
+                     : "";
+
+        if (leftNode.ExpressionType == "$attribute" || rightNode.ExpressionType == "$attribute")
+        {
+            if (scope != SqlScope.Sm)
+                return "$SKIP";
+
+            var leftClaimSql = BuildClaimOrLiteralSql(leftNode, smeValue);
+            if (leftClaimSql == "$SKIP" || leftClaimSql == null) return "$SKIP";
+            var rightClaimSql = BuildClaimOrLiteralSql(rightNode, smeValue);
+            if (rightClaimSql == "$SKIP" || rightClaimSql == null) return "$SKIP";
+            return CombineComparisonSql(leftClaimSql, type, rightClaimSql);
+        }
+
+        var leftSql  = BuildScopeFieldSql(leftNode, scope, smeValue);
+        if (leftSql == "$SKIP" || leftSql == null) return "$SKIP";
+
+        // Path conditions ($sme.idShortPath) are not scope filters
+        if (leftSql.StartsWith("$$path$$")) return "$SKIP";
+
+        var rightSql = BuildScopeLiteralSql(rightNode, smeValue);
+        if (rightSql == "$SKIP" || rightSql == null) return "$SKIP";
+
+        return CombineComparisonSql(leftSql, type, rightSql);
+    }
+
+    /// <summary>Maps a $field node to a SQL column name for the given scope; returns $SKIP if not relevant.</summary>
+    private static string? BuildScopeFieldSql(LogicalExpression node, SqlScope scope, string smeValue)
+    {
+        if (node.ExpressionType != "$field" || node.ExpressionValue is not string raw)
+            return "$SKIP";
+
+        // "$sme.{idShortPath}#field" — overall uses path joins; for scope SQL we emit the same SME
+        // columns as "$sme#field" so FormulaConditions["sme"] can Vorfilter the SMESets subquery in
+        // BuildRawSql (inner filter may be slightly wider than path-specific overall; outer WHERE unchanged).
+        var smeDotIdx = raw.IndexOf("$sme.", StringComparison.OrdinalIgnoreCase);
+        if (smeDotIdx >= 0 && raw.Contains('#'))
+        {
+            var withoutPrefix = raw[(smeDotIdx + "$sme.".Length)..];
+            var hashIdx = withoutPrefix.IndexOf('#');
+            if (hashIdx > 0 && hashIdx < withoutPrefix.Length - 1)
+            {
+                var fieldName = withoutPrefix[(hashIdx + 1)..];
+                if (fieldName == "value")
+                {
+                    if (scope != SqlScope.Value)
+                        return "$SKIP";
+
+                    // Path and match values are enforced by their generated subqueries. They must not widen the
+                    // global ValueSets prefilter used for direct "$sme#value" overall references.
+                    if (!string.IsNullOrEmpty(withoutPrefix[..hashIdx]))
+                        return "$SKIP";
+
+                    return smeValue switch
+                    {
+                        "svalue"  => "v.\"SValue\"",
+                        "mvalue"  => "v.\"NValue\"",
+                        "dtvalue" => "v.\"DTValue\"",
+                        _ => "$SKIP"
+                    };
+                }
+                if (scope == SqlScope.Sme && string.IsNullOrEmpty(withoutPrefix[..hashIdx]))
+                {
+                    var col = SmeColumnSql(fieldName);
+                    if (col != null)
+                        return col;
+                }
+            }
+            return "$SKIP";
+        }
+
+        // Semantic fields: vtvalue / langvalue
+        var vNorm = raw.StartsWith("$sme#") ? raw.Replace("$sme#", "sme.") : raw;
+        if (vNorm == "$sme#valueType" || vNorm == "sme.valueType")
+            return scope == SqlScope.Sme ? "\"TValue\"" : "$SKIP";
+        if (vNorm == "$sme#language" || vNorm == "sme.language")
+            return scope == SqlScope.Sme ? "\"TValue\"" : "$SKIP";
+
+        // Normalize id aliases
+        var field = raw == "$aas#id" ? "$aas#identifier"
+                  : raw == "$sm#id"  ? "$sm#identifier"
+                  : raw;
+
+        if (field.StartsWith("$aas#"))
+        {
+            if (scope != SqlScope.Aas) return "$SKIP";
+            var col = AasColumnSql(field["$aas#".Length..]);
+            return col == null ? "$SKIP" : col;
+        }
+        if (field.StartsWith("$sm#"))
+        {
+            if (scope != SqlScope.Sm) return "$SKIP";
+            var col = SmColumnSql(field["$sm#".Length..]);
+            return col == null ? "$SKIP" : col;
+        }
+        if (field.StartsWith("$sme#"))
+        {
+            var prop = field["$sme#".Length..];
+            if (prop == "value")
+            {
+                // sme.value is a value-table field — always qualify with v. for use in JOIN WHERE
+                return scope switch
+                {
+                    SqlScope.Value => smeValue switch
+                    {
+                        "svalue"  => "v.\"SValue\"",
+                        "mvalue"  => "v.\"NValue\"",
+                        "dtvalue" => "v.\"DTValue\"",
+                        _ => "$SKIP"
+                    },
+                    _ => "$SKIP"
+                };
+            }
+            if (scope != SqlScope.Sme) return "$SKIP";
+            return SmeColumnSql(prop);
+        }
+        return "$SKIP";
+    }
+
+    private static List<string> FoldBooleanAndParts(List<string> parts)
+    {
+        if (parts.Any(p => p == SqlBoolFalse))
+            return [SqlBoolFalse];
+        var rest = parts.Where(p => p != SqlBoolTrue).ToList();
+        return rest.Count == 0 ? [SqlBoolTrue] : rest;
+    }
+
+    private static List<string> FoldBooleanOrParts(List<string> parts)
+    {
+        if (parts.Any(p => p == SqlBoolTrue))
+            return [SqlBoolTrue];
+        var rest = parts.Where(p => p != SqlBoolFalse).ToList();
+        return rest.Count == 0 ? [SqlBoolFalse] : rest;
+    }
+
+    // ------------------------------------------------------------------
+    // Overall-condition builder — produces SQL with path/match placeholders
+    // ------------------------------------------------------------------
+    private static string BuildOverallSql(LogicalExpression le, SqlBuildContext ctx)
+    {
+        var result = BuildOverallSqlNode(le.ExpressionValue, le.ExpressionType, ctx, "");
+        if (result == "$SKIP" || result == "$ERROR" || result == null)
+            return "";
+        return result;
+    }
+
+    private static string? BuildOverallSqlNode(object? obj, string type, SqlBuildContext ctx, string smeValue)
+    {
+        if (obj == null) return "$SKIP";
+
+        if (obj is bool boolLit)
+            return boolLit ? SqlBoolTrue : SqlBoolFalse;
+
+        if (obj is LogicalExpression le)
+            return BuildOverallSqlNode(le.ExpressionValue, le.ExpressionType, ctx, smeValue);
+
+        if (obj is List<LogicalExpression> eList)
+        {
+            switch (type)
+            {
+                case "$not":
+                    if (eList.Count == 1)
+                    {
+                        var inner = BuildOverallSqlNode(eList[0], type: eList[0].ExpressionType, ctx, smeValue);
+                        if (inner == "$SKIP" || inner == null) return "$SKIP";
+                        return $"NOT ({inner})";
+                    }
+                    return "$SKIP";
+
+                case "$and":
+                {
+                    if (TryBuildDirectValueExistsPredicate(eList, type, out var existsPredicate))
+                    {
+                        if (existsPredicate == SqlBoolTrue || existsPredicate == SqlBoolFalse)
+                            return existsPredicate;
+                        return AddExistsCondition(ctx, existsPredicate);
+                    }
+
+                    var parts = new List<string>();
+                    var valueExistsPredicates = new List<string>();
+                    foreach (var e in eList)
+                    {
+                        if (TryBuildDirectValueExistsPredicate(e, out var valueExistsPredicate))
+                        {
+                            if (valueExistsPredicate == SqlBoolFalse)
+                                return SqlBoolFalse;
+                            if (valueExistsPredicate != SqlBoolTrue)
+                                valueExistsPredicates.Add(valueExistsPredicate);
+                            continue;
+                        }
+
+                        var part = BuildOverallSqlNode(e.ExpressionValue, e.ExpressionType, ctx, smeValue);
+                        if (part == "$ERROR")
+                            return "$ERROR";
+                        // Short-circuit: do not visit siblings (no path/match side effects) once AND is unsatisfiable.
+                        if (part == SqlBoolFalse)
+                            return SqlBoolFalse;
+                        if (part != null && part != "$SKIP")
+                            parts.Add(part);
+                    }
+
+                    if (valueExistsPredicates.Count > 0)
+                    {
+                        var valueExistsPredicate = valueExistsPredicates.Count == 1
+                            ? valueExistsPredicates[0]
+                            : "(" + string.Join(" AND ", valueExistsPredicates) + ")";
+                        parts.Add(AddExistsCondition(ctx, valueExistsPredicate));
+                    }
+
+                    if (parts.Count == 0)
+                        return "$SKIP";
+                    parts = FoldBooleanAndParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    return "(" + string.Join(" AND ", parts) + ")";
+                }
+
+                case "$or":
+                {
+                    if (TryBuildDirectValueExistsPredicate(eList, type, out var existsPredicate))
+                    {
+                        if (existsPredicate == SqlBoolTrue || existsPredicate == SqlBoolFalse)
+                            return existsPredicate;
+                        return AddExistsCondition(ctx, existsPredicate);
+                    }
+
+                    var parts = new List<string>();
+                    foreach (var e in eList)
+                    {
+                        var part = BuildOverallSqlNode(e.ExpressionValue, e.ExpressionType, ctx, smeValue);
+                        if (part == "$ERROR")
+                            return "$ERROR";
+                        // Short-circuit: later branches must not register paths/joins if expression is already tautological.
+                        if (part == SqlBoolTrue)
+                            return SqlBoolTrue;
+                        if (part != null && part != "$SKIP")
+                            parts.Add(part);
+                    }
+
+                    if (parts.Count == 0)
+                        return "$SKIP";
+                    parts = FoldBooleanOrParts(parts);
+                    if (parts.Count == 1)
+                        return parts[0];
+                    return "(" + string.Join(" OR ", parts) + ")";
+                }
+
+                case "$match":
+                {
+                    var matchJoin = new MatchJoin { Placeholder = $"match{ctx.MatchIndex}" };
+                    foreach (var e in eList)
+                    {
+                        var pj = TryBuildMatchPathJoin(e);
+                        if (pj != null)
+                        {
+                            pj.Placeholder = $"path{ctx.PathIndex++}";
+                            matchJoin.Paths.Add(pj);
+                        }
+                    }
+                    if (matchJoin.Paths.Count == 0) return "$SKIP";
+
+                    var joinParts = new List<string>();
+                    for (int k = 1; k < matchJoin.Paths.Count; k++)
+                        joinParts.Add($"Path1.SMId = Path{k + 1}.SMId");
+                    matchJoin.JoinConditionSql = string.Join(" AND ", joinParts);
+
+                    ctx.Sc.Matches.Add(matchJoin);
+                    ctx.MatchIndex++;
+                    return $"$${matchJoin.Placeholder}$$";
+                }
+
+                case "$eq": case "$ne": case "$gt": case "$ge": case "$lt": case "$le":
+                case "$starts-with": case "$ends-with": case "$contains":
+                    return BuildOverallComparisonSql(eList, type, ctx);
+            }
+        }
+
+        return "$SKIP";
+    }
+
+    private static string AddExistsCondition(SqlBuildContext ctx, string predicateSql)
+    {
+        var idx = ctx.ExistsIndex++;
+        var exists = new ExistsCondition
+        {
+            Placeholder = $"exists{idx}",
+            PredicateSql = predicateSql
+        };
+        ctx.Sc.ExistsConditions.Add(exists);
+        return $"$${exists.Placeholder}$$";
+    }
+
+    private static bool TryBuildDirectValueExistsPredicate(
+        List<LogicalExpression> eList,
+        string type,
+        out string predicateSql)
+    {
+        predicateSql = "";
+
+        if (type is "$and" or "$or")
+        {
+            var parts = new List<string>();
+            foreach (var e in eList)
+            {
+                if (e.ExpressionValue is bool boolValue)
+                {
+                    var folded = boolValue ? SqlBoolTrue : SqlBoolFalse;
+                    if (type == "$and" && folded == SqlBoolFalse)
+                    {
+                        predicateSql = SqlBoolFalse;
+                        return true;
+                    }
+                    if (type == "$or" && folded == SqlBoolTrue)
+                    {
+                        predicateSql = SqlBoolTrue;
+                        return true;
+                    }
+                    if ((type == "$and" && folded == SqlBoolTrue) || (type == "$or" && folded == SqlBoolFalse))
+                        continue;
+                }
+
+                if (!TryBuildDirectValueExistsPredicate(e, out var part))
+                    return false;
+                parts.Add(part);
+            }
+
+            if (parts.Count == 0)
+            {
+                predicateSql = type == "$and" ? SqlBoolTrue : SqlBoolFalse;
+                return true;
+            }
+
+            predicateSql = parts.Count == 1
+                ? parts[0]
+                : "(" + string.Join(type == "$and" ? " AND " : " OR ", parts) + ")";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryBuildDirectValueExistsPredicate(LogicalExpression le, out string predicateSql)
+    {
+        predicateSql = "";
+
+        if (le.ExpressionValue is List<LogicalExpression> eList)
+        {
+            if (le.ExpressionType is "$and" or "$or")
+                return TryBuildDirectValueExistsPredicate(eList, le.ExpressionType, out predicateSql);
+
+            if (le.ExpressionType is "$eq" or "$ne" or "$gt" or "$ge" or "$lt" or "$le" or "$starts-with" or "$ends-with" or "$contains")
+            {
+                if (eList.Count < 2)
+                    return false;
+
+                var leftNode = eList[0];
+                var rightNode = eList[1];
+                if (leftNode.ExpressionType != "$field" || leftNode.ExpressionValue is not string rawField || rawField != "$sme#value")
+                    return false;
+
+                var smeValue = rightNode.ExpressionType switch
+                {
+                    "$strVal" => "svalue",
+                    "$numVal" => "mvalue",
+                    "$dateTimeVal" => "dtvalue",
+                    "$hexVal" => "mvalue",
+                    _ => ""
+                };
+                var leftSql = smeValue switch
+                {
+                    "svalue" => "v.\"SValue\"",
+                    "mvalue" => "v.\"NValue\"",
+                    "dtvalue" => "v.\"DTValue\"",
+                    _ => "$SKIP"
+                };
+                if (leftSql == "$SKIP")
+                    return false;
+
+                var rightSql = BuildScopeLiteralSql(rightNode, smeValue);
+                if (rightSql == "$SKIP" || rightSql == null)
+                    return false;
+
+                var combined = CombineComparisonSql(leftSql, le.ExpressionType, rightSql);
+                if (combined == null)
+                    return false;
+
+                predicateSql = combined;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string? BuildOverallComparisonSql(List<LogicalExpression> eList, string type, SqlBuildContext ctx)
+    {
+        if (eList.Count < 2) return "$SKIP";
+        var leftNode  = eList[0];
+        var rightNode = eList[1];
+
+        var smeValue = leftNode.ExpressionType == "$strVal" || rightNode.ExpressionType == "$strVal" ? "svalue"
+                     : leftNode.ExpressionType == "$numVal" || rightNode.ExpressionType == "$numVal" ? "mvalue"
+                     : leftNode.ExpressionType == "$dateTimeVal" || rightNode.ExpressionType == "$dateTimeVal" ? "dtvalue"
+                     : leftNode.ExpressionType == "$hexVal" || rightNode.ExpressionType == "$hexVal" ? "mvalue"
+                     : "";
+
+        // $attribute(CLAIM(...)) operands resolve to a token-claim value — not a column. Emit a
+        // sentinel SQL string literal so the comparison is well-formed; per-request substitution
+        // in SqlConditions.SubstituteTokenClaims replaces the sentinel with the real claim value
+        // before SQL execution. Skipping the branch (as the previous code did) silently dropped
+        // the CLAIM check and made CLAIM-gated rules permissive — see SecurityService refactor 4bef43ac.
+        if (leftNode.ExpressionType == "$attribute" || rightNode.ExpressionType == "$attribute")
+        {
+            var leftSqlClaim  = BuildClaimOrLiteralSql(leftNode, smeValue);
+            if (leftSqlClaim == "$SKIP" || leftSqlClaim == null) return "$SKIP";
+            var rightSqlClaim = BuildClaimOrLiteralSql(rightNode, smeValue);
+            if (rightSqlClaim == "$SKIP" || rightSqlClaim == null) return "$SKIP";
+            return CombineComparisonSql(leftSqlClaim, type, rightSqlClaim);
+        }
+
+        // Check for path condition ($sme.idShortPath)
+        if (leftNode.ExpressionType == "$field" && leftNode.ExpressionValue is string rawField
+            && rawField.Contains("$sme."))
+        {
+            var pathSql = TryBuildStandalonePathSql(leftNode, rightNode, type, smeValue, ctx);
+            if (pathSql != null) return pathSql;
+            return "$SKIP";
+        }
+
+        var leftSql  = BuildOverallFieldSql(leftNode, smeValue);
+        if (leftSql == "$SKIP" || leftSql == null) return "$SKIP";
+
+        var rightSql = BuildScopeLiteralSql(rightNode, smeValue);
+        if (rightSql == "$SKIP" || rightSql == null) return "$SKIP";
+
+        return CombineComparisonSql(leftSql, type, rightSql);
+    }
+
+    /// <summary>
+    /// Maps a comparison operand to overall-SQL: a literal for <c>$strVal</c>/<c>$numVal</c>/...,
+    /// or a deferred claim sentinel literal for <c>$attribute(CLAIM(&lt;type&gt;))</c>.
+    /// </summary>
+    private static string? BuildClaimOrLiteralSql(LogicalExpression node, string smeValue)
+    {
+        if (node.ExpressionType == "$attribute")
+        {
+            if (node.ExpressionValue is LogicalExpression inner
+                && inner.ExpressionType == "CLAIM"
+                && inner.ExpressionValue is string claimType
+                && !string.IsNullOrEmpty(claimType))
+            {
+                return SqlConditions.BuildClaimSentinelSqlLiteral(claimType);
+            }
+            return "$SKIP";
+        }
+        return BuildScopeLiteralSql(node, smeValue);
+    }
+
+    /// <summary>Builds a standalone path placeholder in FormulaConditions["all"], adds PathJoin to Sc.Paths.</summary>
+    private static string? TryBuildStandalonePathSql(
+        LogicalExpression fieldNode, LogicalExpression valueNode, string type, string smeValue, SqlBuildContext ctx)
+    {
+        if (!TryBuildPathSubquerySql(fieldNode, valueNode, type, smeValue, smeAlias: "sme",
+                innerJoin: false, out var pathSql, out var idShortPath))
+            return null;
+
+        var idx = ctx.PathIndex++;
+        var pj = new PathJoin { Placeholder = $"path{idx}", SubquerySql = pathSql, IdShortPath = idShortPath };
+        ctx.Sc.Paths.Add(pj);
+        return $"$${pj.Placeholder}$$";
+    }
+
+    /// <summary>For a $match child: builds PathJoin with body SQL using "sme" as alias (replaced later).</summary>
+    private static PathJoin? TryBuildMatchPathJoin(LogicalExpression le)
+    {
+        if (le.ExpressionValue is not List<LogicalExpression> eList || eList.Count < 2)
+            return null;
+        var type      = le.ExpressionType;
+        var leftNode  = eList[0];
+        var rightNode = eList[1];
+
+        if (leftNode.ExpressionType != "$field" || leftNode.ExpressionValue is not string raw
+            || !raw.Contains("$sme."))
+            return null;
+
+        var smeValue = leftNode.ExpressionType == "$strVal" || rightNode.ExpressionType == "$strVal" ? "svalue"
+                     : leftNode.ExpressionType == "$numVal" || rightNode.ExpressionType == "$numVal" ? "mvalue"
+                     : leftNode.ExpressionType == "$dateTimeVal" || rightNode.ExpressionType == "$dateTimeVal" ? "dtvalue"
+                     : leftNode.ExpressionType == "$hexVal"  || rightNode.ExpressionType == "$hexVal" ? "mvalue"
+                     : "";
+
+        if (!TryBuildPathSubquerySql(leftNode, rightNode, type, smeValue, smeAlias: "sme",
+                innerJoin: true, out var sql, out var idShortPath))
+            return null;
+
+        return new PathJoin { SubquerySql = sql, IdShortPath = idShortPath };
+    }
+
+    /// <summary>
+    /// Builds the body (FROM … WHERE …) of a LEFT-JOIN subquery for one $sme.idShortPath#field comparison.
+    /// <paramref name="smeAlias"/> is the alias used for SMESets inside the subquery (no SELECT header — callers add it).
+    /// </summary>
+    private static bool TryBuildPathSubquerySql(
+        LogicalExpression fieldNode, LogicalExpression valueNode,
+        string type, string smeValue, string smeAlias,
+        bool innerJoin,
+        out string sql, out string idShortPath)
+    {
+        sql = "";
+        idShortPath = "";
+
+        if (fieldNode.ExpressionValue is not string raw || !raw.Contains("$sme."))
+            return false;
+
+        // raw format: "$sme.{idShortPath}#{fieldName}"
+        var withoutPrefix = raw.Replace("$sme.", "");
+        var parts = withoutPrefix.Split('#');
+        if (parts.Length != 2) return false;
+        idShortPath  = parts[0];
+        var fieldName = parts[1];   // e.g. "value", "idShort", "valueType", "language"
+
+        var idShort = idShortPath.Contains('.') ? idShortPath.Split('.').Last() : idShortPath;
+
+        // Value SQL for the JOIN condition
+        var valueSql = BuildPathValueSql(fieldName, valueNode, type, smeValue, smeAlias);
+        if (valueSql == null) return false;
+
+        // IdShort and IdShortPath SQL
+        var idShortSql     = $"\"{smeAlias}\".\"IdShort\" = '{EscSql(idShort)}'";
+        var idShortPathSql = BuildIdShortPathSql(smeAlias, idShortPath);
+
+        // Build body only (no SELECT header)
+        var joinKeyword = innerJoin ? "JOIN" : "LEFT JOIN";
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"FROM SMESets {smeAlias}");
+        sb.AppendLine($"{joinKeyword} ValueSets v ON v.SMEId = {smeAlias}.Id AND {valueSql}");
+        sb.AppendLine($"WHERE {valueSql}");
+        // Skip IdShort condition for wildcard paths (%, []) — mirrors old behaviour
+        var hasWildcard = idShort.Contains('%') || idShort.Contains('[');
+        if (!hasWildcard)
+            sb.AppendLine($"AND {idShortSql}");
+        sb.Append($"AND {idShortPathSql}");
+
+        sql = sb.ToString();
+        return true;
+    }
+
+    private static string BuildIdShortPathSql(string smeAlias, string idShortPath)
+    {
+        if (idShortPath.Contains("[]"))
+        {
+            var pattern = idShortPath.Replace("[]", "[[]*[]]");
+            return $"\"{smeAlias}\".\"IdShortPath\" GLOB '{EscSql(pattern)}'";
+        }
+        if (idShortPath.Contains('%'))
+        {
+            var pattern = idShortPath.Replace('%', '*');
+            return $"\"{smeAlias}\".\"IdShortPath\" GLOB '{EscSql(pattern)}'";
+        }
+        return $"\"{smeAlias}\".\"IdShortPath\" = '{EscSql(idShortPath)}'";
+    }
+
+    /// <summary>Builds the SQL condition for the value column(s) of a path join.</summary>
+    private static string? BuildPathValueSql(
+        string fieldName, LogicalExpression valueNode, string type, string smeValue, string smeAlias)
+    {
+        // vtvalue / langvalue: two-column predicates (TValue + Annotation)
+        if (fieldName == "valueType")
+        {
+            var litSql = BuildScopeLiteralSql(valueNode, smeValue);
+            if (litSql == null || litSql == "$SKIP") return null;
+            var literal = UnquoteSqlLiteral(litSql);
+            if (!SmeQueryPrefilter.TryGetTValueForValueTypeLiteral(literal, out var disc)) return null;
+            if (!SmeQueryPrefilter.TrySerializeDataTypeAnnotation(literal, out var ann)) return null;
+            var discEsc = EscSql(disc);
+            var annEsc  = EscSql(ann);
+            return type switch
+            {
+                "$eq" => $"(\"{smeAlias}\".\"TValue\" = '{discEsc}' AND v.\"Annotation\" = '{annEsc}')",
+                "$ne" => $"(\"{smeAlias}\".\"TValue\" <> '{discEsc}' OR v.\"Annotation\" <> '{annEsc}')",
+                _ => null
+            };
+        }
+        if (fieldName == "language")
+        {
+            var litSql = BuildScopeLiteralSql(valueNode, smeValue);
+            if (litSql == null || litSql == "$SKIP") return null;
+            var literal = UnquoteSqlLiteral(litSql);
+            if (!LanguageQueryPrefilter.TryValidateLanguageLiteral(literal, out var lang)) return null;
+            var langEsc = EscSql(lang);
+            return type switch
+            {
+                "$eq" => $"(\"{smeAlias}\".\"TValue\" = 'S' AND v.\"Annotation\" = '{langEsc}')",
+                "$ne" => $"(\"{smeAlias}\".\"TValue\" <> 'S' OR v.\"Annotation\" <> '{langEsc}')",
+                "$contains" => $"(\"{smeAlias}\".\"TValue\" = 'S' AND v.\"Annotation\" LIKE '%{EscSql(lang)}%')",
+                "$starts-with" => $"(\"{smeAlias}\".\"TValue\" = 'S' AND v.\"Annotation\" LIKE '{EscSql(lang)}%')",
+                "$ends-with" => $"(\"{smeAlias}\".\"TValue\" = 'S' AND v.\"Annotation\" LIKE '%{EscSql(lang)}')",
+                _ => null
+            };
+        }
+
+        // Standard value column
+        var sqlCol = fieldName switch
+        {
+            "value"  => smeValue switch
+            {
+                "svalue"  => "v.\"SValue\"",
+                "mvalue"  => "v.\"NValue\"",
+                "dtvalue" => "v.\"DTValue\"",
+                _ => "v.\"SValue\""   // default
+            },
+            "idShort"     => $"\"{smeAlias}\".\"IdShort\"",
+            "idShortPath" => $"\"{smeAlias}\".\"IdShortPath\"",
+            _ => null
+        };
+        if (sqlCol == null) return null;
+
+        var rhs = BuildScopeLiteralSql(valueNode, smeValue);
+        if (rhs == "$SKIP" || rhs == null) return null;
+
+        return CombineComparisonSql(sqlCol, type, rhs);
+    }
+
+    // ------------------------------------------------------------------
+    // Overall condition: field→SQL mapping (with table prefix a. / t.)
+    // ------------------------------------------------------------------
+    private static string? BuildOverallFieldSql(LogicalExpression node, string smeValue)
+    {
+        if (node.ExpressionType != "$field" || node.ExpressionValue is not string raw)
+            return "$SKIP";
+
+        if (raw.Contains("$sme.")) return "$SKIP"; // handled as path
+
+        var vNorm = raw.StartsWith("$sme#") ? raw.Replace("$sme#", "sme.") : raw;
+        if (vNorm == "sme.valueType") return "vtvalue"; // handled by TryResolveSmeValueTypeLanguage
+        if (vNorm == "sme.language") return "langvalue";
+
+        var field = raw == "$aas#id" ? "$aas#identifier"
+                  : raw == "$sm#id"  ? "$sm#identifier"
+                  : raw;
+
+        if (field.StartsWith("$aas#"))
+        {
+            var col = AasColumnSql(field["$aas#".Length..]);
+            return col == null ? "$SKIP" : $"\"a\".{col}";
+        }
+        if (field.StartsWith("$sm#"))
+        {
+            var col = SmColumnSql(field["$sm#".Length..]);
+            return col == null ? "$SKIP" : $"\"t\".{col}";
+        }
+        if (field.StartsWith("$sme#"))
+        {
+            var prop = field["$sme#".Length..];
+            if (prop == "value")
+            {
+                return smeValue switch
+                {
+                    "svalue"  => "\"v\".\"SValue\"",
+                    "mvalue"  => "\"v\".\"NValue\"",
+                    "dtvalue" => "\"v\".\"DTValue\"",
+                    _ => "$SKIP"
+                };
+            }
+            var col = SmeColumnSql(prop);
+            return col == null ? "$SKIP" : $"\"s1\".{col}";
+        }
+        return "$SKIP";
+    }
+
+    // ------------------------------------------------------------------
+    // Literal → SQL RHS
+    // ------------------------------------------------------------------
+    private static string? BuildScopeLiteralSql(LogicalExpression node, string smeValue)
+    {
+        switch (node.ExpressionType)
+        {
+            case "$strVal":
+                if (node.ExpressionValue is string sv)
+                {
+                    if (sv == "$null") return "NULL";
+                    return $"'{EscSql(sv)}'";
+                }
+                return "$SKIP";
+            case "$numVal":
+                if (node.ExpressionValue is int or long or double)
+                    return System.Convert.ToString(node.ExpressionValue, System.Globalization.CultureInfo.InvariantCulture);
+                return "$SKIP";
+            case "$dateTimeVal":
+                if (node.ExpressionValue is string dv)
+                    return $"'{EscSql(dv)}'";
+                return "$SKIP";
+            case "$hexVal":
+                if (node.ExpressionValue is string hv)
+                {
+                    var hex = hv.Replace("16#", "");
+                    var num = System.Convert.ToInt64(hex, 16);
+                    var d = (double)num;
+                    var s = d.ToString("G", System.Globalization.CultureInfo.InvariantCulture);
+                    if (!s.Contains('.') && !s.Contains('E') && !s.Contains('e')) s += ".0";
+                    return s;
+                }
+                return "$SKIP";
+        }
+        return "$SKIP";
+    }
+
+    // ------------------------------------------------------------------
+    // Comparison combiner
+    // ------------------------------------------------------------------
+    private static string? CombineComparisonSql(string leftSql, string type, string rightSql)
+    {
+        if (rightSql == "NULL")
+        {
+            return type switch
+            {
+                "$eq" => $"{leftSql} IS NULL",
+                "$ne" => $"{leftSql} IS NOT NULL",
+                _ => null
+            };
+        }
+        var sqlOp = type switch
+        {
+            "$eq" => "=", "$ne" => "<>",
+            "$gt" => ">", "$ge" => ">=", "$lt" => "<", "$le" => "<=",
+            "$starts-with" => null, "$ends-with" => null, "$contains" => null,
+            _ => null
+        };
+        if (sqlOp != null)
+            return $"({leftSql} {sqlOp} {rightSql})";
+
+        // String methods — rightSql is already 'literal' with quotes
+        var inner = EscSql(UnquoteSqlLiteral(rightSql));
+        return type switch
+        {
+            "$starts-with" => $"({leftSql} GLOB '{inner}*')",
+            "$ends-with"   => $"({leftSql} GLOB '*{inner}')",
+            "$contains"    => $"({leftSql} GLOB '*{inner}*')",
+            _ => null
+        };
+    }
+
+    // ------------------------------------------------------------------
+    // Column name mappings
+    // ------------------------------------------------------------------
+    private static string? AasColumnSql(string prop) => prop switch
+    {
+        "identifier" => "\"Identifier\"",
+        "idShort"    => "\"IdShort\"",
+        "category"   => "\"Category\"",
+        _ => null
+    };
+
+    private static string? SmColumnSql(string prop) => prop switch
+    {
+        "identifier" => "\"Identifier\"",
+        "idShort"    => "\"IdShort\"",
+        "category"   => "\"Category\"",
+        "semanticId" => "\"SemanticId\"",
+        _ => null
+    };
+
+    private static string? SmeColumnSql(string prop) => prop switch
+    {
+        "idShort"     => "\"IdShort\"",
+        "idShortPath" => "\"IdShortPath\"",
+        "category"    => "\"Category\"",
+        "semanticId"  => "\"SemanticId\"",
+        _ => null
+    };
+
+    // ------------------------------------------------------------------
+    // SQL string helpers
+    // ------------------------------------------------------------------
+    private static string EscSql(string s) => s.Replace("'", "''");
+
+    private static string UnquoteSqlLiteral(string sql)
+    {
+        if (sql.Length >= 2 && sql.StartsWith('\'') && sql.EndsWith('\''))
+            return sql[1..^1].Replace("''", "'");
+        return sql;
     }
 }
-

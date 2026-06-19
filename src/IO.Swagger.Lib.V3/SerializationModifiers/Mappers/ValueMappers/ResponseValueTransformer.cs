@@ -16,7 +16,7 @@ using DataTransferObjects.CommonDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Exceptions;
 using System.Collections.Generic;
-using static AasCore.Aas3_0.Visitation;
+using static AasCore.Aas3_1.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {

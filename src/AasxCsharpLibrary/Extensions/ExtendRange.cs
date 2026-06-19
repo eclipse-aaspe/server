@@ -12,13 +12,13 @@
 ********************************************************************************/
 
 using System;
-using AAS = AasCore.Aas3_0;
+using AAS = AasCore.Aas3_1;
 
 namespace Extensions
 {
     public static class ExtendRange
     {
-        public static string? ValueAsText(this AasCore.Aas3_0.Range range)
+        public static string? ValueAsText(this AasCore.Aas3_1.Range range)
         {
             return "" + range.Min + " .. " + range.Max;
         }

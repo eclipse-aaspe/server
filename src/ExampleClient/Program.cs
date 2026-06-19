@@ -12,7 +12,7 @@
 ********************************************************************************/
 
 // See https://aka.ms/new-console-template for more information
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using Microsoft.IdentityModel.Tokens;
 using System.Net;
 using System.Text;

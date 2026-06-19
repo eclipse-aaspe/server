@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
         <RuntimeIdentifiers>linux-arm;linux-arm64;win-x64;osx-x64</RuntimeIdentifiers>
@@ -18,16 +18,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Using Include="AasCore.Aas3_0" />
+        <Using Include="AasCore.Aas3_1" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(DefineConstants)' != '' and $(DefineConstants.Contains('GRAPHQL'))">
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.6" />
     </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -69,7 +69,8 @@
         <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
         <Content Remove="wwwroot\Cable2.jpg" />
         <Content Remove="wwwroot\css\input.css" />
-        <Content Remove="wwwroot\db-schema.jpg" />
+        <Content Remove="wwwroot\db-schema.svg" />
+        <Content Remove="wwwroot\db-schema.puml" />
         <Content Remove="wwwroot\ex.png" />
         <Content Remove="wwwroot\Ex_IECEx.jpg" />
         <Content Remove="wwwroot\Logo_IDTA.jpg" />
@@ -91,7 +92,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="accessrules - Kopieren.txt">
+        <None Update="accessrules-alt.txt">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="accessrules.txt">

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Example: run AasxServerBlazor on Linux without Docker, e.g. for debugging over SSH.
+# Copy to run.sh, adjust paths/URLs/ports, chmod +x run.sh
+#
+# Typical SSH tunnel from your laptop:
+#   ssh -L 50010:127.0.0.1:50010 user@host
+# Then open http://127.0.0.1:50010 in the browser.
+
+set -euo pipefail
+
+rm -f /tmp/tmp*.aasx /tmp/tmp*.tmp 2>/dev/null || true
+
+export DOTNET_gcServer=1
+export Kestrel__Endpoints__Http__Url="${Kestrel__Endpoints__Http__Url:-http://*:50010}"
+export config_Properties_System_Drawing_EnableUnixSupport=true
+export LOGGING_LOGLEVEL_Microsoft_AspNetCore_Server_Kestrel="${LOGGING_LOGLEVEL_Microsoft_AspNetCore_Server_Kestrel:-Debug}"
+
+# Use system dotnet or set DOTNET_ROOT / full path to dotnet 8:
+# DOTNET="${DOTNET:-dotnet}"
+DOTNET="${DOTNET:-$HOME/dotnet8/dotnet}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Directory containing AasxServerBlazor.dll (adjust after publish):
+APP_DIR="${APP_DIR:-$SCRIPT_DIR/../publish}"
+
+exec "$DOTNET" "$APP_DIR/AasxServerBlazor.dll" \
+  --tag dev-ssh \
+  --external-blazor "${EXTERNAL_BLAZOR_URL:-http://localhost:50010}" \
+  --with-db \
+  --start-index "${START_INDEX:-200000}" \
+  --save-temp "${SAVE_TEMP_SEC:-5}" \
+  --edit \
+  --no-security \
+  --data-path "${DATA_PATH:-./aasxs}" \
+  --secret-string-api "${SECRET_STRING_API:-1234}" \
+  --aasx-in-memory "${AASX_IN_MEMORY:-0}" \
+  "$@"

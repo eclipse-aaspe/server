@@ -14,6 +14,7 @@
 namespace IO.Swagger.Controllers;
 
 using AasxServer;
+using System;
 using System.Threading.Tasks;
 using AasxServerStandardBib.Logging;
 using Contracts;
@@ -36,6 +37,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using AasxServerStandardBib.Exceptions;
+using Contracts.QueryResult;
 
 /// <summary>
 /// 
@@ -83,6 +85,41 @@ public class QueryRepositoryAPIApiController : ControllerBase
         => await HandleSubmodelQueryAsync(limit, cursor, ResultType.AssetAdministrationShell, expression);
 
     /// <summary>
+    /// Query Asset Administration Shells and return generated SQL for debugging
+    /// </summary>
+    [HttpPost]
+    [Route("query/shells/debug")]
+    [ValidateModelState]
+    [SwaggerOperation("PostAssetAdminstrationShellsDebug")]
+    [Consumes("text/plain", "application/json")]
+    [SwaggerResponse(statusCode: 200, type: typeof(QueryDebugResult), description: "AssetAdministrationShells query debug created successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PostAssetAdminstrationShellsDebug([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryDebugAsync(limit, cursor, ResultType.AssetAdministrationShell, expression);
+
+    /// <summary>
+    /// Query Asset Administration Shells and return generated SQL as plain text
+    /// </summary>
+    [HttpPost]
+    [Route("query/shells/debug/$sql")]
+    [ValidateModelState]
+    [SwaggerOperation("PostAssetAdminstrationShellsDebugSql")]
+    [Consumes("text/plain", "application/json")]
+    [Produces("text/plain")]
+    [SwaggerResponse(statusCode: 200, type: typeof(string), description: "AssetAdministrationShells query SQL returned successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PostAssetAdminstrationShellsDebugSql([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryDebugSqlAsync(limit, cursor, ResultType.AssetAdministrationShell, expression);
+
+    /// <summary>
     /// Query Submodels
     /// </summary>
     /// <response code="201">Query created successfully</response>
@@ -105,6 +142,41 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual async Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
         => await HandleSubmodelQueryAsync(limit, cursor, ResultType.Submodel, expression);
+
+    /// <summary>
+    /// Query Submodels and return generated SQL for debugging
+    /// </summary>
+    [HttpPost]
+    [Route("query/submodels/debug")]
+    [ValidateModelState]
+    [SwaggerOperation("PostSubmodelsDebug")]
+    [Consumes("text/plain", "application/json")]
+    [SwaggerResponse(statusCode: 200, type: typeof(QueryDebugResult), description: "Submodels query debug created successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PostSubmodelsDebug([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryDebugAsync(limit, cursor, ResultType.Submodel, expression);
+
+    /// <summary>
+    /// Query Submodels and return generated SQL as plain text
+    /// </summary>
+    [HttpPost]
+    [Route("query/submodels/debug/$sql")]
+    [ValidateModelState]
+    [SwaggerOperation("PostSubmodelsDebugSql")]
+    [Consumes("text/plain", "application/json")]
+    [Produces("text/plain")]
+    [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Submodels query SQL returned successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PostSubmodelsDebugSql([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
+        => await HandleSubmodelQueryDebugSqlAsync(limit, cursor, ResultType.Submodel, expression);
 
     /// <summary>
     /// Query Submodels and return value serialization
@@ -166,7 +238,7 @@ public class QueryRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, resultType.ToString(), expression);
+        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, resultType, expression);
 
         if (list.IsNullOrEmpty())
         {
@@ -199,8 +271,114 @@ public class QueryRepositoryAPIApiController : ControllerBase
         }
         else
         {
-            var submodelsPagedList = _paginationService.GetPaginatedQueryResult(list, paginationParameters);
-            return new ObjectResult(submodelsPagedList);
+            return new ObjectResult(BuildPaginatedQueryResult(list, paginationParameters, resultType));
         }
+    }
+
+    private async Task<IActionResult> HandleSubmodelQueryDebugAsync(int? limit, string? cursor, ResultType resultType, string? expression)
+    {
+        if (expression == null)
+        {
+            throw new OperationNotSupported($"Expression body is empty");
+        }
+
+        _logger.LogInformation("Received request to query submodels with debug output.");
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
+        var paginationParameters = new PaginationParameters(cursor, limit);
+        var debugResult = await _dbRequestHandlerService.QueryGetSMsDebug(securityConfig, paginationParameters, resultType, expression);
+        var pagedResult = BuildPaginatedQueryResult(debugResult.Result, paginationParameters, resultType);
+
+        return new ObjectResult(new QueryDebugResult
+        {
+            result = pagedResult.result,
+            paging_metadata = pagedResult.paging_metadata,
+            raw_sql = debugResult.RawSql ?? [],
+            raw_sql_lines = SplitSqlStatements(debugResult.RawSql)
+        });
+    }
+
+    private async Task<IActionResult> HandleSubmodelQueryDebugSqlAsync(int? limit, string? cursor, ResultType resultType, string? expression)
+    {
+        if (expression == null)
+        {
+            throw new OperationNotSupported($"Expression body is empty");
+        }
+
+        _logger.LogInformation("Received request to query submodels with plain SQL debug output.");
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
+        var paginationParameters = new PaginationParameters(cursor, limit);
+        var debugResult = await _dbRequestHandlerService.QueryGetSMsDebug(securityConfig, paginationParameters, resultType, expression);
+
+        return Content(BuildPlainSql(debugResult.RawSql), "text/plain");
+    }
+
+    private static List<List<string>> SplitSqlStatements(List<string>? rawSqlStatements)
+    {
+        var result = new List<List<string>>();
+        if (rawSqlStatements == null)
+        {
+            return result;
+        }
+
+        foreach (var statement in rawSqlStatements)
+        {
+            result.Add(statement
+                .Split(["\r\n", "\n"], StringSplitOptions.None)
+                .ToList());
+        }
+
+        return result;
+    }
+
+    private static string BuildPlainSql(List<string>? rawSqlStatements)
+    {
+        if (rawSqlStatements == null || rawSqlStatements.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var normalizedStatements = rawSqlStatements
+            .Where(statement => !string.IsNullOrWhiteSpace(statement))
+            .Select(statement =>
+            {
+                var trimmed = statement.Trim();
+                return trimmed.EndsWith(';') ? trimmed : trimmed + ";";
+            });
+
+        return string.Join(Environment.NewLine + Environment.NewLine, normalizedStatements);
+    }
+
+    private QueryResult BuildPaginatedQueryResult(List<object> list, PaginationParameters paginationParameters, ResultType resultType)
+    {
+        if (resultType == ResultType.SubmodelValue)
+        {
+            try
+            {
+                var submodels = list.Cast<Submodel>().ToList();
+                var valueList = new List<object>();
+
+                foreach (var submodel in submodels)
+                {
+                    var submodelValue = _mappingService.Map(submodel, "value");
+                    if (submodelValue != null)
+                    {
+                        valueList.Add(submodelValue);
+                    }
+                }
+
+                return _paginationService.GetPaginatedQueryResult(valueList, paginationParameters);
+            }
+            catch (InvalidCastException)
+            {
+                throw new InvalidCastException("List contains non-Submodel items.");
+            }
+        }
+
+        var pagedResult = _paginationService.GetPaginatedQueryResult(list, paginationParameters);
+        pagedResult.paging_metadata ??= new QueryResultPagingMetadata();
+        pagedResult.paging_metadata.resultType ??= resultType.ToString();
+        return pagedResult;
     }
 }

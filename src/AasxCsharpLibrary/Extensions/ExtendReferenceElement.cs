@@ -11,7 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AAS = AasCore.Aas3_0;
+using AAS = AasCore.Aas3_1;
 
 namespace Extensions
 {

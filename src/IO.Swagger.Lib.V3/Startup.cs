@@ -100,9 +100,9 @@ public class Startup
                                    c.SwaggerDoc("V3.0",
                                                 new OpenApiInfo
                                                 {
-                                                    Version     = "V3.0",
+                                                    Version     = "V3.1",
                                                     Title       = "DotAAS Part 2 | HTTP/REST | Repository Service Specification",
-                                                    Description = "DotAAS Part 2 | HTTP/REST | Repository Service Specification (ASP.NET Core 3.1)",
+                                                    Description = "DotAAS Part 2 | HTTP/REST | Repository Service Specification (V3.1)",
                                                     Contact = new OpenApiContact
                                                               {
                                                                   Name

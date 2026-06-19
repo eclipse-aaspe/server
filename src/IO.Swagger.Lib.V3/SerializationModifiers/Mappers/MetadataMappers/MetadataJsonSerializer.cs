@@ -17,7 +17,7 @@ using DataTransferObjects.ValueDTOs;
 using System.Text.Json.Nodes;
 using System;
 using DataTransferObjects.MetadataDTOs;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using DataTransferObjects.CommonDTOs;
 using System.Collections.Generic;
 using IO.Swagger.Lib.V3.Exceptions;

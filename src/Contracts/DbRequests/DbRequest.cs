@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 
 public class DbRequest
 {

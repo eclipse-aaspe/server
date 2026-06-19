@@ -16,7 +16,7 @@ using System.Collections.Generic;
 namespace Contracts.LevelExtent;
 
 using System;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 
 /// <summary>
 /// Service to apply level and extent modifications to instances of IClass.

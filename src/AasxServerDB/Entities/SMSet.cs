@@ -24,6 +24,7 @@ namespace AasxServerDB.Entities
     [Index(nameof(SemanticId))]
     [Index(nameof(Identifier))]
     [Index(nameof(TimeStampTree))]
+    [Index(nameof(Identifier), nameof(IdShort))]
 
     public class SMSet
     {
@@ -76,5 +77,7 @@ namespace AasxServerDB.Entities
 
         // sme
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
+
+        //public virtual ICollection<ValueSet> ValueSets { get; } = new List<ValueSet>();
     }
 }

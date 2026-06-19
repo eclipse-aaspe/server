@@ -32,11 +32,12 @@
 namespace AasxServerDB
 {
     using System;
+    using System.IO;
     using AasxServerDB.Entities;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
-    using System.IO;
+    using static AasxServerDB.Query;
 
     public class AasContext : DbContext
     {
@@ -53,9 +54,7 @@ namespace AasxServerDB
         public DbSet<SMSet> SMSets { get; set; }
         public DbSet<SMRefSet> SMRefSets { get; set; }
         public DbSet<SMESet> SMESets { get; set; }
-        public DbSet<SValueSet> SValueSets { get; set; }
-        public DbSet<IValueSet> IValueSets { get; set; }
-        public DbSet<DValueSet> DValueSets { get; set; }
+        public DbSet<ValueSet> ValueSets { get; set; }
         public DbSet<OValueSet> OValueSets { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
@@ -122,6 +121,8 @@ namespace AasxServerDB
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<SMSetIdResult>().HasNoKey();
+
             modelBuilder.Entity<SMRefSet>()
                 .HasIndex(e => e.AASId)
                 .HasDatabaseName("IX_SMRefSet_AASId");
@@ -133,6 +134,10 @@ namespace AasxServerDB
             modelBuilder.Entity<SMSet>()
                 .HasIndex(e => e.IdShort)
                 .HasDatabaseName("IX_SMSet_IdShort");
+
+            modelBuilder.Entity<SMESet>()
+                .HasIndex(e => e.IdShortPath)
+                .HasDatabaseName("IX_SMESet_IdShortPath");
         }
     }
 }

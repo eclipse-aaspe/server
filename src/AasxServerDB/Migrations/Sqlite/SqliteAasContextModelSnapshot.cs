@@ -107,7 +107,14 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("EnvId");
 
+                    b.HasIndex("GlobalAssetId")
+                        .HasDatabaseName("IX_AASSet_GlobalAssetId");
+
                     b.HasIndex("Id");
+
+                    b.HasIndex("IdShort");
+
+                    b.HasIndex("Identifier");
 
                     b.ToTable("AASSets");
                 });
@@ -182,30 +189,6 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("CDSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Annotation")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SMEId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<double?>("Value")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SMEId");
-
-                    b.HasIndex("Value");
-
-                    b.ToTable("DValueSets");
-                });
-
             modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
                 {
                     b.Property<int>("Id")
@@ -241,32 +224,6 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasIndex("Id");
 
                     b.ToTable("EnvSets");
-                });
-
-            modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Annotation")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SMEId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("Value")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("SMEId");
-
-                    b.HasIndex("Value");
-
-                    b.ToTable("IValueSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.OValueSet", b =>
@@ -371,6 +328,9 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("IdShort");
 
+                    b.HasIndex("IdShortPath")
+                        .HasDatabaseName("IX_SMESet_IdShortPath");
+
                     b.HasIndex("ParentSMEId");
 
                     b.HasIndex("SMId");
@@ -378,6 +338,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasIndex("SemanticId");
 
                     b.HasIndex("TimeStamp");
+
+                    b.HasIndex("SMId", "IdShort", "IdShortPath");
 
                     b.ToTable("SMESets");
                 });
@@ -397,7 +359,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AASId");
+                    b.HasIndex("AASId")
+                        .HasDatabaseName("IX_SMRefSet_AASId");
 
                     b.HasIndex("Id");
 
@@ -494,39 +457,72 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("Id");
 
+                    b.HasIndex("IdShort")
+                        .HasDatabaseName("IX_SMSet_IdShort");
+
                     b.HasIndex("Identifier");
 
                     b.HasIndex("SemanticId");
 
                     b.HasIndex("TimeStampTree");
 
+                    b.HasIndex("Identifier", "IdShort");
+
                     b.ToTable("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.ValueSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Annotation")
+                        .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DTValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("NValue")
+                        .HasColumnType("REAL");
 
                     b.Property<int>("SMEId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Value")
+                    b.Property<int?>("SMId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SValue")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DTValue");
+
                     b.HasIndex("Id");
+
+                    b.HasIndex("NValue");
 
                     b.HasIndex("SMEId");
 
-                    b.HasIndex("Value");
+                    b.HasIndex("SMId");
 
-                    b.ToTable("SValueSets");
+                    b.HasIndex("SValue");
+
+                    b.HasIndex("SValue", "SMEId");
+
+                    b.HasIndex("NValue", "SMEId");
+
+                    b.ToTable("ValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.SMSetIdResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.ToTable("SMSetIdResult");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
@@ -536,17 +532,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasForeignKey("EnvId");
 
                     b.Navigation("EnvSet");
-                });
-
-            modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
-                {
-                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
-                        .WithMany("DValueSets")
-                        .HasForeignKey("SMEId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SMESet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
@@ -566,17 +551,6 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("CDSet");
 
                     b.Navigation("EnvSet");
-                });
-
-            modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
-                {
-                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
-                        .WithMany("IValueSets")
-                        .HasForeignKey("SMEId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SMESet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.OValueSet", b =>
@@ -631,10 +605,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("EnvSet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.ValueSet", b =>
                 {
                     b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
-                        .WithMany("SValueSets")
+                        .WithMany("ValueSets")
                         .HasForeignKey("SMEId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -665,13 +639,9 @@ namespace AasxServerDB.Migrations.Sqlite
 
             modelBuilder.Entity("AasxServerDB.Entities.SMESet", b =>
                 {
-                    b.Navigation("DValueSets");
-
-                    b.Navigation("IValueSets");
-
                     b.Navigation("OValueSets");
 
-                    b.Navigation("SValueSets");
+                    b.Navigation("ValueSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>

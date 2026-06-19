@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
         <UserSecretsId>ef550880-6a5f-4e0c-b634-8284f1dc5445</UserSecretsId>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
@@ -40,30 +40,35 @@
       <None Remove="Opc.Ua.SampleServer.Config.xml" />
     </ItemGroup>
     <ItemGroup>
-        <Using Include="AasCore.Aas3_0" />
+        <Using Include="AasCore.Aas3_1" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="IdentityModel" Version="7.0.0" />
         <PackageReference Include="jose-jwt" Version="5.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
+        <PackageReference Include="Microsoft.AspNetCore.Components" Version="9.0.0" />
+        <!-- SQLite native provider is selected at runtime; see AasxServerDB.SqliteProviderInitializer. -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.9" />
+        <PackageReference Include="SQLitePCLRaw.core" Version="2.1.10" />
+        <PackageReference Include="SQLitePCLRaw.provider.e_sqlite3" Version="2.1.10" />
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
+        <PackageReference Include="SQLitePCLRaw.provider.sqlite3" Version="2.1.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
         <PackageReference Include="Microsoft.Identity.Client" Version="4.74.1" />
-        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.7.1" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Include="QRCoder" Version="1.4.1" />
         <PackageReference Include="ScottPlot" Version="4.1.74" />
         <PackageReference Include="SpookilySharp" Version="1.2.0" />
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2" />
         <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2" />
-        <PackageReference Include="System.Security.Permissions" Version="8.0.0" />
-        <PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" />
+        <PackageReference Include="System.Security.Permissions" Version="9.0.0" />
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
     </ItemGroup>
 
     <ItemGroup>

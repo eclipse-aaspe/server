@@ -19,7 +19,7 @@
 //using System.Security.Claims;
 //using System.Security.Principal;
 //using System.Xml.Linq;
-//using AasCore.Aas3_0;
+//using AasCore.Aas3_1;
 //using AasxServer;
 //using AasxServerStandardBib.Interfaces;
 //using IO.Swagger.Lib.V3.Interfaces;

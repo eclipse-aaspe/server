@@ -15,6 +15,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS.Models;
 using Contracts;
 using Contracts.Pagination;
+using Contracts.QueryResult;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
@@ -65,8 +66,6 @@ namespace IO.Swagger.Lib.V3.Services
         {
             //Creating pagination result
             var pagingMetadata = new QueryResultPagingMetadata();
-
-            pagingMetadata.resultType = ResultType.Identifier.ToString();
 
             if (paginatedList.Count != 0)
             {

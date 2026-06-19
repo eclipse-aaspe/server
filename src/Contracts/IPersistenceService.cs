@@ -14,7 +14,7 @@
 namespace Contracts;
 
 using System.Collections.Generic;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AdminShellNS;
 using Contracts.DbRequests;
 using Contracts.Pagination;
@@ -36,6 +36,10 @@ public interface IPersistenceService
     Task<DbRequestResult> DoDbOperation(DbRequest dbRequest);
 
     void ImportAASXIntoDB(string filePath, bool createFilesOnly);
+
+    void BeginBulkImport();
+    void FlushBulkImport();
+    void EndBulkImport(bool analyze = false);
 
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 }

@@ -45,14 +45,12 @@ using Namotion.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static QRCoder.PayloadGenerator;
-using File = AasCore.Aas3_0.File;
+using File = AasCore.Aas3_1.File;
 
 namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
-        public static List<Dictionary<string, string>>? _condition = new List<Dictionary<string, string>>();
-
         public static AllAccessPermissionRules? _accessRules = null;
 
         public SecurityService()
@@ -65,31 +63,26 @@ namespace AasSecurity
             var parser = new Parser(grammar);
             parser.Context.TracingEnabled = true;
             var filePath = "accessrules.txt";
-            if (System.IO.File.Exists(filePath))
+            if (!System.IO.File.Exists(filePath))
             {
-                // if (expression == "")
-                if (true)
-                {
-                    var expression = System.IO.File.ReadAllText(filePath);
-                    var parseTree = parser.Parse(expression);
-
-                    if (parseTree.HasErrors())
-                    {
-                        var pos = parser.Context.CurrentToken.Location.Position;
-                        var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
-                        text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
-                        Console.WriteLine(text2);
-                        expression = "";
-                    }
-                    else
-                    {
-                        ClearSecurityRules();
-                        grammar.ParseAccessRules(expression);
-                        _accessRules = QueryGrammarJSON._accessRules;
-                        _condition = QueryGrammarJSON.allAccessRuleExpressions;
-                    }
-                }
+                return;
             }
+
+            var expression = System.IO.File.ReadAllText(filePath);
+            var parseTree = parser.Parse(expression);
+
+            if (parseTree.HasErrors())
+            {
+                var pos = parser.Context.CurrentToken.Location.Position;
+                var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
+                Console.WriteLine(text2);
+                return;
+            }
+
+            ClearSecurityRules();
+            grammar.ParseAccessRules(expression);
+            _accessRules = QueryGrammarJSON._accessRules;
         }
 
         public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null,
@@ -101,24 +94,14 @@ namespace AasSecurity
         public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null,
             List<Claim>? tokenClaims = null)
         {
+            // Align with CheckAccessLevelWithError / AuthenticateRequest: unauthenticated preview has no role and no token claims.
+            if (string.IsNullOrWhiteSpace(accessRole) && (tokenClaims == null || tokenClaims.Count == 0))
+            {
+                accessRole = "isNotAuthenticated";
+            }
+
             if (_accessRules != null)
             {
-                /*
-                var rules = _accessRules.Rules.Where(r =>
-                    r.Acl != null &&
-                    r.Acl.Access == "ALLOW" &&
-                    r.Acl.Rights.Contains(neededRightsClaim) && r.Acl.Attributes[0].ItemType == "CLAIM" &&
-                    (
-                        (accessRole != null && r.Acl.Attributes[0].Value == accessRole) ||
-                        (accessRole == null && tokenClaims != null && tokenClaims.Any(t => t.ValueType == "token:" + r.Acl.Attributes[0].Value))
-                    ) &&
-                    (
-                        (httpRoute == null) ||
-                        (httpRoute != null && r.Objects.Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, httpRoute)))
-                    )
-                ).ToList();
-                */
-
                 var rules = _accessRules.Rules
                     .Where(r =>
                         r.Acl != null &&
@@ -141,6 +124,13 @@ namespace AasSecurity
                     )
                     .ToList();
 
+                // Many accessrules.txt entries list /submodels but not /submodel-elements; REST and tree use both.
+                if (rules.Count == 0 && httpRoute != null &&
+                    httpRoute.Contains("/submodel-elements", StringComparison.OrdinalIgnoreCase))
+                {
+                    return GetAccessRulesStatic(accessRole, neededRightsClaim, "/submodels", tokenClaims);
+                }
+
                 if (rules.Count == 0)
                 {
                     return null;
@@ -151,117 +141,190 @@ namespace AasSecurity
 
             return null;
         }
-        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
-        {
-            var rules = GetAccessRules(accessRole, neededRightsClaim, tokenClaims: tokenClaims);
 
-            if (rules == null)
+        /// <summary>
+        /// Effective SQL conditions for the current request: same rule filtering as <see cref="GetAccessRules"/>,
+        /// merged like <see cref="QueryGrammarJSON.ParseAccessRules"/>: each rule is <c>FORMULA AND FILTER</c>, then rules are OR-combined.
+        /// </summary>
+        public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
+        {
+            // Debug
+            // tokenClaims?.Add(new Claim("token:realm_access", "xxx isSuperDuperUser yyy"));
+
+            var rules = GetAccessRules(accessRole, neededRightsClaim, httpRoute, tokenClaims);
+            if (rules == null || rules.Count == 0)
             {
                 return null;
             }
 
-            Dictionary<string, string> condition = [];
-            for (var i = 0; i < rules.Count; i++)
+            SqlConditions? merged = null;
+            foreach (var rule in rules)
             {
-                var rule = rules[i];
-                foreach (var c in rule._formula_conditions)
+                var ruleConditions = CombineAccessRuleFormulaAndFilter(rule);
+                if (ruleConditions == null)
+                    continue;
+
+                var perRequestRuleConditions = ruleConditions.Clone();
+                merged = merged == null
+                    ? perRequestRuleConditions
+                    : SqlConditionsMerger.OrMerge(merged, perRequestRuleConditions);
+            }
+
+            if (merged != null)
+            {
+                // Resolve $attribute(CLAIM(...)) sentinels with the request's token claims before
+                // deriving the C# mirror — see SqlConditions.SubstituteTokenClaims for the contract.
+                merged.SubstituteTokenClaims(tokenClaims);
+                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
+            }
+
+            return merged;
+        }
+
+        /// <inheritdoc />
+        public bool EvaluateTreeSubmodelRead(string? accessRole, Submodel sm, string httpRoute, List<Claim>? tokenClaims = null)
+        {
+            return AnyTreeReadRulePasses(accessRole, httpRoute, tokenClaims, sc => EvaluateSingleRuleTreeSubmodel(sc, sm));
+        }
+
+        /// <inheritdoc />
+        public bool EvaluateTreeSubmodelElementRead(string? accessRole, Submodel parentSubmodel, string objPath, string httpRoute,
+            List<Claim>? tokenClaims = null)
+        {
+            return AnyTreeReadRulePasses(accessRole, httpRoute, tokenClaims,
+                sc => EvaluateSingleRuleTreeSubmodelElement(sc, parentSubmodel, objPath));
+        }
+
+        /// <summary>
+        /// Tree preview: true if any matching READ rule passes the given in-memory evaluation (per-rule formula+filter, not OR-merged across rules).
+        /// </summary>
+        private bool AnyTreeReadRulePasses(string? accessRole, string httpRoute, List<Claim>? tokenClaims, Func<SqlConditions, bool> evaluateCombined)
+        {
+            var rules = GetAccessRules(accessRole, AccessRights.READ.ToString(), httpRoute, tokenClaims);
+            if (rules == null || rules.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var rule in rules)
+            {
+                var combined = CombineAccessRuleFormulaAndFilter(rule);
+                if (combined == null)
                 {
-                    if (i == 0)
-                    {
-                        condition[c.Key] = c.Value;
-                    }
-                    else
-                    {
-                        var hasValue = condition.TryGetValue(c.Key, out var value);
-                        if (hasValue && value != "")
-                        {
-                            if (value != "(True)")
-                            {
-                                if (c.Value != "")
-                                {
-                                    condition[c.Key] = value + " || " + c.Value;
-                                }
-                                else
-                                {
-                                    condition[c.Key] = "(True)";
-                                }
-                            }
-                        }
-                        else
-                        {
-                            condition[c.Key] = c.Value;
-                        }
-                    }
+                    continue;
                 }
-                foreach (var c in rule._filter_conditions)
+
+                combined = combined.Clone();
+                combined.SubstituteTokenClaims(tokenClaims);
+                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(combined);
+                if (evaluateCombined(combined))
                 {
-                    if (i == 0)
-                    {
-                        condition["filter-" + c.Key] = c.Value;
-                    }
-                    else
-                    {
-                        var hasValue = condition.TryGetValue("filter-" + c.Key, out var value);
-                        if (hasValue && value != "")
-                        {
-                            if (value != "(True)")
-                            {
-                                if (c.Value != "")
-                                {
-                                    condition["filter-" + c.Key] = value + " || " + c.Value;
-                                }
-                                else
-                                {
-                                    condition["filter-" + c.Key] = "(True)";
-                                }
-                            }
-                        }
-                        else
-                        {
-                            condition["filter-" + c.Key] = c.Value;
-                        }
-                    }
+                    return true;
                 }
             }
 
-            foreach (var c in condition)
+            return false;
+        }
+
+        /// <summary>
+        /// FORMULA and FILTER are separate <see cref="SqlConditions"/> on the rule; tree preview must AND them (same idea as DB combining formula + filter).
+        /// </summary>
+        private static SqlConditions? CombineAccessRuleFormulaAndFilter(AccessPermissionRule rule)
+        {
+            var f = rule._formula_sqlConditions;
+            var b = rule._filter_sqlConditions;
+            if (f == null && b == null)
             {
-                if (condition[c.Key] is not "" and not "(True)")
-                {
-                    condition[c.Key] = "(" + c.Value + ")";
-                }
+                return null;
+            }
 
-                while (condition[c.Key].Contains("CLAIM("))
-                {
-                    var conditionValue = condition[c.Key];
+            if (f == null)
+            {
+                return b;
+            }
 
-                    var split = conditionValue.Split("CLAIM(");
-                    split = split[1].Split(")");
-                    var claim = split[0];
-                    if (claim.StartsWith("token:"))
+            if (b == null)
+            {
+                return f;
+            }
+
+            return SqlConditionsMerger.Merge(f, b);
+        }
+
+        /// <summary>
+        /// In-memory READ check for one access rule's SQL conditions (correlated sm./sme.); used by tree preview only.
+        /// </summary>
+        private static bool EvaluateSingleRuleTreeSubmodel(SqlConditions sc, Submodel sm)
+        {
+            var conditionSm = sc.FormulaConditionsCSharp.GetValueOrDefault("sm.", "").Trim();
+            if (string.IsNullOrEmpty(conditionSm))
+            {
+                return true;
+            }
+
+            var submodels = new List<Submodel> { sm };
+            return submodels.AsQueryable().Where(conditionSm).Any();
+        }
+
+        private static bool EvaluateSingleRuleTreeSubmodelElement(SqlConditions sc, Submodel parentSubmodel, string objPath)
+        {
+            var conditionSm  = sc.FormulaConditionsCSharp.GetValueOrDefault("sm.", "").Trim();
+            var conditionSme = sc.FormulaConditionsCSharp.GetValueOrDefault("sme.", "").Trim();
+
+            if (conditionSme != "" && objPath.Contains('.') && parentSubmodel.SubmodelElements != null)
+            {
+                var submodelElements = parentSubmodel.SubmodelElements;
+                var path             = objPath.Split('.');
+                var i                = 1;
+                while (i < path.Length)
+                {
+                    var idShort = path[i];
+                    var found   = submodelElements.FindIndex(x => x.IdShort == idShort);
+                    if (found == -1)
                     {
-                        var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        if (value.StartsWith("{"))
-                        {
-                            value = HandleJsonFormatedTokenClaim(value);
-                        }
-                        var replaced = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
-                        condition[c.Key] = replaced;
+                        break;
                     }
-                    if (claim == accessRole)
+
+                    if (i == path.Length - 1)
                     {
-                        var value = tokenClaims?.Where(tc => tc.Type == claim).FirstOrDefault()?.Value;
-                        if (value.StartsWith("{"))
+                        var list = new List<ISubmodelElement> { submodelElements[found] };
+                        var x = list.AsQueryable().Where(conditionSme);
+                        if (x.Any())
                         {
-                            value = HandleJsonFormatedTokenClaim(value);
+                            return true;
                         }
-                        var replaced = conditionValue.Replace($"CLAIM({claim})", $"\"{value}\"");
-                        condition[c.Key] = replaced;
                     }
+
+                    switch (submodelElements[found])
+                    {
+                        case SubmodelElementCollection smc:
+                            submodelElements = smc.Value;
+                            break;
+                        case SubmodelElementList sml:
+                            submodelElements = sml.Value;
+                            break;
+                    }
+
+                    i++;
                 }
             }
 
-            return condition;
+            if (conditionSm != "" && (conditionSme == "" || !objPath.Contains('.')))
+            {
+                var submodels = new List<Submodel> { parentSubmodel };
+                var x = submodels.AsQueryable().Where(conditionSm);
+                if (x.Any())
+                {
+                    return true;
+                }
+            }
+
+            if (string.IsNullOrEmpty(conditionSme) && string.IsNullOrEmpty(conditionSm))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private string HandleJsonFormatedTokenClaim(string value)
@@ -292,7 +355,6 @@ namespace AasSecurity
 
         public void ClearSecurityRules()
         {
-            _condition.Clear();
             _accessRules = null;
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
@@ -1011,22 +1073,12 @@ namespace AasSecurity
                                      out string error, out bool withAllow, out string? getPolicy, string objPath = null, string? aasResourceType = null,
                                      IClass? aasResource = null, string? policy = null, List<Claim>? tokenClaims = null)
         {
-            return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy,
-                objPath, aasResourceType, aasResource, policy: policy, tokenClaims: tokenClaims);
+            return AuthorizeAccessInternal(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy,
+                objPath, aasResourceType, aasResource, policy, tokenClaims);
         }
 
-        private static bool CheckAccessRights(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
-                                              string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false, string? policy = null,
-                                              List<Claim>? tokenClaims = null)
-        {
-            withAllow = false;
-            return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out error, out withAllow, out getPolicy,
-                                              objPath, aasResourceType, aasResource, testOnly, policy, tokenClaims);
-        }
-
-        private static bool CheckAccessRightsWithAllow(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
-                                                       string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false,
-                                                       string? policy = null, List<Claim>? tokenClaims = null)
+        private static bool AuthorizeAccessInternal(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
+            string objPath = "", string? aasResourceType = null, IClass? aasResource = null, string? policy = null, List<Claim>? tokenClaims = null)
         {
             error = "Access not allowed";
             withAllow = false;
@@ -1036,23 +1088,10 @@ namespace AasSecurity
             {
                 return true;
             }
-            else
-            {
-                // TODO (jtikekar, 2023-09-04): uncomment
-                if (CheckAccessLevelWithError(
-                                              out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
-                                              objPath, aasResourceType, aasResource, policy, tokenClaims))
-                    return true;
-            }
 
-            // Exception
-            if (!testOnly)
-            {
-                //throw new NotAllowed(error);
-                return false;
-            }
-
-            return false;
+            return CheckAccessLevelWithError(
+                out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
+                objPath, aasResourceType, aasResource, policy, tokenClaims);
         }
 
         private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, out string? getPolicy,
@@ -1085,11 +1124,6 @@ namespace AasSecurity
                 return CheckAccessLevelEmptyObjPath(currentRole, operation, aasResourceType, aasResource, neededRights, out error);
             }
 
-            if (objPath != string.Empty && (operation.Contains("/submodel-elements") || operation.Contains("/submodels")))
-            {
-                return CheckAccessLevelForOperation(currentRole, operation, aasResourceType, aasResource, neededRights, objPath, out withAllow, out getPolicy, out error, policy);
-            }
-
             error = "ALLOW not defined";
             return false;
         }
@@ -1105,20 +1139,6 @@ namespace AasSecurity
             if (rules != null && rules.Count != 0)
             {
                 return true;
-            }
-
-            error = "API access NOT allowed!";
-            return false;
-
-            getPolicy = string.Empty;
-            foreach (var securityRole in GlobalSecurityVariables.SecurityRoles.Where(securityRole => securityRole.Name == currentRole && securityRole.ObjectType == "api" &&
-                                                                                                     securityRole.Permission == neededRights &&
-                                                                                                     (securityRole.ApiOperation == "*" ||
-                                                                                                      MatchApiOperation(securityRole.ApiOperation, operation)))
-                                                                .Where(securityRole => securityRole.Permission == neededRights))
-            {
-                //return CheckUsage(out error, securityRole);
-                return CheckPolicy(out error, securityRole, out getPolicy);
             }
 
             error = "API access NOT allowed!";
@@ -1228,7 +1248,7 @@ namespace AasSecurity
                         pPolicy = sme as Property;
                         break;
                     case "license":
-                        fPolicy = sme as AasCore.Aas3_0.File;
+                        fPolicy = sme as AasCore.Aas3_1.File;
                         break;
                     case "policyRequestedResource":
                         break;
@@ -1272,167 +1292,9 @@ namespace AasSecurity
             return false;
         }
 
-        private static bool CheckAccessLevelForOperation(string currentRole, string operation, string? aasResourceType, IClass? aasResource, AccessRights neededRights,
-                                                         string objPath, out bool withAllow, out string? getPolicy, out string error, string? policy = null)
-        {
-            error = "";
-            withAllow = false;
-            var deepestDeny = "";
-            var deepestAllow = "";
-            SecurityRole deepestAllowRole = null;
-            getPolicy = "";
-
-            var conditionSM = "";
-            var conditionSME = "";
-            // TODO find all correct entries: copied from GetCondition()
-            foreach (var c in _condition)
-            {
-                var a = c["claim"];
-                var n = c["right"];
-                if (a.Contains(currentRole + " ") && n.Contains(neededRights.ToString()))
-                {
-                    conditionSM = c["sm."];
-                    conditionSME = c["sme."];
-                }
-            }
-
-            if (conditionSME != "" && objPath.Contains('.') && aasResource is Submodel s2 && s2.SubmodelElements != null)
-            {
-                var submodelElements = s2.SubmodelElements;
-                var path = objPath.Split('.');
-                int i = 1;
-                while (i < path.Length)
-                {
-                    var idShort = path[i];
-                    var found = submodelElements.FindIndex(x => x.IdShort == idShort);
-                    if (found == -1)
-                    {
-                        break;
-                    }
-                    if (i == path.Length - 1)
-                    {
-                        List<ISubmodelElement> list = new List<ISubmodelElement>();
-                        list.Add(submodelElements[found]);
-                        var c = conditionSME;
-                        var x = list.AsQueryable().Where(c);
-                        if (x.Any())
-                        {
-                            return true;
-                        }
-                    }
-                    switch (submodelElements[found])
-                    {
-                        case SubmodelElementCollection smc:
-                            submodelElements = smc.Value;
-                            break;
-                        case SubmodelElementList sml:
-                            submodelElements = sml.Value;
-                            break;
-                    }
-                    i++;
-                }
-            }
-            if (conditionSM != "" && (conditionSME == "" || !objPath.Contains('.')) && aasResource is Submodel s)
-            {
-                List<Submodel> submodels = new List<Submodel>();
-                submodels.Add(s);
-                var c = conditionSM;
-                var x = submodels.AsQueryable().Where(c);
-                if (x.Any())
-                {
-                    return true;
-                }
-            }
-
-            foreach (var securityRole in GlobalSecurityVariables.SecurityRoles.Where(securityRole => securityRole.Name.Equals(currentRole)))
-            {
-                if (securityRole.ObjectType.Equals("semanticid", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (aasResource is Submodel submodel)
-                    {
-                        if (securityRole.SemanticId != null)
-                        {
-                            if (securityRole.SemanticId == "*" || (submodel.SemanticId != null && submodel.SemanticId.Keys != null && submodel.SemanticId.Keys.Count != 0))
-                            {
-                                if (securityRole.SemanticId == "*" || (securityRole.SemanticId.ToLower() == submodel.SemanticId?.Keys?[0].Value.ToLower()))
-                                {
-                                    if (securityRole.Kind == KindOfPermissionEnum.Allow)
-                                    {
-                                        if (deepestAllow == "")
-                                        {
-                                            deepestAllow = submodel.IdShort!;
-                                            withAllow = true;
-                                            deepestAllowRole = securityRole;
-                                        }
-                                    }
-
-                                    if (securityRole.Kind == KindOfPermissionEnum.Deny)
-                                    {
-                                        if (deepestDeny == "")
-                                            deepestDeny = submodel.IdShort!;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if ((securityRole.ObjectType == "sm" || securityRole.ObjectType == "submodelElement") &&
-                    securityRole.Submodel == aasResource && securityRole.Permission == neededRights)
-                {
-                    if (securityRole.Kind == KindOfPermissionEnum.Deny)
-                    {
-                        if (objPath.Length >= securityRole.ObjectPath.Length) // deny in tree above
-                        {
-                            if (securityRole.ObjectPath == objPath.Substring(0, securityRole.ObjectPath.Length))
-                                deepestDeny = securityRole.ObjectPath;
-                        }
-
-                        if (securityRole.ObjectPath.Length >= objPath.Length) // deny in tree below
-                        {
-                            if (objPath == securityRole.ObjectPath.Substring(0, objPath.Length))
-                            {
-                                error = "DENY " + securityRole.ObjectPath;
-                                return false;
-                            }
-                        }
-                    }
-
-                    if (securityRole.Kind == KindOfPermissionEnum.Allow)
-                    {
-                        if (objPath.Length >= securityRole.ObjectPath.Length) // allow in tree above
-                        {
-                            if (securityRole.ObjectPath == objPath.Substring(0, securityRole.ObjectPath.Length))
-                            {
-                                deepestAllow = securityRole.ObjectPath;
-                                withAllow = true;
-                                deepestAllowRole = securityRole;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (deepestAllow == "")
-            {
-                error = "ALLOW not defined";
-                return false;
-            }
-
-            if (deepestDeny.Length > deepestAllow.Length)
-            {
-                error = "DENY " + deepestDeny;
-                return false;
-            }
-
-            return CheckPolicy(out error, deepestAllowRole, out getPolicy, policy);
-            //return true;
-        }
-
         private static bool CheckAccessLevelEmptyObjPath(string currentRole, string operation, string? aasResourceType, IClass? aasResource, AccessRights neededRights,
                                                          out string error)
         {
-            //error = string.Empty;
             if (GlobalSecurityVariables.SecurityRoles != null)
             {
                 foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
@@ -1440,7 +1302,6 @@ namespace AasSecurity
                     if (aasResourceType == "aas" && securityRole.ObjectType == "aas")
                     {
                         var aas = aasResource as IAssetAdministrationShell;
-                        //if (aasResourceType != null && securityRole.ObjectReference == aasResource && securityRole.Permission == neededRights)
                         if (aasResourceType != null && (aas.EqualsAas((IAssetAdministrationShell)securityRole.ObjectReference) || securityRole.AAS == "*") &&
                             securityRole.Permission == neededRights)
                         {
@@ -1461,19 +1322,6 @@ namespace AasSecurity
                             }
                         }
                     }
-
-                    // TODO (jtikekar, 2023-09-04): remove
-                    //if (securityRole.Name == currentRole && securityRole.ObjectType == "api" &&
-                    //    securityRole.Permission == neededRights)
-                    //{
-                    //    if (securityRole.ApiOperation == "*" || MatchApiOperation(securityRole.ApiOperation, operation))
-                    //    {
-                    //        if (securityRole.Permission == neededRights)
-                    //        {
-                    //            return CheckUsage(out error, securityRole);
-                    //        }
-                    //    }
-                    //}
                 }
             }
 
@@ -1507,147 +1355,10 @@ namespace AasSecurity
                 return false;
             }
             return true;
-
-            /*
-            bool match = false;
-            if (apiOpSplit.Length == opSplit.Length)
-            {
-                for (var i = 0; i < apiOpSplit.Length; i++)
-                {
-                    if (apiOpSplit[i].Equals(opSplit[i]))
-                    {
-                        match = true;
-                    }
-                    else if (apiOpSplit[i].StartsWith("{"))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        match = false;
-                    }
-                }
-
-                return match;
-            }
-            */
-
-            return false;
         }
 
-        private static bool CheckUsage(out string error, SecurityRole securityRole)
+        public string GetSecurityRules()
         {
-            error = "";
-            if (securityRole.Usage == null)
-            {
-                return true;
-            }
-
-            foreach (var sme in securityRole.Usage.Value)
-            {
-                switch (sme.IdShort)
-                {
-                    case "accessPerDuration":
-                        if (sme is SubmodelElementCollection smc)
-                        {
-                            Property maxCount = null;
-                            Property actualCount = null;
-                            Property duration = null;
-                            Property actualTime = null;
-                            foreach (var sme2 in smc.Value)
-                            {
-                                switch (sme2.IdShort)
-                                {
-                                    case "maxCount":
-                                        maxCount = sme2 as Property;
-                                        break;
-                                    case "duration":
-                                        duration = sme2 as Property;
-                                        break;
-                                    case "actualCount":
-                                        actualCount = sme2 as Property;
-                                        break;
-                                    case "actualTime":
-                                        actualTime = sme2 as Property;
-                                        break;
-                                }
-                            }
-
-                            if (maxCount == null || duration == null || actualCount == null || actualTime == null)
-                                return false;
-                            int d = 0;
-                            if (!int.TryParse(duration.Value, out d))
-                            {
-                                return false;
-                            }
-
-                            DateTime dt = new DateTime();
-                            if (actualTime.Value != null && actualTime.Value != "")
-                            {
-                                try
-                                {
-                                    dt = DateTime.Parse(actualTime.Value);
-                                    if (dt.AddSeconds(d) < DateTime.UtcNow)
-                                    {
-                                        Program.signalNewData(0);
-                                        actualTime.Value = null;
-                                    }
-                                }
-                                catch
-                                {
-                                }
-                            }
-
-                            if (actualTime.Value == null || actualTime.Value == "")
-                            {
-                                actualTime.Value = DateTime.UtcNow.ToString();
-                                actualCount.Value = null;
-                            }
-
-                            if (actualCount.Value == null || actualCount.Value == "")
-                            {
-                                actualCount.Value = "0";
-                            }
-
-                            int ac = 0;
-                            if (!int.TryParse(actualCount.Value, out ac))
-                            {
-                                Program.signalNewData(0);
-                                return false;
-                            }
-
-                            int mc = 0;
-                            if (!int.TryParse(maxCount.Value, out mc))
-                            {
-                                Program.signalNewData(0);
-                                return false;
-                            }
-
-                            ac++;
-                            actualCount.Value = ac.ToString();
-                            if (ac <= mc)
-                            {
-                                Program.signalNewData(0);
-                                return true;
-                            }
-                        }
-
-                        break;
-                }
-            }
-
-            Program.signalNewData(0);
-            return false;
-        }
-
-        public string GetSecurityRules(out List<Dictionary<string, string>> condition)
-        {
-            condition = new List<Dictionary<string, string>>();
-            if (_condition != null)
-            {
-                condition = _condition;
-            }
-
             string rules = "";
 
             foreach (var r in GlobalSecurityVariables.SecurityRoles)

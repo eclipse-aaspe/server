@@ -1,0 +1,286 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" data-diagram-type="CLASS" height="1181px" preserveAspectRatio="none" style="width:1318px;height:1181px;background:#FFFFFF;" version="1.1" viewBox="0 0 1318 1181" width="1318px" zoomAndPan="magnify">
+  <?plantuml 1.2026.3beta6?>
+  <defs/>
+  <g>
+    <g class="title" data-source-line="1">
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="622.6035" x="344.6061" y="22.9951">AasxServerDB entity model (EF Core 8, SqliteAasContext / PostgreAasContext)</text>
+    </g>
+    <!--class EnvSets-->
+    <g class="entity" data-qualified-name="EnvSets" data-source-line="8" id="ent0002">
+      <rect fill="#F1F1F1" height="74.8906" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="112.3037" x="625.72" y="76.8869"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="63.2598" x="650.242" y="94.882">EnvSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="626.72" x2="737.0237" y1="103.1838" y2="103.1838"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="636.72" cy="116.8322" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="645.72" y="120.1789">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="665.4007" y="120.1789">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="626.72" x2="737.0237" y1="127.4806" y2="127.4806"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="85.1895" x="631.72" y="144.4757">Path : string</text>
+    </g>
+    <!--class CDSets-->
+    <g class="entity" data-qualified-name="CDSets" data-source-line="14" id="ent0003">
+      <rect fill="#F1F1F1" height="140.0781" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="483.748" x="7" y="44.2969"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="56.499" x="220.6245" y="62.292">CDSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="8" x2="489.748" y1="70.5938" y2="70.5938"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="18" cy="84.2422" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="27" y="87.5889">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="46.6807" y="87.5889">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="8" x2="489.748" y1="94.8906" y2="94.8906"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="313.8789" x="13" y="111.8857">IdShort, DisplayName, Category, Description</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="218.5244" x="13" y="128.1826">Identifier, IsCaseOf, Extensions</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="335.3711" x="13" y="144.4795">EmbeddedDataSpecifications, Version, Revision</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="365.0527" x="13" y="160.7764">Creator, TemplateId, AEmbeddedDataSpecifications</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="471.748" x="13" y="177.0732">TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete</text>
+    </g>
+    <!--class EnvCDSets-->
+    <g class="entity" data-qualified-name="EnvCDSets" data-source-line="24" id="ent0004">
+      <rect fill="#F1F1F1" height="91.1875" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="289.1563" x="104.3" y="285.1169"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="85.1553" x="206.3005" y="303.112">EnvCDSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="105.3" x2="392.4563" y1="311.4138" y2="311.4138"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="115.3" cy="325.0622" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="124.3" y="328.4089">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="143.9807" y="328.4089">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="105.3" x2="392.4563" y1="335.7106" y2="335.7106"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="115.3" cy="349.3591" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="43.8867" x="124.3" y="352.7057">EnvId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="214.8193" x="172.6369" y="352.7057">: int &#171;FK &#8594; EnvSets&#187; CASCADE</text>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="115.3" cy="365.6559" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="37.126" x="124.3" y="369.0026">CDId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="209.3711" x="165.8762" y="369.0026">: int &#171;FK &#8594; CDSets&#187; CASCADE</text>
+    </g>
+    <!--class AASSets-->
+    <g class="entity" data-qualified-name="AASSets" data-source-line="31" id="ent0005">
+      <rect fill="#F1F1F1" height="172.6719" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="506.5596" x="428.59" y="244.3769"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="66.3564" x="648.6916" y="262.372">AASSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="429.59" x2="934.1496" y1="270.6738" y2="270.6738"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="439.59" cy="284.3222" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="448.59" y="287.6689">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="468.2707" y="287.6689">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="429.59" x2="934.1496" y1="294.9706" y2="294.9706"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="43.8867" x="434.59" y="311.9657">EnvId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="150.582" x="482.9269" y="311.9657">: int? &#171;FK &#8594; EnvSets&#187;</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="398.8018" x="434.59" y="328.2626">IdShort, DisplayName, Category, Description, Extensions</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="377.5693" x="434.59" y="344.5595">Identifier, EmbeddedDataSpecifications, DerivedFrom</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="494.5596" x="434.59" y="360.8564">Version, Revision, Creator, TemplateId, AEmbeddedDataSpecifications</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="377.4121" x="434.59" y="377.1532">AssetKind, GlobalAssetId, AssetType, SpecificAssetIds</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="380.7139" x="434.59" y="393.4501">DefaultThumbnailPath, DefaultThumbnailContentType</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="471.748" x="434.59" y="409.747">TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete</text>
+    </g>
+    <!--class SMRefSets-->
+    <g class="entity" data-qualified-name="SMRefSets" data-source-line="43" id="ent0006">
+      <rect fill="#F1F1F1" height="91.1875" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="216.0527" x="483.85" y="517.7869"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="84.9844" x="549.3842" y="535.782">SMRefSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="484.85" x2="698.9027" y1="544.0838" y2="544.0838"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="494.85" cy="557.7322" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="503.85" y="561.0789">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="523.5307" y="561.0789">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="484.85" x2="698.9027" y1="568.3806" y2="568.3806"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="46.9834" x="489.85" y="585.3757">AASId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="152.6191" x="541.2836" y="585.3757">: int? &#171;FK &#8594; AASSets&#187;</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="63.0684" x="489.85" y="601.6726">Identifier</text>
+    </g>
+    <!--class SMSets-->
+    <g class="entity" data-qualified-name="SMSets" data-source-line="50" id="ent0007">
+      <rect fill="#F1F1F1" height="172.6719" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="506.5596" x="734.59" y="477.0469"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="58.6182" x="958.5607" y="495.042">SMSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="735.59" x2="1240.1496" y1="503.3438" y2="503.3438"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="745.59" cy="516.9922" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="754.59" y="520.3389">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="774.2707" y="520.3389">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="735.59" x2="1240.1496" y1="527.6406" y2="527.6406"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="43.8867" x="740.59" y="544.6357">EnvId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="150.582" x="788.9269" y="544.6357">: int? &#171;FK &#8594; EnvSets&#187;</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="46.9834" x="740.59" y="560.9326">AASId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="152.6191" x="792.0236" y="560.9326">: int? &#171;FK &#8594; AASSets&#187;</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="398.8018" x="740.59" y="577.2295">IdShort, DisplayName, Category, Description, Extensions</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="382.375" x="740.59" y="593.5264">Identifier, Kind, SemanticId, SupplementalSemanticIds</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="281.4971" x="740.59" y="609.8232">Qualifiers, EmbeddedDataSpecifications</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="494.5596" x="740.59" y="626.1201">Version, Revision, Creator, TemplateId, AEmbeddedDataSpecifications</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="471.748" x="740.59" y="642.417">TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete</text>
+    </g>
+    <!--class SMESets-->
+    <g class="entity" data-qualified-name="SMESets" data-source-line="62" id="ent0008">
+      <rect fill="#F1F1F1" height="188.9688" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="499.4912" x="738.13" y="709.7169"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="68.1816" x="953.7848" y="727.712">SMESets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="739.13" x2="1236.6212" y1="736.0138" y2="736.0138"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="749.13" cy="749.6622" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="758.13" y="753.0089">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="777.8107" y="753.0089">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="739.13" x2="1236.6212" y1="760.3106" y2="760.3106"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="749.13" cy="773.9591" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="39.2451" x="758.13" y="777.3057">SMId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="209.7813" x="801.8253" y="777.3057">: int &#171;FK &#8594; SMSets&#187; CASCADE</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="101.5752" x="758.13" y="793.6026">ParentSMEId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="194.4893" x="864.1554" y="793.6026">: int? &#171;FK &#8594; SMESets (self)&#187;</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="301.8955" x="758.13" y="809.8995">SMEType, IdShort, SMLIndex, DisplayName</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="325.0898" x="758.13" y="826.1964">Category, Description, Extensions, SemanticId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="473.4912" x="758.13" y="842.4932">SupplementalSemanticIds, Qualifiers, EmbeddedDataSpecifications</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="112.4375" x="758.13" y="858.7901">TValue : char(1)</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="471.748" x="758.13" y="875.087">TimeStampCreate, TimeStamp, TimeStampTree, TimeStampDelete</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="81.9697" x="758.13" y="891.3839">IdShortPath</text>
+    </g>
+    <!--class ValueSets-->
+    <g class="entity" data-qualified-name="ValueSets" data-source-line="75" id="ent0009">
+      <rect fill="#F1F1F1" height="123.7813" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="297.8857" x="672.93" y="958.6869"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="79.1465" x="782.2996" y="976.682">ValueSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="673.93" x2="969.8157" y1="984.9838" y2="984.9838"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="683.93" cy="998.6322" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="692.93" y="1001.9789">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="712.6107" y="1001.9789">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="673.93" x2="969.8157" y1="1009.2806" y2="1009.2806"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="683.93" cy="1022.9291" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="48.8086" x="692.93" y="1026.2757">SMEId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="218.627" x="746.1888" y="1026.2757">: int &#171;FK &#8594; SMESets&#187; CASCADE</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="73.2813" x="692.93" y="1042.5726">SMId : int?</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="175.0889" x="692.93" y="1058.8695">SValue, NValue, DTValue</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="76.7744" x="692.93" y="1075.1664">Annotation</text>
+    </g>
+    <!--class OValueSets-->
+    <g class="entity" data-qualified-name="OValueSets" data-source-line="84" id="ent0010">
+      <rect fill="#F1F1F1" height="91.1875" rx="3" ry="3" style="stroke:#181818;stroke-width:0.5;" width="297.8857" x="1005.93" y="974.9869"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="91.0479" x="1109.3489" y="992.982">OValueSets</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1006.93" x2="1302.8157" y1="1001.2838" y2="1001.2838"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="1016.93" cy="1014.9322" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="15.2305" x="1025.93" y="1018.2789">Id</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="66.623" x="1045.6107" y="1018.2789">: int &#171;PK&#187;</text>
+      <line style="stroke:#181818;stroke-width:1;" x1="1006.93" x2="1302.8157" y1="1025.5806" y2="1025.5806"/>
+      <g data-visibility-modifier="IE_MANDATORY">
+        <ellipse cx="1016.93" cy="1039.2291" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1;"/>
+      </g>
+      <text fill="#000000" font-family="Consolas" font-size="14" font-weight="700" lengthAdjust="spacing" textLength="48.8086" x="1025.93" y="1042.5757">SMEId</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="218.627" x="1079.1888" y="1042.5757">: int &#171;FK &#8594; SMESets&#187; CASCADE</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="110.4961" x="1025.93" y="1058.8726">Attribute, Value</text>
+    </g>
+    <!--link EnvSets to EnvCDSets-->
+    <g class="link" data-entity-1="ent0002" data-entity-2="ent0004" data-link-type="crowfoot" data-source-line="91" id="lnk11">
+      <path codeLine="91" d="M663.16,160.1869 C663.16,188.5469 663.16,214.4669 663.16,214.4669 C663.16,214.4669 297.07,214.4669 297.07,214.4669 C297.07,214.4669 297.07,234.2769 297.07,266.7669" fill="none" id="EnvSets-EnvCDSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="659.16" x2="667.16" y1="156.1869" y2="156.1869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="659.16" x2="667.16" y1="159.1869" y2="159.1869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="663.16" x2="663.16" y1="160.1869" y2="152.1869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="297.07" x2="303.07" y1="276.7669" y2="284.7669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="297.07" x2="291.07" y1="276.7669" y2="284.7669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="297.07" x2="297.07" y1="276.7669" y2="284.7669"/>
+      <ellipse cx="297.07" cy="270.7669" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link CDSets to EnvCDSets-->
+    <g class="link" data-entity-1="ent0003" data-entity-2="ent0004" data-link-type="crowfoot" data-source-line="92" id="lnk12">
+      <path codeLine="92" d="M200.68,192.5869 C200.68,225.4069 200.68,237.5669 200.68,266.6569" fill="none" id="CDSets-EnvCDSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="196.68" x2="204.68" y1="188.5869" y2="188.5869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="196.68" x2="204.68" y1="191.5869" y2="191.5869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="200.68" x2="200.68" y1="192.5869" y2="184.5869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="200.68" x2="206.68" y1="276.6569" y2="284.6569"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="200.68" x2="194.68" y1="276.6569" y2="284.6569"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="200.68" x2="200.68" y1="276.6569" y2="284.6569"/>
+      <ellipse cx="200.68" cy="270.6569" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link EnvSets to AASSets-->
+    <g class="link" data-entity-1="ent0002" data-entity-2="ent0005" data-link-type="crowfoot" data-source-line="93" id="lnk13">
+      <path codeLine="93" d="M700.59,160.0269 C700.59,185.4469 700.59,194.0769 700.59,226.0869" fill="none" id="EnvSets-AASSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="696.59" x2="704.59" y1="156.0269" y2="156.0269"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="696.59" x2="704.59" y1="159.0269" y2="159.0269"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="700.59" x2="700.59" y1="160.0269" y2="152.0269"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="700.59" x2="706.59" y1="236.0869" y2="244.0869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="700.59" x2="694.59" y1="236.0869" y2="244.0869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="700.59" x2="700.59" y1="236.0869" y2="244.0869"/>
+      <ellipse cx="700.59" cy="230.0869" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link EnvSets to SMSets-->
+    <g class="link" data-entity-1="ent0002" data-entity-2="ent0007" data-link-type="crowfoot" data-source-line="94" id="lnk14">
+      <path codeLine="94" d="M746.37,114.4669 C858,114.4669 1088.15,114.4669 1088.15,114.4669 C1088.15,114.4669 1088.15,328.0569 1088.15,458.5569" fill="none" id="EnvSets-SMSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="742.37" x2="742.37" y1="118.4669" y2="110.4669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="745.37" x2="745.37" y1="118.4669" y2="110.4669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="746.37" x2="738.37" y1="114.4669" y2="114.4669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1088.15" x2="1094.15" y1="468.5569" y2="476.5569"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1088.15" x2="1082.15" y1="468.5569" y2="476.5569"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1088.15" x2="1088.15" y1="468.5569" y2="476.5569"/>
+      <ellipse cx="1088.15" cy="462.5569" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link AASSets to SMSets-->
+    <g class="link" data-entity-1="ent0005" data-entity-2="ent0007" data-link-type="crowfoot" data-source-line="95" id="lnk15">
+      <path codeLine="95" d="M834.87,425.3469 C834.87,444.7269 834.87,439.2869 834.87,458.6669" fill="none" id="AASSets-SMSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="830.87" x2="838.87" y1="421.3469" y2="421.3469"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="830.87" x2="838.87" y1="424.3469" y2="424.3469"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="834.87" x2="834.87" y1="425.3469" y2="417.3469"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="834.87" x2="840.87" y1="468.6669" y2="476.6669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="834.87" x2="828.87" y1="468.6669" y2="476.6669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="834.87" x2="834.87" y1="468.6669" y2="476.6669"/>
+      <ellipse cx="834.87" cy="462.6669" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link AASSets to SMRefSets-->
+    <g class="link" data-entity-1="ent0005" data-entity-2="ent0006" data-link-type="crowfoot" data-source-line="96" id="lnk16">
+      <path codeLine="96" d="M591.87,425.3469 C591.87,459.3269 591.87,470.9269 591.87,499.4669" fill="none" id="AASSets-SMRefSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="587.87" x2="595.87" y1="421.3469" y2="421.3469"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="587.87" x2="595.87" y1="424.3469" y2="424.3469"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="591.87" x2="591.87" y1="425.3469" y2="417.3469"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="591.87" x2="597.87" y1="509.4669" y2="517.4669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="591.87" x2="585.87" y1="509.4669" y2="517.4669"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="591.87" x2="591.87" y1="509.4669" y2="517.4669"/>
+      <ellipse cx="591.87" cy="503.4669" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link SMSets to SMESets-->
+    <g class="link" data-entity-1="ent0007" data-entity-2="ent0008" data-link-type="crowfoot" data-source-line="97" id="lnk17">
+      <path codeLine="97" d="M987.87,657.9869 C987.87,677.2669 987.87,671.8069 987.87,691.3969" fill="none" id="SMSets-SMESets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="983.87" x2="991.87" y1="653.9869" y2="653.9869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="983.87" x2="991.87" y1="656.9869" y2="656.9869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="987.87" x2="987.87" y1="657.9869" y2="649.9869"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="987.87" x2="993.87" y1="701.3969" y2="709.3969"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="987.87" x2="981.87" y1="701.3969" y2="709.3969"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="987.87" x2="987.87" y1="701.3969" y2="709.3969"/>
+      <ellipse cx="987.87" cy="695.3969" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link SMESets to ValueSets-->
+    <g class="link" data-entity-1="ent0008" data-entity-2="ent0009" data-link-type="crowfoot" data-source-line="98" id="lnk18">
+      <path codeLine="98" d="M854.47,907.1069 C854.47,927.2069 854.47,921.9269 854.47,940.4369" fill="none" id="SMESets-ValueSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="850.47" x2="858.47" y1="903.1069" y2="903.1069"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="850.47" x2="858.47" y1="906.1069" y2="906.1069"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="854.47" x2="854.47" y1="907.1069" y2="899.1069"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="854.47" x2="860.47" y1="950.4369" y2="958.4369"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="854.47" x2="848.47" y1="950.4369" y2="958.4369"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="854.47" x2="854.47" y1="950.4369" y2="958.4369"/>
+      <ellipse cx="854.47" cy="944.4369" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <!--link SMESets to OValueSets-->
+    <g class="link" data-entity-1="ent0008" data-entity-2="ent0010" data-link-type="crowfoot" data-source-line="99" id="lnk19">
+      <path codeLine="99" d="M1121.78,907.1069 C1121.78,933.3369 1121.78,934.6269 1121.78,956.6769" fill="none" id="SMESets-OValueSets" style="stroke:#181818;stroke-width:1;"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1117.78" x2="1125.78" y1="903.1069" y2="903.1069"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1117.78" x2="1125.78" y1="906.1069" y2="906.1069"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1121.78" x2="1121.78" y1="907.1069" y2="899.1069"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1121.78" x2="1127.78" y1="966.6769" y2="974.6769"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1121.78" x2="1115.78" y1="966.6769" y2="974.6769"/>
+      <line style="stroke:#181818;stroke-width:1;" x1="1121.78" x2="1121.78" y1="966.6769" y2="974.6769"/>
+      <ellipse cx="1121.78" cy="960.6769" fill="none" rx="4" ry="4" style="stroke:#181818;stroke-width:1;"/>
+    </g>
+    <g class="legend" data-source-line="101">
+      <rect fill="#DDDDDD" height="58.8906" rx="3" ry="3" style="stroke:#000000;stroke-width:1;" width="719.4404" x="580.3753" y="1103.4681"/>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="419.665" x="585.3753" y="1121.4632">SMESets: optional self-FK ParentSMEId -&gt; Id (element tree).</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="709.4404" x="585.3753" y="1137.7601">Tables: EnvSets, CDSets, EnvCDSets, AASSets, SMRefSets, SMSets, SMESets, ValueSets, OValueSets.</text>
+      <text fill="#000000" font-family="Consolas" font-size="14" lengthAdjust="spacing" textLength="467.1816" x="585.3753" y="1154.057">Source: AasxServerDB.Entities + SqliteAasContextModelSnapshot.</text>
+    </g>
+    <?plantuml-src jLRDSjis4BxpANPoiXd8cLuo6Oz77PMaEnh7iHjgSeV8bOW92300vDYJvDe7w2FsIReW8OcKr5X9rOijBFRdmtuVbd32IOG9juyvcWSqwM-0oWdt1BKkKS9PTWs9DWXl6EIVf718lebM3XyTl89xRTtIz6pdaVqeLCCDhy7ebIeBRHGQUDspsugN-hDGIrXmQR6tK-A2hwIxfbplU8rKMLajkOqgKI8KmXIoxow5GlVK86ZZAXr50VcBECxKGuxEnl4Bu1R22hv40374yRICOxW4eHnSNTtVZCTa7utepprt5MrOPmXTzAsVCKbx2Rl5y_ccPLuHDWQfi8taJ_vG31BkSAdD4vdH5aOqJcZLUljo2u66mTGctEBTWa7sw51Pyh3aajLpB4iiK-vutc11tWNtuPR11pJUZS5xV12sIvaOv4vJlXdM1C3Xj6Gm-VSi538JDUQErqqRIt0tXjxFcS7-JeeI7GuRHaqVz6opVhvjVfFS1_lND_3tdt-jgHoF8PdaoIJDWdkI7lBk2lQS1mWdaxo7BwoEG3V4zki1S3z6_Gx7VHbyZ-yKZNZ0yjhecgBss6S_G_x4MdGtGf7ZxrBFkMmDRPp_CQFBHdCWH8Kz7vTs5tTMhUgvuaBwYyJshEsCK6sM4mejltsFYnwHc_KnL1Bh1waCQWXKhWdPBJoeUahr70li51hhwCwnvcGgFDVvgcaarkJ2vTRku_vOSTc6sUzfysHoF9r4iW5LsV5pAByzD5WwjeTJABxdXafIzeF4hQkUMPIByxO8cReRjI4oltqxLIK-3YZrS_mvJli4-io76MJ74pZxmEKAwHH5nStPB-V_ZOsDLlrW67BJrkcniraVoqzscA1iZo5FPQ35hzf23Dw5_sbtOZy4bTAkRSGGwTqkrBl_3-l4qHjall9Txc0HalKpvklNqKX_sNvGe_1TtRFl18JHiMlkj1ojlt_FMCDiZSAyszYpOCtwvar_TZUsdOiYYKjK9HYnh5ntARpz4dGhSYx1NvWHzQftls0q9aN16NOY1qUgEx_m6kLpYHGSpiZ24u1jkyBMVM3Rqx1mNBQkphRGMG-ihv3hbIdmSl1cliYyI0HQUBdtIhxrx-XSySPMsbsGdChkmFy0?>
+  </g>
+</svg>

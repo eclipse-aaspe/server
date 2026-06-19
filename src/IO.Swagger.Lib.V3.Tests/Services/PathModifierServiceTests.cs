@@ -17,7 +17,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
 using System.Linq;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using IO.Swagger.Lib.V3.Services;
 using Xunit;
 

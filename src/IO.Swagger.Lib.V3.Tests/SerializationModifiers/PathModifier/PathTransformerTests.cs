@@ -13,7 +13,7 @@
 
 namespace IO.Swagger.Lib.V3.Tests.SerializationModifiers.PathModifier;
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using Exceptions;
 using V3.SerializationModifiers.PathModifier;
 

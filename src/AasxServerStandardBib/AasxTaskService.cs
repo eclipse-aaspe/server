@@ -70,8 +70,8 @@ namespace AasxServer
         public Property distributionCombination = null;
         public Property weightModule = null;
         public Property weightCombination = null;
-        public AasCore.Aas3_0.File manufacturerLogo = null;
-        public AasCore.Aas3_0.File productImage = null;
+        public AasCore.Aas3_1.File manufacturerLogo = null;
+        public AasCore.Aas3_1.File productImage = null;
         public string productDesignation = "";
         public List<string> bom = new List<string>();
         public DateTime bomTimestamp = new DateTime();
@@ -356,8 +356,8 @@ namespace AasxServer
 
             Property authType = null;
             Property authServerEndPoint = null;
-            AasCore.Aas3_0.File authServerCertificate = null;
-            AasCore.Aas3_0.File clientCertificate = null;
+            AasCore.Aas3_1.File authServerCertificate = null;
+            AasCore.Aas3_1.File clientCertificate = null;
             Property clientCertificatePassWord = null;
             Property accessToken = null;
             Property userName = null;
@@ -426,16 +426,16 @@ namespace AasxServer
 
                         break;
                     case "authservercertificate":
-                        if (sme2 is AasCore.Aas3_0.File)
+                        if (sme2 is AasCore.Aas3_1.File)
                         {
-                            authServerCertificate = sme2 as AasCore.Aas3_0.File;
+                            authServerCertificate = sme2 as AasCore.Aas3_1.File;
                         }
 
                         break;
                     case "clientcertificate":
-                        if (sme2 is AasCore.Aas3_0.File)
+                        if (sme2 is AasCore.Aas3_1.File)
                         {
-                            clientCertificate = sme2 as AasCore.Aas3_0.File;
+                            clientCertificate = sme2 as AasCore.Aas3_1.File;
                         }
 
                         break;
@@ -482,8 +482,8 @@ namespace AasxServer
             }
         }
 
-        bool CreateAccessToken(int envIndex, Property authServerEndPoint, AasCore.Aas3_0.File authServerCertificate,
-                                      AasCore.Aas3_0.File clientCertificate, Property clientCertificatePassWord,
+        bool CreateAccessToken(int envIndex, Property authServerEndPoint, AasCore.Aas3_1.File authServerCertificate,
+                                      AasCore.Aas3_1.File clientCertificate, Property clientCertificatePassWord,
                                       Property accessToken, Property clientToken,
                                       string policy = "", string policyRequestedResource = "")
         {
@@ -747,8 +747,8 @@ namespace AasxServer
             Property accessToken = null;
             Property userName = null;
             Property passWord = null;
-            AasCore.Aas3_0.File authServerCertificate = null;
-            AasCore.Aas3_0.File clientCertificate = null;
+            AasCore.Aas3_1.File authServerCertificate = null;
+            AasCore.Aas3_1.File clientCertificate = null;
             Property clientCertificatePassWord = null;
             Property clientToken = null;
 
@@ -915,9 +915,9 @@ namespace AasxServer
                             break;
 
                         case "authservercertificate":
-                            if (sme2 is AasCore.Aas3_0.File)
+                            if (sme2 is AasCore.Aas3_1.File)
                             {
-                                authServerCertificate = sme2 as AasCore.Aas3_0.File;
+                                authServerCertificate = sme2 as AasCore.Aas3_1.File;
                             }
 
                             break;
@@ -931,9 +931,9 @@ namespace AasxServer
                             break;
 
                         case "clientcertificate":
-                            if (sme2 is AasCore.Aas3_0.File)
+                            if (sme2 is AasCore.Aas3_1.File)
                             {
-                                clientCertificate = sme2 as AasCore.Aas3_0.File;
+                                clientCertificate = sme2 as AasCore.Aas3_1.File;
                             }
 
                             break;
@@ -1660,6 +1660,13 @@ namespace AasxServer
 
             if (eventData.Direction != null && eventData.Mode != null)
             {
+
+                if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "REST_API")
+                {
+                    _eventService.PublishRestApiMessage(eventData, submodelId, idShortPath);
+                    return;
+                }
+
                 if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
                 {
                     _eventService.PublishMqttMessage(eventData, submodelId, idShortPath);
@@ -2418,8 +2425,8 @@ namespace AasxServer
             public Property distributionCombination = null;
             public Property weightModule = null;
             public Property weightCombination = null;
-            public AasCore.Aas3_0.File manufacturerLogo = null;
-            public AasCore.Aas3_0.File productImage = null;
+            public AasCore.Aas3_1.File manufacturerLogo = null;
+            public AasCore.Aas3_1.File productImage = null;
             public string productDesignation = "";
             public List<string> bom = new List<string>();
             public DateTime bomTimestamp = new DateTime();
@@ -2838,7 +2845,7 @@ namespace AasxServer
                                             {
                                                 foreach (var sme in c.Value)
                                                 {
-                                                    if (sme is AasCore.Aas3_0.File f)
+                                                    if (sme is AasCore.Aas3_1.File f)
                                                     {
                                                         if (f.IdShort == "ManufacturerLogo" || f.IdShort == "CompanyLogo")
                                                             cfp.manufacturerLogo = f;
@@ -2849,7 +2856,7 @@ namespace AasxServer
                                                     {
                                                         if (l.Value != null && l.Value[0] is SubmodelElementCollection cc)
                                                         {
-                                                            if (cc.Value?[0].IdShort == "ImageFile" && cc.Value[0] is AasCore.Aas3_0.File ff)
+                                                            if (cc.Value?[0].IdShort == "ImageFile" && cc.Value[0] is AasCore.Aas3_1.File ff)
                                                             {
                                                                 cfp.productImage = ff;
                                                             }

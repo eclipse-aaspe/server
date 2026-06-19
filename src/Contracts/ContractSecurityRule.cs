@@ -16,13 +16,13 @@ namespace Contracts
     using System.Diagnostics.Contracts;
     using System.Security.AccessControl;
     using System.Security.Claims;
-    using AasCore.Aas3_0;
+    using AasCore.Aas3_1;
     using AasSecurity.Models;
 
     public interface IContractSecurityRules
     {
-        public Dictionary<string, string> GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null);
         public List<AccessPermissionRule> GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null);
+        public SqlConditions? GetSqlConditions(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null);
         bool AuthorizeRequest(string accessRole,
                       string httpRoute,
                       AccessRights neededRights,

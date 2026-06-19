@@ -1,0 +1,16 @@
+<Project>
+  <!--
+    SQLite native loading is now decided at RUNTIME, not at build time.
+    A single build ships the embedded e_sqlite3 native plus both SQLitePCLRaw
+    providers. At process start, AasxServerDB.SqliteProviderInitializer picks
+    the provider based on OS and the AASX_SQLITE_PROVIDER environment variable:
+
+      Windows                   : always embedded (bundled e_sqlite3).
+      Linux / macOS default     : embedded.
+      Linux / macOS opt-in      : AASX_SQLITE_PROVIDER=system   -> use distro libsqlite3
+                                   (auto-fallback to embedded if libsqlite3 is missing)
+                                  AASX_SQLITE_PROVIDER=strict-system -> hard fail if missing
+
+    The former MSBuild property AasxSqliteNativeBundle is obsolete.
+  -->
+</Project>

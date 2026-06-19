@@ -44,6 +44,7 @@ using Extensions;
 using Contracts.DbRequests;
 using System.Xml;
 using Contracts.LevelExtent;
+using Contracts.QueryResult;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -369,7 +370,11 @@ namespace IO.Swagger.Lib.V3.Formatters
 
                     foreach (var item in queryResult.result)
                     {
-                        if (resultType == ResultType.AssetAdministrationShell.ToString())
+                        if (item is string strItem)
+                        {
+                            jsonArray.Add(strItem);
+                        }
+                        else if (resultType == ResultType.AssetAdministrationShell.ToString())
                         {
                             var json = Jsonization.Serialize.ToJsonObject(item as IClass);
                             jsonArray.Add(json);
@@ -408,6 +413,30 @@ namespace IO.Swagger.Lib.V3.Formatters
                 }
 
                 jsonNode["paging_metadata"] = pagingMetadata;
+                if (context.Object is QueryDebugResult queryDebugResult)
+                {
+                    var rawSqlArray = new JsonArray();
+                    foreach (var rawSql in queryDebugResult.raw_sql)
+                    {
+                        rawSqlArray.Add(rawSql);
+                    }
+
+                    jsonNode["raw_sql"] = rawSqlArray;
+
+                    var rawSqlLinesArray = new JsonArray();
+                    foreach (var statementLines in queryDebugResult.raw_sql_lines)
+                    {
+                        var statementArray = new JsonArray();
+                        foreach (var line in statementLines)
+                        {
+                            statementArray.Add(line);
+                        }
+
+                        rawSqlLinesArray.Add(statementArray);
+                    }
+
+                    jsonNode["raw_sql_lines"] = rawSqlLinesArray;
+                }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();

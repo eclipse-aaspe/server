@@ -15,7 +15,7 @@ using IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent;
 
 namespace AasxServerBlazorTests.SerializationModifiers.LevelExtent;
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using Contracts.LevelExtent;
 using IO.Swagger.Lib.V3.Exceptions;
 using IO.Swagger.Models;

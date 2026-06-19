@@ -11,13 +11,13 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using DataTransferObjects.CommonDTOs;
 
 namespace DataTransferObjects.MetadataDTOs
 {
     public record class EntityMetadata(
-            EntityType EntityType,
+            EntityType? EntityType,
             List<ExtensionDTO>? Extensions = null,
             string? Category = null,
             string? IdShort = null,

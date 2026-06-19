@@ -18,7 +18,7 @@ using IO.Swagger.Lib.V3.Exceptions;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
-using static AasCore.Aas3_0.Visitation;
+using static AasCore.Aas3_1.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 {

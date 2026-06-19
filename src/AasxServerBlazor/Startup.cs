@@ -52,8 +52,8 @@ public class Startup
     /// <param name="environment">The hosting environment the application is running in.</param>
     public void Configure(IApplicationBuilder app, IWebHostEnvironment environment)
     {
-        ServerConfiguration.ConfigureEnvironment(app, environment);
-
-        ServerConfiguration.ConfigureSwagger(app, Configuration);
+        // ConfigureEnvironment now registers Swagger before UseEndpoints so that
+        // the Blazor fallback endpoint does not swallow "/swagger" requests.
+        ServerConfiguration.ConfigureEnvironment(app, environment, Configuration);
     }
 }

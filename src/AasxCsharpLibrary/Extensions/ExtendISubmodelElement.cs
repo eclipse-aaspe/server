@@ -154,7 +154,7 @@ namespace Extensions
                 return multiLanguageProperty.ValueAsText(defaultLang);
             }
 
-            if (submodelElement is AasCore.Aas3_0.Range range)
+            if (submodelElement is AasCore.Aas3_1.Range range)
             {
                 return range.ValueAsText();
             }
@@ -433,7 +433,7 @@ namespace Extensions
                 }
                 else if (sourceSubmodelElement is AdminShellV20.Range sourceRange)
                 {
-                    var newRange = new AasCore.Aas3_0.Range(DataTypeDefXsd.String);
+                    var newRange = new AasCore.Aas3_1.Range(DataTypeDefXsd.String);
                     outputSubmodelElement = newRange.ConvertFromV20(sourceRange);
                 }
                 else if (sourceSubmodelElement is AdminShellV20.File sourceFile)

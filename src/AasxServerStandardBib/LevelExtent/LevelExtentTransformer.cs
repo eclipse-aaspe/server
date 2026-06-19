@@ -13,7 +13,7 @@
 
 using System.Collections.Generic;
 using Contracts.LevelExtent;
-using static AasCore.Aas3_0.Visitation;
+using static AasCore.Aas3_1.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 {

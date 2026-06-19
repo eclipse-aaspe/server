@@ -21,6 +21,8 @@
 using AasSecurity;
 using Contracts;
 
+AasxServerDB.SqliteProviderInitializer.Initialize();
+
 Console.WriteLine("AASX Server Core starting....");
 var host = CreateHostBuilder(args).Build();
 

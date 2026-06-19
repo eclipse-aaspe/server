@@ -13,7 +13,7 @@
 
 using AasxServerStandardBib.Exceptions;
 using System.Linq;
-using static AasCore.Aas3_0.Visitation;
+using static AasCore.Aas3_1.Visitation;
 
 namespace AasxServerStandardBib.Transformers
 {

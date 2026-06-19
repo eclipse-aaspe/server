@@ -101,7 +101,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
             var valueObject = new JsonObject();
             valueObject["statements"] = statements;
-            valueObject["entityType"] = Jsonization.Serialize.EntityTypeToJsonValue(entityValue.EntityType);
+            valueObject["entityType"] = entityValue.EntityType.HasValue
+                ? Jsonization.Serialize.EntityTypeToJsonValue(entityValue.EntityType.Value)
+                : null;
             valueObject["globalAssetId"] = entityValue.GlobalAssetId;
 
             if (isParentSML)

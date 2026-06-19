@@ -114,6 +114,9 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasIndex("EnvId");
 
+                    b.HasIndex("GlobalAssetId")
+                        .HasDatabaseName("IX_AASSet_GlobalAssetId");
+
                     b.HasIndex("Id");
 
                     b.ToTable("AASSets");
@@ -191,32 +194,6 @@ namespace AasxServerDB.Migrations.Postgres
                     b.ToTable("CDSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Annotation")
-                        .HasColumnType("text");
-
-                    b.Property<int>("SMEId")
-                        .HasColumnType("integer");
-
-                    b.Property<double?>("Value")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SMEId");
-
-                    b.HasIndex("Value");
-
-                    b.ToTable("DValueSets");
-                });
-
             modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
                 {
                     b.Property<int>("Id")
@@ -256,34 +233,6 @@ namespace AasxServerDB.Migrations.Postgres
                     b.HasIndex("Id");
 
                     b.ToTable("EnvSets");
-                });
-
-            modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Annotation")
-                        .HasColumnType("text");
-
-                    b.Property<int>("SMEId")
-                        .HasColumnType("integer");
-
-                    b.Property<long?>("Value")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("SMEId");
-
-                    b.HasIndex("Value");
-
-                    b.ToTable("IValueSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.OValueSet", b =>
@@ -392,6 +341,9 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasIndex("IdShort");
 
+                    b.HasIndex("IdShortPath")
+                        .HasDatabaseName("IX_SMESet_IdShortPath");
+
                     b.HasIndex("ParentSMEId");
 
                     b.HasIndex("SMId");
@@ -420,7 +372,8 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AASId");
+                    b.HasIndex("AASId")
+                        .HasDatabaseName("IX_SMRefSet_AASId");
 
                     b.HasIndex("Id");
 
@@ -519,6 +472,9 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasIndex("Id");
 
+                    b.HasIndex("IdShort")
+                        .HasDatabaseName("IX_SMSet_IdShort");
+
                     b.HasIndex("Identifier");
 
                     b.HasIndex("SemanticId");
@@ -528,7 +484,7 @@ namespace AasxServerDB.Migrations.Postgres
                     b.ToTable("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.ValueSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -537,23 +493,47 @@ namespace AasxServerDB.Migrations.Postgres
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Annotation")
+                        .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("DTValue")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("NValue")
+                        .HasColumnType("double precision");
 
                     b.Property<int>("SMEId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Value")
+                    b.Property<int?>("SMId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SValue")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DTValue");
+
                     b.HasIndex("Id");
+
+                    b.HasIndex("NValue");
 
                     b.HasIndex("SMEId");
 
-                    b.HasIndex("Value");
+                    b.HasIndex("SMId");
 
-                    b.ToTable("SValueSets");
+                    b.HasIndex("SValue");
+
+                    b.ToTable("ValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.SMSetIdResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.ToTable("SMSetIdResult");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
@@ -563,17 +543,6 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasForeignKey("EnvId");
 
                     b.Navigation("EnvSet");
-                });
-
-            modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
-                {
-                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
-                        .WithMany("DValueSets")
-                        .HasForeignKey("SMEId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SMESet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
@@ -593,17 +562,6 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Navigation("CDSet");
 
                     b.Navigation("EnvSet");
-                });
-
-            modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
-                {
-                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
-                        .WithMany("IValueSets")
-                        .HasForeignKey("SMEId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SMESet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.OValueSet", b =>
@@ -658,10 +616,10 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Navigation("EnvSet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.ValueSet", b =>
                 {
                     b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
-                        .WithMany("SValueSets")
+                        .WithMany("ValueSets")
                         .HasForeignKey("SMEId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -692,13 +650,9 @@ namespace AasxServerDB.Migrations.Postgres
 
             modelBuilder.Entity("AasxServerDB.Entities.SMESet", b =>
                 {
-                    b.Navigation("DValueSets");
-
-                    b.Navigation("IValueSets");
-
                     b.Navigation("OValueSets");
 
-                    b.Navigation("SValueSets");
+                    b.Navigation("ValueSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>

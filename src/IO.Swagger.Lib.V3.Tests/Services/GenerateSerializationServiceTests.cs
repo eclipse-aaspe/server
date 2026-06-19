@@ -13,7 +13,7 @@
 
 //namespace AasxServerBlazorTests.Services;
 
-//using AasCore.Aas3_0;
+//using AasCore.Aas3_1;
 //using AasxServerStandardBib.Interfaces;
 //using AasxServerStandardBib.Logging;
 //using IO.Swagger.Lib.V3.Services;

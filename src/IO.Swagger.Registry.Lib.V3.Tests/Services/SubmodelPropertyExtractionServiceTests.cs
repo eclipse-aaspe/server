@@ -13,7 +13,7 @@
 
 namespace IO.Swagger.Registry.Lib.V3.Tests.Services;
 
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using JetBrains.Annotations;
 using V3.Services;
 

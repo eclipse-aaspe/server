@@ -13,9 +13,9 @@
 
 namespace AasxServerDB
 {
-    using AasCore.Aas3_0;
+    using AasCore.Aas3_1;
     using AdminShellNS;
-    using static AasCore.Aas3_0.Visitation;
+    using static AasCore.Aas3_1.Visitation;
     using Extensions;
     using System.IO.Compression;
     using Microsoft.IdentityModel.Tokens;
@@ -25,6 +25,7 @@ namespace AasxServerDB
     using HotChocolate.Language;
     using static AasxServerDB.CrudOperator;
     using Microsoft.EntityFrameworkCore;
+    using System.Globalization;
 
     public class VisitorAASX : VisitorThrough
     {
@@ -65,6 +66,110 @@ namespace AasxServerDB
             _smDB = smDB;
         }
 
+        // Shared context for bulk import (set via BeginBulkImport / EndBulkImport)
+        private static AasContext? _bulkDb = null;
+
+        public static void BeginBulkImport()
+        {
+            _bulkDb = new AasContext();
+            _bulkDb.ChangeTracker.AutoDetectChangesEnabled = false;
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA journal_mode  = WAL;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = OFF;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA cache_size    = -65536;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA temp_store    = MEMORY;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA mmap_size     = 268435456;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys  = OFF;");
+        }
+
+        public static void FlushBulkImport()
+        {
+            if (_bulkDb == null) return;
+            // BulkSaveChanges (EFCore.BulkExtensions) does not reliably preserve insert order / FK fixup for
+            // self-referencing SMESet.ParentSMEId (nested SMC/SML/Entity trees). Children can be inserted with
+            // NULL ParentSMEId. Standard SaveChanges applies dependency order like non-bulk import.
+            _bulkDb.ChangeTracker.AutoDetectChangesEnabled = true;
+            _bulkDb.ChangeTracker.DetectChanges();
+            _bulkDb.SaveChanges();
+            _bulkDb.ChangeTracker.Clear();
+            GC.Collect();
+        }
+
+        public static void EndBulkImport(bool analyze = false)
+        {
+            if (_bulkDb == null) return;
+            _bulkDb.ChangeTracker.AutoDetectChangesEnabled = true;
+            _bulkDb.ChangeTracker.DetectChanges();
+            _bulkDb.SaveChanges();
+            if (analyze)
+            {
+                Console.WriteLine("Running ANALYZE to update query planner statistics...");
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                _bulkDb.Database.ExecuteSqlRaw("ANALYZE;");
+                sw.Stop();
+                Console.WriteLine($"ANALYZE done in {sw.ElapsedMilliseconds / 1000}s.");
+            }
+
+            Console.WriteLine($"  EnvSets:   {_bulkDb.EnvSets.Count()}");
+            Console.WriteLine($"  CDSets:    {_bulkDb.CDSets.Count()}");
+            Console.WriteLine($"  AASSets:   {_bulkDb.AASSets.Count()}");
+            Console.WriteLine($"  SMRefSets: {_bulkDb.SMRefSets.Count()}");
+            Console.WriteLine($"  SMSets:    {_bulkDb.SMSets.Count()}");
+            Console.WriteLine($"  SMESets:   {_bulkDb.SMESets.Count()}");
+            Console.WriteLine($"  ValueSets: {_bulkDb.ValueSets.Count()}");
+            Console.WriteLine($"  OValueSets:{_bulkDb.OValueSets.Count()}");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
+            _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = NORMAL;");
+            _bulkDb.Dispose();
+            _bulkDb = null;
+        }
+
+        // Parse AASX without touching DB — for parallel producer threads
+        public static EnvSet? ParseAASX(string filePath, bool createFilesOnly)
+        {
+            using var asp = new AdminShellPackageEnv(filePath, false, true);
+
+            EnvSet? envDB = null;
+            if (!createFilesOnly)
+            {
+                envDB = new EnvSet() { Path = filePath };
+                ImportAASIntoDB(asp, envDB);
+            }
+
+            // Supplementary file extraction — IO-bound, runs in parser thread
+            var name = Path.GetFileName(filePath);
+            var suppFiles = asp.GetListOfSupplementaryFiles();
+            if (suppFiles.Count > 0)
+            {
+                using var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create);
+                using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+                foreach (var f in suppFiles)
+                {
+                    try
+                    {
+                        using var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true);
+                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString, CompressionLevel.NoCompression);
+                        using var archiveStream = archiveFile.Open();
+                        s.CopyTo(archiveStream, 1024 * 1024);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Copy failed {name}/{f.Uri.OriginalString}: {ex.Message}");
+                    }
+                }
+            }
+
+            return envDB;
+        }
+
+        // Add a pre-parsed EnvSet to the bulk context — call from writer thread only
+        public static void AddEnvSetToBulk(EnvSet envDB)
+        {
+            if (_bulkDb == null) return;
+            _bulkDb.Add(envDB);
+            foreach (var envcdSet in envDB.EnvCDSets.Where(e => e?.CDSet != null))
+                _cdDBId.TryAdd(envcdSet.CDSet!.Identifier, envcdSet.CDSet.Id);
+        }
+
         // Load AASX
         public static void ImportAASXIntoDB(string filePath, bool createFilesOnly)
         {
@@ -72,43 +177,51 @@ namespace AasxServerDB
             {
                 if (!createFilesOnly)
                 {
+                    Console.WriteLine($"Import to DB: {Path.GetFileName(filePath)}");
                     var envDB = new EnvSet()
                     {
                         Path = filePath,
                     };
                     ImportAASIntoDB(asp, envDB);
 
-                    using (var db = new AasContext())
-                    {
-                        db.Add(envDB);
-                        db.SaveChanges();
+                    var ownContext = _bulkDb == null;
+                    var db = _bulkDb ?? new AasContext();
+                    db.Add(envDB);
 
-                        // CD
-                        foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
-                            _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
+                    if (ownContext)
+                    {
+                        db.SaveChanges();
+                        db.Dispose();
                     }
+
+                    // CD
+                    foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
+                        _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
                 }
 
 
                 //ToDo: To File Service
                 var name = Path.GetFileName(filePath);
+                var suppFiles = asp.GetListOfSupplementaryFiles();
 
-                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+                if (suppFiles.Count > 0)
                 {
-                    var files = asp.GetListOfSupplementaryFiles();
-                    foreach (var f in files)
+                    using var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create);
+                    using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+
+                    foreach (var f in suppFiles)
                     {
                         try
                         {
-                            using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                            {
-                                var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+                            using var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true);
 
-                                using var archiveStream = archiveFile.Open();
-                                s.CopyTo(archiveStream);
-                            }
+                            // NoCompression: file is already stored compressed inside the AASX ZIP.
+                            // Re-compressing large files (e.g. .stp) is very slow and saves little.
+                            var archiveFile = archive.CreateEntry(f.Uri.OriginalString, CompressionLevel.NoCompression);
+                            Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                            using var archiveStream = archiveFile.Open();
+                            s.CopyTo(archiveStream, 1024 * 1024); // 1 MB buffer
                         }
                         catch (Exception ex)
                         {
@@ -284,7 +397,7 @@ namespace AasxServerDB
                 {
                     var smeSmList = db.SMESets.Where(sme => sme.SMId == _smDB.Id).ToList();
                     CrudOperator.CreateIdShortPath(db, smeSmList);
-                    smSmeMerged = CrudOperator.GetSmeMerged(db, null, smeSmList, _smDB);
+                    smSmeMerged = CrudOperator.GetSmeMerged(db, smeSmList, _smDB);
                 }
             }
             _smDB ??= new SMSet();
@@ -477,41 +590,41 @@ namespace AasxServerDB
         public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
             { DataTypeDefXsd.AnyUri, "S" },
             { DataTypeDefXsd.Base64Binary, "S" },
-            { DataTypeDefXsd.Boolean, "S" },
-            { DataTypeDefXsd.Byte, "I" },
-            { DataTypeDefXsd.Date, "S" },
-            { DataTypeDefXsd.DateTime, "S" },
+            { DataTypeDefXsd.Boolean, "N" },
+            { DataTypeDefXsd.Byte, "N" },
+            { DataTypeDefXsd.Date, "DT" },
+            { DataTypeDefXsd.DateTime, "DT" },
             { DataTypeDefXsd.Decimal, "S" },
-            { DataTypeDefXsd.Double, "D" },
+            { DataTypeDefXsd.Double, "N" },
             { DataTypeDefXsd.Duration, "S" },
-            { DataTypeDefXsd.Float, "D" },
+            { DataTypeDefXsd.Float, "N" },
             { DataTypeDefXsd.GDay, "S" },
             { DataTypeDefXsd.GMonth, "S" },
             { DataTypeDefXsd.GMonthDay, "S" },
             { DataTypeDefXsd.GYear, "S" },
             { DataTypeDefXsd.GYearMonth, "S" },
-            { DataTypeDefXsd.HexBinary, "S" },
-            { DataTypeDefXsd.Int, "I" },
-            { DataTypeDefXsd.Integer, "I" },
-            { DataTypeDefXsd.Long, "I" },
-            { DataTypeDefXsd.NegativeInteger, "I" },
-            { DataTypeDefXsd.NonNegativeInteger, "I" },
-            { DataTypeDefXsd.NonPositiveInteger, "I" },
-            { DataTypeDefXsd.PositiveInteger, "I" },
-            { DataTypeDefXsd.Short, "I" },
+            { DataTypeDefXsd.HexBinary, "N" }, //Was ist die maximale Wert, der in den Hex passt?
+            { DataTypeDefXsd.Int, "N" },
+            { DataTypeDefXsd.Integer, "N" },
+            { DataTypeDefXsd.Long, "N" },
+            { DataTypeDefXsd.NegativeInteger, "N" },
+            { DataTypeDefXsd.NonNegativeInteger, "N" },
+            { DataTypeDefXsd.NonPositiveInteger, "N" },
+            { DataTypeDefXsd.PositiveInteger, "N" },
+            { DataTypeDefXsd.Short, "N" },
             { DataTypeDefXsd.String, "S" },
-            { DataTypeDefXsd.Time, "S" },
-            { DataTypeDefXsd.UnsignedByte, "I" },
-            { DataTypeDefXsd.UnsignedInt, "I" },
-            { DataTypeDefXsd.UnsignedLong, "I" },
-            { DataTypeDefXsd.UnsignedShort, "I" }
+            { DataTypeDefXsd.Time, "DT" },
+            { DataTypeDefXsd.UnsignedByte, "N" },
+            { DataTypeDefXsd.UnsignedInt, "N" },
+            { DataTypeDefXsd.UnsignedLong, "N" },
+            { DataTypeDefXsd.UnsignedShort, "N" }
         };
-        private static bool GetValueAndDataType(string value, DataTypeDefXsd dataType, out string tableDataType, out string sValue, out long iValue, out double dValue)
+        private static bool GetValueAndDataType(string value, DataTypeDefXsd dataType, out string tableDataType, out string sValue, out double nValue, out DateTime dtValue)
         {
             tableDataType = DataTypeToTable[dataType];
             sValue = string.Empty;
-            iValue = 0;
-            dValue = 0;
+            dtValue = DateTime.MinValue;
+            nValue = 0.0;
 
             if (value.IsNullOrEmpty())
                 return false;
@@ -522,42 +635,94 @@ namespace AasxServerDB
                 case "S":
                     sValue = value;
                     return true;
-                case "I":
-                    if (Int64.TryParse(value, out iValue))
-                        return true;
+                case "N":
+                    switch (dataType)
+                    {
+                        case DataTypeDefXsd.Boolean:
+                            nValue = value.ToLower() == "false" ? 0 : 1;
+                            break;
+                        case DataTypeDefXsd.Byte:
+                        case DataTypeDefXsd.Int:
+                        case DataTypeDefXsd.Integer:
+                        case DataTypeDefXsd.Long:
+                        case DataTypeDefXsd.NegativeInteger:
+                        case DataTypeDefXsd.NonNegativeInteger:
+                        case DataTypeDefXsd.NonPositiveInteger:
+                        case DataTypeDefXsd.PositiveInteger:
+                        case DataTypeDefXsd.Short:
+                        case DataTypeDefXsd.UnsignedByte:
+                        case DataTypeDefXsd.UnsignedInt:
+                        case DataTypeDefXsd.UnsignedLong:
+                        case DataTypeDefXsd.UnsignedShort:
+                            long iValue = 0;
+                            if (Int64.TryParse(value, out iValue))
+                            {
+                                nValue = Convert.ToDouble(iValue);
+                                return true;
+                            }
+                            return false;
+                        case DataTypeDefXsd.Double:
+                        case DataTypeDefXsd.Float:
+                            if (Double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out nValue))
+                                return true;
+                            return false;
+                        case DataTypeDefXsd.HexBinary:
+                            //ToDo: Calculate Hex
+                            throw new NotImplementedException();
+                        default:
+                            break;
+                    }
                     break;
-                case "D":
-                    if (Double.TryParse(value, out dValue))
-                        return true;
+                case "DT":
+                    switch (dataType)
+                    {
+                        case DataTypeDefXsd.Date:           //Will take zero for time
+                        case DataTypeDefXsd.DateTime:       
+                            dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
+                            return true;
+                        case DataTypeDefXsd.Time:
+                            dtValue = TimeStamp.TimeStamp.StringToDateTime(value);
+                            var minDate = DateTime.MinValue;
+                            minDate.Add(TimeSpan.FromSeconds(dtValue.Second));
+                            minDate.Add(TimeSpan.FromMinutes(dtValue.Minute));
+                            minDate.Add(TimeSpan.FromHours(dtValue.Hour));
+                            dtValue = minDate;
+                            return true;
+                    }
+
                     break;
             }
 
             // incorrect table type
-            if (Int64.TryParse(value, out iValue))
-            {
-                tableDataType = "I";
-                return true;
-            }
+            //if (Int64.TryParse(value, out iValue))
+            //{
+            //    tableDataType = "I";
+            //    return true;
+            //}
 
-            if (Double.TryParse(value, out dValue))
-            {
-                tableDataType = "D";
-                return true;
-            }
+            //if (Double.TryParse(value, out nValue))
+            //{
+            //    tableDataType = "D";
+            //    return true;
+            //}
 
-            sValue = value;
-            tableDataType = "S";
-            return true;
+            //sValue = value;
+            //tableDataType = "S";
+            return false;
         }
         private void SetValues(ISubmodelElement sme, SMESet smeDB)
         {
             if (update)
             {
                 smeDB.OValueSets.Clear();
-                smeDB.SValueSets.Clear();
-                smeDB.IValueSets.Clear();
-                smeDB.DValueSets.Clear();
+                smeDB.ValueSets.Clear();
+
+                //smeDB?.SMSet?.ValueSets.Clear(); 
+                //smeDB.IValueSets.Clear();
+                //smeDB.DValueSets.Clear();
             }
+
+
             if (sme is RelationshipElement rel)
             {
                 if (rel.First != null)
@@ -577,18 +742,21 @@ namespace AasxServerDB
                 if (prop.ValueId != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = Serializer.SerializeElement(prop.ValueId) });
 
-                GetValueAndDataType(prop.Value ?? string.Empty, prop.ValueType, out var tValue, out var sValue, out var iValue, out var dValue);
+                GetValueAndDataType(prop.Value ?? string.Empty, prop.ValueType, out var tValue, out var sValue, out var nValue, out var dtValue);
                 if (!tValue.IsNullOrEmpty())
                     smeDB.TValue = tValue;
                 else
                     smeDB.TValue = "S";
 
                 if (smeDB.TValue.Equals("S"))
-                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                else if (smeDB.TValue.Equals("I"))
-                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
-                else if (smeDB.TValue.Equals("D"))
-                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                {
+                    smeDB.ValueSets.Add(new ValueSet { SValue = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                    //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                }
+                //else if (smeDB.TValue.Equals("I"))
+                //    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
+                else if (smeDB.TValue.Equals("N"))
+                    smeDB.ValueSets.Add(new ValueSet { NValue = nValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
@@ -601,7 +769,11 @@ namespace AasxServerDB
                 smeDB.TValue = "S";
                 foreach (var sValueMLP in mlp.Value)
                     if (!sValueMLP.Text.IsNullOrEmpty())
-                        smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
+                    {
+                        smeDB.ValueSets.Add(new ValueSet() { Annotation = sValueMLP.Language, SValue = sValueMLP.Text });
+                        //smeDB?.SMSet?.ValueSets.Add(new ValueSet() { Annotation = sValueMLP.Language, SValue = sValueMLP.Text });
+
+                    }
             }
             else if (sme is Range range)
             {
@@ -610,8 +782,8 @@ namespace AasxServerDB
                 if (range.Min.IsNullOrEmpty() && range.Max.IsNullOrEmpty())
                     return;
 
-                var hasValueMin = GetValueAndDataType(range.Min ?? string.Empty, range.ValueType, out var tableDataTypeMin, out var sValueMin, out var iValueMin, out var dValueMin);
-                var hasValueMax = GetValueAndDataType(range.Max ?? string.Empty, range.ValueType, out var tableDataTypeMax, out var sValueMax, out var iValueMax, out var dValueMax);
+                var hasValueMin = GetValueAndDataType(range.Min ?? string.Empty, range.ValueType, out var tableDataTypeMin, out var sValueMin, out var nValueMin, out var dtValueMin);
+                var hasValueMax = GetValueAndDataType(range.Max ?? string.Empty, range.ValueType, out var tableDataTypeMax, out var sValueMax, out var nValueMax, out var dtValueMax);
 
                 // determine which data types apply
                 var tableDataType = "S";
@@ -633,19 +805,15 @@ namespace AasxServerDB
                     }
                     else if (!tableDataTypeMin.Equals("S") && !tableDataTypeMax.Equals("S")) // both a number
                     {
-                        tableDataType = "D";
-                        if (tableDataTypeMin.Equals("I"))
-                            dValueMin = Convert.ToDouble(iValueMin);
-                        else if (tableDataTypeMax.Equals("I"))
-                            dValueMax = Convert.ToDouble(iValueMax);
+                        tableDataType = "N";
                     }
                     else // default: save in string
                     {
                         tableDataType = "S";
                         if (!tableDataTypeMin.Equals("S"))
-                            sValueMin = tableDataTypeMin.Equals("I") ? iValueMin.ToString() : dValueMin.ToString();
+                            sValueMin = nValueMin.ToString();
                         if (!tableDataTypeMax.Equals("S"))
-                            sValueMax = tableDataTypeMax.Equals("I") ? iValueMax.ToString() : dValueMax.ToString();
+                            sValueMax = nValueMax.ToString();
                     }
                 }
 
@@ -653,23 +821,30 @@ namespace AasxServerDB
                 if (tableDataType.Equals("S"))
                 {
                     if (hasValueMin)
-                        smeDB.SValueSets.Add(new SValueSet { Value = sValueMin, Annotation = "Min" });
+                    {
+                        smeDB.ValueSets.Add(new ValueSet { SValue = sValueMin, Annotation = "Min" });
+                        //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValueMin, Annotation = "Min" });
+
+                    }
                     if (hasValueMax)
-                        smeDB.SValueSets.Add(new SValueSet { Value = sValueMax, Annotation = "Max" });
+                    {
+                        smeDB.ValueSets.Add(new ValueSet { SValue = sValueMax, Annotation = "Max" });
+                        //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = sValueMax, Annotation = "Max" });
+                    }
                 }
-                else if (tableDataType.Equals("I"))
+                //else if (tableDataType.Equals("I"))
+                //{
+                //    if (hasValueMin)
+                //        smeDB.IValueSets.Add(new IValueSet { Value = iValueMin, Annotation = "Min" });
+                //    if (hasValueMax)
+                //        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
+                //}
+                else if (tableDataType.Equals("N"))
                 {
                     if (hasValueMin)
-                        smeDB.IValueSets.Add(new IValueSet { Value = iValueMin, Annotation = "Min" });
+                        smeDB.ValueSets.Add(new ValueSet{ NValue = nValueMin, Annotation = "Min" });
                     if (hasValueMax)
-                        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
-                }
-                else if (tableDataType.Equals("D"))
-                {
-                    if (hasValueMin)
-                        smeDB.DValueSets.Add(new DValueSet { Value = dValueMin, Annotation = "Min" });
-                    if (hasValueMax)
-                        smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
+                        smeDB.ValueSets.Add(new ValueSet { NValue = nValueMax, Annotation = "Max" });
                 }
             }
             else if (sme is Blob blob)
@@ -678,7 +853,8 @@ namespace AasxServerDB
                     return;
 
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
+                smeDB.ValueSets.Add(new ValueSet { SValue = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
+                //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
             }
             else if (sme is File file)
             {
@@ -686,7 +862,8 @@ namespace AasxServerDB
                     return;
 
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
+                smeDB.ValueSets.Add(new ValueSet { SValue = file.Value, Annotation = file.ContentType });
+                //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = file.Value, Annotation = file.ContentType });
             }
             else if (sme is ReferenceElement refEle)
             {
@@ -709,7 +886,8 @@ namespace AasxServerDB
             else if (sme is Entity ent)
             {
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
+                smeDB.ValueSets.Add(new ValueSet { SValue = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
+                //smeDB?.SMSet?.ValueSets.Add(new ValueSet { SValue = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
 
                 if (ent.SpecificAssetIds != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = Serializer.SerializeList(ent.SpecificAssetIds) });

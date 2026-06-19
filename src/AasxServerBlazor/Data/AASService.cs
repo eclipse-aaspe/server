@@ -417,6 +417,6 @@ public class AASService
 
     public List<ISubmodel> GetSubmodels()
     {
-        return Program.env[0].AasEnv.Submodels;
+        return Program.env[0].AasEnv.Submodels?.ToList() ?? new List<ISubmodel>();
     }
 }

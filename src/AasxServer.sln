@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerStandardBib", "Aa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}"
 	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
 		.editorconfig = .editorconfig
 		..\.gitignore = ..\.gitignore
 		..\CHANGELOG.md = ..\CHANGELOG.md
@@ -25,7 +26,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerBlazor", "AasxSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Lib.V3", "IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj", "{1C237091-3C10-4D14-956B-35740AC03BA6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasCore.Aas3_0", "AasCore.Aas3_0\AasCore.Aas3_0.csproj", "{02E9FAE5-A358-4D44-82FD-F864E868B135}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasCore.Aas3_1", "AasCore.Aas3_1\AasCore.Aas3_1.csproj", "{02E9FAE5-A358-4D44-82FD-F864E868B135}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataTransferObjects", "DataTransferObjects\DataTransferObjects.csproj", "{136D762B-33E1-4350-B2A3-00FE0D170CAE}"
 EndProject
@@ -97,6 +98,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxCsharpLibrary.Tests", "AasxCsharpLibrary.Tests\AasxCsharpLibrary.Tests.csproj", "{B9B7BFEC-AEBB-42DB-A1C5-DAB16029F850}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "Contracts\Contracts.csproj", "{1438AF76-63E7-485D-B5A4-B39426892FCA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasxServerDB.Tests", "AasxServerDB.Tests\AasxServerDB.Tests.csproj", "{D7A17163-3EA6-409B-A1FC-550265F51F4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -417,6 +420,24 @@ Global
 		{1438AF76-63E7-485D-B5A4-B39426892FCA}.Release|x64.Build.0 = Release|Any CPU
 		{1438AF76-63E7-485D-B5A4-B39426892FCA}.Release|x86.ActiveCfg = Release|Any CPU
 		{1438AF76-63E7-485D-B5A4-B39426892FCA}.Release|x86.Build.0 = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x64.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Debug|x86.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x64.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.DebugSlow|x86.Build.0 = Debug|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x64.ActiveCfg = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x64.Build.0 = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x86.ActiveCfg = Release|Any CPU
+		{D7A17163-3EA6-409B-A1FC-550265F51F4D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

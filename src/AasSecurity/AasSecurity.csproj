@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
@@ -10,12 +10,12 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
-      <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.4.0" />
+      <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.4" />
       <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.0.2" />
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="AasCore.Aas3_0" />
+        <Using Include="AasCore.Aas3_1" />
     </ItemGroup>
 
     <ItemGroup>

@@ -26,7 +26,9 @@ namespace AasxServerDB.Entities
     [Index(nameof(ParentSMEId))]
     [Index(nameof(SemanticId))]
     [Index(nameof(IdShort))]
+    [Index(nameof(IdShortPath))]
     [Index(nameof(TimeStamp))]
+    [Index(nameof(SMId), nameof(IdShort), nameof(IdShortPath))]
 
     public class SMESet
     {
@@ -65,9 +67,7 @@ namespace AasxServerDB.Entities
         // value
         [Column(TypeName = "char(1)")]
         public string? TValue { get; set; }
-        public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
-        public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
-        public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
+        public virtual ICollection<ValueSet> ValueSets { get; } = new List<ValueSet>();
         public List<string[]> GetValue()
         {
             if (TValue == null)
@@ -79,16 +79,16 @@ namespace AasxServerDB.Entities
                 switch (TValue)
                 {
                     case "S":
-                        list = db.SValueSets.Where(s => s.SMEId == Id).ToList()
-                            .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
+                        list = db.ValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.SValue ?? string.Empty, valueDB.Annotation ?? string.Empty]);
                         break;
-                    case "I":
-                        list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
-                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
-                        break;
+                    //case "I":
+                    //    list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
+                    //        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                    //    break;
                     case "D":
-                        list = db.DValueSets.Where(s => s.SMEId == Id).ToList()
-                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        list = db.ValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.NValue == null ? string.Empty : valueDB.NValue.ToString(), valueDB.Annotation ?? string.Empty]);
                         break;
                 }
 

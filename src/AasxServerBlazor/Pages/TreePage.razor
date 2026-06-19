@@ -5,7 +5,7 @@
 @inject AasxTaskService AasxTaskService
 @using Contracts
 @using MW.Blazor
-@using AasCore.Aas3_0
+@using AasCore.Aas3_1
 @using AasSecurity;
 @using AasSecurity.Models;
 @using Extensions
@@ -16,7 +16,7 @@
 @using AasxServerBlazor.Data
 @using TimeStamp
 @using static AasxServerStandardBib.TimeSeriesPlotting;
-@using Range = AasCore.Aas3_0.Range
+@using Range = AasCore.Aas3_1.Range
 @inject NavigationManager NavMan
 @implements IDisposable
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
@@ -32,77 +32,46 @@
 				<span style="color:white;background-color:blue;">Loading...</span>
 			}
 		}
+		@if (GlobalSecurityVariables.WithAuthentication)
+		{
+			<div class="mb-1">
+				<label class="small text-muted" for="treePreviewAccessRole">Preview access role (empty = anonymous)</label>
+				<div class="d-flex align-items-center">
+					<input id="treePreviewAccessRole" class="form-control form-control-sm flex-grow-1" style="min-width:0" type="text" autocomplete="off" spellcheck="false"
+					       title="Rebuild runs when you leave the field; use Apply to force the same rebuild."
+					       @bind="treePreviewAccessRole" @bind:after="OnTreePreviewAccessRoleBindAfterAsync" />
+					<button type="button" class="btn btn-outline-secondary btn-sm ml-2 flex-shrink-0" @onclick="OnTreePreviewAccessRoleApplyClickAsync">Apply</button>
+				</div>
+			</div>
+		}
 		<span></span>
 		<Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
 		HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
 			<TitleTemplate>
 				@{
-					var getPolicy = string.Empty;
-					@if (GlobalSecurityVariables.WithAuthentication)
+					@if (GlobalSecurityVariables.WithAuthentication && context is Item treeItem && treeItem.Tag is Submodel or ISubmodelElement)
 					{
-						var display = false;
-						var access = false;
-						var withAllow = false;
-						switch (context.Tag)
-						{
-							case Submodel sm:
-								{
-									// check, if access to submodel is allowed
-									withAllow = false;
-									access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-										out _, out withAllow, out getPolicy, sm.IdShort!, "submodel", sm);
-									display = true;
-									break;
-								}
-							case ISubmodelElement sme:
-								{
-									var path = sme.IdShort;
-									var p = sme.Parent;
-									while (p is not Submodel)
-									{
-										path = $"{(p as ISubmodelElement).IdShort}.{path}";
-										p = (p as ISubmodelElement).Parent;
-									}
+						var access = treeItem.TreeSecurityAccess;
+						var mixedDescendants = treeItem.TreeSecurityWithAllow;
 
-									path = $"{(p as Submodel).IdShort}.{path}";
-									var error = string.Empty;
-									access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-										out error, out withAllow, out getPolicy, path, string.Empty, p);
-									display = true;
-									break;
-								}
-						}
-
-						if (display)
+						if (mixedDescendants)
 						{
-							if (context.Children == null || !context.Children.Any())
-								withAllow = false;
-							if (access)
-							{
-								<span style="color:green;background-color:green;">&nbsp&nbsp</span>
-							}
-							else
-							{
-								if (!withAllow)
-								{
-									<span style="color:red;background-color:red;">&nbsp&nbsp</span>
-								}
-								else
-								{
-									<span style="color:red;background-color:red;">&nbsp</span>
-									<span style="color:green;background-color:green;">&nbsp</span>
-								}
-							}
-							<span>&nbsp&nbsp</span>
+							<span style="color:red;background-color:red;">&nbsp</span>
+							<span style="color:green;background-color:green;">&nbsp</span>
 						}
+						else if (access)
+						{
+							<span style="color:green;background-color:green;">&nbsp&nbsp</span>
+						}
+						else
+						{
+							<span style="color:red;background-color:red;">&nbsp&nbsp</span>
+						}
+						<span>&nbsp&nbsp</span>
 					}
 
 					<span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
 					@ViewNodeID(context)@ViewNodeInfo(context)
-					@if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
-					{
-						<span style="color:blue"> @getPolicy</span>
-					}
 
 					<span style="color:blue;font-size:14px">@GetSymbols(context)</span>
 					<span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
@@ -166,8 +135,7 @@
 							text = text.Replace("%BLAZOR%", Program.externalBlazor);
 							if (text.Contains("%ACCESSRULES%"))
 							{
-								List<Dictionary<string, string>> condition = [];
-								var accessRules = SecService.GetSecurityRules(out condition);
+								var accessRules = SecService.GetSecurityRules();
 								<span><b>AAS API</b></span>
 								<br />
 								<table class="table table-bordered table-sm">
@@ -208,22 +176,6 @@
 										}
 									</tbody>
 								</table>
-								<br />
-								<span><b>AAS Data</b></span>
-								<br />
-								@foreach (var dict in condition)
-								{
-									<table class="table table-bordered table-sm">
-										@foreach (var kvp in dict)
-										{
-											<tr>
-												<td>@kvp.Key</td>
-												<td>@kvp.Value</td>
-											</tr>
-										}
-									</table>
-									<br />
-								}
 							}
 							else
 							{
@@ -807,7 +759,15 @@
 
 		public DetailsImageData DetailsImage { get; set; }
 
+		/// <summary> READ access preview for <see cref="Tag"/> Submodel / ISubmodelElement; filled by <see cref="AnnotateTreeSecurity"/>.</summary>
+		public bool TreeSecurityAccess { get; set; }
+
+		/// <summary> True if strict descendants include both an allowed (green) and a denied (red) SM/SME node — drives rot/grün Streifen.</summary>
+		public bool TreeSecurityWithAllow { get; set; }
 	}
+
+	/// <summary> Empty = same behaviour as previous anonymous preview (<c>null</c> role).</summary>
+	string treePreviewAccessRole = "";
 
 	List<Item> Items = null;
 
@@ -895,6 +855,62 @@
 
 	bool update = true;
 
+	/// <summary>
+	/// Recreates <see cref="Items"/> from the AAS model (same as data reload) and maps selection/expansion to the new <see cref="Item"/> instances.
+	/// Preview role only re-colored the old graph before; without a rebuild, <see cref="ExpandedNodes"/> could keep stale nodes and collections might not expand.
+	/// </summary>
+	void RebuildVisibleTreePreservingExpansion()
+	{
+		if (!update)
+		{
+			return;
+		}
+
+		var selectedNode = SelectedNode;
+		var isSelected   = selectedNode != null;
+		var isExpanded   = ExpandedNodes.Count != 0;
+		var expandedNodesPath = new List<string>[ExpandedNodes.Count];
+		if (isExpanded)
+		{
+			for (var j = 0; j < ExpandedNodes.Count; j++)
+			{
+				expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
+			}
+		}
+
+		var selectedNodePath = GetPath(selectedNode);
+
+		var buildTree = SubmodelService.BuildTree(aasID, smID);
+		Items = buildTree;
+
+		ExpandedNodes.Clear();
+		selectedNode = null;
+		if (isSelected)
+		{
+			selectedNode = FindPath(selectedNodePath);
+		}
+
+		if (isExpanded)
+		{
+			foreach (var path in expandedNodesPath)
+			{
+				if (path == null)
+				{
+					continue;
+				}
+
+				var p = FindPath(path);
+				if (p != null)
+				{
+					ExpandedNodes.Add(p);
+				}
+			}
+		}
+
+		AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
+		SelectedNode = selectedNode;
+	}
+
 	void updateVisibleTree()
 	{
 		if (!update)
@@ -909,41 +925,9 @@
 				break;
 			case 1:
 			case 2:
-				var isSelected = selectedNode != null;
-				var isExpanded = ExpandedNodes.Count != 0;
-				var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-				var selectedNodePath = GetPath(selectedNode);
-				if (isExpanded)
-				{
-					for (var j = 0; j < ExpandedNodes.Count; j++)
-					{
-						expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
-					}
-				}
-
-				var buildTree = SubmodelService.BuildTree(aasID, smID);
-
-				Items = buildTree;
-
-				ExpandedNodes.Clear();
-				selectedNode = null;
-				if (isSelected)
-				{
-					selectedNode = FindPath(selectedNodePath);
-				}
-
-				if (isExpanded)
-				{
-					foreach (var path in expandedNodesPath)
-					{
-						var p = FindPath(path);
-						if (p != null)
-							ExpandedNodes.Add(p);
-					}
-				}
-
+				RebuildVisibleTreePreservingExpansion();
 				newDataMode = 0;
-				break;
+				return;
 			// 3 == build new tree, all nodes closed
 			case 3:
 				var buildTree2 = SubmodelService.BuildTree(aasID, smID);
@@ -952,10 +936,136 @@
 				ExpandedNodes.Clear();
 				selectedNode = null;
 				newDataMode = 0;
+				AnnotateTreeSecurity(Items, ResolveTreePreviewAccessRole());
 				break;
 		}
 
 		SelectedNode = selectedNode;
+	}
+
+	static string? ResolveTreePreviewAccessRole(string? raw) =>
+		string.IsNullOrWhiteSpace(raw) ? null : raw.Trim();
+
+	string? ResolveTreePreviewAccessRole() => ResolveTreePreviewAccessRole(treePreviewAccessRole);
+
+	/// <summary> Runs after <see cref="treePreviewAccessRole"/> is written from the input (commit on blur / change).</summary>
+	async Task OnTreePreviewAccessRoleBindAfterAsync()
+	{
+		await ApplyTreePreviewAccessRoleRebuildAsync();
+	}
+
+	async Task OnTreePreviewAccessRoleApplyClickAsync()
+	{
+		await ApplyTreePreviewAccessRoleRebuildAsync();
+	}
+
+	/// <summary> Rebuild tree + security preview; <see cref="InvokeAsync(StateHasChanged)"/> ensures a render after the graph is replaced.</summary>
+	async Task ApplyTreePreviewAccessRoleRebuildAsync()
+	{
+		if (!GlobalSecurityVariables.WithAuthentication)
+		{
+			return;
+		}
+
+		RebuildVisibleTreePreservingExpansion();
+		await InvokeAsync(StateHasChanged);
+	}
+
+	static string BuildSubmodelElementSecurityPath(ISubmodelElement sme)
+	{
+		var path = sme.IdShort;
+		var p    = sme.Parent;
+		while (p is not Submodel)
+		{
+			path = $"{(p as ISubmodelElement)!.IdShort}.{path}";
+			p    = (p as ISubmodelElement)!.Parent;
+		}
+
+		return $"{(p as Submodel)!.IdShort}.{path}";
+	}
+
+	void AnnotateTreeSecurity(List<Item>? roots, string? accessRole)
+	{
+		if (roots == null || !GlobalSecurityVariables.WithAuthentication)
+		{
+			return;
+		}
+
+		foreach (var item in roots)
+		{
+			AnnotateTreeItemSecurity(item, accessRole);
+		}
+
+		foreach (var item in roots)
+		{
+			ApplyTreeSecuritySubtreeMixedStripes(item);
+		}
+	}
+
+	/// <summary>
+	/// Sets <see cref="Item.TreeSecurityWithAllow"/> when this node’s subtree (including self) has both allow and deny for SM/SME preview — e.g. submodel READ ok but some SME denied by FILTER.
+	/// </summary>
+	static (bool subtreeHasGreen, bool subtreeHasRed) ApplyTreeSecuritySubtreeMixedStripes(Item n)
+	{
+		var descGreen = false;
+		var descRed   = false;
+		if (n.Children != null)
+		{
+			foreach (var c in n.Children)
+			{
+				var (tg, tr) = ApplyTreeSecuritySubtreeMixedStripes(c);
+				descGreen |= tg;
+				descRed   |= tr;
+			}
+		}
+
+		var isSec = n.Tag is Submodel or ISubmodelElement;
+		var selfG = isSec && n.TreeSecurityAccess;
+		var selfR = isSec && !n.TreeSecurityAccess;
+
+		var subtreeGreen = descGreen || selfG;
+		var subtreeRed   = descRed   || selfR;
+		n.TreeSecurityWithAllow = subtreeGreen && subtreeRed;
+
+		return (subtreeGreen, subtreeRed);
+	}
+
+	void AnnotateTreeItemSecurity(Item item, string? accessRole)
+	{
+		switch (item.Tag)
+		{
+			case Submodel sm:
+			{
+				item.TreeSecurityAccess = SecService.EvaluateTreeSubmodelRead(accessRole, sm, "/submodels");
+				break;
+			}
+			case ISubmodelElement sme:
+			{
+				var path = BuildSubmodelElementSecurityPath(sme);
+				var p    = sme.Parent;
+				while (p is not Submodel)
+				{
+					p = (p as ISubmodelElement)!.Parent;
+				}
+
+				item.TreeSecurityAccess = SecService.EvaluateTreeSubmodelElementRead(accessRole, (Submodel)p, path, "/submodel-elements");
+				break;
+			}
+			default:
+				item.TreeSecurityAccess    = false;
+				item.TreeSecurityWithAllow = false;
+				break;
+		}
+
+		if (item.Children == null)
+		{
+			return;
+		}
+
+		foreach (var child in item.Children)
+		{
+			AnnotateTreeItemSecurity(child, accessRole);
+		}
 	}
 
 	List<string> GetPath(Item i)
@@ -1149,7 +1259,7 @@
 
 					break;
 				}
-			case AasCore.Aas3_0.File f:
+			case AasCore.Aas3_1.File f:
 				{
 					// Test for /aasx/
 					if (!string.IsNullOrEmpty(f.Value))
@@ -1364,7 +1474,7 @@
                 {
                     var value = itemTag switch
                     {
-                        AasCore.Aas3_0.File file => file.Value,
+                        AasCore.Aas3_1.File file => file.Value,
                         Property property => property.Value,
                         _ => string.Empty
                     };
@@ -1658,7 +1768,7 @@
 
         switch (itemTag)
         {
-            case AasCore.Aas3_0.File f:
+            case AasCore.Aas3_1.File f:
                 ret = string.Empty;
                 ret += f.IdShort;
                 break;
@@ -1760,7 +1870,7 @@
 
                     break;
                 }
-                case AasCore.Aas3_0.File f:
+                case AasCore.Aas3_1.File f:
                 {
                     if (f.Value != null)
                         ret = $" = {f.Value}";
@@ -1776,7 +1886,7 @@
 
         switch (itemTag)
         {
-            case AasCore.Aas3_0.Range range:
+            case AasCore.Aas3_1.Range range:
             {
                 if (range.Min != null && range.Max != null)
                     ret = $" = {range.Min} .. {range.Max}";
@@ -2112,7 +2222,7 @@
 
                 return ret;
             }
-            case AasCore.Aas3_0.File f:
+            case AasCore.Aas3_1.File f:
                 ret += $", {f.Value}";
                 switch (line)
                 {

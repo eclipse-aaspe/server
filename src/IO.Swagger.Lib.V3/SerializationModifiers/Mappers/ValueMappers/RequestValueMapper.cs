@@ -107,7 +107,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         private static IClass Transform(RangeValue valueDTO)
         {
-            return new AasCore.Aas3_0.Range(DataTypeDefXsd.String, idShort: valueDTO.IdShort, min: valueDTO.Min, max: valueDTO.Max);
+            return new AasCore.Aas3_1.Range(DataTypeDefXsd.String, idShort: valueDTO.IdShort, min: valueDTO.Min, max: valueDTO.Max);
         }
 
         private static IClass Transform(SubmodelElementListValue valueDTO)

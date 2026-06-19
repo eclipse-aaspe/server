@@ -69,7 +69,6 @@ public enum DbRequestOp
     QuerySearchSMs,
     QueryCountSMs,
     QuerySearchSMEs,
-    QueryCountSMEs,
 
     QueryGetSMs,
 

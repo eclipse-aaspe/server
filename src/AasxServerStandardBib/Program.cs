@@ -286,7 +286,7 @@ namespace AasxServer
                         }
 
                         // create package env
-                        env[i] = CrudOperator.GetPackageEnv(db, null, envId);
+                        env[i] = CrudOperator.GetPackageEnv(db, envId);
                         if (env[i] == null || env[i].AasEnv == null)
                         {
                             return output;
@@ -427,6 +427,7 @@ namespace AasxServer
             public bool     WithDb          { get; set; }
             public bool     NoDbFiles       { get; set; }
             public int      StartIndex      { get; set; }
+            public bool     Analyze         { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -788,129 +789,170 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
-                var fi = 0;
-                while (fi < fileNames.Length)
+                if (withDb)
+                    persistenceService.BeginBulkImport();
+
+                // Phase 1: globalsecurity/registry files always load into memory sequentially
+                foreach (var f in fileNames)
                 {
-                    // try
+                    var fl = f.ToLower(System.Globalization.CultureInfo.CurrentCulture);
+                    if (fl.Contains("globalsecurity", StringComparison.InvariantCulture) ||
+                        fl.Contains("registry", StringComparison.InvariantCulture))
                     {
-                        fn = fileNames[fi];
-                        if (fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("globalsecurity", StringComparison.InvariantCulture) ||
-                            fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("registry", StringComparison.InvariantCulture))
+                        envFileName[envi] = f;
+                        env[envi]         = new AdminShellPackageEnv(f, true, false);
+                        envi++;
+                        envimin = envi;
+                        oldest  = envi;
+                    }
+                }
+
+                // Phase 2: regular AASX files
+                var regularFiles = fileNames
+                    .Skip(startIndex)
+                    .Where(f =>
+                    {
+                        var fl = f.ToLower(System.Globalization.CultureInfo.CurrentCulture);
+                        return !fl.Contains("globalsecurity", StringComparison.InvariantCulture) &&
+                               !fl.Contains("registry", StringComparison.InvariantCulture);
+                    })
+                    .ToArray();
+
+                // Full sorted list position (1-based) and --start-index (skip count) use fileNames order; parallel parse may complete out of order.
+                var fileIndexByPath = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                for (var fileIdx = 0; fileIdx < fileNames.Length; fileIdx++)
+                {
+                    fileIndexByPath[fileNames[fileIdx]] = fileIdx;
+                }
+
+                if (withDb)
+                {
+                    // Producer-consumer: parse in parallel, write to DB serially (one thread — same DbContext is not thread-safe).
+                    // While FlushBulkImport runs (sync SaveChanges), the consumer does not dequeue; parsers keep filling the queue
+                    // until it is full, then queue.Add blocks. Steady-state gap (parsed − written) stays ≤ ~queue capacity (+1 in flight);
+                    // it does not grow without bound. Smaller capacity = less RAM, producers block sooner if DB is slower than parse.
+                    const int parserThreads = 4;
+                    // After switching from BulkSaveChanges to SaveChanges (correct ParentSMEId), each flush is heavier.
+                    // Increase (e.g. 200–500) for fewer SaveChanges rounds on large imports; uses more RAM until the next flush.
+                    const int importDbFlushEveryNPackages = 100;
+                    const int importParseQueueCapacity = 128;
+                    var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: importParseQueueCapacity);
+
+                    var parsedCount = 0;
+                    var producer = Task.Run(() =>
+                    {
+                        try
                         {
-                            envFileName[envi] = fn;
-                            env[envi]         = new AdminShellPackageEnv(fn, true, false);
-                            //TODO:jtikekar
-                            //AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
-                            //AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                            envi++;
-                            envimin = envi;
-                            oldest  = envi;
-                            fi++;
-                            continue;
+                            Parallel.ForEach(regularFiles,
+                                new ParallelOptions { MaxDegreeOfParallelism = parserThreads },
+                                f =>
+                                {
+                                    try
+                                    {
+                                        var envDB = AasxServerDB.VisitorAASX.ParseAASX(f, createFilesOnly);
+                                        if (envDB != null)
+                                        {
+                                            queue.Add(envDB);
+                                            System.Threading.Interlocked.Increment(ref parsedCount);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.Error.WriteLine($"Error parsing {f}: {ex.Message} — skipping.");
+                                    }
+                                });
+                        }
+                        finally
+                        {
+                            queue.CompleteAdding();
+                        }
+                    });
+
+                    int count = 0;
+                    var maxResumeStartIndex = startIndex;
+                    foreach (var envDB in queue.GetConsumingEnumerable())
+                    {
+                        count++;
+                        var aasxName = string.IsNullOrEmpty(envDB.Path) ? "?" : Path.GetFileName(envDB.Path);
+                        var idx = string.IsNullOrEmpty(envDB.Path) ? -1 : fileIndexByPath.GetValueOrDefault(envDB.Path, -1);
+                        if (idx >= 0)
+                        {
+                            maxResumeStartIndex = Math.Max(maxResumeStartIndex, idx + 1);
                         }
 
-                        if (fi < startIndex)
+                        // 1-based position in sorted directory; --start-index after this file finishes = (idx+1) — same as 0-based index of next file.
+                        Console.WriteLine(idx >= 0
+                            ? $"Import to DB ({idx + 1}/{fileNames.Length}): {aasxName}"
+                            : $"Import to DB (?/{fileNames.Length}): {aasxName}");
+                        AasxServerDB.VisitorAASX.AddEnvSetToBulk(envDB);
+                        if (count % importDbFlushEveryNPackages == 0)
                         {
-                            fi++;
-                            continue;
+                            Console.WriteLine(
+                                $"DB Flush: written={count} (regular batch {regularFiles.Length}) max --start-index={maxResumeStartIndex}/{fileNames.Length} parsed={parsedCount} ({watch.ElapsedMilliseconds / 1000}s)");
+                            persistenceService.FlushBulkImport();
                         }
-
-
-                        if (fn != "" && envi < envimax)
+                    }
+                    producer.Wait();
+                }
+                else
+                {
+                    // Sequential load into memory (no DB)
+                    foreach (var f in regularFiles)
+                    {
+                        if (envi >= envimax) break;
+                        try
                         {
-                            string name     = Path.GetFileName(fn);
-                            string tempName = "./temp/" + Path.GetFileName(fn);
+                            fn = f;
+                            var name     = Path.GetFileName(fn);
+                            var tempName = "./temp/" + name;
 
-                            // Convert to newest version only
                             if (saveTemp == -1)
                             {
                                 env[envi] = new AdminShellPackageEnv(fn, true, false);
-                                if (env[envi] == null)
-                                {
-                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                    return 1;
-                                }
-
-                                Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s " + "SAVE TO TEMP: " + fn);
+                                Console.WriteLine((Array.IndexOf(fileNames, fn) + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s SAVE TO TEMP: " + fn);
                                 Program.env[envi].SaveAs(tempName);
-                                fi++;
                                 continue;
                             }
 
                             if (readTemp && System.IO.File.Exists(tempName))
-                            {
                                 fn = tempName;
-                            }
 
-                            Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s" + " Loading {0}...", fn);
+                            Console.WriteLine($"{Array.IndexOf(fileNames, fn) + 1}/{fileNames.Length} {watch.ElapsedMilliseconds / 1000}s Loading {fn}...");
                             envFileName[envi] = fn;
-                            if (!withDb)
-                            {
-                                env[envi] = new AdminShellPackageEnv(fn, true, false);
-                                if (env[envi] == null)
-                                {
-                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                    return 1;
-                                }
-                            }
-                            else
-                            {
-                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly);
-                                envFileName[envi] = null;
-                                env[envi]         = null;
-                            }
+                            env[envi]         = new AdminShellPackageEnv(fn, true, false);
 
-                            // check if signed
                             string fileCert = "./user/" + name + ".cer";
                             if (System.IO.File.Exists(fileCert))
                             {
                                 X509Certificate2 x509 = new X509Certificate2(fileCert);
                                 envSymbols[envi]       = "S";
                                 envSubjectIssuer[envi] = x509.Subject;
-
                                 X509Chain chain = new X509Chain();
                                 chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                                bool isValid = chain.Build(x509);
-                                if (isValid)
+                                if (chain.Build(x509))
                                 {
                                     envSymbols[envi]       += ";V";
                                     envSubjectIssuer[envi] += ";" + x509.Issuer;
                                 }
                             }
-                        }
-
-                        fi++;
-                        if (withDb)
-                        {
-                            if (fi % 500 == 0) // every 500
-                            {
-                                /*
-                                Console.WriteLine("DB Save Changes");
-                                db.SaveChanges();
-                                db.ChangeTracker.Clear();
-                                System.GC.Collect();
-                                */
-                            }
-                        }
-                        else
-                        {
                             envi++;
                         }
+                        catch (Exception ex)
+                        {
+                            Console.Error.WriteLine($"Error loading {f}: {ex.Message} — skipping.");
+                        }
                     }
-                    /*
-                    catch
-                    {
-                        Console.WriteLine("Error with " + fileNames[fi]);
-                        fi++;
-                    }
-                    */
                 }
+
+                var fi = regularFiles.Length; // for the log line below
 
                 if (saveTemp == -1)
                     return (0);
 
                 if (withDb)
                 {
+                    persistenceService.EndBulkImport(a.Analyze);
+
                     // preload AASX from DB and keep in memory
                     var packages = new List<AdminShellPackageEnv>();
                     var paths = persistenceService.ReadFilteredPackages("--memory", packages);
@@ -1240,7 +1282,10 @@ namespace AasxServer
                                                    "If set, do not export files from AASX into ZIP"),
                                   new Option<int>(
                                                   new[] {"--start-index"},
-                                                  "If set, start index in list of AASX files")
+                                                  "If set, start index in list of AASX files"),
+                                  new Option<bool>(
+                                                   new[] {"--analyze"},
+                                                   "If set, run ANALYZE after bulk import to update query planner statistics")
                               };
 
             if (args.Length == 0)

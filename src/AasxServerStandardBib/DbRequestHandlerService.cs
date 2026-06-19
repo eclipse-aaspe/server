@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
+using AasCore.Aas3_1;
 using AasxServer;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Models;
@@ -37,6 +37,21 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
     private IPersistenceService _persistenceService;
     private readonly IServiceProvider _serviceProvider;
+
+    private static List<object> ConvertQueryItems(DbRequestResult dbRequestResult)
+    {
+        if (dbRequestResult.Ids != null)
+        {
+            return dbRequestResult.Ids.ConvertAll(r => r as object);
+        }
+
+        if (dbRequestResult.ResultData != null)
+        {
+            return dbRequestResult.ResultData.ConvertAll(r => r as object);
+        }
+
+        return [];
+    }
 
     private readonly SemaphoreSlim _lock = new(0);
 
@@ -1299,43 +1314,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
-        string equal, string lower, string upper,  IPaginationParameters paginationParameters, string expression)
-    {
-        var parameters = new DbRequestParams()
-        {
-            QueryRequest = new DbQueryRequest()
-            {
-                PageFrom = paginationParameters.Cursor,
-                PageSize = paginationParameters.Limit,
-                SmSemanticId = smSemanticId,
-                Identifier = smIdentifier,
-                SemanticId = semanticId,
-                Diff = diff,
-                Contains = contains,
-                Equal = equal,
-                Lower = lower,
-                Upper = upper,
-                Expression = expression
-            }
-        };
 
-        var dbRequestContext = new DbRequestContext()
-        {
-            SecurityConfig = securityConfig,
-            Params = parameters
-        };
-        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
-
-        var dbRequest = new DbRequest(DbRequestOp.QueryCountSMEs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
-
-        _queryOperations.Add(dbRequest);
-
-        var tcs = await taskCompletionSource.Task;
-        return tcs.Count;
-    }
-
-    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string resultType, string expression)
+    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1360,17 +1340,40 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
+        return ConvertQueryItems(tcs);
+    }
 
-        if (tcs.Ids != null)
+    public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression)
+    {
+        var parameters = new DbRequestParams()
         {
-            return tcs.Ids.ConvertAll(r => r as object);
-        }
-        else if (tcs.ResultData != null)
-        {
-            return tcs.ResultData.ConvertAll(r => r as object);
-        }
+            QueryRequest = new DbQueryRequest()
+            {
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
+                ResultType = resultType,
+                Expression = expression,
+                IncludeDebugSql = true
+            }
+        };
 
-        return [];
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryGetSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return new QueryDebugExecutionResult
+        {
+            Result = ConvertQueryItems(tcs),
+            RawSql = tcs.RawSql ?? []
+        };
     }
 
     public async Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId)
