@@ -36,6 +36,7 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AdminShellNS;
+using IO.Swagger.Lib.V3.MCP;
 #if GRAPHQL
 using HotChocolate.AspNetCore;
 #endif
@@ -77,6 +78,11 @@ public static class ServerConfiguration
                     IncludeExceptionDetails = true
                 });
 #endif
+
+        // MCP-Server (Streamable HTTP) als dünner Adapter über die Query-Pipeline. Immer aktiv.
+        services.AddMcpServer()
+            .WithHttpTransport()
+            .WithTools<McpQueryTools>();
     }
 
         /// <summary>
@@ -169,6 +175,8 @@ public static class ServerConfiguration
             Tool = { Enable = true }
         });
 #endif
+        // MCP-Endpoint (Streamable HTTP). Hinweis: PathBase ist "/api/v3.0", der Endpoint ist also "/api/v3.0/mcp".
+        endpoints.MapMcp("/mcp");
     }
 
 #endregion
