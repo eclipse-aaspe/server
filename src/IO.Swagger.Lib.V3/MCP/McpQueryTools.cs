@@ -76,6 +76,11 @@ public sealed class McpQueryTools
     // pathologisch große Shells). Reale Produkte haben i.d.R. <10 Submodelle.
     private const int MaxProductSubmodels = 50;
 
+    // Submodel-idShort-Keywords, die in der simple-Stufe (coreOnly) weggelassen werden: sperrige Datei-/Doku-
+    // Submodelle (CAD, BoM_SpareParts, HandoverDocumentation), die sehr kleine Modelle nur ablenken/überfluten.
+    private static readonly HashSet<string> NoiseSubmodelKeywords = new(StringComparer.OrdinalIgnoreCase)
+        { "handover", "documentation", "cad", "bom", "sparepart" };
+
     private static readonly HashSet<string> AllowedScopes = new(StringComparer.Ordinal) { "aas", "sm", "sme" };
 
     // Slot-Operator -> AASQL-JSON-Schlüssel
@@ -502,20 +507,12 @@ public sealed class McpQueryTools
         "Gib einfach den Merkmalsnamen (idShort, z.B. \"flowMax\") und den gesuchten Wert (z.B. \"80\") an. " +
         "Das Tool findet das Produkt, dessen Element mit diesem idShort den angegebenen Wert hat, und liefert die AAS plus die Werte ALLER Submodelle " +
         "(Hersteller/Nameplate, technische Daten, CO2-Fußabdruck usw.) — alles in einem Aufruf. " +
-        "KEIN scope/op/conditions nötig: nur idShort und value. " +
-        "format=\"value\" (Default, kompakt) oder \"full\" (mit semanticId/valueType/Qualifier — nutze full, wenn nach semanticId, Einheit oder Datentyp gefragt wird).")]
+        "KEIN scope/op/conditions/format nötig: nur idShort und value. Das Ergebnis ist bewusst kompakt gehalten.")]
     public async Task<object> AasFindProductSimple(
         [Description("Name des gesuchten Merkmals/Elements (idShort), z.B. \"flowMax\" oder \"ManufacturerName\".")] string idShort,
-        [Description("Gesuchter Wert dieses Merkmals, z.B. \"80\".")] string value,
-        [Description("Ausgabeformat: \"value\" (kompakt, Default) oder \"full\" (mit semanticId/Einheit/Datentyp).")] string format = "value")
+        [Description("Gesuchter Wert dieses Merkmals, z.B. \"80\".")] string value)
     {
-        LogCall($"aas_find_product_simple idShort={idShort} value={value} format={format}");
-
-        var fmt = (format ?? "value").Trim().ToLowerInvariant();
-        if (fmt != "value" && fmt != "full")
-        {
-            return new { error = $"Unbekanntes format \"{format}\". Erlaubt: \"value\" oder \"full\"." };
-        }
+        LogCall($"aas_find_product_simple idShort={idShort} value={value}");
 
         if (string.IsNullOrWhiteSpace(idShort))
         {
@@ -542,13 +539,14 @@ public sealed class McpQueryTools
             return new { error = ex.Message };
         }
 
-        return await FindProductCore(expression, fmt);
+        // Bewusst immer "value" (kompakt) + coreOnly: full und Datei-/Doku-Submodelle überfordern sehr kleine Modelle (Halluzination).
+        return await FindProductCore(expression, "value", coreOnly: true);
     }
 
     // --------------- Helfer ---------------
 
     // Gemeinsame Produkt-Suche: Expression ausführen, ersten Submodel-Treffer zur Shell auflösen, ganzes Produkt liefern.
-    private async Task<object> FindProductCore(string expression, string fmt)
+    private async Task<object> FindProductCore(string expression, string fmt, bool coreOnly = false)
     {
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
         var pagination = new PaginationParameters(null, MaxPageSize);
@@ -571,7 +569,7 @@ public sealed class McpQueryTools
             return new { found = false, matchedSubmodel = firstId, totalMatches = ids.Count, message = "Treffer gefunden, aber keine zugehörige Shell auflösbar." };
         }
 
-        var product = await BuildProductObject(securityConfig, shell, fmt);
+        var product = await BuildProductObject(securityConfig, shell, fmt, coreOnly);
         product["matchedSubmodel"] = firstId;
         product["totalMatches"] = ids.Count;
         return product;
@@ -665,7 +663,7 @@ public sealed class McpQueryTools
 
     // Baut das Produkt-Objekt: AssetInformation + Werte ALLER Submodelle der Shell im gewählten Format.
     // Jeder Submodel-Read ist indexiert (SMSet.Identifier, SMESet.SMId) und auf die Größe DIESES Submodels begrenzt.
-    private async Task<JsonObject> BuildProductObject(SecurityConfig securityConfig, IAssetAdministrationShell shell, string fmt)
+    private async Task<JsonObject> BuildProductObject(SecurityConfig securityConfig, IAssetAdministrationShell shell, string fmt, bool coreOnly = false)
     {
         var ai = shell.AssetInformation;
         var specificAssetIds = new JsonArray();
@@ -710,6 +708,15 @@ public sealed class McpQueryTools
                 catch (NotFoundException)
                 {
                     sm = null;
+                }
+
+                // coreOnly (simple-Stufe): sperrige Datei-/Doku-Submodelle (CAD, BoM, HandoverDocumentation) weglassen,
+                // damit kleine Modelle die relevanten Daten (Nameplate/TechnicalData/CarbonFootprint) nicht im Rauschen verlieren.
+                var smIdShort = (sm as ISubmodel)?.IdShort;
+                if (coreOnly && smIdShort != null
+                    && NoiseSubmodelKeywords.Any(k => smIdShort.Contains(k, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
                 }
 
                 var entry = new JsonObject { ["id"] = smId };
