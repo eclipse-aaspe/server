@@ -92,9 +92,10 @@ public static class ServerConfiguration
                 filters.AddListToolsFilter(next => async (context, ct) =>
                 {
                     var result = await next(context, ct);
-                    if (IsBasicMcpEndpoint(context.Services) && result.Tools is not null)
+                    var allowed = AllowedMcpTools(context.Services);
+                    if (allowed is not null && result.Tools is not null)
                     {
-                        result.Tools = result.Tools.Where(t => McpQueryTools.BasicToolNames.Contains(t.Name)).ToList();
+                        result.Tools = result.Tools.Where(t => allowed.Contains(t.Name)).ToList();
                     }
 
                     return result;
@@ -102,12 +103,13 @@ public static class ServerConfiguration
 
                 filters.AddCallToolFilter(next => (context, ct) =>
                 {
-                    if (IsBasicMcpEndpoint(context.Services)
+                    var allowed = AllowedMcpTools(context.Services);
+                    if (allowed is not null
                         && context.Params is not null
-                        && !McpQueryTools.BasicToolNames.Contains(context.Params.Name))
+                        && !allowed.Contains(context.Params.Name))
                     {
                         throw new InvalidOperationException(
-                            $"Tool '{context.Params.Name}' ist auf dem Endpunkt /mcp-basic nicht verfügbar. Nutze aas_find_product.");
+                            $"Tool '{context.Params.Name}' ist auf diesem MCP-Endpunkt nicht verfügbar.");
                     }
 
                     return next(context, ct);
@@ -115,11 +117,27 @@ public static class ServerConfiguration
             });
     }
 
-    // True, wenn der aktuelle Request über den reduzierten Endpunkt /mcp-basic kam.
-    private static bool IsBasicMcpEndpoint(IServiceProvider? services)
+    // Erlaubter Tool-Satz je nach MCP-Endpunkt-Pfad (null = alle Tools, voller Endpunkt /mcp).
+    // /mcp-simple zuerst prüfen (Pfad enthält nicht "mcp-basic"), dann /mcp-basic, sonst voll.
+    private static HashSet<string>? AllowedMcpTools(IServiceProvider? services)
     {
         var path = services?.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?.HttpContext?.Request.Path.Value;
-        return path is not null && path.Contains("mcp-basic", StringComparison.OrdinalIgnoreCase);
+        if (path is null)
+        {
+            return null;
+        }
+
+        if (path.Contains("mcp-simple", StringComparison.OrdinalIgnoreCase))
+        {
+            return McpQueryTools.SimpleToolNames;
+        }
+
+        if (path.Contains("mcp-basic", StringComparison.OrdinalIgnoreCase))
+        {
+            return McpQueryTools.BasicToolNames;
+        }
+
+        return null;
     }
 
         /// <summary>
@@ -216,6 +234,7 @@ public static class ServerConfiguration
         // /mcp = voller Toolsatz (starke Modelle), /mcp-basic = nur aas_find_product (schwache Modelle); Filter s. ConfigureMcp.
         endpoints.MapMcp("/mcp");
         endpoints.MapMcp("/mcp-basic");
+        endpoints.MapMcp("/mcp-simple");
     }
 
 #endregion

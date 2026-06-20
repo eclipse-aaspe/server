@@ -64,8 +64,13 @@ public sealed class McpQueryTools
 {
     private const int MaxPageSize = 500;
 
-    // Tools, die auf dem reduzierten Endpunkt /mcp-basic sichtbar sind (für schwache Modelle).
+    // Tool-Sätze für die reduzierten Endpunkte (Pfad-Filter siehe ServerConfiguration).
+    // /mcp-basic: das mächtige conditions-Tool — ein Call, aber komplexe Suchen (AND/OR, Operatoren). Für mittlere Modelle (z.B. Gemini Flash).
     public static readonly HashSet<string> BasicToolNames = new(StringComparer.Ordinal) { "aas_find_product" };
+
+    // /mcp-simple: nur das Tool mit flachen Parametern (idShort/value) — für sehr kleine Modelle (z.B. Qwen 7B),
+    // die das conditions[]-Schema nicht korrekt füllen.
+    public static readonly HashSet<string> SimpleToolNames = new(StringComparer.Ordinal) { "aas_find_product_simple" };
 
     // Obergrenze für aas_get_product: max. so viele Submodelle pro AAS werden geladen (Schutz gegen
     // pathologisch große Shells). Reale Produkte haben i.d.R. <10 Submodelle.
@@ -488,6 +493,63 @@ public sealed class McpQueryTools
             return new { error = ex.Message };
         }
 
+        return await FindProductCore(expression, fmt);
+    }
+
+    [McpServerTool(Name = "aas_find_product_simple")]
+    [Description(
+        "Findet ein Produkt anhand EINES Merkmals und liefert es komplett zurück — der einfachste Weg, ohne Bedingungs-Syntax. " +
+        "Gib einfach den Merkmalsnamen (idShort, z.B. \"flowMax\") und den gesuchten Wert (z.B. \"80\") an. " +
+        "Das Tool findet das Produkt, dessen Element mit diesem idShort den angegebenen Wert hat, und liefert die AAS plus die Werte ALLER Submodelle " +
+        "(Hersteller/Nameplate, technische Daten, CO2-Fußabdruck usw.) — alles in einem Aufruf. " +
+        "KEIN scope/op/conditions nötig: nur idShort und value. " +
+        "format=\"value\" (Default, kompakt) oder \"full\" (mit semanticId/valueType/Qualifier — nutze full, wenn nach semanticId, Einheit oder Datentyp gefragt wird).")]
+    public async Task<object> AasFindProductSimple(
+        [Description("Name des gesuchten Merkmals/Elements (idShort), z.B. \"flowMax\" oder \"ManufacturerName\".")] string idShort,
+        [Description("Gesuchter Wert dieses Merkmals, z.B. \"80\".")] string value,
+        [Description("Ausgabeformat: \"value\" (kompakt, Default) oder \"full\" (mit semanticId/Einheit/Datentyp).")] string format = "value")
+    {
+        LogCall($"aas_find_product_simple idShort={idShort} value={value} format={format}");
+
+        var fmt = (format ?? "value").Trim().ToLowerInvariant();
+        if (fmt != "value" && fmt != "full")
+        {
+            return new { error = $"Unbekanntes format \"{format}\". Erlaubt: \"value\" oder \"full\"." };
+        }
+
+        if (string.IsNullOrWhiteSpace(idShort))
+        {
+            return new { error = "idShort darf nicht leer sein (z.B. \"flowMax\")." };
+        }
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return new { error = "value darf nicht leer sein (z.B. \"80\")." };
+        }
+
+        var conditions = new[]
+        {
+            new McpQueryCondition { Scope = "sme", Field = "value", IdShortPath = idShort.Trim(), Op = "eq", Value = value },
+        };
+
+        string expression;
+        try
+        {
+            expression = BuildExpression(conditions, "and");
+        }
+        catch (ArgumentException ex)
+        {
+            return new { error = ex.Message };
+        }
+
+        return await FindProductCore(expression, fmt);
+    }
+
+    // --------------- Helfer ---------------
+
+    // Gemeinsame Produkt-Suche: Expression ausführen, ersten Submodel-Treffer zur Shell auflösen, ganzes Produkt liefern.
+    private async Task<object> FindProductCore(string expression, string fmt)
+    {
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
         var pagination = new PaginationParameters(null, MaxPageSize);
         var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, ResultType.Submodel, expression);
@@ -499,7 +561,7 @@ public sealed class McpQueryTools
 
         if (ids.Count == 0)
         {
-            return new { found = false, totalMatches = 0, message = "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq) oder Schreibweise/Groß-Kleinschreibung prüfen." };
+            return new { found = false, totalMatches = 0, message = "Keine Treffer. Anderen Wert/Schreibweise versuchen oder Groß-/Kleinschreibung des idShort prüfen." };
         }
 
         var firstId = ids[0];
@@ -514,8 +576,6 @@ public sealed class McpQueryTools
         product["totalMatches"] = ids.Count;
         return product;
     }
-
-    // --------------- Helfer ---------------
 
     // Kompaktes Console-Log jedes MCP-Aufrufs (eine Zeile), passend zum übrigen Server-Log.
     private static void LogCall(string line)
