@@ -1246,7 +1246,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
+    public async Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, ResultType resultType, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1257,6 +1257,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                 SemanticId = semanticId,
                 Identifier = identifier,
                 Diff = diff,
+                ResultType = resultType,
                 Expression = expression
             }
         };

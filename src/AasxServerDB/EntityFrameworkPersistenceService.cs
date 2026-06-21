@@ -729,13 +729,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     //        queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.QueryResult = qresult;
                     //    break;
-                    //case DbRequestOp.QueryCountSMs:
-                    //    queryRequest = dbRequest.Context.Params.QueryRequest;
-                    //    query = new Query(_grammar);
-                    //    var count = query.CountSMs(securityConfig, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
-                    //        queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                    //    result.Count = count;
-                    //    break;
+                    case DbRequestOp.QueryCountSMs:
+                        var countRequest = dbRequest.Context.Params.QueryRequest;
+                        var countQuery = new Query(_grammar);
+                        result.Count = countQuery.GetQueryDataCount(
+                            securityConfig.NoSecurity,
+                            db,
+                            countRequest.PageFrom,
+                            countRequest.PageSize,
+                            countRequest.ResultType,
+                            countRequest.Expression,
+                            securitySqlConditions);
+                        break;
                     //case DbRequestOp.QuerySearchSMEs:
                     //    queryRequest = dbRequest.Context.Params.QueryRequest;
                     //    query = new Query(_grammar);

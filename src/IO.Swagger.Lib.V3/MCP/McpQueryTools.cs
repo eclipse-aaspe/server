@@ -210,7 +210,7 @@ public sealed class McpQueryTools
     [Description(
         "Zählt die Treffer einer Suche, bevor man sie abruft. Gleiche Bedingungs-/combine-Logik wie aas_query. " +
         "Hinweis: in dieser Version nur für target=\"submodels\" verfügbar; für target=\"shells\" bitte aas_query mit limit verwenden. " +
-        "Die Zählung ist auf 500 gedeckelt; ist das Feld \"capped\" im Ergebnis true, kann die echte Gesamtzahl höher sein.")]
+        "Liefert die exakte Gesamtzahl (ungedeckelt) und ist auch bei großen Treffermengen schnell.")]
     public async Task<object> AasCount(
         [Description("Zielobjekt: aktuell nur \"submodels\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
@@ -235,27 +235,24 @@ public sealed class McpQueryTools
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
-        var pagination = new PaginationParameters(null, MaxPageSize);
 
-        // In dieser Version gibt es keinen dedizierten COUNT-Pfad im Query-Engine
-        // (DbRequestOp.QueryCountSMs ist nicht implementiert). Wir zählen daher über
-        // den funktionierenden QueryGetSMs-Pfad und liefern die Anzahl der Identifier.
-        var (list, queryError) = await TryQuery(securityConfig, pagination, ResultType.Submodel, expression);
-        if (queryError != null)
+        // Dedizierter COUNT-Pfad: zählt die Treffer-Ids im Query-Engine, OHNE die
+        // vollständigen Submodelle zu materialisieren ("Collect results" entfällt).
+        // Das skaliert auf große DBs und liefert die echte Gesamtzahl (ungedeckelt).
+        // pageSize = int.MaxValue => SQL-LIMIT umfasst alle Treffer (SQLite & Postgres).
+        var pagination = new PaginationParameters(null, int.MaxValue);
+        int totalCount;
+        try
         {
-            return new { error = "Query fehlgeschlagen: " + queryError };
+            totalCount = await _dbRequestHandlerService.QueryCountSMs(
+                securityConfig, string.Empty, string.Empty, string.Empty, pagination, ResultType.Submodel, expression);
+        }
+        catch (Exception ex)
+        {
+            return new { error = "Query fehlgeschlagen: " + ex.Message };
         }
 
-        var totalCount = (list ?? new List<object>())
-            .OfType<IIdentifiable>()
-            .Select(x => x.Id)
-            .Count(id => !string.IsNullOrEmpty(id));
-
-        // capped=true bedeutet: Das Limit wurde erreicht, die echte Gesamtzahl
-        // kann höher sein (kein exakter COUNT in dieser Version).
-        var capped = totalCount >= MaxPageSize;
-
-        return new { target, totalCount, capped, nextStep = "Treffer abrufen mit aas_query (gleiche Bedingung); danach aas_get_submodel oder aas_get_product für die Inhalte." };
+        return new { target, totalCount, nextStep = "Treffer abrufen mit aas_query (gleiche Bedingung); danach aas_get_submodel oder aas_get_product für die Inhalte." };
     }
 
     [McpServerTool(Name = "aas_get_submodel")]

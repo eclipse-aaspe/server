@@ -262,6 +262,43 @@ public partial class Query
     //}
 
 
+    // Count-only path: returns the number of matching ids WITHOUT materializing
+    // the full submodels (the "Collect results" phase). This is the fast,
+    // scalable way to answer aas_count for large databases. pageSize should be
+    // unbounded (e.g. int.MaxValue) so the count is the true total, not a page.
+    internal int GetQueryDataCount(bool noSecurity, AasContext db,
+        int pageFrom, int pageSize, ResultType resultType, string expression,
+        SqlConditions? securitySqlConditions = null)
+    {
+        var effectiveSecurity = noSecurity ? null : securitySqlConditions;
+
+        var qResult = new QResult()
+        {
+            Count = 0,
+            TotalCount = 0,
+            PageFrom = 0,
+            PageSize = QResult.DefaultPageSize,
+            LastID = 0,
+            Messages = new List<string>(),
+            SMResults = new List<SMResult>(),
+            SMEResults = new List<SMEResult>(),
+            SQL = new List<string>()
+        };
+
+        var watch = Stopwatch.StartNew();
+        Console.WriteLine("\nSearchSMs (count)");
+        watch.Restart();
+
+        expression = "$JSONGRAMMAR " + expression;
+
+        var result = GetSMs(out _, resultType,
+            qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression, null, effectiveSecurity);
+
+        var count = result?.Count ?? 0;
+        Console.WriteLine("Count query in " + watch.ElapsedMilliseconds + " ms (" + count + " matches)");
+        return count;
+    }
+
     internal QueryResult GetQueryData(bool noSecurity, AasContext db,
         int pageFrom, int pageSize, ResultType resultType, string expression, bool includeDebugSql = false,
         SqlConditions? securitySqlConditions = null)
