@@ -79,6 +79,13 @@ public sealed class McpQueryTools
     // pathologisch große Shells). Reale Produkte haben i.d.R. <10 Submodelle.
     private const int MaxProductSubmodels = 50;
 
+    // Default order for ambiguous leaf-name projections; callers can override both lists.
+    private static readonly string[] DefaultProjectionPriority =
+        { "Nameplate", "GeneralInformation", "TechnicalData", "TechnicalProperties", "HandoverDocumentation", "ProductCarbonFootprint" };
+
+    private static readonly string[] DefaultProjectionDeprioritize =
+        { "Associated_part", "Part_relation" };
+
     // Submodel-idShort-Keywords, die in der simple-Stufe (coreOnly) weggelassen werden: sperrige Datei-/Doku-
     // Submodelle (CAD, BoM_SpareParts, HandoverDocumentation), die sehr kleine Modelle nur ablenken/überfluten.
     private static readonly HashSet<string> NoiseSubmodelKeywords = new(StringComparer.OrdinalIgnoreCase)
@@ -134,7 +141,10 @@ public sealed class McpQueryTools
         [Description("Maximale Trefferzahl (Default und Maximum 500).")] int? limit = null,
         [Description("Cursor (Offset) zum Weiterblättern; aus nextCursor einer vorigen Antwort.")] string? cursor = null,
         [Description("Optional: Liste von idShortPaths, deren Werte je Treffer direkt mitgeliefert werden (Projektion = Tabellenspalten), z.B. [\"GeneralInformation.ManufacturerArticleNumber\", \"TechnicalProperties.Power_output\"]. Dann gibt das Tool statt nur Identifier eine Zeile pro Treffer mit diesen Feldern zurück — spart viele aas_get_submodel-Aufrufe. Volle Pfade (mit Punkt) sind präzise; ein Blattname ohne Punkt nimmt den ersten Treffer im Submodel. Nur für target=\"submodels\".")] string[]? select = null,
-        [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion: nur dieser Sprachwert kommt zurück (Default \"en\"; fehlt die Sprache, wird die erste vorhandene genommen). Nur relevant zusammen mit select.")] string lang = "en")
+        [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion: nur dieser Sprachwert kommt zurück (Default \"en\"; fehlt die Sprache, wird die erste vorhandene genommen). Nur relevant zusammen mit select.")] string lang = "en",
+        [Description("Optionale Prioritätsreihenfolge für mehrdeutige Blattnamen. Default: Nameplate, GeneralInformation, TechnicalData, TechnicalProperties, HandoverDocumentation, ProductCarbonFootprint.")] string[]? priority = null,
+        [Description("Optionale Pfadsegmente, die bei mehrdeutigen Blattnamen ans Ende gestellt werden. Default: Associated_part, Part_relation.")] string[]? deprioritize = null,
+        [Description("Wenn true, enthält jede Projektionszeile zusätzlich ein paths-Objekt mit den tatsächlich gewählten idShortPaths.")] bool withPaths = false)
     {
         using var _ = LogCallTimed($"aas_query {target} {DescribeConditions(conditions, combine)} limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} cursor={cursor ?? "-"} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
 
@@ -155,7 +165,11 @@ public sealed class McpQueryTools
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
         var pagination = new PaginationParameters(cursor, NormalizeLimit(limit));
 
-        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, resultType, expression);
+        var (list, queryError) = await TryQuery(securityConfig, pagination, resultType, expression);
+        if (queryError != null)
+        {
+            return new { error = "Query fehlgeschlagen: " + queryError };
+        }
 
         var identifiers = (list ?? new List<object>())
             .OfType<IIdentifiable>()
@@ -174,7 +188,7 @@ public sealed class McpQueryTools
             var rows = new JsonArray();
             foreach (var id in identifiers)
             {
-                rows.Add(await BuildProjectionRow(securityConfig, id, select, lang));
+                rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths));
             }
 
             return new { target, count = identifiers.Count, columns = select, rows, nextCursor };
@@ -226,7 +240,11 @@ public sealed class McpQueryTools
         // In dieser Version gibt es keinen dedizierten COUNT-Pfad im Query-Engine
         // (DbRequestOp.QueryCountSMs ist nicht implementiert). Wir zählen daher über
         // den funktionierenden QueryGetSMs-Pfad und liefern die Anzahl der Identifier.
-        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, ResultType.Submodel, expression);
+        var (list, queryError) = await TryQuery(securityConfig, pagination, ResultType.Submodel, expression);
+        if (queryError != null)
+        {
+            return new { error = "Query fehlgeschlagen: " + queryError };
+        }
 
         var totalCount = (list ?? new List<object>())
             .OfType<IIdentifiable>()
@@ -293,7 +311,10 @@ public sealed class McpQueryTools
         [Description("Liste von Submodel-Identifiern (vollständige ids, NICHT Base64-kodiert).")] string[] identifiers,
         [Description("Ausgabeformat je Submodel, wenn KEIN select: \"value\" (kompakt, Default) oder \"full\".")] string format = "value",
         [Description("Optional: idShortPaths zur Projektion (Tabellenspalten), z.B. [\"GeneralInformation.ManufacturerArticleNumber\", \"TechnicalProperties.Power_output\"]. Mit select wird je ID nur eine Zeile mit diesen Feldern geliefert.")] string[]? select = null,
-        [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion (Default \"en\"). Nur mit select relevant.")] string lang = "en")
+        [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion (Default \"en\"). Nur mit select relevant.")] string lang = "en",
+        [Description("Optionale Prioritätsreihenfolge für mehrdeutige Blattnamen. Default: Nameplate, GeneralInformation, TechnicalData, TechnicalProperties, HandoverDocumentation, ProductCarbonFootprint.")] string[]? priority = null,
+        [Description("Optionale Pfadsegmente, die bei mehrdeutigen Blattnamen ans Ende gestellt werden. Default: Associated_part, Part_relation.")] string[]? deprioritize = null,
+        [Description("Wenn true, enthält jede Projektionszeile zusätzlich ein paths-Objekt mit den tatsächlich gewählten idShortPaths.")] bool withPaths = false)
     {
         using var _ = LogCallTimed($"aas_get_submodels n={(identifiers?.Length ?? 0)} format={format} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
 
@@ -318,7 +339,7 @@ public sealed class McpQueryTools
             {
                 if (!string.IsNullOrWhiteSpace(id))
                 {
-                    rows.Add(await BuildProjectionRow(securityConfig, id.Trim(), select, lang));
+                    rows.Add(await BuildProjectionRow(securityConfig, id.Trim(), select, lang, priority, deprioritize, withPaths));
                 }
             }
 
@@ -661,12 +682,32 @@ public sealed class McpQueryTools
 
     // --------------- Helfer ---------------
 
+    // Führt eine Query aus und fängt Engine-Fehler ab (z.B. ungültiges SQL durch aas.* in Submodel-Queries),
+    // damit daraus ein lesbares {error} wird statt einer unhandled exception.
+    private async Task<(List<object>? List, string? Error)> TryQuery(SecurityConfig securityConfig, PaginationParameters pagination, ResultType resultType, string expression)
+    {
+        try
+        {
+            var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, resultType, expression);
+            return (list, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
     // Gemeinsame Produkt-Suche: Expression ausführen, ersten Submodel-Treffer zur Shell auflösen, ganzes Produkt liefern.
     private async Task<object> FindProductCore(string expression, string fmt, bool coreOnly = false)
     {
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
         var pagination = new PaginationParameters(null, MaxPageSize);
-        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, ResultType.Submodel, expression);
+        var (list, queryError) = await TryQuery(securityConfig, pagination, ResultType.Submodel, expression);
+        if (queryError != null)
+        {
+            return new { error = "Query fehlgeschlagen: " + queryError };
+        }
+
         var ids = (list ?? new List<object>())
             .OfType<IIdentifiable>()
             .Select(x => x.Id)
@@ -747,12 +788,14 @@ public sealed class McpQueryTools
         return dto is IValueDTO valueDto ? ValueOnlyJsonSerializer.ToJsonObject(valueDto) : null;
     }
 
-    // Navigiert einen idShortPath im Submodel zum Element: mit Punkt positional je Ebene, ohne Punkt erster Treffer beliebiger Tiefe.
-    private static ISubmodelElement? GetElementByPath(ISubmodel submodel, string path)
+    // Navigiert einen idShortPath im Submodel: mit Punkt exakt, ohne Punkt per konfigurierbarem Ranking.
+    private static (string Path, ISubmodelElement Element)? GetProjectionMatch(
+        ISubmodel submodel, string path, string[]? priority, string[]? deprioritize)
     {
         if (path.Contains('.', StringComparison.Ordinal))
         {
-            return NavigatePath(submodel.SubmodelElements, path.Split('.'), 0);
+            var exact = NavigatePath(submodel.SubmodelElements, path.Split('.'), 0);
+            return exact is null ? null : (path, exact);
         }
 
         var matches = new List<(string Path, ISubmodelElement Element)>();
@@ -762,23 +805,65 @@ public sealed class McpQueryTools
             return null;
         }
 
-        // Hauptprodukt bevorzugen: Treffer NICHT unter Zubehör-Zweigen (Part_relation/Associated_part).
-        // Sonst liefert ein Blattname wie "Product_type" fälschlich die Zubehör-Bezeichnung (z.B. Montageadapter).
-        foreach (var m in matches)
+        var preferredPath = SelectPreferredProjectionPath(
+            matches.Select(match => match.Path).ToArray(), priority, deprioritize);
+        var preferred = matches.First(match => string.Equals(match.Path, preferredPath, StringComparison.Ordinal));
+        return preferred;
+    }
+
+    internal static string? SelectPreferredProjectionPath(
+        IReadOnlyList<string> paths, string[]? priority = null, string[]? deprioritize = null)
+    {
+        if (paths.Count == 0)
         {
-            if (!IsAccessoryPath(m.Path))
+            return null;
+        }
+
+        var priorities = NormalizeRankingList(priority, DefaultProjectionPriority);
+        var penalties = NormalizeRankingList(deprioritize, DefaultProjectionDeprioritize);
+
+        return paths
+            .Select((path, index) => new
             {
-                return m.Element;
+                Path = path,
+                Index = index,
+                Penalty = PathContainsAnySegment(path, penalties) ? 1 : 0,
+                Priority = GetPathPriority(path, priorities),
+                Depth = path.Split('.', StringSplitOptions.RemoveEmptyEntries).Length,
+            })
+            .OrderBy(x => x.Penalty)
+            .ThenBy(x => x.Priority)
+            .ThenBy(x => x.Depth)
+            .ThenBy(x => x.Index)
+            .Select(x => x.Path)
+            .FirstOrDefault();
+    }
+
+    private static string[] NormalizeRankingList(string[]? configured, string[] defaults)
+        => configured is null
+            ? defaults
+            : configured.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToArray();
+
+    private static int GetPathPriority(string path, string[] priorities)
+    {
+        var segments = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < priorities.Length; i++)
+        {
+            if (segments.Any(segment => string.Equals(segment, priorities[i], StringComparison.OrdinalIgnoreCase)))
+            {
+                return i;
             }
         }
 
-        return matches[0].Element;
+        return priorities.Length;
     }
 
-    // Zubehör-/Nebenprodukt-Zweige, die bei Hauptprodukt-Abfragen ignoriert werden sollen.
-    private static bool IsAccessoryPath(string path)
-        => path.Contains("Associated_part", StringComparison.OrdinalIgnoreCase)
-           || path.Contains("Part_relation", StringComparison.OrdinalIgnoreCase);
+    private static bool PathContainsAnySegment(string path, string[] candidates)
+    {
+        var segments = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        return candidates.Any(candidate =>
+            segments.Any(segment => string.Equals(segment, candidate, StringComparison.OrdinalIgnoreCase)));
+    }
 
     private static ISubmodelElement? NavigatePath(IReadOnlyList<ISubmodelElement>? elements, string[] segments, int index)
     {
@@ -849,7 +934,9 @@ public sealed class McpQueryTools
     }
 
     // Eine Projektions-Zeile für ein Submodel: liest es und extrahiert die select-Pfade als {id, <path>:<wert>}.
-    private async Task<JsonObject> BuildProjectionRow(SecurityConfig securityConfig, string id, string[] select, string lang)
+    private async Task<JsonObject> BuildProjectionRow(
+        SecurityConfig securityConfig, string id, string[] select, string lang,
+        string[]? priority, string[]? deprioritize, bool withPaths)
     {
         IClass? sm = null;
         try
@@ -862,6 +949,7 @@ public sealed class McpQueryTools
         }
 
         var row = new JsonObject { ["id"] = id };
+        JsonObject? selectedPaths = withPaths ? new JsonObject() : null;
         if (sm is ISubmodel submodel)
         {
             foreach (var rawPath in select)
@@ -872,7 +960,17 @@ public sealed class McpQueryTools
                 }
 
                 var path = rawPath.Trim();
-                row[path] = GetProjectedValue(GetElementByPath(submodel, path), lang);
+                var match = GetProjectionMatch(submodel, path, priority, deprioritize);
+                row[path] = GetProjectedValue(match?.Element, lang);
+                if (selectedPaths is not null)
+                {
+                    selectedPaths[path] = match?.Path;
+                }
+            }
+
+            if (selectedPaths is not null)
+            {
+                row["paths"] = selectedPaths;
             }
         }
         else
@@ -910,7 +1008,7 @@ public sealed class McpQueryTools
         }.ToJsonString();
 
         var pagination = new PaginationParameters(null, 1);
-        var shells = await _dbRequestHandlerService.QueryGetSMs(securityConfig, pagination, ResultType.AssetAdministrationShell, expression);
+        var (shells, _) = await TryQuery(securityConfig, pagination, ResultType.AssetAdministrationShell, expression);
 
         return (shells ?? new List<object>())
             .OfType<IIdentifiable>()
