@@ -1325,14 +1325,18 @@ public sealed class McpQueryTools
             : null;
 
         // idShortPath nur als positionalen Pfad behandeln, wenn er einen "." enthält
-        // (z.B. "TechnicalProperties.flowMax"). Ein einzelner Name ohne "." ist faktisch ein
-        // idShort-Blattname, der unabhängig von der Verschachtelungstiefe gefunden wird. In dem Fall
-        // wird die Bedingung zu: $sme#idShort == <name> UND $sme#<field> <op> <wert> (gleiches Element).
+        // (z.B. "TechnicalProperties.flowMax"). Ein einzelner Name ohne "." ist ein idShort-Blattname
+        // in beliebiger Tiefe. WICHTIG (BUG A): Das muss am SELBEN Element korreliert sein. Früher wurde
+        // $and[$sme#idShort==X, $sme#<field> op Y] gebaut — das matcht aber "irgendein idShort=X UND
+        // irgendein Wert op Y" (verschiedene Elemente!) -> Falsch-Treffer. Korrekt ist der korrelierte
+        // Pfad-Mechanismus der Engine: top-level ($sme.<leaf>#field) ODER verschachtelt ($sme.%.<leaf>#field,
+        // %-Wildcard = beliebiger Pfad-Präfix). Beides ist je ein korreliertes Pfad-Subquery (idShortPath + Wert in einer Zeile).
         if (rawPath != null && !rawPath.Contains('.', StringComparison.Ordinal) && field != "idShort")
         {
-            var idShortCmp = BuildFieldComparison("$eq", "$sme#idShort", rawPath, allowNumeric: false);
-            var valueCmp = BuildFieldComparison(opKey, "$sme#" + field, c.Value, allowNumeric: NumericCapableOps.Contains(op));
-            return new JsonObject { ["$and"] = new JsonArray(idShortCmp, valueCmp) };
+            var allowNumeric = NumericCapableOps.Contains(op);
+            var topLevel = BuildFieldComparison(opKey, "$" + scope + "." + rawPath + "#" + field, c.Value, allowNumeric);
+            var nested = BuildFieldComparison(opKey, "$" + scope + ".%." + rawPath + "#" + field, c.Value, allowNumeric);
+            return new JsonObject { ["$or"] = new JsonArray(topLevel, nested) };
         }
 
         var pathSegment = rawPath != null ? "." + rawPath : string.Empty;
