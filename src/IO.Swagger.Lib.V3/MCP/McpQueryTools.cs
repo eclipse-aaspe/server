@@ -1224,25 +1224,35 @@ public sealed class McpQueryTools
 
     private static JsonObject BuildFieldComparison(string opKey, string fieldRef, string? value, bool allowNumeric)
     {
-        // Werttyp: bei numerikfähigem Operator und parsebarer Zahl -> $numVal, sonst $strVal.
-        // NumberStyles.Float (NICHT .Any!): keine Tausendertrennung, sonst würde "1,32" als 132
-        // fehlinterpretiert. Ein "1,32" ist damit keine Zahl -> $strVal (deutsches Komma bleibt String).
-        JsonObject rhs;
-        if (allowNumeric && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var num))
+        JsonObject StrRhs() => new JsonObject { ["$strVal"] = value ?? string.Empty };
+        JsonObject Leaf(string op, JsonObject rhs) => new JsonObject
         {
-            rhs = new JsonObject { ["$numVal"] = num };
-        }
-        else
+            [op] = new JsonArray(new JsonObject { ["$field"] = fieldRef }, rhs),
+        };
+
+        // Nicht numerikfähig oder keine Zahl -> reiner String-Vergleich.
+        // NumberStyles.Float (NICHT .Any!): keine Tausendertrennung, sonst würde "1,32" als 132 fehlinterpretiert.
+        if (!allowNumeric || !double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var num))
         {
-            rhs = new JsonObject { ["$strVal"] = value ?? string.Empty };
+            return Leaf(opKey, StrRhs());
         }
 
-        return new JsonObject
+        JsonObject NumRhs() => new JsonObject { ["$numVal"] = num };
+
+        // eq/ne: gegen String ODER Zahl prüfen — der valueType (xs:string vs xs:double) ist bei der Query unbekannt.
+        // So findet eq "80" einen Double-Wert 80 UND eq "2908936" eine ziffrige String-Artikelnummer.
+        if (opKey == "$eq")
         {
-            [opKey] = new JsonArray(
-                new JsonObject { ["$field"] = fieldRef },
-                rhs),
-        };
+            return new JsonObject { ["$or"] = new JsonArray(Leaf("$eq", StrRhs()), Leaf("$eq", NumRhs())) };
+        }
+
+        if (opKey == "$ne")
+        {
+            return new JsonObject { ["$and"] = new JsonArray(Leaf("$ne", StrRhs()), Leaf("$ne", NumRhs())) };
+        }
+
+        // gt/ge/lt/le: numerischer Vergleich.
+        return Leaf(opKey, NumRhs());
     }
 
     private static void ValidateField(string scope, string field)
