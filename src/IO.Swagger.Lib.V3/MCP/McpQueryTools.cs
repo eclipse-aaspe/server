@@ -47,11 +47,14 @@ public sealed class McpQueryCondition
     [Description("Optionaler idShortPath innerhalb des Submodels, nur für scope=\"sme\". Enthält der Wert einen Punkt, wird er als verschachtelter Pfad behandelt (z.B. \"TechnicalProperties.flowMax\" oder \"Documents[].DocumentVersion.Title\"). Ein einzelner Name ohne Punkt (z.B. \"flowMax\") wird als idShort des Elements gesucht und unabhängig von der Verschachtelungstiefe gefunden.")]
     public string? IdShortPath { get; set; }
 
-    [Description("Vergleichsoperator: eq|ne|gt|ge|lt|le|contains|starts-with|ends-with|regex.")]
+    [Description("Vergleichsoperator: eq|ne|gt|ge|lt|le|contains|starts-with|ends-with|regex|in. \"in\" prüft, ob der Wert in der Liste values vorkommt (ODER-Verknüpfung).")]
     public string Op { get; set; } = "eq";
 
     [Description("Vergleichswert als String (Zahlen als String angeben, z.B. \"100\"). Bei eq/ne/gt/ge/lt/le werden numerische Werte automatisch numerisch verglichen — \"eq 80\" findet also auch einen Double-Wert 80.")]
     public string Value { get; set; } = "";
+
+    [Description("Werteliste für op=\"in\" (z.B. mehrere Artikelnummern). Trifft, wenn das Feld einem der Werte entspricht — ersetzt viele or-verknüpfte eq-Bedingungen.")]
+    public string[]? Values { get; set; }
 }
 
 /// <summary>
@@ -122,15 +125,18 @@ public sealed class McpQueryTools
         "(2) UND: combine=\"and\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"},{scope:\"sme\",field:\"value\",op:\"lt\",value:\"100\"}]. " +
         "(3) ODER: combine=\"or\", conditions=[{scope:\"sme\",field:\"value\",op:\"eq\",value:\"A\"},{scope:\"sme\",field:\"value\",op:\"eq\",value:\"B\"}]. " +
         "Bei großen Treffermengen vorher aas_count aufrufen. " +
-        "Wichtig: aas_query liefert nur Identifier. Danach den Inhalt mit aas_get_submodel lesen — oder, wenn die Frage mehrere Submodelle eines Produkts betrifft (z.B. technische Daten + Hersteller + CO2), in EINEM Schritt mit aas_get_product(identifier).")]
+        "Wichtig: aas_query liefert standardmäßig nur Identifier. Danach den Inhalt mit aas_get_submodel lesen — oder, wenn die Frage mehrere Submodelle eines Produkts betrifft (z.B. technische Daten + Hersteller + CO2), in EINEM Schritt mit aas_get_product(identifier). " +
+        "TIPP für Tabellen/Listen: Übergib select=[idShortPaths], dann liefert aas_query je Treffer direkt diese Feldwerte (Projektion) — das ersetzt viele Einzelabrufe.")]
     public async Task<object> AasQuery(
         [Description("Zielobjekt: \"submodels\" oder \"shells\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
         [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\". Bei einer Bedingung ohne Bedeutung.")] string combine = "and",
         [Description("Maximale Trefferzahl (Default und Maximum 500).")] int? limit = null,
-        [Description("Cursor (Offset) zum Weiterblättern; aus nextCursor einer vorigen Antwort.")] string? cursor = null)
+        [Description("Cursor (Offset) zum Weiterblättern; aus nextCursor einer vorigen Antwort.")] string? cursor = null,
+        [Description("Optional: Liste von idShortPaths, deren Werte je Treffer direkt mitgeliefert werden (Projektion = Tabellenspalten), z.B. [\"GeneralInformation.ManufacturerArticleNumber\", \"TechnicalProperties.Power_output\"]. Dann gibt das Tool statt nur Identifier eine Zeile pro Treffer mit diesen Feldern zurück — spart viele aas_get_submodel-Aufrufe. Volle Pfade (mit Punkt) sind präzise; ein Blattname ohne Punkt nimmt den ersten Treffer im Submodel. Nur für target=\"submodels\".")] string[]? select = null,
+        [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion: nur dieser Sprachwert kommt zurück (Default \"en\"; fehlt die Sprache, wird die erste vorhandene genommen). Nur relevant zusammen mit select.")] string lang = "en")
     {
-        LogCall($"aas_query {target} {DescribeConditions(conditions, combine)} limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} cursor={cursor ?? "-"}");
+        using var _ = LogCallTimed($"aas_query {target} {DescribeConditions(conditions, combine)} limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} cursor={cursor ?? "-"} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
 
         ResultType resultType;
         string expression;
@@ -161,6 +167,19 @@ public sealed class McpQueryTools
             ? (pagination.Cursor + identifiers.Count).ToString(CultureInfo.InvariantCulture)
             : null;
 
+        // Projektion: Wenn select angegeben ist, je Treffer eine Zeile mit den gewählten Feldwerten liefern
+        // (statt nur Identifier) — spart die vielen aas_get_submodel-Folgeaufrufe. Nur für Submodelle sinnvoll.
+        if (select is { Length: > 0 } && resultType == ResultType.Submodel)
+        {
+            var rows = new JsonArray();
+            foreach (var id in identifiers)
+            {
+                rows.Add(await BuildProjectionRow(securityConfig, id, select, lang));
+            }
+
+            return new { target, count = identifiers.Count, columns = select, rows, nextCursor };
+        }
+
         return new
         {
             target,
@@ -168,7 +187,7 @@ public sealed class McpQueryTools
             identifiers,
             nextCursor,
             nextStep = identifiers.Count > 0
-                ? "Dies sind nur Identifier. Inhalte lesen: aas_get_submodel(identifier). Für ALLE Daten des Produkts auf einmal (technische Daten + Hersteller + CO2 usw.) ohne einzeln zu navigieren: aas_get_product(identifier)."
+                ? "Dies sind nur Identifier. Inhalte lesen: aas_get_submodel(identifier), oder gleich Felder mitliefern via select=[...]. Für ALLE Daten eines Produkts (Technik+Hersteller+CO2): aas_get_product(identifier)."
                 : "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq), Groß-/Kleinschreibung des idShort prüfen oder breiter suchen.",
         };
     }
@@ -183,7 +202,7 @@ public sealed class McpQueryTools
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
         [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and")
     {
-        LogCall($"aas_count {target} {DescribeConditions(conditions, combine)}");
+        using var _ = LogCallTimed($"aas_count {target} {DescribeConditions(conditions, combine)}");
 
         string expression;
         try
@@ -232,7 +251,7 @@ public sealed class McpQueryTools
         [Description("Submodel-Identifier (die vollständige id, NICHT Base64-kodiert), typischerweise ein Treffer aus aas_query.")] string identifier,
         [Description("Ausgabeformat: \"value\" (kompakt, Default) oder \"full\" (vollständiges AAS-JSON).")] string format = "value")
     {
-        LogCall($"aas_get_submodel id={identifier} format={format}");
+        using var _ = LogCallTimed($"aas_get_submodel id={identifier} format={format}");
         if (string.IsNullOrWhiteSpace(identifier))
         {
             throw new ArgumentException("identifier darf nicht leer sein.");
@@ -264,6 +283,88 @@ public sealed class McpQueryTools
         return new { identifier, format = fmt, submodel = SerializeValueOrFull(submodel, fmt) };
     }
 
+    [McpServerTool(Name = "aas_get_submodels")]
+    [Description(
+        "Holt MEHRERE Submodelle in EINEM Aufruf — eine Liste von Identifiern statt vieler Einzelabrufe. " +
+        "OHNE select: je Submodel der volle Inhalt (value/full). " +
+        "MIT select=[idShortPaths]: je Submodel nur eine kompakte Zeile mit diesen Feldern (Tabelle/Projektion, wie bei aas_query). " +
+        "Ideal, wenn man bereits eine Liste von Submodel-IDs hat (z.B. aus aas_query) und gezielt Felder oder Inhalte braucht.")]
+    public async Task<object> AasGetSubmodels(
+        [Description("Liste von Submodel-Identifiern (vollständige ids, NICHT Base64-kodiert).")] string[] identifiers,
+        [Description("Ausgabeformat je Submodel, wenn KEIN select: \"value\" (kompakt, Default) oder \"full\".")] string format = "value",
+        [Description("Optional: idShortPaths zur Projektion (Tabellenspalten), z.B. [\"GeneralInformation.ManufacturerArticleNumber\", \"TechnicalProperties.Power_output\"]. Mit select wird je ID nur eine Zeile mit diesen Feldern geliefert.")] string[]? select = null,
+        [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion (Default \"en\"). Nur mit select relevant.")] string lang = "en")
+    {
+        using var _ = LogCallTimed($"aas_get_submodels n={(identifiers?.Length ?? 0)} format={format} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
+
+        if (identifiers is null || identifiers.Length == 0)
+        {
+            return new { error = "identifiers darf nicht leer sein (Liste von Submodel-Identifiern)." };
+        }
+
+        var fmt = (format ?? "value").Trim().ToLowerInvariant();
+        if (fmt != "value" && fmt != "full")
+        {
+            return new { error = $"Unbekanntes format \"{format}\". Erlaubt: \"value\" oder \"full\"." };
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+
+        // Mit select: Tabelle (eine Zeile pro ID mit den gewählten Feldern).
+        if (select is { Length: > 0 })
+        {
+            var rows = new JsonArray();
+            foreach (var id in identifiers)
+            {
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    rows.Add(await BuildProjectionRow(securityConfig, id.Trim(), select, lang));
+                }
+            }
+
+            return new { count = rows.Count, columns = select, rows };
+        }
+
+        // Ohne select: je Submodel der (value/full) Inhalt.
+        var submodels = new JsonArray();
+        foreach (var id in identifiers)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+
+            IClass? sm = null;
+            try
+            {
+                sm = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, id.Trim(), level: null, extent: null);
+            }
+            catch (NotFoundException)
+            {
+                sm = null;
+            }
+
+            var entry = new JsonObject { ["id"] = id.Trim() };
+            if (sm is null)
+            {
+                entry["found"] = false;
+            }
+            else
+            {
+                if (sm is ISubmodel s)
+                {
+                    entry["idShort"] = s.IdShort;
+                }
+
+                entry["value"] = SerializeValueOrFull(sm, fmt);
+            }
+
+            submodels.Add(entry);
+        }
+
+        return new { count = submodels.Count, format = fmt, submodels };
+    }
+
     [McpServerTool(Name = "aas_get_element")]
     [Description(
         "Liest ein einzelnes SubmodelElement aus einem Submodel — gezielt, statt das ganze Submodel zu laden (spart Tokens). " +
@@ -275,7 +376,7 @@ public sealed class McpQueryTools
         [Description("Voller idShortPath mit Punkt (exaktes Element) ODER einzelner idShort-Blattname ohne Punkt (Suche in beliebiger Tiefe, alle Treffer).")] string idShortPath,
         [Description("Ausgabeformat: \"value\" (kompakt, Default) oder \"full\" (vollständiges Element-JSON).")] string format = "value")
     {
-        LogCall($"aas_get_element sm={submodelIdentifier} path={idShortPath} format={format}");
+        using var _ = LogCallTimed($"aas_get_element sm={submodelIdentifier} path={idShortPath} format={format}");
         if (string.IsNullOrWhiteSpace(submodelIdentifier))
         {
             throw new ArgumentException("submodelIdentifier darf nicht leer sein.");
@@ -357,7 +458,7 @@ public sealed class McpQueryTools
         [Description("AAS-Identifier (vollständige id, NICHT Base64-kodiert), typischerweise ein Treffer aus aas_query target=\"shells\".")] string identifier,
         [Description("Ausgabeformat: \"value\" (kompakt, Default) oder \"full\" (vollständiges AAS-JSON).")] string format = "value")
     {
-        LogCall($"aas_get_shell id={identifier} format={format}");
+        using var _ = LogCallTimed($"aas_get_shell id={identifier} format={format}");
         if (string.IsNullOrWhiteSpace(identifier))
         {
             throw new ArgumentException("identifier darf nicht leer sein.");
@@ -386,50 +487,65 @@ public sealed class McpQueryTools
             return new { identifier, found = false };
         }
 
-        if (fmt == "full")
+        var result = BuildShellObject(shell, fmt);
+        result["identifier"] = identifier;
+        result["format"] = fmt;
+        return result;
+    }
+
+    [McpServerTool(Name = "aas_get_shells")]
+    [Description(
+        "Holt MEHRERE AAS (Shells) in EINEM Aufruf — eine Liste von AAS-Identifiern statt vieler Einzelabrufe. " +
+        "Je Shell die AssetInformation + Submodel-Referenzen (format=\"value\", Default) oder das volle AAS-JSON (format=\"full\").")]
+    public async Task<object> AasGetShells(
+        [Description("Liste von AAS-Identifiern (vollständige ids, NICHT Base64-kodiert).")] string[] identifiers,
+        [Description("Ausgabeformat je Shell: \"value\" (kompakt, Default) oder \"full\".")] string format = "value")
+    {
+        using var _ = LogCallTimed($"aas_get_shells n={(identifiers?.Length ?? 0)} format={format}");
+
+        if (identifiers is null || identifiers.Length == 0)
         {
-            return new { identifier, format = fmt, shell = Jsonization.Serialize.ToJsonObject(shell) };
+            return new { error = "identifiers darf nicht leer sein (Liste von AAS-Identifiern)." };
         }
 
-        // Kompakt: AssetInformation + Submodel-Identifier (aus den Referenzen).
-        var submodelIds = new JsonArray();
-        if (shell.Submodels != null)
+        var fmt = (format ?? "value").Trim().ToLowerInvariant();
+        if (fmt != "value" && fmt != "full")
         {
-            foreach (var smRef in shell.Submodels)
+            return new { error = $"Unbekanntes format \"{format}\". Erlaubt: \"value\" oder \"full\"." };
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+
+        var shells = new JsonArray();
+        foreach (var id in identifiers)
+        {
+            if (string.IsNullOrWhiteSpace(id))
             {
-                var key = smRef?.Keys?.LastOrDefault();
-                if (key != null && !string.IsNullOrEmpty(key.Value))
-                {
-                    submodelIds.Add(key.Value);
-                }
+                continue;
             }
-        }
 
-        var ai = shell.AssetInformation;
-        var specificAssetIds = new JsonArray();
-        if (ai?.SpecificAssetIds != null)
-        {
-            foreach (var said in ai.SpecificAssetIds)
+            IAssetAdministrationShell? shell = null;
+            try
             {
-                specificAssetIds.Add(new JsonObject { ["name"] = said.Name, ["value"] = said.Value });
+                shell = await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, id.Trim());
             }
+            catch (NotFoundException)
+            {
+                shell = null;
+            }
+
+            if (shell is null)
+            {
+                shells.Add(new JsonObject { ["identifier"] = id.Trim(), ["found"] = false });
+                continue;
+            }
+
+            var entry = BuildShellObject(shell, fmt);
+            entry["identifier"] = id.Trim();
+            shells.Add(entry);
         }
 
-        var assetInformation = new JsonObject
-        {
-            ["assetKind"] = ai != null ? ai.AssetKind.ToString() : null,
-            ["globalAssetId"] = ai?.GlobalAssetId,
-            ["specificAssetIds"] = specificAssetIds,
-        };
-
-        return new
-        {
-            identifier,
-            idShort = shell.IdShort,
-            format = fmt,
-            assetInformation,
-            submodels = submodelIds,
-        };
+        return new { count = shells.Count, format = fmt, shells };
     }
 
     [McpServerTool(Name = "aas_get_product")]
@@ -445,7 +561,7 @@ public sealed class McpQueryTools
         [Description("AAS-Identifier ODER Submodel-Identifier (vollständige id, NICHT Base64-kodiert). Ein Submodel-Treffer aus aas_query genügt — die Shell wird automatisch aufgelöst.")] string identifier,
         [Description("Ausgabeformat je Submodel: \"value\" (kompakt, Default, nur idShort->Wert) oder \"full\" (vollständiges AAS-JSON inkl. semanticId, valueType, Qualifier). Nutze \"full\", wenn nach semanticId, Einheiten oder Datentyp gefragt wird.")] string format = "value")
     {
-        LogCall($"aas_get_product id={identifier} format={format}");
+        using var _ = LogCallTimed($"aas_get_product id={identifier} format={format}");
         if (string.IsNullOrWhiteSpace(identifier))
         {
             return new { error = "identifier darf nicht leer sein." };
@@ -480,7 +596,7 @@ public sealed class McpQueryTools
         [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and",
         [Description("Ausgabeformat je Submodel: \"value\" (kompakt, Default, nur idShort->Wert) oder \"full\" (vollständiges AAS-JSON inkl. semanticId, valueType, Qualifier). Nutze \"full\", wenn nach semanticId, Einheiten oder Datentyp gefragt wird.")] string format = "value")
     {
-        LogCall($"aas_find_product {DescribeConditions(conditions, combine)} format={format}");
+        using var _ = LogCallTimed($"aas_find_product {DescribeConditions(conditions, combine)} format={format}");
 
         var fmt = (format ?? "value").Trim().ToLowerInvariant();
         if (fmt != "value" && fmt != "full")
@@ -512,7 +628,7 @@ public sealed class McpQueryTools
         [Description("Name des gesuchten Merkmals/Elements (idShort), z.B. \"flowMax\" oder \"ManufacturerName\".")] string idShort,
         [Description("Gesuchter Wert dieses Merkmals, z.B. \"80\".")] string value)
     {
-        LogCall($"aas_find_product_simple idShort={idShort} value={value}");
+        using var _ = LogCallTimed($"aas_find_product_simple idShort={idShort} value={value}");
 
         if (string.IsNullOrWhiteSpace(idShort))
         {
@@ -581,6 +697,24 @@ public sealed class McpQueryTools
         Console.WriteLine("[MCP] " + line);
     }
 
+    // Loggt den Aufruf (Eingang) und beim Dispose die Dauer — für Performance-Analyse bei großer DB.
+    // Verwendung: using var _ = LogCallTimed($"aas_query ...");  -> beim Methodenende kommt "[MCP] <tool> done in X ms".
+    private static CallTimer LogCallTimed(string line)
+    {
+        LogCall(line);
+        return new CallTimer(line.Split(' ', 2)[0]);
+    }
+
+    private sealed class CallTimer : IDisposable
+    {
+        private readonly string _tool;
+        private readonly System.Diagnostics.Stopwatch _watch = System.Diagnostics.Stopwatch.StartNew();
+
+        public CallTimer(string tool) => _tool = tool;
+
+        public void Dispose() => Console.WriteLine($"[MCP] {_tool} done in {_watch.ElapsedMilliseconds} ms");
+    }
+
     // Kompakte Darstellung der Suchbedingungen fürs Log, z.B. [sm.idShort eq TechnicalData and sme.value ge 80].
     private static string DescribeConditions(McpQueryCondition[]? conditions, string? combine)
     {
@@ -594,7 +728,10 @@ public sealed class McpQueryTools
         {
             var scope = string.IsNullOrWhiteSpace(c?.Scope) ? "sme" : c!.Scope!.Trim();
             var path = !string.IsNullOrWhiteSpace(c?.IdShortPath) ? "." + c!.IdShortPath!.Trim() : string.Empty;
-            return $"{scope}{path}.{c?.Field} {c?.Op} {c?.Value}";
+            var val = string.Equals(c?.Op?.Trim(), "in", StringComparison.OrdinalIgnoreCase) && c?.Values is { Length: > 0 }
+                ? "[" + string.Join("|", c.Values) + "]"
+                : c?.Value;
+            return $"{scope}{path}.{c?.Field} {c?.Op} {val}";
         });
         return "[" + string.Join(sep, parts) + "]";
     }
@@ -608,6 +745,122 @@ public sealed class McpQueryTools
 
         var dto = _mappingService.Map(obj, "value");
         return dto is IValueDTO valueDto ? ValueOnlyJsonSerializer.ToJsonObject(valueDto) : null;
+    }
+
+    // Navigiert einen idShortPath im Submodel zum Element: mit Punkt positional je Ebene, ohne Punkt erster Treffer beliebiger Tiefe.
+    private static ISubmodelElement? GetElementByPath(ISubmodel submodel, string path)
+    {
+        if (path.Contains('.', StringComparison.Ordinal))
+        {
+            return NavigatePath(submodel.SubmodelElements, path.Split('.'), 0);
+        }
+
+        var matches = new List<(string Path, ISubmodelElement Element)>();
+        CollectByIdShort(submodel.SubmodelElements, string.Empty, path, matches);
+        return matches.Count > 0 ? matches[0].Element : null;
+    }
+
+    private static ISubmodelElement? NavigatePath(IReadOnlyList<ISubmodelElement>? elements, string[] segments, int index)
+    {
+        if (elements == null || index >= segments.Length)
+        {
+            return null;
+        }
+
+        var match = elements.FirstOrDefault(e => string.Equals(e?.IdShort, segments[index], StringComparison.Ordinal));
+        if (match == null)
+        {
+            return null;
+        }
+
+        if (index == segments.Length - 1)
+        {
+            return match;
+        }
+
+        IReadOnlyList<ISubmodelElement>? children = match switch
+        {
+            ISubmodelElementCollection collection => collection.Value,
+            ISubmodelElementList list => list.Value,
+            IEntity entity => entity.Statements,
+            _ => null,
+        };
+
+        return NavigatePath(children, segments, index + 1);
+    }
+
+    // Projizierter Wert eines Elements: bei Property der Skalar, bei MultiLanguageProperty die bevorzugte Sprache,
+    // sonst die kompakte value-Darstellung.
+    private JsonNode? GetProjectedValue(ISubmodelElement? element, string lang)
+    {
+        if (element is null)
+        {
+            return null;
+        }
+
+        if (element is IProperty property)
+        {
+            return property.Value;
+        }
+
+        // MLP auf eine Sprache reduzieren (Default en), damit Tabellenzellen schlank bleiben statt aller Sprachen.
+        if (element is IMultiLanguageProperty mlp)
+        {
+            var langs = mlp.Value;
+            if (langs == null || langs.Count == 0)
+            {
+                return null;
+            }
+
+            var pick = langs.FirstOrDefault(l => string.Equals(l?.Language, lang, StringComparison.OrdinalIgnoreCase))
+                       ?? langs[0];
+            return pick?.Text;
+        }
+
+        var node = SerializeValueOrFull(element, "value");
+
+        // ValueOnly wickelt als { idShort: <wert> } ein — für eine Tabellenzelle den inneren Wert auspacken.
+        if (node is JsonObject obj && obj.Count == 1)
+        {
+            return obj.First().Value?.DeepClone();
+        }
+
+        return node;
+    }
+
+    // Eine Projektions-Zeile für ein Submodel: liest es und extrahiert die select-Pfade als {id, <path>:<wert>}.
+    private async Task<JsonObject> BuildProjectionRow(SecurityConfig securityConfig, string id, string[] select, string lang)
+    {
+        IClass? sm = null;
+        try
+        {
+            sm = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, id, level: null, extent: null);
+        }
+        catch (NotFoundException)
+        {
+            sm = null;
+        }
+
+        var row = new JsonObject { ["id"] = id };
+        if (sm is ISubmodel submodel)
+        {
+            foreach (var rawPath in select)
+            {
+                if (string.IsNullOrWhiteSpace(rawPath))
+                {
+                    continue;
+                }
+
+                var path = rawPath.Trim();
+                row[path] = GetProjectedValue(GetElementByPath(submodel, path), lang);
+            }
+        }
+        else
+        {
+            row["found"] = false;
+        }
+
+        return row;
     }
 
     private async Task<IAssetAdministrationShell?> TryReadShell(SecurityConfig securityConfig, string aasId)
@@ -659,6 +912,50 @@ public sealed class McpQueryTools
         }
 
         return shell;
+    }
+
+    // Baut das Shell-Objekt: bei value AssetInformation + Submodel-Referenzen, bei full das ganze AAS-JSON.
+    private static JsonObject BuildShellObject(IAssetAdministrationShell shell, string fmt)
+    {
+        var result = new JsonObject { ["idShort"] = shell.IdShort };
+
+        if (fmt == "full")
+        {
+            result["shell"] = Jsonization.Serialize.ToJsonObject(shell);
+            return result;
+        }
+
+        var submodelIds = new JsonArray();
+        if (shell.Submodels != null)
+        {
+            foreach (var smRef in shell.Submodels)
+            {
+                var key = smRef?.Keys?.LastOrDefault();
+                if (key != null && !string.IsNullOrEmpty(key.Value))
+                {
+                    submodelIds.Add(key.Value);
+                }
+            }
+        }
+
+        var ai = shell.AssetInformation;
+        var specificAssetIds = new JsonArray();
+        if (ai?.SpecificAssetIds != null)
+        {
+            foreach (var said in ai.SpecificAssetIds)
+            {
+                specificAssetIds.Add(new JsonObject { ["name"] = said.Name, ["value"] = said.Value });
+            }
+        }
+
+        result["assetInformation"] = new JsonObject
+        {
+            ["assetKind"] = ai != null ? ai.AssetKind.ToString() : null,
+            ["globalAssetId"] = ai?.GlobalAssetId,
+            ["specificAssetIds"] = specificAssetIds,
+        };
+        result["submodels"] = submodelIds;
+        return result;
     }
 
     // Baut das Produkt-Objekt: AssetInformation + Werte ALLER Submodelle der Shell im gewählten Format.
@@ -869,9 +1166,35 @@ public sealed class McpQueryTools
         }
 
         var op = (c.Op ?? string.Empty).Trim().ToLowerInvariant();
+
+        // op="in": ODER-Verknüpfung von eq-Vergleichen über die Werteliste — nutzt die komplette Feld-/Pfad-/Numerik-Logik wieder.
+        if (op == "in")
+        {
+            var values = c.Values ?? System.Array.Empty<string>();
+            if (values.Length == 0)
+            {
+                throw new ArgumentException("op=\"in\" benötigt eine nicht-leere Werteliste (values).");
+            }
+
+            var orArray = new JsonArray();
+            foreach (var v in values)
+            {
+                orArray.Add(BuildComparison(new McpQueryCondition
+                {
+                    Scope = c.Scope,
+                    Field = c.Field,
+                    IdShortPath = c.IdShortPath,
+                    Op = "eq",
+                    Value = v,
+                }));
+            }
+
+            return new JsonObject { ["$or"] = orArray };
+        }
+
         if (!OpMap.TryGetValue(op, out var opKey))
         {
-            throw new ArgumentException($"Unbekannter Operator \"{c.Op}\". Erlaubt: {string.Join(", ", OpMap.Keys)}.");
+            throw new ArgumentException($"Unbekannter Operator \"{c.Op}\". Erlaubt: {string.Join(", ", OpMap.Keys)}, in.");
         }
 
         // Für scope=sme ist "value" der sinnvolle Default, wenn field leer ist — LLMs lassen field
