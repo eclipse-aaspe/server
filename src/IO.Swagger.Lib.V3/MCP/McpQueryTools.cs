@@ -757,8 +757,28 @@ public sealed class McpQueryTools
 
         var matches = new List<(string Path, ISubmodelElement Element)>();
         CollectByIdShort(submodel.SubmodelElements, string.Empty, path, matches);
-        return matches.Count > 0 ? matches[0].Element : null;
+        if (matches.Count == 0)
+        {
+            return null;
+        }
+
+        // Hauptprodukt bevorzugen: Treffer NICHT unter Zubehör-Zweigen (Part_relation/Associated_part).
+        // Sonst liefert ein Blattname wie "Product_type" fälschlich die Zubehör-Bezeichnung (z.B. Montageadapter).
+        foreach (var m in matches)
+        {
+            if (!IsAccessoryPath(m.Path))
+            {
+                return m.Element;
+            }
+        }
+
+        return matches[0].Element;
     }
+
+    // Zubehör-/Nebenprodukt-Zweige, die bei Hauptprodukt-Abfragen ignoriert werden sollen.
+    private static bool IsAccessoryPath(string path)
+        => path.Contains("Associated_part", StringComparison.OrdinalIgnoreCase)
+           || path.Contains("Part_relation", StringComparison.OrdinalIgnoreCase);
 
     private static ISubmodelElement? NavigatePath(IReadOnlyList<ISubmodelElement>? elements, string[] segments, int index)
     {
