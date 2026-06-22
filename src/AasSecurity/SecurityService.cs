@@ -879,6 +879,10 @@ namespace AasSecurity
                                 tokenClaims.Add(new Claim("domain", domain));
                             }
 
+                            _logger.LogInformation($"User from Token: {user}");
+                            _logger.LogInformation($"Domain from Token: {domain}");
+
+
                             return "";
                         }
                     }
