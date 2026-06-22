@@ -52,16 +52,16 @@ namespace AasSecurity
                 return Task.FromResult(AuthenticateResult.Fail(new Exception($"Request cannot be authenticated.")));
             }
 
-            _logger.LogInformation($"Request is successfully authenticated.");
+            //_logger.LogInformation($"Request is successfully authenticated.");
 
-            _logger.LogInformation("***************** LIST TICKET CLAIMS ********************");
+            //_logger.LogInformation("***************** LIST TICKET CLAIMS ********************");
 
-            foreach (var tickeClaim in ticket.Principal.Claims)
-            {
-                _logger.LogInformation($"CLAIM value {tickeClaim?.Value}");
-                _logger.LogInformation($"CLAIM issuer {tickeClaim?.Issuer}");
-                _logger.LogInformation($"next claim");
-            }
+            //foreach (var tickeClaim in ticket.Principal.Claims)
+            //{
+            //    _logger.LogInformation($"CLAIM value {tickeClaim?.Value}");
+            //    _logger.LogInformation($"CLAIM issuer {tickeClaim?.Issuer}");
+            //    _logger.LogInformation($"next claim");
+            //}
 
             return Task.FromResult(AuthenticateResult.Success(ticket));
 
