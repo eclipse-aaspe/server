@@ -16,6 +16,7 @@ namespace IO.Swagger.Lib.V3.MCP;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json.Nodes;
@@ -47,7 +48,7 @@ public sealed class McpQueryCondition
     [Description("Optionaler idShortPath innerhalb des Submodels, nur für scope=\"sme\". Enthält der Wert einen Punkt, wird er als verschachtelter Pfad behandelt (z.B. \"TechnicalProperties.flowMax\" oder \"Documents[].DocumentVersion.Title\"). Ein einzelner Name ohne Punkt (z.B. \"flowMax\") wird als idShort des Elements gesucht und unabhängig von der Verschachtelungstiefe gefunden.")]
     public string? IdShortPath { get; set; }
 
-    [Description("Vergleichsoperator: eq|ne|gt|ge|lt|le|contains|starts-with|ends-with|regex|in. \"in\" prüft, ob der Wert in der Liste values vorkommt (ODER-Verknüpfung).")]
+    [Description("Vergleichsoperator: eq|ne|gt|ge|lt|le|contains|starts-with|ends-with|regex|in. contains benötigt mindestens 3 Zeichen, damit der Trigrammindex genutzt werden kann. \"in\" prüft, ob der Wert in der Liste values vorkommt (ODER-Verknüpfung).")]
     public string Op { get; set; } = "eq";
 
     [Description("Vergleichswert als String (Zahlen als String angeben, z.B. \"100\"). Bei eq/ne/gt/ge/lt/le werden numerische Werte automatisch numerisch verglichen — \"eq 80\" findet also auch einen Double-Wert 80.")]
@@ -171,11 +172,7 @@ public sealed class McpQueryTools
             return new { error = "Query fehlgeschlagen: " + queryError };
         }
 
-        var identifiers = (list ?? new List<object>())
-            .OfType<IIdentifiable>()
-            .Select(x => x.Id)
-            .Where(id => !string.IsNullOrEmpty(id))
-            .ToList();
+        var identifiers = ExtractIdentifiers(list);
 
         string? nextCursor = identifiers.Count >= pagination.Limit
             ? (pagination.Cursor + identifiers.Count).ToString(CultureInfo.InvariantCulture)
@@ -186,9 +183,15 @@ public sealed class McpQueryTools
         if (select is { Length: > 0 } && resultType == ResultType.Submodel)
         {
             var rows = new JsonArray();
-            foreach (var id in identifiers)
+            for (var index = 0; index < identifiers.Count; index++)
             {
+                var id = identifiers[index];
+                var projectionWatch = Stopwatch.StartNew();
+                Console.WriteLine($"[MCP] aas_query projection {index + 1}/{identifiers.Count}: {id}");
                 rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths));
+                Console.WriteLine(
+                    $"[MCP] aas_query projection {index + 1}/{identifiers.Count} done " +
+                    $"in {projectionWatch.ElapsedMilliseconds} ms");
             }
 
             return new { target, count = identifiers.Count, columns = select, rows, nextCursor };
@@ -705,11 +708,7 @@ public sealed class McpQueryTools
             return new { error = "Query fehlgeschlagen: " + queryError };
         }
 
-        var ids = (list ?? new List<object>())
-            .OfType<IIdentifiable>()
-            .Select(x => x.Id)
-            .Where(s => !string.IsNullOrEmpty(s))
-            .ToList();
+        var ids = ExtractIdentifiers(list);
 
         if (ids.Count == 0)
         {
@@ -935,44 +934,69 @@ public sealed class McpQueryTools
         SecurityConfig securityConfig, string id, string[] select, string lang,
         string[]? priority, string[]? deprioritize, bool withPaths)
     {
-        IClass? sm = null;
-        try
-        {
-            sm = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, id, level: null, extent: null);
-        }
-        catch (NotFoundException)
-        {
-            sm = null;
-        }
-
         var row = new JsonObject { ["id"] = id };
         JsonObject? selectedPaths = withPaths ? new JsonObject() : null;
-        if (sm is ISubmodel submodel)
+        ISubmodel? submodel = null;
+        var submodelLoadAttempted = false;
+
+        foreach (var rawPath in select)
         {
-            foreach (var rawPath in select)
+            if (string.IsNullOrWhiteSpace(rawPath))
             {
-                if (string.IsNullOrWhiteSpace(rawPath))
+                continue;
+            }
+
+            var path = rawPath.Trim();
+
+            // A full idShortPath can be fetched directly. Loading the complete
+            // submodel for every projected cell is prohibitively expensive for
+            // very large TechnicalData submodels.
+            if (path.Contains('.', StringComparison.Ordinal))
+            {
+                ISubmodelElement? element = null;
+                try
                 {
-                    continue;
+                    element = await _dbRequestHandlerService.ReadSubmodelElementByPath(
+                        securityConfig, null, id, path, level: null, extent: null) as ISubmodelElement;
+                }
+                catch (NotFoundException)
+                {
+                    element = null;
                 }
 
-                var path = rawPath.Trim();
-                var match = GetProjectionMatch(submodel, path, priority, deprioritize);
-                row[path] = GetProjectedValue(match?.Element, lang);
+                row[path] = GetProjectedValue(element, lang);
                 if (selectedPaths is not null)
+                    selectedPaths[path] = element is null ? null : path;
+                continue;
+            }
+
+            // A leaf name can be ambiguous at any depth, so retain the ranked
+            // whole-submodel fallback only for this case and load it at most once.
+            if (!submodelLoadAttempted)
+            {
+                submodelLoadAttempted = true;
+                try
                 {
-                    selectedPaths[path] = match?.Path;
+                    submodel = await _dbRequestHandlerService.ReadSubmodelById(
+                        securityConfig, null, id, level: null, extent: null) as ISubmodel;
+                }
+                catch (NotFoundException)
+                {
+                    submodel = null;
                 }
             }
 
+            var match = submodel is null ? null : GetProjectionMatch(submodel, path, priority, deprioritize);
+            row[path] = GetProjectedValue(match?.Element, lang);
             if (selectedPaths is not null)
             {
-                row["paths"] = selectedPaths;
+                selectedPaths[path] = match?.Path;
             }
         }
-        else
+
+        if (selectedPaths is not null)
         {
-            row["found"] = false;
+            row["paths"] = selectedPaths;
         }
 
         return row;
@@ -1007,10 +1031,21 @@ public sealed class McpQueryTools
         var pagination = new PaginationParameters(null, 1);
         var (shells, _) = await TryQuery(securityConfig, pagination, ResultType.AssetAdministrationShell, expression);
 
-        return (shells ?? new List<object>())
-            .OfType<IIdentifiable>()
-            .Select(x => x.Id)
-            .FirstOrDefault(x => !string.IsNullOrEmpty(x));
+        return ExtractIdentifiers(shells).FirstOrDefault();
+    }
+
+    private static List<string> ExtractIdentifiers(List<object>? items)
+    {
+        return (items ?? [])
+            .Select(item => item switch
+            {
+                string id => id,
+                IIdentifiable identifiable => identifiable.Id,
+                _ => null,
+            })
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Select(id => id!)
+            .ToList();
     }
 
     // Löst eine id (AAS-Identifier ODER Submodel-Identifier) zur zugehörigen Shell auf.
@@ -1260,6 +1295,10 @@ public sealed class McpQueryTools
         {
             ["Query"] = new JsonObject
             {
+                // aas_query needs identifiers first. Without this, Query.GetQueryData
+                // materializes every complete submodel before MCP projects the selected
+                // fields, causing the same large submodels to be loaded twice.
+                ["$select"] = "id",
                 ["$condition"] = condition,
             },
         };
@@ -1312,6 +1351,21 @@ public sealed class McpQueryTools
             throw new ArgumentException($"Unbekannter Operator \"{c.Op}\". Erlaubt: {string.Join(", ", OpMap.Keys)}, in.");
         }
 
+        if (op == "regex")
+        {
+            throw new ArgumentException(
+                "Der Operator regex wird vom SQL-Backend derzeit nicht unterstützt. " +
+                "Verwende eq, starts-with, ends-with oder contains.");
+        }
+
+        if (op == "contains" && (c.Value ?? string.Empty).Length < 3)
+        {
+            throw new ArgumentException(
+                $"contains mit \"{c.Value}\" ist zu kurz: Der SQLite-Trigrammindex benötigt mindestens 3 Zeichen. " +
+                "Verwende eq, starts-with oder einen spezifischeren Teilstring mit mindestens 3 Zeichen " +
+                "(z.B. 24V, 24D oder /24).");
+        }
+
         // Für scope=sme ist "value" der sinnvolle Default, wenn field leer ist — LLMs lassen field
         // bei idShortPath-/Wert-Suchen oft weg (z.B. {scope:sme, idShortPath:"flowMax", op:eq, value:"80"}).
         var field = string.IsNullOrWhiteSpace(c.Field) && scope == "sme" ? "value" : (c.Field ?? string.Empty).Trim();
@@ -1331,9 +1385,11 @@ public sealed class McpQueryTools
         if (rawPath != null && !rawPath.Contains('.', StringComparison.Ordinal) && field != "idShort")
         {
             var allowNumeric = NumericCapableOps.Contains(op);
-            var topLevel = BuildFieldComparison(opKey, "$" + scope + "." + rawPath + "#" + field, c.Value, allowNumeric);
-            var nested = BuildFieldComparison(opKey, "$" + scope + ".%." + rawPath + "#" + field, c.Value, allowNumeric);
-            return new JsonObject { ["$or"] = new JsonArray(topLevel, nested) };
+            return BuildFieldComparison(
+                opKey,
+                "$" + scope + ".%." + rawPath + "#" + field,
+                c.Value,
+                allowNumeric);
         }
 
         var pathSegment = rawPath != null ? "." + rawPath : string.Empty;

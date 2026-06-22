@@ -1877,6 +1877,14 @@ public class QueryGrammarJSON : Grammar
 
     private static string BuildIdShortPathSql(string smeAlias, string idShortPath)
     {
+        // Leading %. means a leaf at zero or more parent levels. Combining the
+        // top-level and nested variants avoids two otherwise identical path joins.
+        if (idShortPath.StartsWith("%.", StringComparison.Ordinal))
+        {
+            var leaf = EscSql(idShortPath[2..]);
+            return $"(\"{smeAlias}\".\"IdShortPath\" = '{leaf}' OR " +
+                   $"\"{smeAlias}\".\"IdShortPath\" GLOB '*.{leaf}')";
+        }
         if (idShortPath.Contains("[]"))
         {
             var pattern = idShortPath.Replace("[]", "[[]*[]]");

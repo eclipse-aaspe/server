@@ -292,9 +292,9 @@ public partial class Query
         expression = "$JSONGRAMMAR " + expression;
 
         var result = GetSMs(out _, resultType,
-            qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression, null, effectiveSecurity);
+            qResult, watch, db, true, false, "", "", "", pageFrom, pageSize, expression, null, effectiveSecurity);
 
-        var count = result?.Count ?? 0;
+        var count = result?.FirstOrDefault() ?? 0;
         Console.WriteLine("Count query in " + watch.ElapsedMilliseconds + " ms (" + count + " matches)");
         return count;
     }
@@ -652,7 +652,9 @@ public partial class Query
         // get data
         if (withExpression) // with expression
         {
-            comTable = CombineTablesLEFT(db, sqlConditions, pageFrom, pageSize, resultType, flags, generatedSql);
+            comTable = withCount
+                ? [CombineTablesLEFTCount(db, sqlConditions, resultType, flags, generatedSql)]
+                : CombineTablesLEFT(db, sqlConditions, pageFrom, pageSize, resultType, flags, generatedSql);
         }
 
         if (comTable == null)
@@ -1616,6 +1618,12 @@ public partial class Query
         if (rawSql == null)
             throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
 
+        if (db.Database.IsSqlite())
+        {
+            rawSql = ApplySqliteIndexedPathJoinOrder(rawSql);
+            rawSql = ApplySqliteTrigramIndex(rawSql);
+        }
+
         if (flags.Contains("$TEMPTABLE"))
         {
             using var tx = db.Database.BeginTransaction();
@@ -1649,6 +1657,8 @@ public partial class Query
         var qpRaw = GetQueryPlan(db, rawSql);
         swPlan.Stop();
         Console.WriteLine($"[ReadDiag] CombineTablesLEFT.GetQueryPlan: {swPlan.ElapsedMilliseconds} ms");
+        Console.WriteLine($"[ReadDiag] SQL:\n{rawSql.TrimEnd()}");
+        Console.WriteLine($"[ReadDiag] QueryPlan:\n{qpRaw.TrimEnd()}");
 
         var swExec = Stopwatch.StartNew();
         var ids = db.Set<SMSetIdResult>()
@@ -1659,6 +1669,47 @@ public partial class Query
         swExec.Stop();
         Console.WriteLine($"[ReadDiag] CombineTablesLEFT.Execute   : {swExec.ElapsedMilliseconds} ms ({ids.Count} ids)");
         return ids;
+    }
+
+    private static int CombineTablesLEFTCount(
+        AasContext db,
+        SqlConditions sqlConditions,
+        ResultType resultType,
+        List<string> flags,
+        List<string>? generatedSql = null)
+    {
+        var sqlAasMerged = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("aas", ""));
+        var sqlOverallCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("all", ""));
+        var restrictAAS = !SqlConditionIsPureTautology(sqlAasMerged);
+        var aasExistInCondition = !string.IsNullOrWhiteSpace(sqlOverallCondition)
+            && sqlOverallCondition.Contains("\"aas\".");
+        var isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
+
+        var rawSql = BuildRawSqlFromSqlConditions(
+            sqlConditions, isWithAASTable, resultType, 0, int.MaxValue, flags)
+            ?? throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
+
+        if (db.Database.IsSqlite())
+        {
+            rawSql = ApplySqliteIndexedPathJoinOrder(rawSql);
+            rawSql = ApplySqliteTrigramIndex(rawSql);
+        }
+
+        // Counting does not need stable result ordering or pagination. Removing
+        // both avoids a temp B-tree and materializing every matching identifier.
+        rawSql = Regex.Replace(
+            rawSql,
+            @"\r?\nORDER BY [^\r\n]+\r?\nLIMIT \d+ OFFSET \d+\s*$",
+            string.Empty,
+            RegexOptions.CultureInvariant);
+        var countSql = $"SELECT COUNT(*) AS Value\r\nFROM (\r\n{rawSql.TrimEnd()}\r\n) AS count_query";
+        AddGeneratedSql(generatedSql, countSql);
+
+        var plan = GetQueryPlan(db, countSql);
+        Console.WriteLine($"[ReadDiag] Count SQL:\n{countSql}");
+        Console.WriteLine($"[ReadDiag] Count QueryPlan:\n{plan.TrimEnd()}");
+
+        return db.Database.SqlQueryRaw<int>(countSql).AsEnumerable().Single();
     }
 
     // ------------------------------------------------------------------
@@ -1702,6 +1753,66 @@ public partial class Query
         bool overallHasVRef    = overall.Contains("\"value\".");
         bool overallHasTRef    = overall.Contains("\"sm\".") || overall.Contains("\"aas\".");
 
+        // Positive path/match blocks already yield matching SMId values. Wrapping
+        // them in SMSets LEFT JOIN makes SQLite scan every submodel and may execute
+        // FTS path searches repeatedly. Intersect their result sets directly.
+        var positiveJoinAliases = Enumerable.Range(1, sc.Paths.Count).Select(i => $"p{i}")
+            .Concat(Enumerable.Range(1, sc.Matches.Count).Select(i => $"m{i}"))
+            .ToList();
+        var allowedPositiveAliases = positiveJoinAliases.ToHashSet(StringComparer.Ordinal);
+        var isPositiveJoinExpression = TryBuildPositiveJoinDnf(
+            overall, allowedPositiveAliases, out var positiveJoinDnf);
+        var directSubmodelResult = resultType != ResultType.AssetAdministrationShell && !isWithAASTable;
+        var directShellResult = resultType == ResultType.AssetAdministrationShell
+            && string.IsNullOrWhiteSpace(whereAas);
+        bool canDirectPositiveJoins = positiveJoinAliases.Count > 0
+            && string.IsNullOrWhiteSpace(whereSm)
+            && (directSubmodelResult || directShellResult)
+            && !unionOrTemp
+            && isPositiveJoinExpression;
+
+        if (canDirectPositiveJoins)
+        {
+            var sources = new List<(string Alias, string Sql)>();
+            for (var i = 0; i < sc.Paths.Count; i++)
+                sources.Add(($"p{i + 1}", $"SELECT sme.SMId AS SMId\r\n{sc.Paths[i].SubquerySql}"));
+            for (var i = 0; i < sc.Matches.Count; i++)
+                sources.Add(($"m{i + 1}", BuildMatchSubquerySql(sc.Matches[i])));
+
+            var raw = "WITH\r\n";
+            raw += string.Join(",\r\n", sources.Select(source =>
+                $"{source.Alias} AS (\r\n{source.Sql}\r\n)"));
+            raw += ",\r\nmatching_sm AS (\r\nSELECT DISTINCT Id\r\nFROM (\r\n";
+
+            for (var branchIndex = 0; branchIndex < positiveJoinDnf.Count; branchIndex++)
+            {
+                var branch = positiveJoinDnf[branchIndex];
+                var firstAlias = branch[0];
+                raw += $"SELECT {firstAlias}.SMId AS Id\r\nFROM {firstAlias}\r\n";
+                foreach (var alias in branch.Skip(1))
+                    raw += $"INNER JOIN {alias} ON {alias}.SMId = {firstAlias}.SMId\r\n";
+                if (branchIndex < positiveJoinDnf.Count - 1)
+                    raw += "UNION\r\n";
+            }
+            raw += ") AS positive_ids\r\n)\r\n";
+
+            if (directShellResult)
+            {
+                raw += "SELECT DISTINCT aas.Id AS Id\r\n";
+                raw += "FROM matching_sm match\r\n";
+                raw += "INNER JOIN SMSets sm ON sm.Id = match.Id\r\n";
+                raw += "INNER JOIN SMRefSets sx ON sx.Identifier = sm.Identifier\r\n";
+                raw += "INNER JOIN AASSets aas ON aas.Id = sx.AASId\r\n";
+                raw += $"ORDER BY aas.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+            }
+            else
+            {
+                raw += "SELECT Id FROM matching_sm\r\n";
+                raw += $"ORDER BY Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+            }
+            return ApplyLikeToGlob(raw);
+        }
+
         bool canDirectSme = !hasPathsOrMatches && !isWithAASTable
             && string.IsNullOrWhiteSpace(whereSm)
             && resultType != ResultType.AssetAdministrationShell
@@ -1710,6 +1821,18 @@ public partial class Query
         bool canDirectValue = !hasPathsOrMatches && !isWithAASTable
             && string.IsNullOrWhiteSpace(whereSm)
             && resultType != ResultType.AssetAdministrationShell
+            && overallHasVRef && !overallHasTRef;
+
+        bool canDirectShellSme = !hasPathsOrMatches
+            && resultType == ResultType.AssetAdministrationShell
+            && string.IsNullOrWhiteSpace(whereAas)
+            && string.IsNullOrWhiteSpace(whereSm)
+            && overallHasSmeRef && !overallHasVRef && !overallHasTRef;
+
+        bool canDirectShellValue = !hasPathsOrMatches
+            && resultType == ResultType.AssetAdministrationShell
+            && string.IsNullOrWhiteSpace(whereAas)
+            && string.IsNullOrWhiteSpace(whereSm)
             && overallHasVRef && !overallHasTRef;
 
         if (canDirectSme)
@@ -1729,6 +1852,26 @@ public partial class Query
             var raw = "SELECT DISTINCT sm.Id\r\nFROM ValueSets AS value\r\nJOIN SMESets AS sme ON sme.Id = value.SMEId\r\nJOIN SMSets AS sm ON sm.Id = sme.SMId\r\n";
             raw += $"WHERE {overall}\r\n";
             raw += $"ORDER BY sm.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
+            return ApplyLikeToGlob(raw);
+        }
+
+        if (canDirectShellSme || canDirectShellValue)
+        {
+            var raw = "SELECT DISTINCT aas.Id AS Id\r\n";
+            if (canDirectShellValue)
+            {
+                raw += "FROM ValueSets AS value\r\n";
+                raw += "INNER JOIN SMESets AS sme ON sme.Id = value.SMEId\r\n";
+            }
+            else
+            {
+                raw += "FROM SMESets AS sme\r\n";
+            }
+            raw += "INNER JOIN SMSets AS sm ON sm.Id = sme.SMId\r\n";
+            raw += "INNER JOIN SMRefSets AS sx ON sx.Identifier = sm.Identifier\r\n";
+            raw += "INNER JOIN AASSets AS aas ON aas.Id = sx.AASId\r\n";
+            raw += $"WHERE {overall}\r\n";
+            raw += $"ORDER BY aas.Id\r\nLIMIT {pageSize} OFFSET {pageFrom}\r\n";
             return ApplyLikeToGlob(raw);
         }
 
@@ -1810,6 +1953,9 @@ public partial class Query
 
             var sbVal = new StringBuilder();
             sbVal.Append("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme.SMId AS \"SMId\"");
+            // Id lets the SQLite execution path correlate an outer value predicate
+            // with ValueSets_fts without changing the shape of the generated joins.
+            sbVal.Append(",\r\n    v.\"Id\" AS \"Id\"");
             foreach (var f in valFields) sbVal.Append($",\r\n    v.\"{f}\" AS \"{f}\"");
             sbVal.Append("\r\n  FROM ValueSets v\r\n  JOIN SMESets sme ON sme.Id = v.SMEId\r\n");
             sbVal.Append($"  WHERE {valWhere}\r\n) AS value ON value.\"SMId\" = sm.Id\r\n");
@@ -1865,8 +2011,145 @@ public partial class Query
         return sql.Replace("%", "*");
     }
 
+    private static readonly Regex SqliteSValueContainsRegex = new(
+        "(?<column>(?<alias>\\\"(?:value|v)\\\"|v)\\.\\\"SValue\\\")\\s+GLOB\\s+(?<pattern>'(?:''|[^'])*')",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex SqliteIdShortContainsRegex = new(
+        "(?<column>(?<alias>\\\"sme\\\"|sme)\\.\\\"IdShort\\\")\\s+GLOB\\s+(?<pattern>'(?:''|[^'])*')",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex SqliteIndexedPathJoinRegex = new(
+        "FROM SMESets (?<sme>[A-Za-z][A-Za-z0-9_]*)(?<nl>\\r?\\n)" +
+        "(?:LEFT JOIN|JOIN) ValueSets (?<value>[A-Za-z][A-Za-z0-9_]*) ON " +
+        "\\k<value>\\.SMEId = \\k<sme>\\.Id AND (?<predicate>[^\\r\\n]+)\\k<nl>" +
+        "WHERE \\k<predicate>",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    /// <summary>
+    /// Path searches normally start at SMESets and repeat the value predicate in
+    /// JOIN and WHERE. For an indexed contains or prefix predicate, start at the
+    /// reduced ValueSets candidates instead. CROSS JOIN fixes that loop order.
+    /// </summary>
+    internal static string ApplySqliteIndexedPathJoinOrder(string sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            return sql;
+
+        return SqliteIndexedPathJoinRegex.Replace(sql, match =>
+        {
+            var predicate = match.Groups["predicate"].Value;
+            if (!HasIndexableSValueTrigram(predicate) && !HasIndexableSValuePrefix(predicate))
+                return match.Value;
+
+            var smeAlias = match.Groups["sme"].Value;
+            var valueAlias = match.Groups["value"].Value;
+            var newline = match.Groups["nl"].Value;
+            return $"FROM ValueSets {valueAlias}{newline}" +
+                   $"CROSS JOIN SMESets {smeAlias}{newline}" +
+                   $"WHERE {smeAlias}.Id = {valueAlias}.SMEId{newline}" +
+                   $"AND {predicate}";
+        });
+    }
+
+    /// <summary>
+    /// Adds FTS5 row-id candidate filters to ordinary SValue and IdShort contains predicates.
+    /// The original GLOB remains in place as the authoritative comparison. Patterns
+    /// that cannot benefit from a trigram (fewer than three literal characters or
+    /// embedded GLOB metacharacters) are deliberately left unchanged.
+    /// </summary>
+    internal static string ApplySqliteTrigramIndex(string sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            return sql;
+
+        var rewritten = SqliteSValueContainsRegex.Replace(sql, match =>
+        {
+            if (!IsIndexableTrigramGlob(match))
+                return match.Value;
+
+            var sqlLiteral = match.Groups["pattern"].Value;
+            var alias = match.Groups["alias"].Value;
+            return $"({match.Value} AND {alias}.\"Id\" IN " +
+                   $"(SELECT rowid FROM \"{SqliteTrigramIndex.TableName}\" " +
+                   $"WHERE \"SValue\" GLOB {sqlLiteral}))";
+        });
+
+        return SqliteIdShortContainsRegex.Replace(rewritten, match =>
+        {
+            if (!IsIndexableTrigramGlob(match))
+                return match.Value;
+
+            var sqlLiteral = match.Groups["pattern"].Value;
+            var alias = match.Groups["alias"].Value;
+            return $"({match.Value} AND {alias}.\"Id\" IN " +
+                   $"(SELECT rowid FROM \"{SqliteTrigramIndex.IdShortTableName}\" " +
+                   $"WHERE \"IdShort\" GLOB {sqlLiteral}))";
+        });
+    }
+
+    private static bool HasIndexableSValueTrigram(string sql)
+    {
+        foreach (Match match in SqliteSValueContainsRegex.Matches(sql))
+        {
+            if (IsIndexableTrigramGlob(match))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasIndexableSValuePrefix(string sql)
+    {
+        foreach (Match match in SqliteSValueContainsRegex.Matches(sql))
+        {
+            var sqlLiteral = match.Groups["pattern"].Value;
+            var pattern = sqlLiteral[1..^1].Replace("''", "'", StringComparison.Ordinal);
+            if (pattern.Length < 2 || pattern[^1] != '*')
+                continue;
+
+            var prefix = pattern[..^1];
+            if (prefix.Length > 0 && prefix.IndexOfAny(['*', '?', '[', ']']) < 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsIndexableTrigramGlob(Match match)
+    {
+        var sqlLiteral = match.Groups["pattern"].Value;
+        var pattern = sqlLiteral[1..^1].Replace("''", "'", StringComparison.Ordinal);
+
+        // Prefix searches are handled more efficiently by SQLite's ordinary
+        // SValue/IdShort B-tree. Trigram is needed for leading-wildcard contains
+        // and suffix searches, provided the literal part has at least 3 chars.
+        if (pattern.Length < 4 || pattern[0] != '*')
+            return false;
+
+        var searchText = pattern[1..];
+        if (searchText.EndsWith('*'))
+            searchText = searchText[..^1];
+        return searchText.Length >= 3 && searchText.IndexOfAny(['*', '?', '[', ']']) < 0;
+    }
+
     private static string BuildValueExistsSql(string predicateSql)
     {
+        // A correlated EXISTS starts at every SMSets row. For selective trigram
+        // predicates that is disastrous when matches are rare. Build the matching
+        // SM-id set once and force ValueSets (and therefore its FTS row-id filter)
+        // to be the leading side of the SQLite join.
+        if (HasIndexableSValueTrigram(predicateSql) || HasIndexableSValuePrefix(predicateSql))
+        {
+            return $@"sm.Id IN (
+  SELECT sme_value.SMId
+  FROM ValueSets v
+  CROSS JOIN SMESets sme_value
+  WHERE sme_value.Id = v.SMEId
+    AND ({predicateSql})
+)";
+        }
+
         return $@"EXISTS (
   SELECT 1
   FROM ValueSets v
@@ -2266,6 +2549,67 @@ public partial class Query
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Converts an expression made exclusively from positive path/match aliases
+    /// and AND/OR into disjunctive normal form. Each outer list item is one UNION
+    /// branch; aliases inside a branch are intersected by SMId joins.
+    /// </summary>
+    private static bool TryBuildPositiveJoinDnf(
+        string expression,
+        IReadOnlySet<string> allowedAliases,
+        out List<List<string>> dnf)
+    {
+        dnf = [];
+        var text = expression.Trim();
+        while (IsSingleBalancedParenthesisWrap(text))
+            text = text.Substring(1, text.Length - 2).Trim();
+
+        var orParts = SplitTopLevelOr(text);
+        if (orParts.Count > 1)
+        {
+            foreach (var part in orParts)
+            {
+                if (!TryBuildPositiveJoinDnf(part, allowedAliases, out var child))
+                    return false;
+                dnf.AddRange(child);
+                if (dnf.Count > 64)
+                    return false;
+            }
+            return dnf.Count > 0;
+        }
+
+        var andParts = SplitTopLevelAnd(text);
+        if (andParts.Count > 1)
+        {
+            var product = new List<List<string>> { new List<string>() };
+            foreach (var part in andParts)
+            {
+                if (!TryBuildPositiveJoinDnf(part, allowedAliases, out var child))
+                    return false;
+
+                var next = new List<List<string>>();
+                foreach (var left in product)
+                foreach (var right in child)
+                    next.Add(left.Concat(right).Distinct(StringComparer.Ordinal).ToList());
+                if (next.Count > 64)
+                    return false;
+                product = next;
+            }
+            dnf = product;
+            return dnf.Count > 0;
+        }
+
+        var leaf = Regex.Match(
+            text,
+            @"^(?<alias>[pm]\d+)\.SMId\s+IS\s+NOT\s+NULL$",
+            RegexOptions.CultureInvariant);
+        if (!leaf.Success || !allowedAliases.Contains(leaf.Groups["alias"].Value))
+            return false;
+
+        dnf.Add([leaf.Groups["alias"].Value]);
+        return true;
     }
 
     private static string AppendAndCondition(string? left, string? right)

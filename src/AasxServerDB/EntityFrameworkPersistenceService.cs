@@ -78,7 +78,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void InitDB(bool reloadDB, string dataPath)
+    public void InitDB(bool reloadDB, string dataPath, bool deferSearchIndexes = false)
     {
         AasContext.DataPath = dataPath;
 
@@ -165,6 +165,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         sqliteDb.Database.EnsureCreated();
 
+                        // During a bulk import, build the FTS indexes once afterwards.
+                        // Creating their triggers here would index every imported row separately.
+                        if (!deferSearchIndexes)
+                            SqliteTrigramIndex.Initialize(sqliteDb);
+
                         //sqliteDb.Database.Migrate();
                     }
                     catch (Exception ex)
@@ -177,6 +182,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
             }
         }
+    }
+
+    public void InitializeSearchIndexes()
+    {
+        if (AasContext.IsPostgres)
+            return;
+
+        using var sqliteDb = new SqliteAasContext();
+        SqliteTrigramIndex.Initialize(sqliteDb);
     }
 
     public void ImportAASXIntoDB(string filePath, bool createFilesOnly)

@@ -54,6 +54,13 @@ namespace IO.Swagger.Lib.V3.Middleware
         {
             logger.LogError(exception.Message);
             logger.LogDebug(exception.StackTrace ?? $"No Stacktrace for {exception}");
+            if (context.Response.HasStarted)
+            {
+                // The client may cancel an MCP request after response streaming has
+                // begun. Headers are immutable at that point, so no JSON error
+                // response can safely be written anymore.
+                return;
+            }
             context.Response.ContentType = "application/json";
             var result = new Result();
             var message = new Message();
