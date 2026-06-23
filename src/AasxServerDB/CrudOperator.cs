@@ -33,7 +33,13 @@ namespace AasxServerDB
 
     internal static class ReadDiag
     {
-        public static bool Enabled = true;
+        // Master switch for the VERBOSE query/read diagnostics (per-phase ReadSubmodel
+        // timings, generated SQL, query plan, SearchSMs/combinedCondition banners).
+        // Off by default; re-enable by setting the environment variable AAS_QUERY_DIAG=1.
+        // NOTE: the one-line ReadSubmodel summary is printed regardless of this flag.
+        public static bool Enabled =
+            string.Equals(System.Environment.GetEnvironmentVariable("AAS_QUERY_DIAG"), "1", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(System.Environment.GetEnvironmentVariable("AAS_QUERY_DIAG"), "true", StringComparison.OrdinalIgnoreCase);
 
         public static long ReadSubmodelTicks;
         public static int ReadSubmodelCount;
@@ -815,6 +821,7 @@ namespace AasxServerDB
             bool skipAllowCheck = false)
         {
             var swRead = Stopwatch.StartNew();
+            var mergedRowCount = 0;
 
             if (!submodelIdentifier.IsNullOrEmpty())
             {
@@ -890,11 +897,12 @@ namespace AasxServerDB
                     smDB,
                     securitySqlConditions);
                 swMerged.Stop();
+                mergedRowCount = smeMerged?.Count ?? 0;
                 if (ReadDiag.Enabled)
                 {
                     ReadDiag.GetSmeMergedTicks += swMerged.ElapsedTicks;
                     ReadDiag.GetSmeMergedCount++;
-                    Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: loaded {smeMerged?.Count ?? 0} merged rows in {swMerged.ElapsedMilliseconds} ms");
+                    Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: loaded {mergedRowCount} merged rows in {swMerged.ElapsedMilliseconds} ms");
                 }
 
                 if (smeMerged == null)
@@ -925,6 +933,8 @@ namespace AasxServerDB
                 Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: parents set in {swParents.ElapsedMilliseconds} ms");
 
             swRead.Stop();
+            // One concise summary line per ReadSubmodel — always printed (independent of the verbose switch).
+            Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: {mergedRowCount} rows in {swRead.ElapsedMilliseconds} ms");
             if (ReadDiag.Enabled)
             {
                 ReadDiag.ReadSubmodelTicks += swRead.ElapsedTicks;
