@@ -427,7 +427,7 @@ namespace AasSecurity
                 accessRole = "isNotAuthenticated";
             }
 
-            _logger.LogInformation($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
+            Console.WriteLine($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
             var aasSecurityContext = new AasSecurityContext(accessRole, route, httpOperation);
             //Create claims
             var claims = new List<Claim>
@@ -451,7 +451,7 @@ namespace AasSecurity
         private string GetAccessRole(NameValueCollection queries, NameValueCollection headers,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
         {
-            _logger.LogInformation("Getting the access rights.");
+            Console.WriteLine("Getting the access rights.");
             string accessRole = null;
             string user = null;
             bool error = false;
@@ -464,7 +464,7 @@ namespace AasSecurity
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
             {
-                _logger.LogInformation($"Access role found {accessRole}");
+                Console.WriteLine($"Access role found {accessRole}");
 
                 return accessRole;
             }
@@ -518,7 +518,7 @@ namespace AasSecurity
         private string HandleBearerToken(string? bearerToken, ref string user, ref bool error,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims, out string domain)
         {
-            _logger.LogInformation("START HANDLING BEARER TOKEN");
+            Console.WriteLine("START HANDLING BEARER TOKEN");
 
             domain = "";
             policy = "";
@@ -527,7 +527,7 @@ namespace AasSecurity
 
             if (bearerToken == null)
             {
-                _logger.LogInformation("NO BEARER TOKEN");
+                Console.WriteLine("NO BEARER TOKEN");
                 return null;
             }
 
@@ -575,11 +575,11 @@ namespace AasSecurity
                         try
                         {
                             var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-                            _logger.LogInformation("Token is valid.");
+                            Console.WriteLine("Token is valid.");
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogInformation($"Token validation failed: {ex.Message}");
+                            Console.WriteLine($"Token validation failed: {ex.Message}");
                             user = "";
                             return "";
                         }
@@ -659,7 +659,7 @@ namespace AasSecurity
                                         }
                                         catch (Exception ex)
                                         {
-                                            _logger.LogInformation($"Could not access well-known from {iss}");
+                                            Console.WriteLine($"Could not access well-known from {iss}");
                                         }
 
                                         parameters = new Dictionary<string, string>
@@ -741,7 +741,7 @@ namespace AasSecurity
                                 }
                                 catch (Exception ex)
                                 {
-                                    _logger.LogInformation($"Could not access well-known from {iss}");
+                                    Console.WriteLine($"Could not access well-known from {iss}");
                                 }
                             }
                             try
@@ -768,12 +768,12 @@ namespace AasSecurity
                                 }
                                 catch (Exception ex)
                                 {
-                                    _logger.LogError($"Error in validation of token {bearerToken}: {ex.Message}.");
+                                    Console.WriteLine($"Error in validation of token {bearerToken}: {ex.Message}.");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
+                                Console.WriteLine($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
                             }
                         }
                     }
@@ -787,7 +787,7 @@ namespace AasSecurity
                             if (cert == null)
                             {
                                 user = "";
-                                _logger.LogInformation("NO SERVER CERTIFICATE FOUND");
+                                Console.WriteLine("NO SERVER CERTIFICATE FOUND");
                                 return "";
                             }
 
@@ -808,7 +808,7 @@ namespace AasSecurity
                             catch
                             {
                                 user = "";
-                                _logger.LogInformation("DECODE SERVER CERTIFICATE FAILED");
+                                Console.WriteLine("DECODE SERVER CERTIFICATE FAILED");
                                 return "";
                             }
                         }
@@ -888,8 +888,8 @@ namespace AasSecurity
                                 tokenClaims.Add(new Claim("domain", domain));
                             }
 
-                            _logger.LogInformation($"User from Token: {user}");
-                            _logger.LogInformation($"Domain from Token: {domain}");
+                            Console.WriteLine($"User from Token: {user}");
+                            Console.WriteLine($"Domain from Token: {domain}");
 
 
                             return "";
@@ -900,12 +900,12 @@ namespace AasSecurity
             catch (Exception ex)
             {
                 error = true;
-                _logger.LogError($"Exception occurred while parsing the bearer token.{ex.Message}");
+                Console.WriteLine($"Exception occurred while parsing the bearer token.{ex.Message}");
                 _logger.LogDebug(ex.StackTrace);
             }
 
             user = "";
-            _logger.LogInformation("NO USER FOUND");
+            Console.WriteLine("NO USER FOUND");
             return "";
         }
 
@@ -926,7 +926,7 @@ namespace AasSecurity
                             switch (split[0].ToLower())
                             {
                                 case "bearer":
-                                    _logger.LogInformation("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
+                                    Console.WriteLine("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
                                     bearerToken = split[1];
                                     break;
                                 case "basic" when bearerToken == null:
@@ -983,7 +983,7 @@ namespace AasSecurity
                         var token = headers[key];
                         if (token != null)
                         {
-                            _logger.LogInformation("Received email token from header: {Sanitize}", LogSanitizer.Sanitize(token));
+                            Console.WriteLine("Received email token from header: {Sanitize}", LogSanitizer.Sanitize(token));
                             user = token;
                             error = false;
                         }
@@ -1003,7 +1003,7 @@ namespace AasSecurity
                         var secretQuery = queries["s"]!;
                         if (!string.IsNullOrEmpty(secretQuery))
                         {
-                            _logger.LogInformation("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
+                            Console.WriteLine("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
                             if (Program.secretStringAPI != null)
                             {
                                 if (secretQuery.Equals(Program.secretStringAPI))
@@ -1020,7 +1020,7 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogInformation("Received token of type bear {Sanitize}", LogSanitizer.Sanitize(token));
+                            Console.WriteLine("Received token of type bear {Sanitize}", LogSanitizer.Sanitize(token));
                             bearerToken = token;
                         }
 
@@ -1031,7 +1031,7 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogInformation("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
+                            Console.WriteLine("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
                             user = token;
                             accessRights = user;
                             error = false;
@@ -1044,12 +1044,12 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogInformation("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
+                            Console.WriteLine("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
                             var username = CheckUserPW(token, out var userName, out var passWord);
                             if (username != null)
                             {
                                 user = username;
-                                _logger.LogInformation("Received username+password query string = {Sanitize}", LogSanitizer.Sanitize(user));
+                                Console.WriteLine("Received username+password query string = {Sanitize}", LogSanitizer.Sanitize(user));
                             }
                             else
                             {
