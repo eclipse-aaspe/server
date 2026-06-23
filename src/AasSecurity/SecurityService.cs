@@ -516,13 +516,18 @@ namespace AasSecurity
         private string HandleBearerToken(string? bearerToken, ref string user, ref bool error,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims, out string domain)
         {
+            _logger.LogInformation("START HANDLING BEARER TOKEN");
+
             domain = "";
             policy = "";
             policyRequestedResource = "";
             tokenClaims = [];
 
             if (bearerToken == null)
+            {
+                _logger.LogInformation("NO BEARER TOKEN");
                 return null;
+            }
 
             try
             {
@@ -568,11 +573,11 @@ namespace AasSecurity
                         try
                         {
                             var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-                            Console.WriteLine("Token is valid.");
+                            _logger.LogInformation("Token is valid.");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Token validation failed: {ex.Message}");
+                            _logger.LogInformation($"Token validation failed: {ex.Message}");
                             user = "";
                             return "";
                         }
@@ -780,6 +785,7 @@ namespace AasSecurity
                             if (cert == null)
                             {
                                 user = "";
+                                _logger.LogInformation("NO SERVER CERTIFICATE FOUND");
                                 return "";
                             }
 
@@ -800,6 +806,7 @@ namespace AasSecurity
                             catch
                             {
                                 user = "";
+                                _logger.LogInformation("DECODE SERVER CERTIFICATE FAILED");
                                 return "";
                             }
                         }
@@ -896,6 +903,7 @@ namespace AasSecurity
             }
 
             user = "";
+            _logger.LogInformation("NO USER FOUND");
             return "";
         }
 
