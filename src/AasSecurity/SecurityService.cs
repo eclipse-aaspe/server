@@ -451,7 +451,7 @@ namespace AasSecurity
         private string GetAccessRole(NameValueCollection queries, NameValueCollection headers,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
         {
-            _logger.LogDebug("Getting the access rights.");
+            _logger.LogInformation("Getting the access rights.");
             string accessRole = null;
             string user = null;
             bool error = false;
@@ -464,6 +464,8 @@ namespace AasSecurity
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
             {
+                _logger.LogInformation($"Access role found {accessRole}");
+
                 return accessRole;
             }
 
@@ -924,7 +926,7 @@ namespace AasSecurity
                             switch (split[0].ToLower())
                             {
                                 case "bearer":
-                                    _logger.LogDebug("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
+                                    _logger.LogInformation("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
                                     bearerToken = split[1];
                                     break;
                                 case "basic" when bearerToken == null:
@@ -981,7 +983,7 @@ namespace AasSecurity
                         var token = headers[key];
                         if (token != null)
                         {
-                            _logger.LogDebug("Received email token from header: {Sanitize}", LogSanitizer.Sanitize(token));
+                            _logger.LogInformation("Received email token from header: {Sanitize}", LogSanitizer.Sanitize(token));
                             user = token;
                             error = false;
                         }
@@ -1001,7 +1003,7 @@ namespace AasSecurity
                         var secretQuery = queries["s"]!;
                         if (!string.IsNullOrEmpty(secretQuery))
                         {
-                            _logger.LogDebug("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
+                            _logger.LogInformation("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
                             if (Program.secretStringAPI != null)
                             {
                                 if (secretQuery.Equals(Program.secretStringAPI))
@@ -1018,7 +1020,7 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogDebug("Received token of type bear {Sanitize}", LogSanitizer.Sanitize(token));
+                            _logger.LogInformation("Received token of type bear {Sanitize}", LogSanitizer.Sanitize(token));
                             bearerToken = token;
                         }
 
@@ -1029,7 +1031,7 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogDebug("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
+                            _logger.LogInformation("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
                             user = token;
                             accessRights = user;
                             error = false;
@@ -1042,12 +1044,12 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogDebug("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
+                            _logger.LogInformation("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
                             var username = CheckUserPW(token, out var userName, out var passWord);
                             if (username != null)
                             {
                                 user = username;
-                                _logger.LogDebug("Received username+password query string = {Sanitize}", LogSanitizer.Sanitize(user));
+                                _logger.LogInformation("Received username+password query string = {Sanitize}", LogSanitizer.Sanitize(user));
                             }
                             else
                             {
