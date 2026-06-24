@@ -926,7 +926,8 @@ namespace AasSecurity
                             switch (split[0].ToLower())
                             {
                                 case "bearer":
-                                    Console.WriteLine("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
+                                   Console.WriteLine($"Received bearer token {split[1]}");
+                                   //_logger.LogInformation("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
                                     bearerToken = split[1];
                                     break;
                                 case "basic" when bearerToken == null:
