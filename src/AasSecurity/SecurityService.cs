@@ -451,7 +451,6 @@ namespace AasSecurity
         private string GetAccessRole(NameValueCollection queries, NameValueCollection headers,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
         {
-            Console.WriteLine("Getting the access rights.");
             string accessRole = null;
             string user = null;
             bool error = false;
@@ -518,8 +517,6 @@ namespace AasSecurity
         private string HandleBearerToken(string? bearerToken, ref string user, ref bool error,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims, out string domain)
         {
-            Console.WriteLine("START HANDLING BEARER TOKEN");
-
             domain = "";
             policy = "";
             policyRequestedResource = "";
@@ -888,10 +885,6 @@ namespace AasSecurity
                                 tokenClaims.Add(new Claim("domain", domain));
                             }
 
-                            Console.WriteLine($"User from Token: {user}");
-                            Console.WriteLine($"Domain from Token: {domain}");
-
-
                             return "";
                         }
                     }
@@ -905,7 +898,6 @@ namespace AasSecurity
             }
 
             user = "";
-            Console.WriteLine("NO USER FOUND");
             return "";
         }
 
