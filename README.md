@@ -1,3 +1,33 @@
+# Eclipse AASPE Server
+
+> ### Status
+> [![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
+> [![Draft Release on Merge to Release Branch](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml/badge.svg?branch=release)](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml)<br>
+> [![Build and publish docker images when release is published](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml)<br>
+> [![Code Style & Security Analysis](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml)<br>
+> 
+> ![GitHub repo size](https://img.shields.io/github/repo-size/eclipse-aaspe/server) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/eclipse-aaspe/server)
+> ### Docker Images
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
+>
+> ### Dotnet Version
+> We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-9.0-blue)
+
+AASPE Server is a companion app for the [AASPE Package Explorer](https://github.com/eclipse-aaspe/package-explorer). Some source code is shared, especially AasCore.  
+AASPE Server is a AAS Repository, a Submodel Repository and a Concept Description Repository.  
+It can also import and export AASX packages by the AASX File Server API and supports the Serialization API.  
+AAS and Submodel Queries can be made by the Query Repository API.  
+A readonly AAS Registry can be provided automatically by the AAS Repository.  
+
+AASPE Server uses Entity Framework and stores data in the SQL database SQLite. (Other SQL databases like PostgreSQL may be supported later.)  
+Performance has been tested with up to 100K AAS, 500K SM, 50M SME and 100M Values, where AASQL queries can be made in less than 10 seconds.
+Many optimizations have been made by testing with SQLite.
+
+The Core variant exposes REST endpoints and provides changed data by MQTT.  
+The **Blazor** variant offers the same functionality and uses Blazor for a browser-based UI. The **Blazor** variant is also able to provide changed data by REST API.
+
 ## ⚠️ Important Notice: Breaking Changes in `main`
 
 The `main` branch contains **breaking changes** compared to previous versions of the system.
@@ -23,54 +53,17 @@ This branch is maintained to support the older version and ensure compatibility 
 - Use `main` for all **new development** and future-ready integrations  
 - Use `main-db1` only if you depend on the **legacy implementation**
 
+## Quick Facts
 
-# Eclipse AASPE Server
-
-> ### Status
-> [![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
-> [![Draft Release on Merge to Release Branch](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml/badge.svg?branch=release)](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml)<br>
-> [![Build and publish docker images when release is published](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml)<br>
-> [![Code Style & Security Analysis](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml)<br>
-> 
-> ![GitHub repo size](https://img.shields.io/github/repo-size/eclipse-aaspe/server) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/eclipse-aaspe/server)
-> ### Docker Images
-> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
-> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo:develop)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
-> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
-> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
-> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
->
-> ### Dotnet Version
-> We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-9.0-blue)
-
-
-AASPE Server is a companion app for the [AASPE Package Explorer](https://github.com/eclipse-aaspe/package-explorer). Some source code is shared, especially AasCore.  
-AASPE Server is a AAS Repository, a Submodel Repository and a Concept Description Repository.  
-It can also import and export AASX packages by the AASX File Server API and supports the Serialization API.  
-AAS and Submodel Queries can be made by the Query Repository API.  
-A readonly AAS Registry can be provided automatically by the AAS Repository.  
-
-AASPE Server uses Entity Framework and stores data in the SQL database SQLite. (Other SQL databases like PostgreSQL may be supported later.)  
-Performance has been tested with up to 100K AAS, 500K SM, 50M SME and 100M Values, where AASQL queries can be made in less than 10 seconds.
-Many optimizations have been made by testing with SQLite.
-
-The Core variant exposes REST endpoints and provides changed data by MQTT.  
-The **Blazor** variant offers the same functionality and uses Blazor for a browser-based UI.
-
-> **IMPORTANT**
->
-> AASX Server is in **V3**; see [Releases](https://github.com/eclipse-aaspe/server/releases).  
-> Ongoing development is also tracked on branches such as [`newdb2-main`](https://github.com/eclipse-aaspe/server/tree/newdb2-main) (see Docker tag `develop` below).
-
-> **TIP**
+### Reference Demo 
 >
 > The current reference demo (large dataset, **security and row-level filtering enabled**) is [`https://big.aas-voyager.com/`](https://big.aas-voyager.com/).  
-> Explore the API at [`/swagger`](https://big.aas-voyager.com/swagger), the live access rules at [`/access`](https://big.aas-voyager.com/access), and the DB browser at [`/db`](https://big.aas-voyager.com/db).  
+> Explore the API at [`/swagger`](https://big.aas-voyager.com/swagger/index.htm), the live access rules at [`/access`](https://big.aas-voyager.com/access), and the DB browser at [`/db-chunked`](https://big.aas-voyager.com/db-chunked).  
 > See [`docs/security.md`](docs/security.md) for how the roles, rule language and `FILTER` blocks used by that server are wired up.
 
 > Older demo endpoints such as `v3.admin-shell-io.com` and `v3security.admin-shell-io.com` are outdated; prefer `big.aas-voyager.com` for all new tests and screenshots.
 
-## Quick reference (V3)
+### Quick reference (V3)
 
 | Topic | Detail |
 |--------|--------|
@@ -81,12 +74,113 @@ The **Blazor** variant offers the same functionality and uses Blazor for a brows
 
 The legacy **V2** REST surface (`--rest`, `--host`, `--port`, fixed port **51310**) is **no longer** the primary API. Ignore the “**Connect to REST by:**” message in old tooling.
 
-## How-to
+## Setting Up the AASX Server
 
-Currently, **AasxServerBlazor** is the primary entry point; **AasxServerCore** may still be used in some deployments. **AasxServerWindows** is not actively developed; use **.NET 8** on Windows with the Blazor variant.
+The recommended approach is Docker, since ready-made, automatically built images are available. Alternatively, you can run the server directly with .NET. Currently, **AasxServerBlazor** is the primary entry point; **AasxServerCore** may still be used in some deployments. **AasxServerWindows** is not actively developed; use **.NET 9** on Windows with the Blazor variant.
 
-### Running from source (development)
+### Prerequisites 
 
+- A current Docker installation (Docker Engine or Docker Desktop). 
+- Optionally, a directory containing your `.aasx` files. 
+- For the .NET variant only: the 
+  [.NET 9 Runtime / SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). 
+
+### Build with Docker
+The recommended approach to run the server is Docker.
+ 
+#### Available Docker Images 
+
+Images are published to Docker Hub under the `adminshellio` organisation. 
+
+| Variant | Image | 
+| --- | --- | 
+| Blazor (with GUI) | [`adminshellio/aasx-server-blazor-for-demo`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo) | 
+| Blazor arm32 | [`adminshellio/aasx-server-blazor-for-demo-arm32`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32) | 
+| Blazor arm64 | [`adminshellio/aasx-server-blazor-for-demo-arm64`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64) | 
+| Core (without GUI) | [`adminshellio/aasx-server-core-for-demo`](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo) | 
+
+#### Tags 
+
+> **There is no `latest` tag — always specify a tag explicitly.** 
+
+| Tag | Meaning | 
+| --- | --- | 
+| `main` | Built automatically by the CI pipeline on each push to `main`. | 
+| `develop` | Built **manually** when needed from the current development branch (e.g. `events-api-supplier`). | 
+| `legacy` | Built from the `main-db1` legacy branch (previous version). | 
+| `<version>` | A fixed release build (see [Releases](https://github.com/eclipse-aaspe/server/releases)). | 
+
+The same tags apply to the other `adminshellio/aasx-server-…-for-demo` images 
+(Core, arm32, arm64) when published. 
+
+#### Build Docker images locally
+
+Use [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1) on Windows/PowerShell (see script for prerequisites).
+
+#### Quick Start
+
+> **Important:** As of V3, running **with a database** is the intended mode of 
+> operation. The former pure in-memory mode (without `--with-db`) is no longer 
+> actively maintained or tested. The examples below enable the database. See 
+> [Persistence](#persistence-database) for details. 
+
+The following command starts the Blazor variant, mounts a local directory 
+`./aasxs` containing your AASX files, and imports them into the database on the 
+**first** start: 
+
+```bash 
+docker run \ 
+  -p 5001:5001 \ 
+  --restart unless-stopped \ 
+  -v ./aasxs:/AasxServerBlazor/aasxs \ 
+  docker.io/adminshellio/aasx-server-blazor-for-demo:main \ 
+  --with-db --start-index 0 --data-path /AasxServerBlazor/aasxs 
+``` 
+
+The user interface is then available at <http://localhost:5001>. 
+
+> **On subsequent starts**, the already-imported content should **not** be read 
+> in again. Set `--start-index` to a value greater than your number of AASX files 
+> (e.g. `--start-index 1000`). See [Persistence](#persistence-database). 
+
+To use the development build instead, pull and run the `:develop` tag: 
+
+```bash 
+docker pull docker.io/adminshellio/aasx-server-blazor-for-demo:develop 
+``` 
+
+#### Running with Docker Compose 
+
+The repository includes a Compose file you can use or adapt: 
+
+```bash 
+docker compose -f src/docker/docker-compose.yaml up --build 
+``` 
+
+See 
+[`src/docker/docker-compose.yaml`](https://github.com/eclipse-aaspe/server/blob/main/src/docker/docker-compose.yaml) 
+for ports, volumes (`./aasxs`), and the default `command` line. A 
+[`src/docker/docker-compose-demo.yaml`](https://github.com/eclipse-aaspe/server/blob/main/src/docker/docker-compose-demo.yaml) 
+is also provided for demo variants.
+
+#### Loading AASX Files 
+
+Provide AASX packages in one of two ways: 
+
+1. **Via a mounted directory** (recommended): place your `.aasx` files into the 
+   directory you mount with `-v` and reference via `--data-path`. 
+2. **Copy into a running container:** 
+
+   ```bash 
+   docker cp /path/to/aasx/samples/ <container-id>:/AasxServerBlazor/aasxs/ 
+   ``` 
+
+   For the Core variant, use `/AasxServerCore/aasxs/` analogously. 
+
+### Alternative methods for setting up the server
+If you choose not to use Docker, the server can be run using several alternative methods.
+
+#### Running from source
 Solution file: [`src/AasxServer.sln`](src/AasxServer.sln). Typical local run (from repository root):
 
 ```sh
@@ -96,7 +190,7 @@ dotnet run --project src/AasxServerBlazor/AasxServerBlazor.csproj -- --no-securi
 
 Arguments after `--` are passed to the server. Adjust `--data-path` and `--external-blazor` to match your environment. See also [`src/AasxServerBlazor/Properties/launchSettings.json`](src/AasxServerBlazor/Properties/launchSettings.json) for examples.
 
-### Remote debugging over SSH (Linux)
+#### Remote debugging over SSH (Linux)
 
 For a **non-Docker** run on a remote machine (bind `http://*:PORT`, optional Kestrel debug), start from an example script:
 
@@ -108,7 +202,7 @@ From your laptop, forward the port, e.g.:
 ssh -L 50010:127.0.0.1:50010 user@remote-host
 ```
 
-### Running with .NET (published build)
+##### Running with .NET (published build)
 
 After publishing `AasxServerBlazor`, run the DLL (replace **YOURPORT** / **YOURURL**):
 
@@ -120,68 +214,9 @@ dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor 
 
 Default port in many configs is **5001**. [.NET 9 Runtime / SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) is required to build and run.
 
-### Running with Docker
-
-Image: [`docker.io/adminshellio/aasx-server-blazor-for-demo`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
-
-**Tags** (there is **no** `latest` tag; always specify a tag):
-
-| Tag | Meaning |
-|-----|---------|
-| `main` | Built automatically by the GitHub pipeline on each push to **`main`** |
-| `develop` | Built **manually** when needed from the current development branch (e.g. [`newdb2-main`](https://github.com/eclipse-aaspe/server/tree/newdb2-main)) |
-| Version tags | Use when you need a fixed release build |
-
-**Example (`main` — CI build from branch `main`):**
-
-```sh
-docker run \
-  -p 5001:5001 \
-  --restart unless-stopped \
-  -v ./aasxs:/AasxServerBlazor/aasxs \
-  docker.io/adminshellio/aasx-server-blazor-for-demo:main
-```
-
-**Example (`develop` — manual build from the active dev branch, e.g. `newdb2-main`):**
-
-```sh
-docker pull docker.io/adminshellio/aasx-server-blazor-for-demo:develop
-
-docker run \
-  -p 5001:5001 \
-  --restart unless-stopped \
-  -v ./aasxs:/AasxServerBlazor/aasxs \
-  docker.io/adminshellio/aasx-server-blazor-for-demo:develop
-```
-
-The same `:main` / `:develop` tags apply to the other **adminshellio/aasx-server-…-for-demo** images (Core, arm32, arm64) when published.
-
-### Docker Compose (repository file)
-
-The repository includes a Compose file you can use or adapt:
-
-```sh
-docker compose -f src/docker/docker-compose.yaml up --build
-```
-
-See [`src/docker/docker-compose.yaml`](src/docker/docker-compose.yaml) for ports, volumes (`./aasxs`), and default `command` line. There is also [`src/docker/docker-compose-demo.yaml`](src/docker/docker-compose-demo.yaml) for demo variants.
-
-### Docker Hub variants (architectures)
-
-| Variant | linux/amd64 | Tags (examples) |
-|---------|-------------|-----------------|
-| Blazor | [aasx-server-blazor-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo) | `:main`, `:develop`, version tags |
-| Blazor arm32 | [aasx-server-blazor-for-demo-arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32) | `:main`, `:develop`, … |
-| Blazor arm64 | [aasx-server-blazor-for-demo-arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64) | `:main`, `:develop`, … |
-| Core | [aasx-server-core-for-demo](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo) | `:main`, `:develop`, … |
-
 ### Multi-architecture
 
 If you want to help with multi-arch images or Raspberry Pi, [open an issue](https://github.com/eclipse-aaspe/server/issues/new).
-
-### Build Docker images locally
-
-Use [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1) on Windows/PowerShell (see script for prerequisites).
 
 ### Persistence (database)
 
@@ -202,7 +237,11 @@ and how AASQL is translated to SQL (the `CombineTablesLEFT` pipeline with
 | `--save-temp SEC` | Periodically write API changes to the DB every **SEC** seconds |
 | `--aasx-in-memory N` | Limit how many AAS appear in the Blazor tree (only the most recently changed may be shown when limited) |
 
-Reference demo with DB enabled: [`big.aas-voyager.com`](https://big.aas-voyager.com/) · [DB view](https://big.aas-voyager.com/db) · [access rules](https://big.aas-voyager.com/access) · [Swagger](https://big.aas-voyager.com/swagger).
+Reference demo with DB enabled: [`big.aas-voyager.com`](https://big.aas-voyager.com/) · [DB view](https://big.aas-voyager.com/db-chunked) · [access rules](https://big.aas-voyager.com/access) · [Swagger](https://big.aas-voyager.com/swagger/index.htm).
+
+For a walkthrough of the relational schema and how AASQL is translated to SQL, 
+see 
+[`docs/database-and-query.md`](https://github.com/eclipse-aaspe/server/blob/main/docs/database-and-query.md). 
 
 ### Security (authentication, roles, access rules)
 
@@ -211,10 +250,17 @@ Security is configured through AAS submodels (`SecuritySettingsForServer`,
 The reference deployment [`big.aas-voyager.com`](https://big.aas-voyager.com/)
 has role-based authentication **and** row-level `FILTER` rules enabled.
 
-For the role catalogue (`isNotAuthenticated`, `isReaderOnly`,
-`isAuthenticatedUser`, `isSuperDuperUser`, …), the `AllAccessPermissionRules`
-rule language served at `/Access`, and how `FORMULA` / `FILTER` expressions are
-merged into the AASQL pipeline, see [`docs/security.md`](docs/security.md).
+The rule system defines a role catalogue (`isNotAuthenticated`, `isReaderOnly`, 
+`isAuthenticatedUser`, `isSuperDuperUser`, …) and an `AllAccessPermissionRules` 
+rule language exposed at `/Access`. `FORMULA` and `FILTER` expressions are merged 
+into the AASQL query pipeline, allowing fine-grained, row-level access control. 
+
+For the full role catalogue, the rule language, and how the expressions are 
+wired up, see 
+[`docs/security.md`](https://github.com/eclipse-aaspe/server/blob/main/docs/security.md). 
+
+> The `--no-security` flag disables authentication entirely and is intended for 
+> local tests and demos only — never for production. 
 
 Example GraphQL query:
 
@@ -275,17 +321,6 @@ With the switch to semantic versioning, our release process has been enhanced:
 Once the branch is merged into the release branch, GitHub Workflows will **automatically** initiate, creating a new draft release. Review the release to confirm everything is in order before publishing it in the release settings.
 
 Docker image releases are handled automatically at this stage.
-
-### Nightly Releases
-
-We employ a cron job to check nightly for changes on the main branch. If changes are detected, it creates a new prerelease `latest alpha` build. This process automatically assigns a new version number, creates a tag, and releases the corresponding Docker images. A changelog is also automatically generated based on PR changes; however, direct merges into main are not included in this changelog.
-
-You can manually trigger this process using the workflow [here](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml).
-
-### Example Version Tags
-- `v1.0.0.1-aasV3-alpha-develop`: Alpha build on a develop branch.
-- `v1.0.0.2-aasV3-alpha-stable`: Stable release.
-- `v1.0.0.3-aasV3-alpha-latest`: Latest build on the main branch.
 
 ## Issues
 
