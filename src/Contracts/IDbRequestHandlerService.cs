@@ -91,7 +91,7 @@ public interface IDbRequestHandlerService
     Task<QResult> QuerySearchSMEs(ISecurityConfig securityConfig, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff,
         string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression);
     Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression);
-    Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression);
+    Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression, bool sqlOnly = false);
 
     Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId);
     Task<DbFileRequestResult> ReadAASXByPackageId(ISecurityConfig securityConfig, string packageId);

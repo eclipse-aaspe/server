@@ -34,6 +34,11 @@ public class DbQueryRequest
 
     public ResultType ResultType { get; set; }
     public bool IncludeDebugSql { get; set; }
+
+    /// <summary>
+    /// When true, build the SQL and its query plan (EXPLAIN QUERY PLAN) but do NOT execute the actual query.
+    /// </summary>
+    public bool SqlOnly { get; set; }
     //Submodel Element Request
     public string Requested { get; set; }
     public string SmSemanticId { get; set; }

@@ -264,7 +264,7 @@ public partial class Query
 
     internal QueryResult GetQueryData(bool noSecurity, AasContext db,
         int pageFrom, int pageSize, ResultType resultType, string expression, bool includeDebugSql = false,
-        SqlConditions? securitySqlConditions = null)
+        bool sqlOnly = false, SqlConditions? securitySqlConditions = null)
     {
         // When true (--no-security), ignore any passed-in rule merge and in-memory filtering.
         var effectiveSecurity = noSecurity ? null : securitySqlConditions;
@@ -291,7 +291,13 @@ public partial class Query
 
         expression = "$JSONGRAMMAR " + expression;
 
-        List<string>? generatedSql = includeDebugSql ? new List<string>() : null;
+        // SQL-only debugging: build SQL + query plan, but skip executing the actual query.
+        // Append (not prepend) so the "$JSONGRAMMAR" prefix stays at the start for grammar detection;
+        // flags are stripped position-independently in GetSMs.
+        if (sqlOnly)
+            expression += " $SQLONLY";
+
+        List<string>? generatedSql = (includeDebugSql || sqlOnly) ? new List<string>() : null;
         var result = GetSMs(out var effectiveSqlConditions, resultType,
             qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression, generatedSql, effectiveSecurity);
         if (result == null)
@@ -560,7 +566,7 @@ public partial class Query
             expression = expression.Replace("$CONSOLIDATE", string.Empty);
         }
 
-        List<string> possibleFlags = ["$LEFTJOIN", "$UNION", "$TEMPTABLE", "$LEGACYSMEJOIN"];
+        List<string> possibleFlags = ["$LEFTJOIN", "$UNION", "$TEMPTABLE", "$LEGACYSMEJOIN", "$SQLONLY"];
         List<string> flags = [];
         foreach (var flag in possibleFlags)
         {
@@ -645,6 +651,53 @@ public partial class Query
         }
 
         return qp;
+    }
+
+    // Query plan for a multi-statement script (e.g. the $TEMPTABLE build SQL).
+    // EXPLAIN QUERY PLAN only works per statement, so DDL (DROP/CREATE) is executed
+    // on a private connection so the temp table exists, and the data-moving
+    // statements (INSERT ... SELECT) are explained without actually inserting rows.
+    private static string GetQueryPlanForScript(AasContext db, string script)
+    {
+        var sb = new StringBuilder();
+        using var connection = new SqliteConnection(db.Database.GetDbConnection().ConnectionString);
+        connection.Open();
+
+        foreach (var raw in script.Split(';'))
+        {
+            var stmt = raw.Trim();
+            if (stmt.Length == 0)
+                continue;
+
+            var upper = stmt.TrimStart().ToUpperInvariant();
+            using var command = connection.CreateCommand();
+
+            // DDL must run so later EXPLAINs can resolve the temp table; it has no meaningful plan.
+            if (upper.StartsWith("DROP") || upper.StartsWith("CREATE"))
+            {
+                command.CommandText = stmt;
+                command.ExecuteNonQuery();
+                continue;
+            }
+
+            command.CommandText = "EXPLAIN QUERY PLAN\n" + stmt;
+            using var reader = command.ExecuteReader();
+            sb.Append("-- ").Append(stmt.Split('\n')[0].Trim()).Append('\n');
+            while (reader.Read())
+                sb.Append(reader.GetString(3)).Append('\n');
+            sb.Append('\n');
+        }
+
+        return sb.ToString();
+    }
+
+    // Appends a labeled EXPLAIN QUERY PLAN block to the debug SQL output (no-op when not collecting).
+    private static void AddQueryPlan(List<string>? generatedSql, string? queryPlan)
+    {
+        if (generatedSql == null || string.IsNullOrWhiteSpace(queryPlan))
+            return;
+
+        AddGeneratedSql(generatedSql, "-- EXPLAIN QUERY PLAN\n" + queryPlan.TrimEnd());
     }
 
     //private static IQueryable<CombinedSMResultWithAas> CombineSMWithAas(AasContext db, IQueryable<CombinedSMResult> smResult, IQueryable<SMRefSet>? smRef)
@@ -1579,11 +1632,24 @@ public partial class Query
         if (rawSql == null)
             throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
 
+        // SQL-only debugging: emit SQL + query plan, but never execute the actual query.
+        var sqlOnly = flags.Contains("$SQLONLY");
+
         if (flags.Contains("$TEMPTABLE"))
         {
+            AddGeneratedSql(generatedSql, rawSql);
+
+            if (sqlOnly)
+            {
+                var swPlanOnly = Stopwatch.StartNew();
+                AddQueryPlan(generatedSql, GetQueryPlanForScript(db, rawSql));
+                swPlanOnly.Stop();
+                Console.WriteLine($"[ReadDiag] CombineTablesLEFT.GetQueryPlan (sql-only, temptable): {swPlanOnly.ElapsedMilliseconds} ms");
+                return new List<int>();
+            }
+
             using var tx = db.Database.BeginTransaction();
 
-            AddGeneratedSql(generatedSql, rawSql);
             db.Database.ExecuteSqlRaw(rawSql);
 
             var tempTableSelectRaw = $@"SELECT Id
@@ -1613,12 +1679,27 @@ public partial class Query
         swPlan.Stop();
         Console.WriteLine($"[ReadDiag] CombineTablesLEFT.GetQueryPlan: {swPlan.ElapsedMilliseconds} ms");
 
+        if (sqlOnly)
+        {
+            AddQueryPlan(generatedSql, qpRaw);
+            return new List<int>();
+        }
+
         var swExec = Stopwatch.StartNew();
-        var ids = db.Set<SMSetIdResult>()
-            .FromSqlRaw(rawSql)
-            .AsNoTracking()
-            .Select(x => x.Id)
-            .ToList();
+        // Execute the finished SQL directly via ADO.NET (like the sqlite3 CLI).
+        // EF's FromSqlRaw(...).Select(...) wraps rawSql in a subquery, which degrades the
+        // plan for DISTINCT+ORDER BY+LIMIT queries (observed ~8x slower than native).
+        var ids = new List<int>();
+        var connection = db.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = rawSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                ids.Add(reader.GetInt32(0));
+        }
         swExec.Stop();
         Console.WriteLine($"[ReadDiag] CombineTablesLEFT.Execute   : {swExec.ElapsedMilliseconds} ms ({ids.Count} ids)");
         return ids;
@@ -1653,7 +1734,7 @@ public partial class Query
         foreach (var path  in sc.Paths)    overall = overall.Replace($"$${path.Placeholder}$$",  $"(p{pathNum++}.SMId IS NOT NULL)");
         foreach (var match in sc.Matches)  overall = overall.Replace($"$${match.Placeholder}$$", $"(m{matchNum++}.SMId IS NOT NULL)");
         foreach (var exists in sc.ExistsConditions)
-            overall = overall.Replace($"$${exists.Placeholder}$$", BuildValueExistsSql(exists.PredicateSql));
+            overall = overall.Replace($"$${exists.Placeholder}$$", BuildValueMatchSql(exists.PredicateSql, whereSme));
 
         // ----------------------------------------------------------------
         // Direct paths: no paths/matches, no AAS join, no SM filter, standalone SM list.
@@ -1770,6 +1851,10 @@ public partial class Query
             foreach (var col in new[] { "SValue", "NValue", "DTValue", "Annotation" })
                 if (overall.Contains($"\"value\".\"{col}\"")) valFields.Add(col);
             var valWhere  = string.IsNullOrWhiteSpace(whereVal) ? "1=1" : whereVal.Replace("\"value\".", "v.");
+            // Apply the element-visibility FILTER inside the value join (alias sme = SMESets here), so a
+            // value in a hidden element cannot satisfy the query — same correctness fix as the value EXISTS.
+            if (!string.IsNullOrWhiteSpace(whereSme))
+                valWhere = $"({valWhere}) AND ({whereSme})";
 
             var sbVal = new StringBuilder();
             sbVal.Append("LEFT JOIN(\r\n  SELECT DISTINCT\r\n    sme.SMId AS \"SMId\"");
@@ -1784,11 +1869,7 @@ public partial class Query
 
         if (unionOrTemp)
         {
-            var orParts = string.IsNullOrWhiteSpace(overall) || overall == "1=1"
-                ? new List<string> { "1=1" }
-                : SplitTopLevelOr(overall);
-            if (orParts.Count == 0)
-                orParts = new List<string> { "1=1" };
+            var orParts = BuildUnionOrParts(sc, overall, whereSme, smeJoin, valueJoin);
             return BuildJoinedUnionOrTempSql(
                 rawBase,
                 pathJoins,
@@ -1828,15 +1909,57 @@ public partial class Query
         return sql.Replace("%", "*");
     }
 
-    private static string BuildValueExistsSql(string predicateSql)
+    // Realizes a direct $sme#value condition. The element-visibility FILTER (smeFilter, e.g. the
+    // access-rule "$sme#idShort starts-with General/Manufacturer") is applied INSIDE the value match,
+    // so a value sitting in a hidden element cannot satisfy the query (otherwise id-only queries would
+    // leak the existence of hidden-element values). Selective predicates (=, range, GLOB-prefix) become
+    // a value-index-driven, non-correlated subquery (sm.Id IN (...)); non-selective ones (<>, negation,
+    // OR of predicates) stay a correlated EXISTS that short-circuits per submodel.
+    // NOTE: interim operator heuristic — to be replaced by a structure-based decision in the planned
+    // condition-IR (where selectivity could come from ANALYZE statistics).
+    private static string BuildValueMatchSql(string predicateSql, string? smeFilter)
     {
+        var filter = string.IsNullOrWhiteSpace(smeFilter)
+            ? string.Empty
+            : $"\r\n    AND ({smeFilter!.Replace("\"sme\".", "sme_value.", StringComparison.Ordinal)})";
+
+        if (PredicatePrefersJoin(predicateSql))
+        {
+            return $@"sm.Id IN (
+  SELECT sme_value.SMId
+  FROM ValueSets v
+  JOIN SMESets sme_value ON sme_value.Id = v.SMEId
+  WHERE ({predicateSql}){filter}
+)";
+        }
+
         return $@"EXISTS (
   SELECT 1
   FROM ValueSets v
   JOIN SMESets sme_value ON sme_value.Id = v.SMEId
   WHERE sme_value.SMId = sm.Id
-    AND ({predicateSql})
+    AND ({predicateSql}){filter}
 )";
+    }
+
+    // Operator heuristic for BuildValueMatchSql: a value predicate is "join-worthy" when it is an
+    // index-usable positive comparison (=, <, >, <=, >=, or a GLOB prefix without leading wildcard)
+    // and carries no negation or top-level OR (one non-selective disjunct would force a scan).
+    private static bool PredicatePrefersJoin(string predicateSql)
+    {
+        if (string.IsNullOrWhiteSpace(predicateSql))
+            return false;
+        if (predicateSql.Contains("<>", StringComparison.Ordinal) ||
+            predicateSql.Contains("!=", StringComparison.Ordinal) ||
+            Regex.IsMatch(predicateSql, @"\bNOT\b", RegexOptions.IgnoreCase))
+            return false;
+        if (Regex.IsMatch(predicateSql, @"\bOR\b", RegexOptions.IgnoreCase))
+            return false;
+        if (Regex.IsMatch(predicateSql, @"[=<>]", RegexOptions.CultureInvariant))
+            return true;
+        if (Regex.IsMatch(predicateSql, @"GLOB\s+'[^*]"))
+            return true;
+        return false;
     }
 
     /// <summary>
@@ -1996,6 +2119,94 @@ public partial class Query
         }
 
         throw new InvalidOperationException("BuildDirectUnionOrTempSql requires $UNION or $TEMPTABLE.");
+    }
+
+    // Decide the OR-branches for the UNION/TEMPTABLE builder.
+    //
+    // When security is merged in, FormulaConditions["all"] is "(userOR) AND (securityACL)" whose
+    // top-level operator is AND — SplitTopLevelOr can't decompose it, so $UNION/$TEMPTABLE would
+    // degenerate to a single branch. Instead we split the *user* OR alone and AND the security ACL
+    // onto each branch (distribution: (A OR B OR C) AND S -> (A AND S), (B AND S), (C AND S)), so each
+    // branch can be driven by its own index. Falls back to the old combined-split whenever distribution
+    // isn't applicable or would reference a join that isn't built.
+    private static List<string> BuildUnionOrParts(SqlConditions sc, string combinedOverall, string? smeFilter, string? smeJoin, string? valueJoin)
+    {
+        List<string> NonEmpty(List<string> parts) => parts.Count == 0 ? new List<string> { "1=1" } : parts;
+
+        List<string> Fallback() =>
+            NonEmpty(string.IsNullOrWhiteSpace(combinedOverall) || combinedOverall == "1=1"
+                ? new List<string> { "1=1" }
+                : SplitTopLevelOr(combinedOverall));
+
+        var qRaw = sc.QueryOverallRaw;
+        var secRaw = sc.SecurityOverallRaw;
+        if (string.IsNullOrWhiteSpace(qRaw) || string.IsNullOrWhiteSpace(secRaw))
+            return Fallback();
+
+        string Resolve(string raw)
+        {
+            var s = NormalizeSqlAliases(raw ?? "");
+            int pN = 1, mN = 1;
+            foreach (var path in sc.Paths) s = s.Replace($"$${path.Placeholder}$$", $"(p{pN++}.SMId IS NOT NULL)");
+            foreach (var match in sc.Matches) s = s.Replace($"$${match.Placeholder}$$", $"(m{mN++}.SMId IS NOT NULL)");
+            foreach (var exists in sc.ExistsConditions) s = s.Replace($"$${exists.Placeholder}$$", BuildValueMatchSql(exists.PredicateSql, smeFilter));
+            return s;
+        }
+
+        var resolvedSecurity = Resolve(secRaw!);
+        var userBranches = SplitTopLevelOr(StripEnclosingParens(Resolve(qRaw!)));
+        if (userBranches.Count <= 1)
+            return Fallback(); // no user OR to distribute -> nothing gained
+
+        var distributed = userBranches
+            .Select(b => b.Trim() == "1=1" ? $"({resolvedSecurity})" : $"({b}) AND ({resolvedSecurity})")
+            .ToList();
+
+        // Safety: a branch may only reference the sme/value materialized joins if they were actually built;
+        // otherwise the emitted SQL would name an undefined alias (e.g. after the sme-EXISTS rewrite).
+        bool joinsConsistent = distributed.All(b =>
+            (smeJoin != null || !b.Contains("\"sme\".", StringComparison.Ordinal)) &&
+            (valueJoin != null || !b.Contains("\"value\".", StringComparison.Ordinal)));
+
+        return joinsConsistent ? distributed : Fallback();
+    }
+
+    // Removes redundant outer parentheses that wrap the whole expression, so SplitTopLevelOr can see
+    // a top-level OR in "(A OR B OR C)". Leaves "(A) OR (B)" untouched (not a single enclosing pair).
+    private static string StripEnclosingParens(string s)
+    {
+        s = s.Trim();
+        while (s.Length >= 2 && s[0] == '(' && s[^1] == ')')
+        {
+            int depth = 0;
+            bool inSingle = false, inDouble = false, wrapsWhole = true;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (!inDouble && c == '\'')
+                {
+                    if (inSingle && i + 1 < s.Length && s[i + 1] == '\'') i++;
+                    else inSingle = !inSingle;
+                    continue;
+                }
+                if (!inSingle && c == '"')
+                {
+                    if (inDouble && i + 1 < s.Length && s[i + 1] == '"') i++;
+                    else inDouble = !inDouble;
+                    continue;
+                }
+                if (inSingle || inDouble) continue;
+                if (c == '(') depth++;
+                else if (c == ')')
+                {
+                    depth--;
+                    if (depth == 0 && i != s.Length - 1) { wrapsWhole = false; break; }
+                }
+            }
+            if (!wrapsWhole) break;
+            s = s.Substring(1, s.Length - 2).Trim();
+        }
+        return s;
     }
 
     private static string BuildJoinedUnionOrTempSql(
