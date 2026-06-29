@@ -11,12 +11,12 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 using AasxServerStandardBib.Logging;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
 
 namespace AasSecurity
 {
@@ -53,6 +53,15 @@ namespace AasSecurity
             }
 
             _logger.LogInformation($"Request is successfully authenticated.");
+
+            _logger.LogInformation("***************** LIST TICKET CLAIMS ********************");
+
+            foreach (var tickeClaim in ticket.Principal.Claims)
+            {
+                _logger.LogInformation($"CLAIM {tickeClaim?.ToString()}");
+                _logger.LogInformation($"next claim");
+            }
+
             return Task.FromResult(AuthenticateResult.Success(ticket));
 
         }
