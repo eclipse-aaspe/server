@@ -1344,7 +1344,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return ConvertQueryItems(tcs);
     }
 
-    public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression)
+    public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression, bool sqlOnly = false)
     {
         var parameters = new DbRequestParams()
         {
@@ -1354,7 +1354,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                 PageSize = paginationParameters.Limit,
                 ResultType = resultType,
                 Expression = expression,
-                IncludeDebugSql = true
+                IncludeDebugSql = true,
+                SqlOnly = sqlOnly
             }
         };
 

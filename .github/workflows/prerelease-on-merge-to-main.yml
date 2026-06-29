@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - main-db1
   schedule:
     - cron: '0 23 * * 1-5' # This is 1:00 AM Berlin time from Monday to Friday
   workflow_dispatch:  # Allows manual triggering
@@ -274,6 +275,8 @@ jobs:
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "tag=main" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main-db1" ]; then
+            echo "tag=legacy" >> $GITHUB_OUTPUT
           else
             echo "tag=develop" >> $GITHUB_OUTPUT
           fi

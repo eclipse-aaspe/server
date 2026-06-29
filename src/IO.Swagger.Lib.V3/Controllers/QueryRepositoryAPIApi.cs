@@ -309,7 +309,8 @@ public class QueryRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var debugResult = await _dbRequestHandlerService.QueryGetSMsDebug(securityConfig, paginationParameters, resultType, expression);
+        // SQL-only: build the SQL + query plan without executing the (potentially heavy) query.
+        var debugResult = await _dbRequestHandlerService.QueryGetSMsDebug(securityConfig, paginationParameters, resultType, expression, sqlOnly: true);
 
         return Content(BuildPlainSql(debugResult.RawSql), "text/plain");
     }

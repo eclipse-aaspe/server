@@ -203,11 +203,12 @@ public sealed class QueryTests
 
         // SQL shape: path conditions ($sme.ManufacturerName, $sme.FootprintInformationModule2.CO2eq)
         // must produce LEFT JOIN path subqueries, not a full-table SME scan.
-        // Direct $sme#value conditions must use EXISTS, not a joined SME scan.
+        // Direct $sme#value equality conditions ('2500', hex) are selective, so they must be realized
+        // as value-index-driven subqueries (sm.Id IN (...)), not a correlated EXISTS over the SM list.
         result.Sql.Should().ContainSingle();
         var sql = result.Sql[0];
         sql.Should().Contain("LEFT JOIN(", because: "path conditions must use path subquery LEFT JOINs");
-        sql.Should().Contain("EXISTS (", because: "direct $sme#value conditions must use EXISTS subqueries");
+        sql.Should().Contain("sm.Id IN (", because: "selective direct $sme#value (=) conditions must be value-driven, not correlated EXISTS");
         sql.Should().Contain("GLOB", because: "LIKE must be converted to GLOB for SQLite index performance");
         sql.Should().NotContain("LIKE", because: "LIKE must be converted to GLOB for SQLite index performance");
         sql.Should().NotContain("INNER JOIN SMRefSets", because: "no $aas condition in Query2 — AAS table join must be skipped");
@@ -303,14 +304,14 @@ public sealed class QueryTests
         // SQL shape: $aas#id conditions require AAS join; $match requires a match subquery
         // with Path{N} aliases and substr() for %-wildcard segment extraction;
         // path conditions ($sme.FootprintInformationModule2.CO2eq) use LEFT JOIN path subqueries;
-        // direct $sme#value (hex) uses EXISTS.
+        // direct $sme#value (hex equality) is selective, so it uses a value-driven subquery (sm.Id IN (...)).
         result.Sql.Should().ContainSingle();
         var sql = result.Sql[0];
         sql.Should().Contain("INNER JOIN SMRefSets", because: "$aas#id conditions require the AAS→SMRefSets join");
         sql.Should().Contain("SELECT Path1.SMId AS SMId", because: "$match must produce a match subquery joining Path aliases");
         sql.Should().Contain("substr(", because: "%-wildcard $match paths must extract segments via substr()");
         sql.Should().Contain("LEFT JOIN(", because: "path conditions must use path subquery LEFT JOINs");
-        sql.Should().Contain("EXISTS (", because: "direct $sme#value hex condition must use EXISTS subquery");
+        sql.Should().Contain("sm.Id IN (", because: "selective direct $sme#value (hex =) must be value-driven, not correlated EXISTS");
         sql.Should().Contain("GLOB", because: "LIKE must be converted to GLOB for SQLite index performance");
         sql.Should().NotContain("LIKE", because: "LIKE must be converted to GLOB for SQLite index performance");
     }
@@ -572,6 +573,198 @@ public sealed class QueryTests
         filteredIdShorts.Should().OnlyContain(s => s!.StartsWith("General") || s.StartsWith("Manufacturer"));
         filteredIdShorts.Count.Should().BeLessThan(fullIdShorts.Count,
             "the element-level FILTER must remove non-matching elements on the single-submodel GET path");
+    }
+
+    /// <summary>
+    /// $UNION / $TEMPTABLE under an access-rule FILTER: the merged overall is "(userOR) AND (ACL)",
+    /// whose top level is AND. The builder must split the *user* OR and AND the ACL onto each branch
+    /// (distribution), so the flagged query (a) still returns exactly the same submodels as the default
+    /// LEFT-JOIN query and (b) actually emits multiple branches.
+    /// </summary>
+    [Theory]
+    [InlineData("$UNION")]
+    [InlineData("$TEMPTABLE")]
+    public void UnionOrTemp_WithSecurityFilter_DistributesUserOrAndMatchesDefault(string flag)
+    {
+        const string securityExpression = """
+            {
+              "AllAccessPermissionRules": {
+                "rules": [
+                  {
+                    "ACL": {
+                      "ATTRIBUTES": [ { "CLAIM": "isNotAuthenticated" } ],
+                      "RIGHTS": [ "READ" ],
+                      "ACCESS": "ALLOW"
+                    },
+                    "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                    "FORMULA": {
+                      "$or": [
+                        { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "Nameplate" } ] },
+                        { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "TechnicalData" } ] }
+                      ]
+                    },
+                    "FILTER": {
+                      "FRAGMENT": "xxx",
+                      "CONDITION": {
+                        "$or": [
+                          { "$starts-with": [ { "$field": "$sme#idShort" }, { "$strVal": "General" } ] },
+                          { "$starts-with": [ { "$field": "$sme#idShort" }, { "$strVal": "Manufacturer" } ] }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+
+        // User query with a genuine top-level $or (sm idShort), which under the ACL becomes
+        // "(idShort=Nameplate OR idShort=TechnicalData) AND (ACL FORMULA) AND (ACL FILTER)".
+        const string userQuery = """
+            {
+              "Query": {
+                "$select": "id",
+                "$condition": {
+                  "$or": [
+                    { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "Nameplate" } ] },
+                    { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "TechnicalData" } ] }
+                  ]
+                }
+              }
+            }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var sec = LoadSubmodelAccessRuleSqlConditions(securityExpression);
+
+        var def = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: false, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery, includeDebugSql: true, securitySqlConditions: sec.Clone());
+        var flagged = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: false, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery + " " + flag, includeDebugSql: true, securitySqlConditions: sec.Clone());
+
+        def.Should().NotBeNull();
+        flagged.Should().NotBeNull();
+        def!.Ids.Should().NotBeEmpty("the anonymous ACL exposes Nameplate/TechnicalData submodels");
+        flagged!.Ids.Should().BeEquivalentTo(def.Ids, "OR distribution must preserve query semantics");
+
+        var sql = string.Join("\n", flagged.Sql);
+        if (flag == "$UNION")
+            sql.Should().Contain("UNION", "the user $or must split into separate UNION branches");
+        else
+            System.Text.RegularExpressions.Regex.Matches(sql, "INSERT OR IGNORE INTO union_ids").Count
+                .Should().BeGreaterThan(1, "the user $or must split into separate temp-table INSERT branches");
+    }
+
+    private const string AnonymousSubmodelsAcl = """
+        {
+          "AllAccessPermissionRules": {
+            "rules": [
+              {
+                "ACL": {
+                  "ATTRIBUTES": [ { "CLAIM": "isNotAuthenticated" } ],
+                  "RIGHTS": [ "READ" ],
+                  "ACCESS": "ALLOW"
+                },
+                "OBJECTS": [ { "ROUTE": "/submodels" } ],
+                "FORMULA": {
+                  "$or": [
+                    { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "Nameplate" } ] },
+                    { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "TechnicalData" } ] }
+                  ]
+                },
+                "FILTER": {
+                  "FRAGMENT": "xxx",
+                  "CONDITION": {
+                    "$or": [
+                      { "$starts-with": [ { "$field": "$sme#idShort" }, { "$strVal": "General" } ] },
+                      { "$starts-with": [ { "$field": "$sme#idShort" }, { "$strVal": "Manufacturer" } ] }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+        """;
+
+    /// <summary>
+    /// Selective direct <c>$sme#value</c> equality must be realized value-index-driven (<c>sm.Id IN (…)</c>),
+    /// and the access-rule element FILTER must sit INSIDE that value match — otherwise a value in a hidden
+    /// element could satisfy the query (id-only leak).
+    /// </summary>
+    [Fact]
+    public void ValueEquality_WithSecurity_IsValueDriven_AndFilterInsideMatch()
+    {
+        // $and wrapping routes the value predicate through the EXISTS/value-match realization
+        // (a standalone $sme#value goes through the value-join path instead).
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$and": [ { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "2500" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var sec = LoadSubmodelAccessRuleSqlConditions(AnonymousSubmodelsAcl);
+        var result = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: false, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery, includeDebugSql: true, securitySqlConditions: sec);
+
+        result.Should().NotBeNull();
+        var sql = string.Join("\n", result!.Sql);
+        sql.Should().Contain("sm.Id IN (", "selective '=' on $sme#value must be value-driven");
+        sql.Should().NotContain("sme_value.SMId = sm.Id", "the value-driven form must not be a correlated EXISTS");
+        // FILTER must be applied inside the value-driven subquery (between the IN and its General* predicate).
+        sql.Should().MatchRegex(@"sm\.Id IN \([\s\S]*?GLOB 'General\*'", "the element FILTER must sit inside the value match");
+    }
+
+    /// <summary>
+    /// Non-selective direct <c>$sme#value</c> (<c>&lt;&gt;</c>) must stay a correlated EXISTS (short-circuits per
+    /// submodel), and the element FILTER must sit INSIDE that EXISTS.
+    /// </summary>
+    [Fact]
+    public void ValueInequality_WithSecurity_StaysExists_AndFilterInsideMatch()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$and": [ { "$ne": [ { "$field": "$sme#value" }, { "$strVal": "" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var sec = LoadSubmodelAccessRuleSqlConditions(AnonymousSubmodelsAcl);
+        var result = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: false, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery, includeDebugSql: true, securitySqlConditions: sec);
+
+        result.Should().NotBeNull();
+        var sql = string.Join("\n", result!.Sql);
+        sql.Should().Contain("sme_value.SMId = sm.Id", "non-selective '<>' must stay a correlated EXISTS");
+        sql.Should().MatchRegex(@"sme_value\.SMId = sm\.Id[\s\S]*?GLOB 'General\*'", "the element FILTER must sit inside the EXISTS");
+    }
+
+    /// <summary>
+    /// A standalone <c>$sme#value</c> is realized via the value-join (not the EXISTS path). The element
+    /// FILTER must be applied inside that join too, otherwise a value in a hidden element could match.
+    /// </summary>
+    [Fact]
+    public void StandaloneValue_WithSecurity_FilterInsideValueJoin()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "2500" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var sec = LoadSubmodelAccessRuleSqlConditions(AnonymousSubmodelsAcl);
+        var result = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: false, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery, includeDebugSql: true, securitySqlConditions: sec);
+
+        result.Should().NotBeNull();
+        var sql = string.Join("\n", result!.Sql);
+        // The FILTER must sit inside the value join (before its ") AS value" close).
+        sql.Should().MatchRegex(@"JOIN SMESets sme ON sme\.Id = v\.SMEId[\s\S]*?GLOB 'General\*'[\s\S]*?\) AS value",
+            "the element FILTER must sit inside the value join");
     }
 
     // -------------------------------------------------------------------------

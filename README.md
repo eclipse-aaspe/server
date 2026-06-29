@@ -1,3 +1,29 @@
+## ⚠️ Important Notice: Breaking Changes in `main`
+
+The `main` branch contains **breaking changes** compared to previous versions of the system.
+
+These changes may require adjustments in existing integrations, configurations, or deployments. Please review the changes carefully before upgrading.
+
+### What This Means
+- Existing setups may no longer work without modification
+- Migration effort may be required  
+- Db Schema has changed 
+- -NET 9.0 is used now
+
+### Legacy Support
+
+If you need to continue working with the previous version, please use the dedicated legacy branch:
+
+➡️ **`main-db1`**
+
+This branch is maintained to support the older version and ensure compatibility with existing systems. Docker images for main-db1 are tagged legacy.
+
+### Recommendation
+
+- Use `main` for all **new development** and future-ready integrations  
+- Use `main-db1` only if you depend on the **legacy implementation**
+
+
 # Eclipse AASPE Server
 
 > ### Status

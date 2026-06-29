@@ -95,6 +95,19 @@ public class SqlConditions
     public List<ExistsCondition> ExistsConditions { get; } = new();
 
     /// <summary>
+    /// When this bag is the AND-merge of a user query and a security bag (see <see cref="SqlConditionsMerger.Merge"/>),
+    /// these carry the two <c>"all"</c>-scope overalls separately (with placeholders, before the AND-combine):
+    /// <see cref="QueryOverallRaw"/> = the user query disjunction, <see cref="SecurityOverallRaw"/> = the ACL FORMULA/FILTER.
+    /// The UNION/TEMPTABLE builder uses them to split the user OR into branches and AND the security onto each branch,
+    /// instead of splitting the already AND-combined <c>FormulaConditions["all"]</c> (whose top level is AND, hence unsplittable).
+    /// Both null when no security merge happened.
+    /// </summary>
+    public string? QueryOverallRaw { get; set; }
+
+    /// <summary>See <see cref="QueryOverallRaw"/>.</summary>
+    public string? SecurityOverallRaw { get; set; }
+
+    /// <summary>
     /// Returns a deep copy that owns its own dictionaries and join lists so per-request mutations
     /// (e.g. <see cref="SubstituteTokenClaims"/>, single-row Allow-checks) cannot leak into cached
     /// <c>AccessPermissionRule._formula_sqlConditions</c> instances shared across requests.
@@ -117,6 +130,8 @@ public class SqlConditions
         }
         foreach (var e in ExistsConditions)
             dst.ExistsConditions.Add(new ExistsCondition { Placeholder = e.Placeholder, PredicateSql = e.PredicateSql });
+        dst.QueryOverallRaw = QueryOverallRaw;
+        dst.SecurityOverallRaw = SecurityOverallRaw;
         return dst;
     }
 
@@ -151,6 +166,10 @@ public class SqlConditions
         }
         foreach (var e in ExistsConditions)
             e.PredicateSql = ReplaceClaimSentinels(e.PredicateSql, claimList);
+        if (QueryOverallRaw != null)
+            QueryOverallRaw = ReplaceClaimSentinels(QueryOverallRaw, claimList);
+        if (SecurityOverallRaw != null)
+            SecurityOverallRaw = ReplaceClaimSentinels(SecurityOverallRaw, claimList);
     }
 
     private static string ReplaceClaimSentinels(string? sql, IList<Claim>? claims)
@@ -297,6 +316,12 @@ public static class SqlConditionsMerger
             !string.IsNullOrWhiteSpace(qOver) && !string.IsNullOrWhiteSpace(secOverall)
                 ? $"({qOver}) AND ({secOverall})"
                 : string.IsNullOrWhiteSpace(qOver) ? secOverall : qOver;
+
+        // Keep the two overalls separate (before the AND-combine) so the UNION/TEMPTABLE builder can
+        // split the user OR into branches and AND the security onto each, rather than splitting the
+        // combined AND (which is unsplittable). Both carry placeholders; resolved at SQL-build time.
+        merged.QueryOverallRaw = qOver;
+        merged.SecurityOverallRaw = secOverall;
 
         // --- Paths: query first, then renumbered security ---
         foreach (var p in query.Paths)

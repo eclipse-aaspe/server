@@ -781,6 +781,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             queryRequest.ResultType,
                             queryRequest.Expression,
                             queryRequest.IncludeDebugSql,
+                            queryRequest.SqlOnly,
                             securitySqlConditions);
 
                         if (queryRequest.IncludeDebugSql)
