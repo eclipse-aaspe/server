@@ -657,6 +657,43 @@ public sealed class QueryTests
                 .Should().BeGreaterThan(1, "the user $or must split into separate temp-table INSERT branches");
     }
 
+    /// <summary>
+    /// Without security the OR-distribution fallback must still split a fully-paren-wrapped top-level
+    /// OR ("(A OR B)") via StripEnclosingParens — otherwise $UNION/$TEMPTABLE would degenerate to one
+    /// monolithic branch (full SMSets scan) instead of value-/index-driven branches.
+    /// </summary>
+    [Theory]
+    [InlineData("$UNION")]
+    [InlineData("$TEMPTABLE")]
+    public void UnionOrTemp_NoSecurity_DistributesTopLevelOr(string flag)
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition": { "$or": [
+              { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "Nameplate" } ] },
+              { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "TechnicalData" } ] }
+            ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var def = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery, includeDebugSql: true);
+        var flagged = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery + " " + flag, includeDebugSql: true);
+
+        def.Should().NotBeNull();
+        flagged.Should().NotBeNull();
+        flagged!.Ids.Should().BeEquivalentTo(def!.Ids, "OR distribution must preserve query semantics");
+
+        var sql = string.Join("\n", flagged.Sql);
+        if (flag == "$UNION")
+            sql.Should().Contain("UNION", "a fully-wrapped top-level OR must split even without security");
+        else
+            System.Text.RegularExpressions.Regex.Matches(sql, "INSERT OR IGNORE INTO union_ids").Count
+                .Should().BeGreaterThan(1, "a fully-wrapped top-level OR must split into temp-table branches even without security");
+    }
+
     private const string AnonymousSubmodelsAcl = """
         {
           "AllAccessPermissionRules": {

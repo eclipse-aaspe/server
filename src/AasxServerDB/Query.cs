@@ -2394,7 +2394,7 @@ public partial class Query
         int pageFrom,
         int pageSize)
     {
-        var orParts = SplitTopLevelOr(overall);
+        var orParts = SplitTopLevelOr(StripEnclosingParens(overall));
         if (orParts.Count == 0)
             orParts = new List<string> { "1=1" };
         var fromSql = isSmeTable
@@ -2447,10 +2447,13 @@ public partial class Query
     {
         List<string> NonEmpty(List<string> parts) => parts.Count == 0 ? new List<string> { "1=1" } : parts;
 
+        // Strip a redundant enclosing paren so a fully-wrapped top-level OR ("(A OR B OR C)") still
+        // splits — without it, the no-security path (this fallback) would emit a single monolithic
+        // branch (full SMSets scan) instead of distributing the OR.
         List<string> Fallback() =>
             NonEmpty(string.IsNullOrWhiteSpace(combinedOverall) || combinedOverall == "1=1"
                 ? new List<string> { "1=1" }
-                : SplitTopLevelOr(combinedOverall));
+                : SplitTopLevelOr(StripEnclosingParens(combinedOverall)));
 
         var qRaw = sc.QueryOverallRaw;
         var secRaw = sc.SecurityOverallRaw;
