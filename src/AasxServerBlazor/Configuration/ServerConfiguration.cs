@@ -93,9 +93,29 @@ public static class ServerConfiguration
                 {
                     var result = await next(context, ct);
                     var allowed = AllowedMcpTools(context.Services);
-                    if (allowed is not null && result.Tools is not null)
+                    if (result.Tools is not null)
                     {
-                        result.Tools = result.Tools.Where(t => allowed.Contains(t.Name)).ToList();
+                        if (allowed is not null)
+                        {
+                            result.Tools = result.Tools.Where(t => allowed.Contains(t.Name)).ToList();
+                        }
+
+                        // OpenAI Apps SDK / ChatGPT compatibility: declare each (read-only, public) tool as
+                        // no-auth and give it invocation status text. securitySchemes is mirrored into _meta
+                        // (the location ChatGPT reads; the typed SDK cannot emit a custom top-level field).
+                        // title + readOnly/idempotent/etc. annotations come from the [McpServerTool] attributes.
+                        foreach (var tool in result.Tools)
+                        {
+                            var meta = tool.Meta ?? new System.Text.Json.Nodes.JsonObject();
+                            meta["securitySchemes"] = new System.Text.Json.Nodes.JsonArray(
+                                new System.Text.Json.Nodes.JsonObject { ["type"] = "noauth" });
+                            if (McpToolStatus.TryGetValue(tool.Name, out var status))
+                            {
+                                meta["openai/toolInvocation/invoking"] = status.Invoking;
+                                meta["openai/toolInvocation/invoked"] = status.Invoked;
+                            }
+                            tool.Meta = meta;
+                        }
                     }
 
                     return result;
@@ -116,6 +136,22 @@ public static class ServerConfiguration
                 });
             });
     }
+
+    // Per-tool invocation status text (OpenAI Apps SDK _meta), kept <= 64 chars per the spec.
+    private static readonly IReadOnlyDictionary<string, (string Invoking, string Invoked)> McpToolStatus =
+        new Dictionary<string, (string, string)>(StringComparer.Ordinal)
+        {
+            ["aas_query"]               = ("Searching Voyager…", "Voyager search complete"),
+            ["aas_count"]               = ("Counting Voyager results…", "Voyager count complete"),
+            ["aas_get_submodel"]        = ("Reading AAS submodel…", "AAS submodel loaded"),
+            ["aas_get_submodels"]       = ("Reading AAS submodels…", "AAS submodels loaded"),
+            ["aas_get_shell"]           = ("Reading AAS shell…", "AAS shell loaded"),
+            ["aas_get_shells"]          = ("Reading AAS shells…", "AAS shells loaded"),
+            ["aas_get_product"]         = ("Reading AAS product…", "AAS product loaded"),
+            ["aas_find_product"]        = ("Finding AAS product…", "AAS product found"),
+            ["aas_find_product_simple"] = ("Finding product…", "Product found"),
+            ["aas_get_element"]         = ("Reading AAS element…", "AAS element loaded"),
+        };
 
     // Erlaubter Tool-Satz je nach MCP-Endpunkt-Pfad (null = alle Tools, voller Endpunkt /mcp).
     // /mcp-simple zuerst prüfen (Pfad enthält nicht "mcp-basic"), dann /mcp-basic, sonst voll.

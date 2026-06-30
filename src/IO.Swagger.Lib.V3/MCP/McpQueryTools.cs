@@ -123,7 +123,7 @@ public sealed class McpQueryTools
         _mappingService = mappingService;
     }
 
-    [McpServerTool(Name = "aas_query")]
+    [McpServerTool(Name = "aas_query", Title = "Search AAS Repository", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Sucht im AAS-Repository und liefert nur die gefundenen Identifier zurück (keine Volldaten). " +
         "Mehrere Bedingungen werden mit combine (\"and\"/\"or\") verknüpft. " +
@@ -209,7 +209,7 @@ public sealed class McpQueryTools
         };
     }
 
-    [McpServerTool(Name = "aas_count")]
+    [McpServerTool(Name = "aas_count", Title = "Count AAS Search Results", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Zählt die Treffer einer Suche, bevor man sie abruft. Gleiche Bedingungs-/combine-Logik wie aas_query. " +
         "Hinweis: in dieser Version nur für target=\"submodels\" verfügbar; für target=\"shells\" bitte aas_query mit limit verwenden. " +
@@ -258,7 +258,7 @@ public sealed class McpQueryTools
         return new { target, totalCount, nextStep = "Treffer abrufen mit aas_query (gleiche Bedingung); danach aas_get_submodel oder aas_get_product für die Inhalte." };
     }
 
-    [McpServerTool(Name = "aas_get_submodel")]
+    [McpServerTool(Name = "aas_get_submodel", Title = "Get AAS Submodel", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Holt ein komplettes Submodel anhand seines Identifiers (z.B. einen Treffer aus aas_query), damit man mit den Inhalten weiterarbeiten kann. " +
         "format=\"value\" (Default) liefert eine kompakte idShort->Wert-Darstellung — token-sparsam und ideal zum Auslesen von Werten. " +
@@ -301,7 +301,7 @@ public sealed class McpQueryTools
         return new { identifier, format = fmt, submodel = SerializeValueOrFull(submodel, fmt) };
     }
 
-    [McpServerTool(Name = "aas_get_submodels")]
+    [McpServerTool(Name = "aas_get_submodels", Title = "Get Multiple AAS Submodels", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Holt MEHRERE Submodelle in EINEM Aufruf — eine Liste von Identifiern statt vieler Einzelabrufe. " +
         "OHNE select: je Submodel der volle Inhalt (value/full). " +
@@ -386,7 +386,7 @@ public sealed class McpQueryTools
         return new { count = submodels.Count, format = fmt, submodels };
     }
 
-    [McpServerTool(Name = "aas_get_element")]
+    [McpServerTool(Name = "aas_get_element", Title = "Get AAS Element", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Liest ein einzelnes SubmodelElement aus einem Submodel — gezielt, statt das ganze Submodel zu laden (spart Tokens). " +
         "Ein idShortPath MIT Punkt (z.B. \"TechnicalProperties.flowMax\") adressiert exakt ein Element (normale AAS-API). " +
@@ -465,7 +465,7 @@ public sealed class McpQueryTools
         return new { submodelIdentifier = smId, idShort = path, format = fmt, count = results.Count, matches = results };
     }
 
-    [McpServerTool(Name = "aas_get_shell")]
+    [McpServerTool(Name = "aas_get_shell", Title = "Get AAS Shell", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Liest eine AAS (Asset Administration Shell) anhand ihres Identifiers — die Asset-Ebene ÜBER den Submodellen. " +
         "WANN BENUTZEN: Immer wenn du zu einem Produkt weitere Daten aus einem ANDEREN Submodel DERSELBEN Shell brauchst — " +
@@ -514,7 +514,7 @@ public sealed class McpQueryTools
         return result;
     }
 
-    [McpServerTool(Name = "aas_get_shells")]
+    [McpServerTool(Name = "aas_get_shells", Title = "Get Multiple AAS Shells", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Holt MEHRERE AAS (Shells) in EINEM Aufruf — eine Liste von AAS-Identifiern statt vieler Einzelabrufe. " +
         "Je Shell die AssetInformation + Submodel-Referenzen (format=\"value\", Default) oder das volle AAS-JSON (format=\"full\").")]
@@ -569,7 +569,7 @@ public sealed class McpQueryTools
         return new { count = shells.Count, format = fmt, shells };
     }
 
-    [McpServerTool(Name = "aas_get_product")]
+    [McpServerTool(Name = "aas_get_product", Title = "Get Complete AAS Product", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Liefert in EINEM Aufruf ein komplettes Produkt: die AAS (assetInformation) PLUS die Werte ALLER ihrer Submodelle " +
         "(z.B. TechnicalData + Nameplate + CarbonFootprint zusammen). " +
@@ -604,7 +604,7 @@ public sealed class McpQueryTools
         return await BuildProductObject(securityConfig, shell, fmt);
     }
 
-    [McpServerTool(Name = "aas_find_product")]
+    [McpServerTool(Name = "aas_find_product", Title = "Find Complete AAS Product", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Sucht ein Produkt anhand von Bedingungen UND liefert es in EINEM Aufruf komplett zurück — ohne Verkettung. " +
         "Das richtige Tool für Fragen wie 'finde das Ventil mit flowMax 80 und nenne Hersteller, technische Daten und CO2-Fußabdruck'. " +
@@ -638,7 +638,7 @@ public sealed class McpQueryTools
         return await FindProductCore(expression, fmt);
     }
 
-    [McpServerTool(Name = "aas_find_product_simple")]
+    [McpServerTool(Name = "aas_find_product_simple", Title = "Find Product by Simple Property", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
         "Findet ein Produkt anhand EINES Merkmals und liefert es komplett zurück — der einfachste Weg, ohne Bedingungs-Syntax. " +
         "Gib einfach den Merkmalsnamen (idShort, z.B. \"flowMax\") und den gesuchten Wert (z.B. \"80\") an. " +
