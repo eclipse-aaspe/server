@@ -65,6 +65,30 @@ public sealed class SqliteTrigramIndexTests
     }
 
     [Fact]
+    public void ApplySqliteTrigramIndex_SkipsPatternsInSkipSet()
+    {
+        const string input = "SELECT * FROM ValueSets AS v WHERE v.\"SValue\" GLOB '*Netzteil*'";
+        var skip = new HashSet<string>(StringComparer.Ordinal) { "'*Netzteil*'" };
+
+        var result = Query.ApplySqliteTrigramIndex(input, skip);
+
+        result.Should().NotContain("ValueSets_fts", "patterns in the skip set must not get an FTS candidate filter");
+        result.Should().Contain("v.\"SValue\" GLOB '*Netzteil*'", "the original GLOB stays unchanged");
+    }
+
+    [Theory]
+    [InlineData("v.\"SValue\" GLOB '*Phoenix*'", true)]      // single indexable contains
+    [InlineData("(v.\"SValue\" GLOB '*Phoenix*')", true)]    // wrapped in parens
+    [InlineData("v.\"SValue\" GLOB '*Phoenix*' AND v.\"NValue\" = 5", false)] // compound (extra selectivity)
+    [InlineData("v.\"SValue\" GLOB 'Phoenix*'", false)]      // prefix, not a trigram contains
+    [InlineData("v.\"SValue\" = '2500'", false)]             // equality, no contains
+    [InlineData("v.\"SValue\" GLOB '*ab*'", false)]          // fewer than 3 literal chars
+    public void TryGetPureSValueContainsPattern_DetectsSingleIndexableContains(string predicate, bool expected)
+    {
+        Query.TryGetPureSValueContainsPattern(predicate, out _).Should().Be(expected);
+    }
+
+    [Fact]
     public void BuildRawSql_UsesUncorrelatedCandidateSetForIndexedValueContains()
     {
         var conditions = new SqlConditions();

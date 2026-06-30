@@ -694,6 +694,71 @@ public sealed class QueryTests
                 .Should().BeGreaterThan(1, "a fully-wrapped top-level OR must split into temp-table branches even without security");
     }
 
+    /// <summary>
+    /// A non-selective ("common") $contains is realized as a correlated EXISTS (early-stop under
+    /// ORDER BY/LIMIT), and the FTS candidate filter is NOT injected into it (which would re-materialize
+    /// the huge match set). Cap is lowered so any present term counts as common in the small fixture.
+    /// </summary>
+    [Fact]
+    public void Contains_CommonValue_RoutedToExists_WithoutFtsPrefilter()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [ { "$contains": [ { "$field": "$sme#value" }, { "$strVal": "ZVEI" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present term is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common contains must be realized as a correlated EXISTS");
+            sql.Should().NotContain("ValueSets_fts", "the common contains EXISTS must not get the FTS candidate filter");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A rare/absent $contains stays on the value-driven IN path with the FTS candidate filter
+    /// (fast for small/empty match sets).
+    /// </summary>
+    [Fact]
+    public void Contains_RareValue_StaysValueDrivenWithFtsPrefilter()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [ { "$contains": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz123" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // absent term still yields 0 matches -> rare
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sm.Id IN (", "a rare/absent contains stays value-driven");
+            sql.Should().Contain("ValueSets_fts", "the rare contains keeps the FTS candidate filter");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
     private const string AnonymousSubmodelsAcl = """
         {
           "AllAccessPermissionRules": {

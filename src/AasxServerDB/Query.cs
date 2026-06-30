@@ -1664,6 +1664,10 @@ public partial class Query
 
         bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
+        // Probe contains-predicate selectivity (sets ExistsCondition.PreferExists for "common" ones)
+        // before building, so the value match can choose EXISTS vs the value-driven IN/FTS.
+        var commonContains = ClassifyCommonContains(db, sqlConditions);
+
         var swBuild = Stopwatch.StartNew();
         var rawSql = BuildRawSqlFromSqlConditions(sqlConditions, isWithAASTable, resultType, pageFrom, pageSize, flags);
         swBuild.Stop();
@@ -1674,7 +1678,7 @@ public partial class Query
         if (db.Database.IsSqlite())
         {
             rawSql = ApplySqliteIndexedPathJoinOrder(rawSql);
-            rawSql = ApplySqliteTrigramIndex(rawSql);
+            rawSql = ApplySqliteTrigramIndex(rawSql, commonContains);
         }
 
         // SQL-only debugging: emit SQL + query plan, but never execute the actual query.
@@ -1769,6 +1773,8 @@ public partial class Query
             && sqlOverallCondition.Contains("\"aas\".");
         var isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
+        var commonContains = ClassifyCommonContains(db, sqlConditions);
+
         var rawSql = BuildRawSqlFromSqlConditions(
             sqlConditions, isWithAASTable, resultType, 0, int.MaxValue, flags)
             ?? throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
@@ -1776,7 +1782,7 @@ public partial class Query
         if (db.Database.IsSqlite())
         {
             rawSql = ApplySqliteIndexedPathJoinOrder(rawSql);
-            rawSql = ApplySqliteTrigramIndex(rawSql);
+            rawSql = ApplySqliteTrigramIndex(rawSql, commonContains);
         }
 
         // Counting does not need stable result ordering or pagination. Removing
@@ -1828,7 +1834,7 @@ public partial class Query
         foreach (var path  in sc.Paths)    overall = overall.Replace($"$${path.Placeholder}$$",  $"(p{pathNum++}.SMId IS NOT NULL)");
         foreach (var match in sc.Matches)  overall = overall.Replace($"$${match.Placeholder}$$", $"(m{matchNum++}.SMId IS NOT NULL)");
         foreach (var exists in sc.ExistsConditions)
-            overall = overall.Replace($"$${exists.Placeholder}$$", BuildValueMatchSql(exists.PredicateSql, whereSme));
+            overall = overall.Replace($"$${exists.Placeholder}$$", BuildValueMatchSql(exists.PredicateSql, whereSme, exists.PreferExists));
 
         // ----------------------------------------------------------------
         // Direct paths: no paths/matches, no AAS join, no SM filter, standalone SM list.
@@ -2145,7 +2151,7 @@ public partial class Query
     /// that cannot benefit from a trigram (fewer than three literal characters or
     /// embedded GLOB metacharacters) are deliberately left unchanged.
     /// </summary>
-    internal static string ApplySqliteTrigramIndex(string sql)
+    internal static string ApplySqliteTrigramIndex(string sql, IReadOnlySet<string>? skipSValuePatterns = null)
     {
         if (string.IsNullOrWhiteSpace(sql))
             return sql;
@@ -2153,6 +2159,11 @@ public partial class Query
         var rewritten = SqliteSValueContainsRegex.Replace(sql, match =>
         {
             if (!IsIndexableTrigramGlob(match))
+                return match.Value;
+
+            // Non-selective ("common") contains were routed to a correlated EXISTS; adding the FTS
+            // candidate filter there would re-materialize the huge match set, so skip those patterns.
+            if (skipSValuePatterns != null && skipSValuePatterns.Contains(match.Groups["pattern"].Value))
                 return match.Value;
 
             var sqlLiteral = match.Groups["pattern"].Value;
@@ -2220,6 +2231,77 @@ public partial class Query
         return searchText.Length >= 3 && searchText.IndexOfAny(['*', '?', '[', ']']) < 0;
     }
 
+    // A leading-wildcard contains matching at least this many value rows is treated as "common" and
+    // realized as a correlated EXISTS (early-stop) rather than the value-driven IN/FTS. Settable for tests.
+    internal static int ContainsCommonProbeCap = 1000;
+
+    // Classifies each direct $sme#value condition that is a *single* indexable leading-wildcard contains:
+    // a capped FTS probe decides whether it is non-selective ("common"). Common ones get PreferExists
+    // (→ EXISTS) and their pattern is returned so the trigram rewrite skips them (no FTS candidate filter).
+    // Rare/zero contains stay on the value-driven IN/FTS path (already fast). No-op for non-SQLite.
+    private static HashSet<string> ClassifyCommonContains(AasContext db, SqlConditions sc)
+    {
+        var common = new HashSet<string>(StringComparer.Ordinal);
+        if (!db.Database.IsSqlite())
+            return common;
+
+        foreach (var exists in sc.ExistsConditions)
+        {
+            exists.PreferExists = false;
+            if (TryGetPureSValueContainsPattern(exists.PredicateSql, out var pattern)
+                && SValueContainsIsCommon(db, pattern, ContainsCommonProbeCap))
+            {
+                exists.PreferExists = true;
+                common.Add(pattern);
+            }
+        }
+
+        return common;
+    }
+
+    // True only when the predicate is exactly one indexable leading-wildcard SValue contains (nothing else
+    // ANDed that would add selectivity); returns the SQL literal pattern, e.g. '*Phoenix*'.
+    internal static bool TryGetPureSValueContainsPattern(string predicateSql, out string patternLiteral)
+    {
+        patternLiteral = string.Empty;
+        if (string.IsNullOrWhiteSpace(predicateSql))
+            return false;
+
+        var s = StripEnclosingParens(predicateSql).Trim();
+        var matches = SqliteSValueContainsRegex.Matches(s);
+        if (matches.Count != 1)
+            return false;
+
+        var m = matches[0];
+        if (m.Index != 0 || m.Length != s.Length || !IsIndexableTrigramGlob(m))
+            return false;
+
+        patternLiteral = m.Groups["pattern"].Value;
+        return true;
+    }
+
+    // Capped probe: counts up to `cap` FTS matches for the contains pattern; >= cap means "common".
+    // On any error (e.g. FTS table absent) returns false so the current value-driven path is kept.
+    private static bool SValueContainsIsCommon(AasContext db, string patternLiteral, int cap)
+    {
+        try
+        {
+            var connection = db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                $"SELECT COUNT(*) FROM (SELECT 1 FROM \"{SqliteTrigramIndex.TableName}\" " +
+                $"WHERE \"SValue\" GLOB {patternLiteral} LIMIT {cap})";
+            var n = Convert.ToInt32(command.ExecuteScalar());
+            return n >= cap;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     // Realizes a direct $sme#value condition. The element-visibility FILTER (smeFilter, e.g. the
     // access-rule "$sme#idShort starts-with General/Manufacturer") is applied INSIDE the value match,
     // so a value sitting in a hidden element cannot satisfy the query (otherwise id-only queries would
@@ -2230,13 +2312,16 @@ public partial class Query
     // OR the operator heuristic (=, range, GLOB-prefix). Non-selective ones (<>, negation, OR) stay a
     // correlated EXISTS that short-circuits per submodel.
     // NOTE: interim heuristic — to be replaced by a structure-based decision in the planned condition-IR.
-    private static string BuildValueMatchSql(string predicateSql, string? smeFilter = null)
+    private static string BuildValueMatchSql(string predicateSql, string? smeFilter = null, bool preferExists = false)
     {
         var filter = string.IsNullOrWhiteSpace(smeFilter)
             ? string.Empty
             : $"\r\n    AND ({smeFilter!.Replace("\"sme\".", "sme_value.", StringComparison.Ordinal)})";
 
-        if (HasIndexableSValueTrigram(predicateSql) || HasIndexableSValuePrefix(predicateSql) || PredicatePrefersJoin(predicateSql))
+        // preferExists: a capped FTS probe classified this contains as non-selective ("common") — force the
+        // correlated EXISTS (early-stop under ORDER BY/LIMIT) instead of materializing the huge match set.
+        if (!preferExists &&
+            (HasIndexableSValueTrigram(predicateSql) || HasIndexableSValuePrefix(predicateSql) || PredicatePrefersJoin(predicateSql)))
         {
             return $@"sm.Id IN (
   SELECT sme_value.SMId
@@ -2466,7 +2551,7 @@ public partial class Query
             int pN = 1, mN = 1;
             foreach (var path in sc.Paths) s = s.Replace($"$${path.Placeholder}$$", $"(p{pN++}.SMId IS NOT NULL)");
             foreach (var match in sc.Matches) s = s.Replace($"$${match.Placeholder}$$", $"(m{mN++}.SMId IS NOT NULL)");
-            foreach (var exists in sc.ExistsConditions) s = s.Replace($"$${exists.Placeholder}$$", BuildValueMatchSql(exists.PredicateSql, smeFilter));
+            foreach (var exists in sc.ExistsConditions) s = s.Replace($"$${exists.Placeholder}$$", BuildValueMatchSql(exists.PredicateSql, smeFilter, exists.PreferExists));
             return s;
         }
 
