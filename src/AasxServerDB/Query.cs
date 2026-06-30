@@ -1664,9 +1664,9 @@ public partial class Query
 
         bool isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
-        // Probe contains-predicate selectivity (sets ExistsCondition.PreferExists for "common" ones)
-        // before building, so the value match can choose EXISTS vs the value-driven IN/FTS.
-        var commonContains = ClassifyCommonContains(db, sqlConditions);
+        // Probe value-match selectivity (sets ExistsCondition.PreferExists for "common" contains/equality
+        // predicates) before building, so the value match can choose EXISTS vs the value-driven IN/FTS.
+        var commonContains = ClassifyCommonValueMatches(db, sqlConditions);
 
         var swBuild = Stopwatch.StartNew();
         var rawSql = BuildRawSqlFromSqlConditions(sqlConditions, isWithAASTable, resultType, pageFrom, pageSize, flags);
@@ -1773,7 +1773,7 @@ public partial class Query
             && sqlOverallCondition.Contains("\"aas\".");
         var isWithAASTable = restrictAAS || aasExistInCondition || resultType == ResultType.AssetAdministrationShell;
 
-        var commonContains = ClassifyCommonContains(db, sqlConditions);
+        var commonContains = ClassifyCommonValueMatches(db, sqlConditions);
 
         var rawSql = BuildRawSqlFromSqlConditions(
             sqlConditions, isWithAASTable, resultType, 0, int.MaxValue, flags)
@@ -2108,6 +2108,10 @@ public partial class Query
         "(?<column>(?<alias>\\\"(?:value|v)\\\"|v)\\.\\\"SValue\\\")\\s+GLOB\\s+(?<pattern>'(?:''|[^'])*')",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex SqliteSValueEqualsRegex = new(
+        "(?<column>(?<alias>\\\"(?:value|v)\\\"|v)\\.\\\"SValue\\\")\\s*=\\s*(?<literal>'(?:''|[^'])*')",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     private static readonly Regex SqliteIdShortContainsRegex = new(
         "(?<column>(?<alias>\\\"sme\\\"|sme)\\.\\\"IdShort\\\")\\s+GLOB\\s+(?<pattern>'(?:''|[^'])*')",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -2235,11 +2239,14 @@ public partial class Query
     // realized as a correlated EXISTS (early-stop) rather than the value-driven IN/FTS. Settable for tests.
     internal static int ContainsCommonProbeCap = 1000;
 
-    // Classifies each direct $sme#value condition that is a *single* indexable leading-wildcard contains:
-    // a capped FTS probe decides whether it is non-selective ("common"). Common ones get PreferExists
-    // (→ EXISTS) and their pattern is returned so the trigram rewrite skips them (no FTS candidate filter).
-    // Rare/zero contains stay on the value-driven IN/FTS path (already fast). No-op for non-SQLite.
-    private static HashSet<string> ClassifyCommonContains(AasContext db, SqlConditions sc)
+    // Classifies each direct $sme#value condition that is a *single* indexable value match (a
+    // leading-wildcard contains OR an exact equality) by a capped probe: if it matches at least
+    // ContainsCommonProbeCap rows it is non-selective ("common") and gets PreferExists (→ correlated
+    // EXISTS, which early-stops under ORDER BY/LIMIT) instead of materializing the huge match set on
+    // the value-driven IN/FTS path. For common contains the pattern is additionally returned so the
+    // trigram rewrite skips its FTS candidate filter (equality uses no FTS filter, so it is not
+    // returned). Rare/zero matches stay on the value-driven path (already fast). No-op for non-SQLite.
+    private static HashSet<string> ClassifyCommonValueMatches(AasContext db, SqlConditions sc)
     {
         var common = new HashSet<string>(StringComparer.Ordinal);
         if (!db.Database.IsSqlite())
@@ -2253,6 +2260,16 @@ public partial class Query
             {
                 exists.PreferExists = true;
                 common.Add(pattern);
+            }
+            else if (TryGetPureSValueEqualsLiteral(exists.PredicateSql, out var literal)
+                && SValueEqualsIsCommon(db, literal, ContainsCommonProbeCap))
+            {
+                exists.PreferExists = true;
+            }
+            else if (TryGetPureSValuePrefixPattern(exists.PredicateSql, out var prefix)
+                && SValuePrefixIsCommon(db, prefix, ContainsCommonProbeCap))
+            {
+                exists.PreferExists = true;
             }
         }
 
@@ -2293,6 +2310,97 @@ public partial class Query
             command.CommandText =
                 $"SELECT COUNT(*) FROM (SELECT 1 FROM \"{SqliteTrigramIndex.TableName}\" " +
                 $"WHERE \"SValue\" GLOB {patternLiteral} LIMIT {cap})";
+            var n = Convert.ToInt32(command.ExecuteScalar());
+            return n >= cap;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // True only when the predicate is exactly one SValue equality (nothing else ANDed that would add
+    // selectivity); returns the SQL literal, e.g. 'Phoenix Contact GmbH & Co. KG'.
+    internal static bool TryGetPureSValueEqualsLiteral(string predicateSql, out string literal)
+    {
+        literal = string.Empty;
+        if (string.IsNullOrWhiteSpace(predicateSql))
+            return false;
+
+        var s = StripEnclosingParens(predicateSql).Trim();
+        var matches = SqliteSValueEqualsRegex.Matches(s);
+        if (matches.Count != 1)
+            return false;
+
+        var m = matches[0];
+        if (m.Index != 0 || m.Length != s.Length)
+            return false;
+
+        literal = m.Groups["literal"].Value;
+        return true;
+    }
+
+    // Capped probe: counts up to `cap` exact-value matches via the SValue B-tree (covering index seek);
+    // >= cap means "common". On any error returns false so the current value-driven path is kept.
+    private static bool SValueEqualsIsCommon(AasContext db, string literal, int cap)
+    {
+        try
+        {
+            var connection = db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                $"SELECT COUNT(*) FROM (SELECT 1 FROM ValueSets WHERE \"SValue\" = {literal} LIMIT {cap})";
+            var n = Convert.ToInt32(command.ExecuteScalar());
+            return n >= cap;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // True only when the predicate is exactly one SValue prefix GLOB ('abc*' — trailing wildcard only,
+    // no leading wildcard, clean literal part); returns the SQL literal pattern, e.g. 'PXC-*'.
+    internal static bool TryGetPureSValuePrefixPattern(string predicateSql, out string patternLiteral)
+    {
+        patternLiteral = string.Empty;
+        if (string.IsNullOrWhiteSpace(predicateSql))
+            return false;
+
+        var s = StripEnclosingParens(predicateSql).Trim();
+        var matches = SqliteSValueContainsRegex.Matches(s);
+        if (matches.Count != 1)
+            return false;
+
+        var m = matches[0];
+        if (m.Index != 0 || m.Length != s.Length)
+            return false;
+
+        var sqlLiteral = m.Groups["pattern"].Value;
+        var pattern = sqlLiteral[1..^1].Replace("''", "'", StringComparison.Ordinal);
+        if (pattern.Length < 2 || pattern[^1] != '*' || pattern[0] == '*')
+            return false;
+        if (pattern[..^1].IndexOfAny(['*', '?', '[', ']']) >= 0)
+            return false;
+
+        patternLiteral = sqlLiteral;
+        return true;
+    }
+
+    // Capped probe: counts up to `cap` prefix matches via the SValue B-tree (GLOB 'abc*' is range-optimized
+    // on the BINARY index); >= cap means "common". On any error returns false so the value-driven path stays.
+    private static bool SValuePrefixIsCommon(AasContext db, string patternLiteral, int cap)
+    {
+        try
+        {
+            var connection = db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                $"SELECT COUNT(*) FROM (SELECT 1 FROM ValueSets WHERE \"SValue\" GLOB {patternLiteral} LIMIT {cap})";
             var n = Convert.ToInt32(command.ExecuteScalar());
             return n >= cap;
         }

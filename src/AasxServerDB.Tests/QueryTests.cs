@@ -759,6 +759,101 @@ public sealed class QueryTests
         }
     }
 
+    /// <summary>
+    /// A common direct <c>$sme#value</c> equality must be realized as a correlated EXISTS (early-stop
+    /// under ORDER BY/LIMIT), NOT the value-driven IN — otherwise a frequent value (e.g. a manufacturer
+    /// name on hundreds of thousands of elements) materializes its whole match set even for LIMIT 3.
+    /// </summary>
+    [Fact]
+    public void Equality_CommonValue_RoutedToExists()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "2500" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present value is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common equality must be realized as a correlated EXISTS");
+            sql.Should().NotContain("sm.Id IN (", "a common equality must not materialize the full value-driven match set");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A rare/absent <c>$sme#value</c> equality stays on the value-driven IN path (small match set).
+    /// </summary>
+    [Fact]
+    public void Equality_RareValue_StaysValueDriven()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz-absent-value" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // absent value yields 0 matches -> rare
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sm.Id IN (", "a rare/absent equality stays value-driven");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A common direct <c>$sme#value</c> prefix (<c>starts-with</c>) must also route to the correlated
+    /// EXISTS (early-stop), not the value-driven IN that materializes the whole prefix range.
+    /// </summary>
+    [Fact]
+    public void Prefix_CommonValue_RoutedToExists()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$starts-with": [ { "$field": "$sme#value" }, { "$strVal": "250" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present prefix is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common prefix must be realized as a correlated EXISTS");
+            sql.Should().NotContain("sm.Id IN (", "a common prefix must not materialize the full value-driven match set");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
     private const string AnonymousSubmodelsAcl = """
         {
           "AllAccessPermissionRules": {
@@ -845,11 +940,13 @@ public sealed class QueryTests
     }
 
     /// <summary>
-    /// A standalone <c>$sme#value</c> is realized via the value-join (not the EXISTS path). The element
-    /// FILTER must be applied inside that join too, otherwise a value in a hidden element could match.
+    /// A standalone <c>$sme#value</c> now routes through the value-match builder (a bare value
+    /// comparison is its own existential over the SM's elements), not a value join. The element
+    /// FILTER must be applied inside that value-match subquery too, otherwise a value in a hidden
+    /// element could match.
     /// </summary>
     [Fact]
-    public void StandaloneValue_WithSecurity_FilterInsideValueJoin()
+    public void StandaloneValue_WithSecurity_FilterInsideValueMatch()
     {
         const string userQuery = """
             { "Query": { "$select": "id", "$condition":
@@ -864,9 +961,12 @@ public sealed class QueryTests
 
         result.Should().NotBeNull();
         var sql = string.Join("\n", result!.Sql);
-        // The FILTER must sit inside the value join (before its ") AS value" close).
-        sql.Should().MatchRegex(@"JOIN SMESets sme ON sme\.Id = v\.SMEId[\s\S]*?GLOB 'General\*'[\s\S]*?\) AS value",
-            "the element FILTER must sit inside the value join");
+        // A selective bare value '=' is value-driven (IN), not a value join. The element-level
+        // security FILTER must sit inside that value-match subquery, applied to the very elements
+        // whose value is matched.
+        sql.Should().Contain("sm.Id IN (", "a selective bare value '=' is value-driven (IN), not a value join");
+        sql.Should().MatchRegex(@"sm\.Id IN \([\s\S]*?v\.""SValue"" = '2500'[\s\S]*?GLOB 'General\*'[\s\S]*?\)\)",
+            "the element FILTER must sit inside the value-match subquery");
     }
 
     // -------------------------------------------------------------------------

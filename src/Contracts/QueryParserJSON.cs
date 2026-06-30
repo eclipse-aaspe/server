@@ -1499,15 +1499,13 @@ public class QueryGrammarJSON : Grammar
 
                 case "$and":
                 {
-                    if (TryBuildDirectValueExistsPredicate(eList, type, out var existsPredicate))
-                    {
-                        if (existsPredicate == SqlBoolTrue || existsPredicate == SqlBoolFalse)
-                            return existsPredicate;
-                        return AddExistsCondition(ctx, existsPredicate);
-                    }
-
+                    // AND combines submodel-level facts. Each $sme#value comparison is its OWN existential
+                    // ("∃ an element with this value"), so several bare sme conditions become
+                    // EXISTS(A) AND EXISTS(B) — they may match DIFFERENT elements. Building one combined
+                    // EXISTS(A AND B) would require a SINGLE element to satisfy all (wrong for "manufacturer X
+                    // AND type Y") and is slow. Same-element correlation is expressed via idShortPath / path
+                    // subqueries (handled separately). OR keeps a single combined EXISTS(A OR B), equivalent there.
                     var parts = new List<string>();
-                    var valueExistsPredicates = new List<string>();
                     foreach (var e in eList)
                     {
                         if (TryBuildDirectValueExistsPredicate(e, out var valueExistsPredicate))
@@ -1515,7 +1513,7 @@ public class QueryGrammarJSON : Grammar
                             if (valueExistsPredicate == SqlBoolFalse)
                                 return SqlBoolFalse;
                             if (valueExistsPredicate != SqlBoolTrue)
-                                valueExistsPredicates.Add(valueExistsPredicate);
+                                parts.Add(AddExistsCondition(ctx, valueExistsPredicate)); // separate EXISTS per condition
                             continue;
                         }
 
@@ -1527,14 +1525,6 @@ public class QueryGrammarJSON : Grammar
                             return SqlBoolFalse;
                         if (part != null && part != "$SKIP")
                             parts.Add(part);
-                    }
-
-                    if (valueExistsPredicates.Count > 0)
-                    {
-                        var valueExistsPredicate = valueExistsPredicates.Count == 1
-                            ? valueExistsPredicates[0]
-                            : "(" + string.Join(" AND ", valueExistsPredicates) + ")";
-                        parts.Add(AddExistsCondition(ctx, valueExistsPredicate));
                     }
 
                     if (parts.Count == 0)
@@ -1601,7 +1591,22 @@ public class QueryGrammarJSON : Grammar
 
                 case "$eq": case "$ne": case "$gt": case "$ge": case "$lt": case "$le":
                 case "$starts-with": case "$ends-with": case "$contains":
+                {
+                    // A bare $sme#value comparison becomes its own existential (EXISTS over the SM's
+                    // elements) instead of a ValueSets join, so the value-match builder + its
+                    // common-contains→EXISTS probe handle it uniformly — including the common
+                    // leading-wildcard case that a value join would materialize (slow). sm/aas/path
+                    // comparisons (TryBuild… returns false for them) keep the direct comparison SQL.
+                    if (TryBuildDirectValueExistsPredicate(
+                            new LogicalExpression { ExpressionType = type, ExpressionValue = eList },
+                            out var directValuePredicate))
+                    {
+                        if (directValuePredicate == SqlBoolTrue || directValuePredicate == SqlBoolFalse)
+                            return directValuePredicate;
+                        return AddExistsCondition(ctx, directValuePredicate);
+                    }
                     return BuildOverallComparisonSql(eList, type, ctx);
+                }
             }
         }
 
