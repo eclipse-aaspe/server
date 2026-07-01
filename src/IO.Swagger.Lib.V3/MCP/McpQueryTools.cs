@@ -42,13 +42,13 @@ public sealed class McpQueryCondition
     [Description("Worauf sich das Feld bezieht: \"aas\" (Shell), \"sm\" (Submodel) oder \"sme\" (Submodel-Element, nur als Filter). Default: \"sme\".")]
     public string Scope { get; set; } = "sme";
 
-    [Description("Feldname je nach scope. aas: idShort|id|assetInformation.assetKind|assetInformation.assetType|assetInformation.globalAssetId|assetInformation.specificAssetIds[].name|... ; sm: semanticId|idShort|id ; sme: semanticId|idShort|value|valueType|language.")]
+    [Description("Feldname je nach scope. aas: idShort|id|assetInformation.assetKind|assetInformation.assetType|assetInformation.globalAssetId|assetInformation.specificAssetIds[].name|... ; sm: semanticId|idShort|id ; sme: semanticId|idShort|idShortPath|value|valueType|language. Wildcard-/Teilstring-Operatoren contains, starts-with und ends-with sind nur für value, idShort und idShortPath erlaubt. Für semanticId und id ausschließlich eq oder in verwenden.")]
     public string Field { get; set; } = "";
 
     [Description("Optionaler idShortPath innerhalb des Submodels, nur für scope=\"sme\". Enthält der Wert einen Punkt, wird er als verschachtelter Pfad behandelt (z.B. \"TechnicalProperties.flowMax\" oder \"Documents[].DocumentVersion.Title\"). Ein einzelner Name ohne Punkt (z.B. \"flowMax\") wird als idShort des Elements gesucht und unabhängig von der Verschachtelungstiefe gefunden.")]
     public string? IdShortPath { get; set; }
 
-    [Description("Vergleichsoperator: eq|ne|gt|ge|lt|le|contains|starts-with|ends-with|regex|in. contains benötigt mindestens 3 Zeichen, damit der Trigrammindex genutzt werden kann. \"in\" prüft, ob der Wert in der Liste values vorkommt (ODER-Verknüpfung).")]
+    [Description("Vergleichsoperator: eq|ne|gt|ge|lt|le|contains|starts-with|ends-with|regex|in. contains, starts-with und ends-with nur für value, idShort und idShortPath verwenden; semanticId und id nur mit eq oder in. regex ist derzeit nicht unterstützt. contains benötigt mindestens 3 Zeichen, damit der Trigrammindex genutzt werden kann. \"in\" prüft, ob der Wert in der Liste values vorkommt (ODER-Verknüpfung).")]
     public string Op { get; set; } = "eq";
 
     [Description("Vergleichswert als String (Zahlen als String angeben, z.B. \"100\"). Bei eq/ne/gt/ge/lt/le werden numerische Werte automatisch numerisch verglichen — \"eq 80\" findet also auch einen Double-Wert 80.")]
@@ -114,6 +114,10 @@ public sealed class McpQueryTools
     // String, daher schlägt ein reiner String-eq fehl. Bei nicht-numerischen Werten greift automatisch $strVal.
     private static readonly HashSet<string> NumericCapableOps = new(StringComparer.Ordinal) { "eq", "ne", "gt", "ge", "lt", "le" };
 
+    private static readonly HashSet<string> WildcardOps = new(StringComparer.Ordinal) { "contains", "starts-with", "ends-with", "regex" };
+
+    private static readonly HashSet<string> WildcardFields = new(StringComparer.Ordinal) { "value", "idShort", "idShortPath" };
+
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
     private readonly IMappingService _mappingService;
 
@@ -128,11 +132,12 @@ public sealed class McpQueryTools
         "Sucht im AAS-Repository und liefert nur die gefundenen Identifier zurück (keine Volldaten). " +
         "Mehrere Bedingungen werden mit combine (\"and\"/\"or\") verknüpft. " +
         "target=\"submodels\" gibt Submodel-Identifier zurück, target=\"shells\" gibt AAS-Identifier zurück. " +
+        "Wildcard-/Teilstring-Suchen (contains, starts-with, ends-with) dürfen ausschließlich auf value, idShort und idShortPath verwendet werden. Für semanticId und id ausschließlich eq oder in verwenden; regex ist derzeit nicht unterstützt. " +
         "Beispiele: " +
         "(1) eine Bedingung: target=\"submodels\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"}]. " +
         "(2) UND: combine=\"and\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"},{scope:\"sme\",field:\"value\",op:\"lt\",value:\"100\"}]. " +
         "(3) ODER: combine=\"or\", conditions=[{scope:\"sme\",field:\"value\",op:\"eq\",value:\"A\"},{scope:\"sme\",field:\"value\",op:\"eq\",value:\"B\"}]. " +
-        "Bei großen Treffermengen vorher aas_count aufrufen. " +
+        "Nicht automatisch aas_count vorschalten; aas_count nur verwenden, wenn der Benutzer explizit die exakte Gesamtzahl braucht. Wenn hasMore=true, mit cursor weiterblättern, nicht count aufrufen. " +
         "Wichtig: aas_query liefert standardmäßig nur Identifier. Danach den Inhalt mit aas_get_submodel lesen — oder, wenn die Frage mehrere Submodelle eines Produkts betrifft (z.B. technische Daten + Hersteller + CO2), in EINEM Schritt mit aas_get_product(identifier). " +
         "TIPP für Tabellen/Listen: Übergib select=[idShortPaths], dann liefert aas_query je Treffer direkt diese Feldwerte (Projektion) — das ersetzt viele Einzelabrufe.")]
     public async Task<object> AasQuery(
@@ -164,7 +169,8 @@ public sealed class McpQueryTools
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
-        var pagination = new PaginationParameters(cursor, NormalizeLimit(limit));
+        var requestedLimit = NormalizeLimit(limit);
+        var pagination = new PaginationParameters(cursor, requestedLimit + 1);
 
         var (list, queryError) = await TryQuery(securityConfig, pagination, resultType, expression);
         if (queryError != null)
@@ -172,9 +178,11 @@ public sealed class McpQueryTools
             return new { error = "Query fehlgeschlagen: " + queryError };
         }
 
-        var identifiers = ExtractIdentifiers(list);
+        var fetchedIdentifiers = ExtractIdentifiers(list);
+        var hasMore = fetchedIdentifiers.Count > requestedLimit;
+        var identifiers = fetchedIdentifiers.Take(requestedLimit).ToList();
 
-        string? nextCursor = identifiers.Count >= pagination.Limit
+        string? nextCursor = hasMore
             ? (pagination.Cursor + identifiers.Count).ToString(CultureInfo.InvariantCulture)
             : null;
 
@@ -187,14 +195,14 @@ public sealed class McpQueryTools
             {
                 var id = identifiers[index];
                 var projectionWatch = Stopwatch.StartNew();
-                Console.WriteLine($"[MCP] aas_query projection {index + 1}/{identifiers.Count}: {id}");
+                LogMcpLine($"aas_query projection {index + 1}/{identifiers.Count}: {id}");
                 rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths));
-                Console.WriteLine(
-                    $"[MCP] aas_query projection {index + 1}/{identifiers.Count} done " +
+                LogMcpLine(
+                    $"aas_query projection {index + 1}/{identifiers.Count} done " +
                     $"in {projectionWatch.ElapsedMilliseconds} ms");
             }
 
-            return new { target, count = identifiers.Count, columns = select, rows, nextCursor };
+            return new { target, count = identifiers.Count, columns = select, rows, hasMore, nextCursor };
         }
 
         return new
@@ -202,6 +210,7 @@ public sealed class McpQueryTools
             target,
             count = identifiers.Count,
             identifiers,
+            hasMore,
             nextCursor,
             nextStep = identifiers.Count > 0
                 ? "Dies sind nur Identifier. Inhalte lesen: aas_get_submodel(identifier), oder gleich Felder mitliefern via select=[...]. Für ALLE Daten eines Produkts (Technik+Hersteller+CO2): aas_get_product(identifier)."
@@ -209,17 +218,29 @@ public sealed class McpQueryTools
         };
     }
 
-    [McpServerTool(Name = "aas_count", Title = "Count AAS Search Results", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
+    [McpServerTool(Name = "aas_count", Title = "Exact Count Only When Explicitly Requested", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
-        "Zählt die Treffer einer Suche, bevor man sie abruft. Gleiche Bedingungs-/combine-Logik wie aas_query. " +
-        "Hinweis: in dieser Version nur für target=\"submodels\" verfügbar; für target=\"shells\" bitte aas_query mit limit verwenden. " +
-        "Liefert die exakte Gesamtzahl (ungedeckelt) und ist auch bei großen Treffermengen schnell.")]
+        "Nicht für Exploration, Plausibilitätschecks oder vor normalen Suchen verwenden. Nutze stattdessen aas_query mit limit/cursor. " +
+        "Dieses Tool zählt nur, wenn der Benutzer ausdrücklich eine exakte Gesamtzahl verlangt; dann exactTotalRequested=true setzen. " +
+        "Gleiche Bedingungs-/combine-Logik wie aas_query. Nur für target=\"submodels\". " +
+        "Liefert die exakte Gesamtzahl (ungedeckelt), kann auf großen Datenbanken aber teuer sein.")]
     public async Task<object> AasCount(
         [Description("Zielobjekt: aktuell nur \"submodels\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
-        [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and")
+        [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and",
+        [Description("Muss true sein, und nur setzen, wenn der Benutzer explizit nach der exakten Gesamtzahl fragt (z.B. \"wie viele insgesamt?\"). Für normale Suche/Listen false lassen und aas_query verwenden.")] bool exactTotalRequested = false)
     {
-        using var _ = LogCallTimed($"aas_count {target} {DescribeConditions(conditions, combine)}");
+        using var _ = LogCallTimed($"aas_count {target} {DescribeConditions(conditions, combine)} exactTotalRequested={exactTotalRequested}");
+
+        if (!exactTotalRequested)
+        {
+            return new
+            {
+                skipped = true,
+                message = "aas_count wurde nicht ausgeführt. Nutze aas_query mit limit/cursor; count nur mit exactTotalRequested=true verwenden, wenn der Benutzer explizit die exakte Gesamtzahl verlangt.",
+                nextStep = "Rufe aas_query mit derselben Bedingung auf. Bei hasMore=true mit nextCursor weiterblättern."
+            };
+        }
 
         string expression;
         try
@@ -577,12 +598,14 @@ public sealed class McpQueryTools
         "damit du NICHT einzeln navigieren musst. " +
         "identifier kann eine AAS-id ODER eine Submodel-id sein (z.B. ein Treffer aus aas_query); die zugehörige Shell wird automatisch ermittelt. " +
         "Typischer Ablauf: aas_query findet ein Submodel -> dessen id hier übergeben -> alles zum Produkt kommt zurück. " +
-        "Hinweis: bei vielen/großen Submodellen kann das Ergebnis umfangreich werden.")]
+        "Bei vielen/großen Submodellen über submodelLimit/submodelCursor weiterblättern; nextSubmodelCursor aus der Antwort verwenden.")]
     public async Task<object> AasGetProduct(
         [Description("AAS-Identifier ODER Submodel-Identifier (vollständige id, NICHT Base64-kodiert). Ein Submodel-Treffer aus aas_query genügt — die Shell wird automatisch aufgelöst.")] string identifier,
-        [Description("Ausgabeformat je Submodel: \"value\" (kompakt, Default, nur idShort->Wert) oder \"full\" (vollständiges AAS-JSON inkl. semanticId, valueType, Qualifier). Nutze \"full\", wenn nach semanticId, Einheiten oder Datentyp gefragt wird.")] string format = "value")
+        [Description("Ausgabeformat je Submodel: \"value\" (kompakt, Default, nur idShort->Wert) oder \"full\" (vollständiges AAS-JSON inkl. semanticId, valueType, Qualifier). Nutze \"full\", wenn nach semanticId, Einheiten oder Datentyp gefragt wird.")] string format = "value",
+        [Description("Maximale Anzahl Submodelle dieses Produkts in dieser Antwort (Default und Maximum 50).")] int? submodelLimit = null,
+        [Description("Cursor zum Weiterblättern der Produkt-Submodelle; aus nextSubmodelCursor einer vorigen Antwort.")] string? submodelCursor = null)
     {
-        using var _ = LogCallTimed($"aas_get_product id={identifier} format={format}");
+        using var _ = LogCallTimed($"aas_get_product id={identifier} format={format} submodelLimit={(submodelLimit?.ToString(CultureInfo.InvariantCulture) ?? "-")} submodelCursor={submodelCursor ?? "-"}");
         if (string.IsNullOrWhiteSpace(identifier))
         {
             return new { error = "identifier darf nicht leer sein." };
@@ -601,7 +624,12 @@ public sealed class McpQueryTools
             return new { identifier, found = false, message = "Identifier ist weder eine bekannte AAS noch ein bekanntes Submodel." };
         }
 
-        return await BuildProductObject(securityConfig, shell, fmt);
+        return await BuildProductObject(
+            securityConfig,
+            shell,
+            fmt,
+            submodelCursor: NormalizeCursor(submodelCursor),
+            submodelLimit: NormalizeProductSubmodelLimit(submodelLimit));
     }
 
     [McpServerTool(Name = "aas_find_product", Title = "Find Complete AAS Product", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
@@ -731,25 +759,48 @@ public sealed class McpQueryTools
     // Kompaktes Console-Log jedes MCP-Aufrufs (eine Zeile), passend zum übrigen Server-Log.
     private static void LogCall(string line)
     {
-        Console.WriteLine("[MCP] " + line);
+        DiagnosticsLog.WriteMcp(string.Empty);
+        DiagnosticsLog.WriteMcp(line, timestamp: true);
+    }
+
+    private static void LogMcpLine(string line)
+    {
+        DiagnosticsLog.WriteMcp(line);
     }
 
     // Loggt den Aufruf (Eingang) und beim Dispose die Dauer — für Performance-Analyse bei großer DB.
     // Verwendung: using var _ = LogCallTimed($"aas_query ...");  -> beim Methodenende kommt "[MCP] <tool> done in X ms".
     private static CallTimer LogCallTimed(string line)
     {
+        var scope = DiagnosticsLog.BeginMcpScope();
         LogCall(line);
-        return new CallTimer(line.Split(' ', 2)[0]);
+        return new CallTimer(line.Split(' ', 2)[0], scope);
     }
 
     private sealed class CallTimer : IDisposable
     {
         private readonly string _tool;
         private readonly System.Diagnostics.Stopwatch _watch = System.Diagnostics.Stopwatch.StartNew();
+        private readonly IDisposable _scope;
+        private bool _disposed;
 
-        public CallTimer(string tool) => _tool = tool;
+        public CallTimer(string tool, IDisposable scope)
+        {
+            _tool = tool;
+            _scope = scope;
+        }
 
-        public void Dispose() => Console.WriteLine($"[MCP] {_tool} done in {_watch.ElapsedMilliseconds} ms");
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            LogMcpLine($"{_tool} done in {_watch.ElapsedMilliseconds} ms");
+            _scope.Dispose();
+        }
     }
 
     // Kompakte Darstellung der Suchbedingungen fürs Log, z.B. [sm.idShort eq TechnicalData and sme.value ge 80].
@@ -1110,7 +1161,13 @@ public sealed class McpQueryTools
 
     // Baut das Produkt-Objekt: AssetInformation + Werte ALLER Submodelle der Shell im gewählten Format.
     // Jeder Submodel-Read ist indexiert (SMSet.Identifier, SMESet.SMId) und auf die Größe DIESES Submodels begrenzt.
-    private async Task<JsonObject> BuildProductObject(SecurityConfig securityConfig, IAssetAdministrationShell shell, string fmt, bool coreOnly = false)
+    private async Task<JsonObject> BuildProductObject(
+        SecurityConfig securityConfig,
+        IAssetAdministrationShell shell,
+        string fmt,
+        bool coreOnly = false,
+        int submodelCursor = 0,
+        int submodelLimit = MaxProductSubmodels)
     {
         var ai = shell.AssetInformation;
         var specificAssetIds = new JsonArray();
@@ -1130,17 +1187,19 @@ public sealed class McpQueryTools
         };
 
         var submodels = new JsonArray();
-        var truncated = false;
+        var totalSubmodelRefs = shell.Submodels?.Count ?? 0;
+        var hasMoreSubmodels = false;
+        string? nextSubmodelCursor = null;
         if (shell.Submodels != null)
         {
-            foreach (var smRef in shell.Submodels)
-            {
-                if (submodels.Count >= MaxProductSubmodels)
-                {
-                    truncated = true;
-                    break;
-                }
+            var endExclusive = Math.Min(totalSubmodelRefs, submodelCursor + submodelLimit);
+            hasMoreSubmodels = endExclusive < totalSubmodelRefs;
+            nextSubmodelCursor = hasMoreSubmodels
+                ? endExclusive.ToString(CultureInfo.InvariantCulture)
+                : null;
 
+            foreach (var smRef in shell.Submodels.Skip(submodelCursor).Take(submodelLimit))
+            {
                 var smId = smRef?.Keys?.LastOrDefault()?.Value;
                 if (string.IsNullOrEmpty(smId))
                 {
@@ -1184,7 +1243,13 @@ public sealed class McpQueryTools
             ["format"] = fmt,
             ["assetInformation"] = assetInformation,
             ["submodels"] = submodels,
-            ["truncated"] = truncated,
+            ["submodelCursor"] = submodelCursor,
+            ["submodelLimit"] = submodelLimit,
+            ["returnedSubmodels"] = submodels.Count,
+            ["totalSubmodelRefs"] = totalSubmodelRefs,
+            ["hasMoreSubmodels"] = hasMoreSubmodels,
+            ["nextSubmodelCursor"] = nextSubmodelCursor,
+            ["truncated"] = hasMoreSubmodels,
         };
     }
 
@@ -1247,7 +1312,7 @@ public sealed class McpQueryTools
         _ => throw new ArgumentException($"Unbekanntes target \"{target}\". Erlaubt: \"submodels\" oder \"shells\"."),
     };
 
-    private static int NormalizeLimit(int? limit)
+    internal static int NormalizeLimit(int? limit)
     {
         if (limit is null || limit <= 0)
         {
@@ -1256,6 +1321,21 @@ public sealed class McpQueryTools
 
         return Math.Min(limit.Value, MaxPageSize);
     }
+
+    internal static int NormalizeProductSubmodelLimit(int? limit)
+    {
+        if (limit is null || limit <= 0)
+        {
+            return MaxProductSubmodels;
+        }
+
+        return Math.Min(limit.Value, MaxProductSubmodels);
+    }
+
+    internal static int NormalizeCursor(string? cursor)
+        => string.IsNullOrWhiteSpace(cursor) || !int.TryParse(cursor, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) || parsed < 0
+            ? 0
+            : parsed;
 
     /// <summary>
     /// Baut aus den Slots eine AASQL-JSON-Query (Modus-Präfix "$JSONGRAMMAR").
@@ -1351,6 +1431,13 @@ public sealed class McpQueryTools
             throw new ArgumentException($"Unbekannter Operator \"{c.Op}\". Erlaubt: {string.Join(", ", OpMap.Keys)}, in.");
         }
 
+        var validationField = string.IsNullOrWhiteSpace(c.Field) && scope == "sme" ? "value" : (c.Field ?? string.Empty).Trim();
+        ValidateField(scope, validationField);
+        var validationPath = scope == "sme" && !string.IsNullOrWhiteSpace(c.IdShortPath)
+            ? c.IdShortPath!.Trim()
+            : null;
+        ValidateWildcardOperatorForField(op, scope, validationField, validationPath);
+
         if (op == "regex")
         {
             throw new ArgumentException(
@@ -1430,6 +1517,47 @@ public sealed class McpQueryTools
         return Leaf(opKey, NumRhs());
     }
 
+    internal static void ValidateWildcardOperatorForField(string op, string scope, string field, string? idShortPath = null)
+    {
+        if (!WildcardOps.Contains(op))
+        {
+            return;
+        }
+
+        var normalizedField = NormalizeWildcardFieldName(scope, field, idShortPath);
+        if (WildcardFields.Contains(normalizedField))
+        {
+            return;
+        }
+
+        throw new ArgumentException(FormatWildcardFieldError(normalizedField));
+    }
+
+    private static string NormalizeWildcardFieldName(string scope, string field, string? idShortPath)
+    {
+        var f = (field ?? string.Empty).Trim();
+        if (scope == "sme" && !string.IsNullOrWhiteSpace(idShortPath) && f == "idShort")
+        {
+            return "idShortPath";
+        }
+
+        return f is "id" or "identifier" ? "identifier" : f;
+    }
+
+    private static string DisplayWildcardFieldName(string field)
+        => field == "identifier" ? "id" : field;
+
+    private static string FormatWildcardFieldError(string field)
+    {
+        var display = DisplayWildcardFieldName(field);
+        return $"Wildcard search is not supported for field '{display}'.{System.Environment.NewLine}" +
+               $"Allowed wildcard fields are:{System.Environment.NewLine}" +
+               $"- value{System.Environment.NewLine}" +
+               $"- idShort{System.Environment.NewLine}" +
+               $"- idShortPath{System.Environment.NewLine}" +
+               $"Use 'eq' or 'in' for {display}.";
+    }
+
     private static void ValidateField(string scope, string field)
     {
         if (string.IsNullOrWhiteSpace(field))
@@ -1440,7 +1568,7 @@ public sealed class McpQueryTools
         var f = field.Trim();
         bool ok = scope switch
         {
-            "sme" => f is "idShort" or "value" or "valueType" or "language" || f.StartsWith("semanticId", StringComparison.Ordinal),
+            "sme" => f is "idShort" or "idShortPath" or "value" or "valueType" or "language" || f.StartsWith("semanticId", StringComparison.Ordinal),
             "sm" => f is "idShort" or "id" || f.StartsWith("semanticId", StringComparison.Ordinal),
             "aas" => f is "idShort" or "id"
                      || f.StartsWith("assetInformation", StringComparison.Ordinal)

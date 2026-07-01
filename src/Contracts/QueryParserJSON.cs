@@ -1886,9 +1886,7 @@ public class QueryGrammarJSON : Grammar
         // top-level and nested variants avoids two otherwise identical path joins.
         if (idShortPath.StartsWith("%.", StringComparison.Ordinal))
         {
-            var leaf = EscSql(idShortPath[2..]);
-            return $"(\"{smeAlias}\".\"IdShortPath\" = '{leaf}' OR " +
-                   $"\"{smeAlias}\".\"IdShortPath\" GLOB '*.{leaf}')";
+            return "1=1";
         }
         if (idShortPath.Contains("[]"))
         {

@@ -97,7 +97,7 @@ public partial class Query
         var text = string.Empty;
 
         var watch = Stopwatch.StartNew();
-        if (ReadDiag.Enabled) Console.WriteLine("\nSearchSMs");
+        if (ReadDiag.Enabled) ReadDiag.Write("\nSearchSMs");
 
         watch.Restart();
 
@@ -286,7 +286,7 @@ public partial class Query
         };
 
         var watch = Stopwatch.StartNew();
-        if (ReadDiag.Enabled) Console.WriteLine("\nSearchSMs (count)");
+        if (ReadDiag.Enabled) ReadDiag.Write("\nSearchSMs (count)");
         watch.Restart();
 
         expression = "$JSONGRAMMAR " + expression;
@@ -295,7 +295,7 @@ public partial class Query
             qResult, watch, db, true, false, "", "", "", pageFrom, pageSize, expression, null, effectiveSecurity);
 
         var count = result?.FirstOrDefault() ?? 0;
-        if (ReadDiag.Enabled) Console.WriteLine("Count query in " + watch.ElapsedMilliseconds + " ms (" + count + " matches)");
+        if (ReadDiag.Enabled) ReadDiag.Write("Count query in " + watch.ElapsedMilliseconds + " ms (" + count + " matches)");
         return count;
     }
 
@@ -322,7 +322,7 @@ public partial class Query
         var text = string.Empty;
 
         var watch = Stopwatch.StartNew();
-        if (ReadDiag.Enabled) Console.WriteLine("\nSearchSMs");
+        if (ReadDiag.Enabled) ReadDiag.Write("\nSearchSMs");
 
         watch.Restart();
 
@@ -340,7 +340,7 @@ public partial class Query
         if (result == null)
         {
             text = "No query is generated.";
-            Console.WriteLine(text);
+            if (ReadDiag.Enabled) ReadDiag.Write(text);
             return null;
         }
         else
@@ -355,7 +355,7 @@ public partial class Query
             };
 
             text = "Query data in " + watch.ElapsedMilliseconds + " ms";
-            if (ReadDiag.Enabled) Console.WriteLine(text);
+            if (ReadDiag.Enabled) ReadDiag.Write(text);
 
             watch.Restart();
             //var lastId = 0;
@@ -538,7 +538,7 @@ public partial class Query
             }
 
             var collectResultText = "Collect results in " + watch.ElapsedMilliseconds + " ms";
-            if (ReadDiag.Enabled) Console.WriteLine(collectResultText);
+            if (ReadDiag.Enabled) ReadDiag.Write(collectResultText);
 
             return queryDataResult;
         }
@@ -1671,7 +1671,7 @@ public partial class Query
         var swBuild = Stopwatch.StartNew();
         var rawSql = BuildRawSqlFromSqlConditions(sqlConditions, isWithAASTable, resultType, pageFrom, pageSize, flags);
         swBuild.Stop();
-        if (ReadDiag.Enabled) Console.WriteLine($"[ReadDiag] CombineTablesLEFT.BuildRawSql: {swBuild.ElapsedMilliseconds} ms");
+        if (ReadDiag.Enabled) ReadDiag.Write($"[ReadDiag] CombineTablesLEFT.BuildRawSql: {swBuild.ElapsedMilliseconds} ms");
         if (rawSql == null)
             throw new InvalidOperationException("BuildRawSqlFromSqlConditions returned null.");
 
@@ -1693,7 +1693,7 @@ public partial class Query
                 var swPlanOnly = Stopwatch.StartNew();
                 AddQueryPlan(generatedSql, GetQueryPlanForScript(db, rawSql));
                 swPlanOnly.Stop();
-                Console.WriteLine($"[ReadDiag] CombineTablesLEFT.GetQueryPlan (sql-only, temptable): {swPlanOnly.ElapsedMilliseconds} ms");
+                if (ReadDiag.Enabled) ReadDiag.Write($"[ReadDiag] CombineTablesLEFT.GetQueryPlan (sql-only, temptable): {swPlanOnly.ElapsedMilliseconds} ms");
                 return new List<int>();
             }
 
@@ -1728,9 +1728,9 @@ public partial class Query
             var swPlan = Stopwatch.StartNew();
             var qpRaw = GetQueryPlan(db, rawSql);
             swPlan.Stop();
-            Console.WriteLine($"[ReadDiag] CombineTablesLEFT.GetQueryPlan: {swPlan.ElapsedMilliseconds} ms");
-            Console.WriteLine($"[ReadDiag] SQL:\n{rawSql.TrimEnd()}");
-            Console.WriteLine($"[ReadDiag] QueryPlan:\n{qpRaw.TrimEnd()}");
+            ReadDiag.Write($"[ReadDiag] CombineTablesLEFT.GetQueryPlan: {swPlan.ElapsedMilliseconds} ms");
+            ReadDiag.Write($"[ReadDiag] SQL:\n{rawSql.TrimEnd()}");
+            ReadDiag.Write($"[ReadDiag] QueryPlan:\n{qpRaw.TrimEnd()}");
         }
 
         if (sqlOnly)
@@ -1755,7 +1755,7 @@ public partial class Query
                 ids.Add(reader.GetInt32(0));
         }
         swExec.Stop();
-        if (ReadDiag.Enabled) Console.WriteLine($"[ReadDiag] CombineTablesLEFT.Execute   : {swExec.ElapsedMilliseconds} ms ({ids.Count} ids)");
+        if (ReadDiag.Enabled) ReadDiag.Write($"[ReadDiag] CombineTablesLEFT.Execute   : {swExec.ElapsedMilliseconds} ms ({ids.Count} ids)");
         return ids;
     }
 
@@ -1798,8 +1798,8 @@ public partial class Query
         if (ReadDiag.Enabled)
         {
             var plan = GetQueryPlan(db, countSql);
-            Console.WriteLine($"[ReadDiag] Count SQL:\n{countSql}");
-            Console.WriteLine($"[ReadDiag] Count QueryPlan:\n{plan.TrimEnd()}");
+            ReadDiag.Write($"[ReadDiag] Count SQL:\n{countSql}");
+            ReadDiag.Write($"[ReadDiag] Count QueryPlan:\n{plan.TrimEnd()}");
         }
 
         return db.Database.SqlQueryRaw<int>(countSql).AsEnumerable().Single();
@@ -3147,7 +3147,7 @@ public partial class Query
         {
             withQueryLanguage = 3;
             expression = expression.Replace("$JSONGRAMMAR", string.Empty);
-            if (ReadDiag.Enabled) Console.WriteLine("$JSONGRAMMAR");
+            if (ReadDiag.Enabled) ReadDiag.Write("$JSONGRAMMAR");
             messages.Add("$JSONGRAMMAR");
         }
         if (expression.StartsWith("$JSON"))
@@ -3289,7 +3289,7 @@ public partial class Query
                 messages.Add("");
 
                 text = "combinedCondition: " + overallCondition;
-                if (ReadDiag.Enabled) Console.WriteLine(text);
+                if (ReadDiag.Enabled) ReadDiag.Write(text);
                 messages.Add(text);
 
             }

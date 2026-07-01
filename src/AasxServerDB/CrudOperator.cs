@@ -35,11 +35,9 @@ namespace AasxServerDB
     {
         // Master switch for the VERBOSE query/read diagnostics (per-phase ReadSubmodel
         // timings, generated SQL, query plan, SearchSMs/combinedCondition banners).
-        // Off by default; re-enable by setting the environment variable AAS_QUERY_DIAG=1.
-        // NOTE: the one-line ReadSubmodel summary is printed regardless of this flag.
-        public static bool Enabled =
-            string.Equals(System.Environment.GetEnvironmentVariable("AAS_QUERY_DIAG"), "1", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(System.Environment.GetEnvironmentVariable("AAS_QUERY_DIAG"), "true", StringComparison.OrdinalIgnoreCase);
+        // Off by default; re-enable by setting AAS_QUERY_LOG=1 (AAS_QUERY_DIAG=1 is
+        // kept as a backwards-compatible alias).
+        public static bool Enabled => DiagnosticsLog.QueryEnabled;
 
         public static long ReadSubmodelTicks;
         public static int ReadSubmodelCount;
@@ -71,14 +69,25 @@ namespace AasxServerDB
         public static void Print(string label)
         {
             if (!Enabled) return;
-            Console.WriteLine($"[ReadDiag] {label}");
-            Console.WriteLine($"[ReadDiag]   ReadSubmodel         : {ReadSubmodelCount,5} x, total {Ms(ReadSubmodelTicks),8:F1} ms, avg {(ReadSubmodelCount > 0 ? Ms(ReadSubmodelTicks) / ReadSubmodelCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]   IsSubmodelAllowed... : {AllowCheckCount,5} x, total {Ms(AllowCheckTicks),8:F1} ms, avg {(AllowCheckCount > 0 ? Ms(AllowCheckTicks) / AllowCheckCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]   ApplySmeSqlFilter... : {ApplyFilterCount,5} x, total {Ms(ApplyFilterTicks),8:F1} ms, avg {(ApplyFilterCount > 0 ? Ms(ApplyFilterTicks) / ApplyFilterCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]   GetSmeMerged         : {GetSmeMergedCount,5} x, total {Ms(GetSmeMergedTicks),8:F1} ms, avg {(GetSmeMergedCount > 0 ? Ms(GetSmeMergedTicks) / GetSmeMergedCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]     join ValueSets     : total {Ms(JoinSValueTicks),8:F1} ms");
-            Console.WriteLine($"[ReadDiag]     join OValueSets    : total {Ms(JoinOValueTicks),8:F1} ms");
-            Console.WriteLine($"[ReadDiag]     no-value residual  : total {Ms(NoValueTicks),8:F1} ms");
+            Write($"[ReadDiag] {label}");
+            Write($"[ReadDiag]   ReadSubmodel         : {ReadSubmodelCount,5} x, total {Ms(ReadSubmodelTicks),8:F1} ms, avg {(ReadSubmodelCount > 0 ? Ms(ReadSubmodelTicks) / ReadSubmodelCount : 0),6:F2} ms");
+            Write($"[ReadDiag]   IsSubmodelAllowed... : {AllowCheckCount,5} x, total {Ms(AllowCheckTicks),8:F1} ms, avg {(AllowCheckCount > 0 ? Ms(AllowCheckTicks) / AllowCheckCount : 0),6:F2} ms");
+            Write($"[ReadDiag]   ApplySmeSqlFilter... : {ApplyFilterCount,5} x, total {Ms(ApplyFilterTicks),8:F1} ms, avg {(ApplyFilterCount > 0 ? Ms(ApplyFilterTicks) / ApplyFilterCount : 0),6:F2} ms");
+            Write($"[ReadDiag]   GetSmeMerged         : {GetSmeMergedCount,5} x, total {Ms(GetSmeMergedTicks),8:F1} ms, avg {(GetSmeMergedCount > 0 ? Ms(GetSmeMergedTicks) / GetSmeMergedCount : 0),6:F2} ms");
+            Write($"[ReadDiag]     join ValueSets     : total {Ms(JoinSValueTicks),8:F1} ms");
+            Write($"[ReadDiag]     join OValueSets    : total {Ms(JoinOValueTicks),8:F1} ms");
+            Write($"[ReadDiag]     no-value residual  : total {Ms(NoValueTicks),8:F1} ms");
+        }
+
+        public static void Write(string message) => DiagnosticsLog.WriteQuery(message, IsStartMessage(message));
+
+        private static bool IsStartMessage(string message)
+        {
+            var line = message.TrimStart('\r', '\n');
+            return line.StartsWith("SearchSM", StringComparison.Ordinal) ||
+                (line.StartsWith("[ReadDiag] ReadSubmodel ", StringComparison.Ordinal) &&
+                 (line.EndsWith(": load SME rows and values...", StringComparison.Ordinal) ||
+                  line.EndsWith(": build SME tree...", StringComparison.Ordinal)));
         }
     }
 
@@ -780,7 +789,7 @@ namespace AasxServerDB
             if (result == null)
             {
                 if (ReadDiag.Enabled)
-                    Console.WriteLine($"[ReadDiag] ReadPagedSubmodels: SearchSMs returned null after {swSearch.ElapsedMilliseconds} ms");
+                    ReadDiag.Write($"[ReadDiag] ReadPagedSubmodels: SearchSMs returned null after {swSearch.ElapsedMilliseconds} ms");
                 return output;
             }
 
@@ -806,10 +815,10 @@ namespace AasxServerDB
             swPage.Stop();
             if (ReadDiag.Enabled)
             {
-                Console.WriteLine($"[ReadDiag] ReadPagedSubmodels page: pageSize={paginationParameters.Limit}, cursor={paginationParameters.Cursor}, returned={output.Count}, total={swPage.ElapsedMilliseconds} ms");
-                Console.WriteLine($"[ReadDiag]   prep mergedSqlConditions    : {swPrep.ElapsedMilliseconds,5} ms");
-                Console.WriteLine($"[ReadDiag]   SearchSMs                   : {swSearch.ElapsedMilliseconds,5} ms (returned {result.Count} ids)");
-                Console.WriteLine($"[ReadDiag]   db.SMSets.Where(...).ToList : {swMaterialize.ElapsedMilliseconds,5} ms (loaded {smDBList.Count} rows)");
+                ReadDiag.Write($"[ReadDiag] ReadPagedSubmodels page: pageSize={paginationParameters.Limit}, cursor={paginationParameters.Cursor}, returned={output.Count}, total={swPage.ElapsedMilliseconds} ms");
+                ReadDiag.Write($"[ReadDiag]   prep mergedSqlConditions    : {swPrep.ElapsedMilliseconds,5} ms");
+                ReadDiag.Write($"[ReadDiag]   SearchSMs                   : {swSearch.ElapsedMilliseconds,5} ms (returned {result.Count} ids)");
+                ReadDiag.Write($"[ReadDiag]   db.SMSets.Where(...).ToList : {swMaterialize.ElapsedMilliseconds,5} ms (loaded {smDBList.Count} rows)");
                 ReadDiag.Print("  ReadSubmodel phases:");
             }
 
@@ -890,7 +899,7 @@ namespace AasxServerDB
 
                 var swMerged = Stopwatch.StartNew();
                 if (ReadDiag.Enabled)
-                    Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: load SME rows and values...");
+                    ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: load SME rows and values...");
                 var smeMerged = GetSmeMerged(
                     db,
                     filteredSmeQuery,
@@ -902,7 +911,7 @@ namespace AasxServerDB
                 {
                     ReadDiag.GetSmeMergedTicks += swMerged.ElapsedTicks;
                     ReadDiag.GetSmeMergedCount++;
-                    Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: loaded {mergedRowCount} merged rows in {swMerged.ElapsedMilliseconds} ms");
+                    ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: loaded {mergedRowCount} merged rows in {swMerged.ElapsedMilliseconds} ms");
                 }
 
                 if (smeMerged == null)
@@ -914,11 +923,11 @@ namespace AasxServerDB
                 {
                     var swTree = Stopwatch.StartNew();
                     if (ReadDiag.Enabled)
-                        Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: build SME tree...");
+                        ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: build SME tree...");
                     LoadSME(submodel, null, null, null, smeMerged);
                     swTree.Stop();
                     if (ReadDiag.Enabled)
-                        Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: SME tree built in {swTree.ElapsedMilliseconds} ms");
+                        ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: SME tree built in {swTree.ElapsedMilliseconds} ms");
                 }
             }
 
@@ -930,13 +939,12 @@ namespace AasxServerDB
             submodel.SetAllParents();
             swParents.Stop();
             if (ReadDiag.Enabled)
-                Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: parents set in {swParents.ElapsedMilliseconds} ms");
+                ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: parents set in {swParents.ElapsedMilliseconds} ms");
 
             swRead.Stop();
-            // One concise summary line per ReadSubmodel — always printed (independent of the verbose switch).
-            Console.WriteLine($"[ReadDiag] ReadSubmodel {smDB.Identifier}: {mergedRowCount} rows in {swRead.ElapsedMilliseconds} ms");
             if (ReadDiag.Enabled)
             {
+                ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: {mergedRowCount} rows in {swRead.ElapsedMilliseconds} ms");
                 ReadDiag.ReadSubmodelTicks += swRead.ElapsedTicks;
                 ReadDiag.ReadSubmodelCount++;
             }

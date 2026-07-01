@@ -5,6 +5,55 @@ using IO.Swagger.Lib.V3.MCP;
 public class McpQueryToolsProjectionTests
 {
     [Fact]
+    public void NormalizeLimit_DefaultsAndCapsAtMcpPageSize()
+    {
+        Assert.Equal(500, McpQueryTools.NormalizeLimit(null));
+        Assert.Equal(500, McpQueryTools.NormalizeLimit(0));
+        Assert.Equal(25, McpQueryTools.NormalizeLimit(25));
+        Assert.Equal(500, McpQueryTools.NormalizeLimit(1000));
+    }
+
+    [Fact]
+    public void NormalizeProductSubmodelLimit_DefaultsAndCapsAtProductPageSize()
+    {
+        Assert.Equal(50, McpQueryTools.NormalizeProductSubmodelLimit(null));
+        Assert.Equal(50, McpQueryTools.NormalizeProductSubmodelLimit(-1));
+        Assert.Equal(10, McpQueryTools.NormalizeProductSubmodelLimit(10));
+        Assert.Equal(50, McpQueryTools.NormalizeProductSubmodelLimit(100));
+    }
+
+    [Fact]
+    public void NormalizeCursor_UsesZeroForInvalidOrNegativeValues()
+    {
+        Assert.Equal(0, McpQueryTools.NormalizeCursor(null));
+        Assert.Equal(0, McpQueryTools.NormalizeCursor(""));
+        Assert.Equal(0, McpQueryTools.NormalizeCursor("abc"));
+        Assert.Equal(0, McpQueryTools.NormalizeCursor("-5"));
+        Assert.Equal(20, McpQueryTools.NormalizeCursor("20"));
+    }
+
+    [Fact]
+    public void ValidateWildcardOperatorForField_AllowsValueIdShortAndIdShortPath()
+    {
+        McpQueryTools.ValidateWildcardOperatorForField("contains", "sme", "value");
+        McpQueryTools.ValidateWildcardOperatorForField("starts-with", "sme", "idShort");
+        McpQueryTools.ValidateWildcardOperatorForField("ends-with", "sme", "idShortPath");
+        McpQueryTools.ValidateWildcardOperatorForField("contains", "sme", "idShort", "TechnicalData.Power_output");
+    }
+
+    [Fact]
+    public void ValidateWildcardOperatorForField_RejectsSemanticIdAndId()
+    {
+        var semanticId = Assert.Throws<ArgumentException>(
+            () => McpQueryTools.ValidateWildcardOperatorForField("contains", "sm", "semanticId"));
+        Assert.Contains("Wildcard search is not supported for field 'semanticId'", semanticId.Message);
+
+        var id = Assert.Throws<ArgumentException>(
+            () => McpQueryTools.ValidateWildcardOperatorForField("starts-with", "sm", "id"));
+        Assert.Contains("Wildcard search is not supported for field 'id'", id.Message);
+    }
+
+    [Fact]
     public void SelectPreferredProjectionPath_PutsDeprioritizedBranchesLast()
     {
         var paths = new[]

@@ -727,6 +727,35 @@ public sealed class QueryTests
         }
     }
 
+    [Fact]
+    public void Contains_CommonValue_WithPagedLimit_RoutedToExists_WithoutFtsPrefilter()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [ { "$contains": [ { "$field": "$sme#value" }, { "$strVal": "ZVEI" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present term is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: 20,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common contains must also use EXISTS for paged queries");
+            sql.Should().NotContain("sm.Id IN (", "a common contains must not materialize the full value-driven match set");
+            sql.Should().NotContain("ValueSets_fts", "the common contains EXISTS must not get the FTS candidate filter");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
     /// <summary>
     /// A rare/absent $contains stays on the value-driven IN path with the FTS candidate filter
     /// (fast for small/empty match sets).
