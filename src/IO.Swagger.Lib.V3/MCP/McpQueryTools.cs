@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using AasCore.Aas3_1;
 using AasxServer;
 using Contracts;
+using Contracts.DbRequests;
 using Contracts.Exceptions;
 using Contracts.Pagination;
 using Contracts.QueryResult;
@@ -69,6 +70,11 @@ public sealed class McpQueryTools
 {
     private const int DefaultPageSize = 500;
     private const int MaxPageSize = 5000;
+
+    // Ab dieser Dateigröße wird der Inhalt nicht mehr inline (content/contentBase64) in die
+    // Tool-Antwort gelegt — große Tabellen laufen sonst durch das Kontextfenster des Modells.
+    // Der Abruf erfolgt dann über downloadUrl (HTTP) oder resourceUri (MCP-Resource).
+    private const int InlineExportContentMaxBytes = 200_000;
 
     // Tool-Sätze für die reduzierten Endpunkte (Pfad-Filter siehe ServerConfiguration).
     // /mcp-basic: das mächtige conditions-Tool — ein Call, aber komplexe Suchen (AND/OR, Operatoren). Für mittlere Modelle (z.B. Gemini Flash).
@@ -142,7 +148,9 @@ public sealed class McpQueryTools
         "Nicht automatisch aas_count vorschalten; aas_count nur verwenden, wenn der Benutzer explizit die exakte Gesamtzahl braucht. Wenn hasMore=true, mit cursor weiterblättern, nicht count aufrufen. " +
         "Wichtig: aas_query liefert standardmäßig nur Identifier. Danach den Inhalt mit aas_get_submodel lesen — oder, wenn die Frage mehrere Submodelle eines Produkts betrifft (z.B. technische Daten + Hersteller + CO2), in EINEM Schritt mit aas_get_product(identifier). " +
         "TIPP für Tabellen/Listen: Übergib select=[idShortPaths], dann liefert aas_query je Treffer direkt diese Feldwerte (Projektion) — das ersetzt viele Einzelabrufe. " +
-        "Für Daten aus einem anderen Submodel derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber.")]
+        "Für Daten aus einem anderen Submodel derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber. " +
+        "Wenn der Benutzer eine Tabelle, Excel- oder CSV-Datei möchte, stattdessen direkt aas_query_export_xlsx (bevorzugt) bzw. aas_query_export_csv verwenden. " +
+        "Bei vielen erwarteten Treffern limit explizit setzen (Maximum 5000).")]
     public async Task<object> AasQuery(
         [Description("Zielobjekt: \"submodels\" oder \"shells\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
@@ -193,16 +201,12 @@ public sealed class McpQueryTools
         // (statt nur Identifier) — spart die vielen aas_get_submodel-Folgeaufrufe. Nur für Submodelle sinnvoll.
         if (select is { Length: > 0 } && resultType == ResultType.Submodel)
         {
+            var projectedRows = await BuildProjectionRows(
+                securityConfig, identifiers, select, lang, priority, deprioritize, withPaths, "aas_query");
             var rows = new JsonArray();
-            for (var index = 0; index < identifiers.Count; index++)
+            foreach (var row in projectedRows)
             {
-                var id = identifiers[index];
-                var projectionWatch = Stopwatch.StartNew();
-                LogMcpLine($"aas_query projection {index + 1}/{identifiers.Count}: {id}");
-                rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths));
-                LogMcpLine(
-                    $"aas_query projection {index + 1}/{identifiers.Count} done " +
-                    $"in {projectionWatch.ElapsedMilliseconds} ms");
+                rows.Add(row);
             }
 
             return new { target, count = identifiers.Count, columns = select, rows, hasMore, nextCursor };
@@ -223,12 +227,13 @@ public sealed class McpQueryTools
 
     [McpServerTool(Name = "aas_query_export_csv", Title = "Export AAS Query as CSV", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description(
-        "Führt eine aas_query mit select aus und liefert das Ergebnis als Excel-taugliche CSV-Datei-Nutzlast zurück. " +
-        "Nutzen, wenn der Benutzer eine Tabelle/Excel/CSV-Datei möchte, statt große aas_query-Zeilen im Chat weiterzuverarbeiten. " +
-        "Die Antwort enthält fileName, mimeType=text/csv, contentBase64 und content. " +
+        "Führt eine aas_query mit select aus und liefert das Ergebnis als echte CSV-Datei. " +
+        "Für Tabellen/Excel bevorzugt aas_query_export_xlsx verwenden; CSV nur, wenn explizit CSV gewünscht ist. " +
+        "Die Antwort enthält fileName, mimeType=text/csv, count, hasMore, downloadUrl (HTTP-Download) und resourceUri (MCP-Resource); " +
+        "content/contentBase64 sind nur bei kleinen Dateien (<200 KB) zusätzlich enthalten. " +
         "select ist erforderlich; exportiert wird eine Zeile pro Treffer mit Spalte id plus den select-Spalten. " +
-        "Pfade ohne / beziehen sich auf das Treffer-Submodel. Für andere Submodelle derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber. " +
-        "Für mehr als 500 Treffer limit explizit setzen, z.B. limit=1000.")]
+        "Pfade ohne / beziehen sich auf das Treffer-Submodel. Für Felder aus einem anderen Submodel derselben AAS die Syntax /SubmodelIdShort/idShortPath nutzen, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber. " +
+        "Für mehr als 500 Treffer limit explizit setzen, z.B. limit=1000. Nicht vorher aas_count aufrufen — bei hasMore=true mit cursor weiterblättern.")]
     public async Task<object> AasQueryExportCsv(
         [Description("Zielobjekt: aktuell \"submodels\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
@@ -244,36 +249,144 @@ public sealed class McpQueryTools
     {
         using var _ = LogCallTimed($"aas_query_export_csv {target} {DescribeConditions(conditions, combine)} limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} cursor={cursor ?? "-"} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
 
-        if (select is null || select.Length == 0)
+        var export = await RunExportQuery("aas_query_export_csv", target, conditions, select, combine, limit, cursor, lang, priority, deprioritize);
+        if (export.Error != null)
         {
-            return new { error = "select ist für aas_query_export_csv erforderlich, damit CSV-Spalten erzeugt werden können." };
+            return export.Error;
         }
 
-        ResultType resultType;
+        var exportWatch = Stopwatch.StartNew();
+        var normalizedDelimiter = NormalizeCsvDelimiter(delimiter);
+        var csv = BuildCsv(export.Columns, export.Rows, normalizedDelimiter);
+        var bytes = Encoding.UTF8.GetBytes("\uFEFF" + csv);
+
+        var normalizedFileName = NormalizeExportFileName(fileName, ".csv", "aas_query_export.csv");
+        var token = McpExportFileStore.Add(bytes, normalizedFileName, "text/csv");
+        LogMcpLine($"aas_query_export_csv file: {bytes.Length} bytes in {exportWatch.ElapsedMilliseconds} ms");
+
+        var inline = bytes.Length <= InlineExportContentMaxBytes;
+        return new
+        {
+            target,
+            count = export.Rows.Count,
+            hasMore = export.HasMore,
+            nextCursor = export.NextCursor,
+            fileName = normalizedFileName,
+            mimeType = "text/csv",
+            encoding = "utf-8-sig",
+            delimiter = normalizedDelimiter,
+            columns = export.Columns,
+            fileSizeBytes = bytes.Length,
+            downloadUrl = BuildExportDownloadUrl(token),
+            resourceUri = McpExportResources.BuildResourceUri(token),
+            contentBase64 = inline ? Convert.ToBase64String(bytes) : null,
+            content = inline ? csv : null,
+            note = inline
+                ? null
+                : "Datei zu groß für Inline-Inhalt; über downloadUrl herunterladen oder als MCP-Resource (resourceUri) lesen.",
+        };
+    }
+
+    [McpServerTool(Name = "aas_query_export_xlsx", Title = "Export AAS Query as Excel (XLSX)", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
+    [Description(
+        "Führt eine aas_query mit select aus und liefert das Ergebnis als echte Excel-Datei (XLSX). " +
+        "BEVORZUGTES Tool, wenn der Benutzer eine Tabelle, Excel-Datei oder einen Datei-Download möchte — nicht viele aas_query-Zeilen im Chat weiterverarbeiten. " +
+        "Die Antwort enthält fileName, mimeType, count, hasMore, downloadUrl (HTTP-Download, dem Benutzer als Link geben) und resourceUri (MCP-Resource); " +
+        "contentBase64 ist nur bei kleinen Dateien (<200 KB) zusätzlich enthalten. " +
+        "select ist erforderlich; exportiert wird eine Zeile pro Treffer mit Spalte id plus den select-Spalten. " +
+        "Pfade ohne / beziehen sich auf das Treffer-Submodel. Für Felder aus einem anderen Submodel derselben AAS die Syntax /SubmodelIdShort/idShortPath nutzen, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber oder /TechnicalData/TechnicalProperties.Manufacturer.Product_type. " +
+        "Für mehr als 500 Treffer limit explizit setzen, z.B. limit=1000 (Maximum 5000). " +
+        "Nicht automatisch aas_count vorschalten — bei hasMore=true mit cursor weiterblättern.")]
+    public async Task<object> AasQueryExportXlsx(
+        [Description("Zielobjekt: aktuell \"submodels\".")] string target,
+        [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
+        [Description("idShortPaths/Blattnamen als Tabellenspalten, z.B. [\"GeneralInformation.ManufacturerArticleNumber\"]. Für andere Submodelle derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber.")] string[] select,
+        [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and",
+        [Description("Maximale Trefferzahl (Default 500, Maximum 5000).")] int? limit = null,
+        [Description("Cursor (Offset) zum Weiterblättern; aus nextCursor einer vorigen Antwort.")] string? cursor = null,
+        [Description("Sprache für mehrsprachige Felder (Default \"en\").")] string lang = "en",
+        [Description("Dateiname der exportierten Excel-Datei.")] string fileName = "aas_query_export.xlsx",
+        [Description("Optionale Prioritätsreihenfolge für mehrdeutige Blattnamen.")] string[]? priority = null,
+        [Description("Optionale Pfadsegmente, die bei mehrdeutigen Blattnamen ans Ende gestellt werden.")] string[]? deprioritize = null)
+    {
+        using var _ = LogCallTimed($"aas_query_export_xlsx {target} {DescribeConditions(conditions, combine)} limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} cursor={cursor ?? "-"} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
+
+        var export = await RunExportQuery("aas_query_export_xlsx", target, conditions, select, combine, limit, cursor, lang, priority, deprioritize);
+        if (export.Error != null)
+        {
+            return export.Error;
+        }
+
+        var exportWatch = Stopwatch.StartNew();
+        var bytes = XlsxBuilder.Build(export.Columns, export.Rows);
+        var normalizedFileName = NormalizeExportFileName(fileName, ".xlsx", "aas_query_export.xlsx");
+        var token = McpExportFileStore.Add(bytes, normalizedFileName, XlsxBuilder.MimeType);
+        LogMcpLine($"aas_query_export_xlsx file: {bytes.Length} bytes in {exportWatch.ElapsedMilliseconds} ms");
+
+        var inline = bytes.Length <= InlineExportContentMaxBytes;
+        return new
+        {
+            target,
+            count = export.Rows.Count,
+            hasMore = export.HasMore,
+            nextCursor = export.NextCursor,
+            fileName = normalizedFileName,
+            mimeType = XlsxBuilder.MimeType,
+            columns = export.Columns,
+            fileSizeBytes = bytes.Length,
+            downloadUrl = BuildExportDownloadUrl(token),
+            resourceUri = McpExportResources.BuildResourceUri(token),
+            contentBase64 = inline ? Convert.ToBase64String(bytes) : null,
+            note = inline
+                ? null
+                : "Datei zu groß für Inline-Inhalt; über downloadUrl herunterladen oder als MCP-Resource (resourceUri) lesen.",
+        };
+    }
+
+    // Gemeinsamer Unterbau der Export-Tools: Query ausführen, Treffer paginieren, Projektions-
+    // zeilen bauen (Fast Path, wenn möglich) und die Spaltenliste (id + select) liefern.
+    private sealed class ExportQueryData
+    {
+        public object? Error { get; init; }
+        public bool HasMore { get; init; }
+        public string? NextCursor { get; init; }
+        public List<JsonObject> Rows { get; init; } = new();
+        public string[] Columns { get; init; } = [];
+    }
+
+    private async Task<ExportQueryData> RunExportQuery(
+        string toolName, string target, McpQueryCondition[] conditions, string[] select, string combine,
+        int? limit, string? cursor, string lang, string[]? priority, string[]? deprioritize)
+    {
+        if (select is null || select.Length == 0)
+        {
+            return new ExportQueryData { Error = new { error = $"select ist für {toolName} erforderlich, damit Tabellenspalten erzeugt werden können." } };
+        }
+
         string expression;
         try
         {
-            resultType = ParseTarget(target);
+            var resultType = ParseTarget(target);
             if (resultType != ResultType.Submodel)
             {
-                throw new ArgumentException("aas_query_export_csv unterstützt aktuell nur target=\"submodels\".");
+                throw new ArgumentException($"{toolName} unterstützt aktuell nur target=\"submodels\".");
             }
 
             expression = BuildExpression(conditions, combine);
         }
         catch (ArgumentException ex)
         {
-            return new { error = ex.Message };
+            return new ExportQueryData { Error = new { error = ex.Message } };
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
         var requestedLimit = NormalizeLimit(limit);
         var pagination = new PaginationParameters(cursor, requestedLimit + 1);
 
-        var (list, queryError) = await TryQuery(securityConfig, pagination, resultType, expression);
+        var (list, queryError) = await TryQuery(securityConfig, pagination, ResultType.Submodel, expression);
         if (queryError != null)
         {
-            return new { error = "Query fehlgeschlagen: " + queryError };
+            return new ExportQueryData { Error = new { error = "Query fehlgeschlagen: " + queryError } };
         }
 
         var fetchedIdentifiers = ExtractIdentifiers(list);
@@ -283,37 +396,27 @@ public sealed class McpQueryTools
             ? (pagination.Cursor + identifiers.Count).ToString(CultureInfo.InvariantCulture)
             : null;
 
-        var rows = new List<JsonObject>(identifiers.Count);
-        for (var index = 0; index < identifiers.Count; index++)
-        {
-            var id = identifiers[index];
-            var projectionWatch = Stopwatch.StartNew();
-            LogMcpLine($"aas_query_export_csv projection {index + 1}/{identifiers.Count}: {id}");
-            rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths: false));
-            LogMcpLine(
-                $"aas_query_export_csv projection {index + 1}/{identifiers.Count} done " +
-                $"in {projectionWatch.ElapsedMilliseconds} ms");
-        }
-
+        var rows = await BuildProjectionRows(
+            securityConfig, identifiers, select, lang, priority, deprioritize, withPaths: false, toolName);
         var columns = new[] { "id" }.Concat(select.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim())).ToArray();
-        var normalizedDelimiter = NormalizeCsvDelimiter(delimiter);
-        var csv = BuildCsv(columns, rows, normalizedDelimiter);
-        var bytes = Encoding.UTF8.GetBytes("\uFEFF" + csv);
 
-        return new
-        {
-            target,
-            count = rows.Count,
-            hasMore,
-            nextCursor,
-            fileName = NormalizeCsvFileName(fileName),
-            mimeType = "text/csv",
-            encoding = "utf-8-sig",
-            delimiter = normalizedDelimiter,
-            columns,
-            contentBase64 = Convert.ToBase64String(bytes),
-            content = csv,
-        };
+        return new ExportQueryData { HasMore = hasMore, NextCursor = nextCursor, Rows = rows, Columns = columns };
+    }
+
+    // Externer Download-Link für eine Exportdatei; nutzt die konfigurierte externe Server-URL.
+    private static string BuildExportDownloadUrl(string token)
+    {
+        var baseUrl = (Program.externalBlazor ?? string.Empty).TrimEnd('/');
+        return baseUrl + "/mcp-exports/" + token;
+    }
+
+    internal static string NormalizeExportFileName(string? fileName, string extension, string defaultName)
+    {
+        var name = string.IsNullOrWhiteSpace(fileName) ? defaultName : fileName.Trim();
+
+        // Nur der blanke Dateiname ist erlaubt (Token-URL und Content-Disposition).
+        name = name.Replace('\\', '_').Replace('/', '_').Replace("..", "_", StringComparison.Ordinal);
+        return name.EndsWith(extension, StringComparison.OrdinalIgnoreCase) ? name : name + extension;
     }
 
     [McpServerTool(Name = "aas_count", Title = "Exact Count Only When Explicitly Requested", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
@@ -1078,6 +1181,207 @@ public sealed class McpQueryTools
         return node;
     }
 
+    // Projektions-Zeilen für alle Treffer: nutzt den SQL-Fast-Path, wenn alle select-Einträge
+    // explizite volle Pfade sind und keine Security aktiv ist; sonst den bisherigen Objektpfad.
+    private async Task<List<JsonObject>> BuildProjectionRows(
+        SecurityConfig securityConfig, List<string> identifiers, string[] select, string lang,
+        string[]? priority, string[]? deprioritize, bool withPaths, string toolName)
+    {
+        var fastRows = await TryBuildProjectionRowsFast(securityConfig, identifiers, select, lang, withPaths, toolName);
+        if (fastRows != null)
+        {
+            return fastRows;
+        }
+
+        var rows = new List<JsonObject>(identifiers.Count);
+        for (var index = 0; index < identifiers.Count; index++)
+        {
+            var id = identifiers[index];
+            var projectionWatch = Stopwatch.StartNew();
+            LogMcpLine($"{toolName} projection {index + 1}/{identifiers.Count}: {id}");
+            rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths));
+            LogMcpLine(
+                $"{toolName} projection {index + 1}/{identifiers.Count} done " +
+                $"in {projectionWatch.ElapsedMilliseconds} ms");
+        }
+
+        return rows;
+    }
+
+    // SQL-Fast-Path: EINE Batch-Projektion (SMSets/SMRefSets/SMESets/ValueSets) für alle Treffer
+    // und alle select-Pfade statt vieler ReadSubmodel-/ReadSubmodelElement-Aufrufe pro Treffer.
+    // Liefert null, wenn der Fast Path nicht anwendbar ist (Security aktiv, Blattnamen im select,
+    // Indexpfade) — dann übernimmt der bisherige Objektpfad.
+    private async Task<List<JsonObject>?> TryBuildProjectionRowsFast(
+        SecurityConfig securityConfig, List<string> identifiers, string[] select, string lang, bool withPaths, string toolName)
+    {
+        if (!Program.noSecurity || !TryPlanFastProjection(select, out var plan))
+        {
+            return null;
+        }
+
+        var watch = Stopwatch.StartNew();
+        List<DbProjectionRow> projection;
+        try
+        {
+            projection = await _dbRequestHandlerService.QueryProjectSMs(securityConfig, new DbProjectionRequest
+            {
+                SubmodelIdentifiers = identifiers,
+                Paths = plan,
+            });
+        }
+        catch (Exception ex)
+        {
+            LogMcpLine($"{toolName} fast projection failed ({ex.Message}); falling back to object path");
+            return null;
+        }
+
+        var sqlMs = watch.ElapsedMilliseconds;
+
+        var rows = new List<JsonObject>(projection.Count);
+        var fallbackCells = 0;
+        foreach (var projRow in projection)
+        {
+            var row = new JsonObject { ["id"] = projRow.SubmodelIdentifier };
+            JsonObject? selectedPaths = withPaths ? new JsonObject() : null;
+            foreach (var path in plan)
+            {
+                projRow.Cells.TryGetValue(path.RawPath, out var cell);
+                JsonNode? value = null;
+                string? resolvedPath = null;
+                if (cell is { Found: true })
+                {
+                    if (IsFastProjectableCell(cell))
+                    {
+                        value = ProjectFastCellValue(cell, lang);
+                    }
+                    else
+                    {
+                        // Komplexes Element (SMC, File, Range, ...): nur diese Zelle über den
+                        // Objektpfad lesen, damit der Wert exakt dem bisherigen Verhalten entspricht.
+                        fallbackCells++;
+                        var (element, _) = await ReadProjectedElement(
+                            securityConfig, cell.SourceSubmodelIdentifier!, path.ElementIdShortPath,
+                            priority: null, deprioritize: null);
+                        value = GetProjectedValue(element, lang);
+                    }
+
+                    resolvedPath = path.RawPath;
+                }
+
+                row[path.RawPath] = value;
+                if (selectedPaths is not null)
+                {
+                    selectedPaths[path.RawPath] = resolvedPath;
+                }
+            }
+
+            if (selectedPaths is not null)
+            {
+                row["paths"] = selectedPaths;
+            }
+
+            rows.Add(row);
+        }
+
+        LogMcpLine(
+            $"{toolName} fast projection: {rows.Count} rows x {plan.Count} fields, sql {sqlMs} ms"
+            + (fallbackCells > 0 ? $", {fallbackCells} cells via object fallback" : string.Empty));
+        return rows;
+    }
+
+    // Fast-Path-Erkennung: JEDER select-Eintrag muss explizit adressierbar sein —
+    // "A.B.C" im Treffer-Submodel oder "/SubmodelIdShort/idShortPath" in einem Submodel derselben AAS.
+    // Blattnamen ohne Submodel-Präfix bleiben beim Objektpfad-Fallback, weil sie Ranking-Suche brauchen.
+    // Indexpfade mit "[" bleiben ebenfalls beim Fallback, weil SML-Kinder in SMESets.IdShortPath
+    // nicht bracket-adressierbar sind.
+    internal static bool TryPlanFastProjection(string[]? select, out List<DbProjectionPath> plan)
+    {
+        plan = new List<DbProjectionPath>();
+        if (select is null || select.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var rawPath in select)
+        {
+            if (string.IsNullOrWhiteSpace(rawPath))
+            {
+                continue;
+            }
+
+            var path = rawPath.Trim();
+            if (path.Contains('[', StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (TryParseCrossSubmodelProjectionPath(path, out var targetSubmodelIdShort, out var elementPath))
+            {
+                plan.Add(new DbProjectionPath
+                {
+                    RawPath = path,
+                    TargetSubmodelIdShort = targetSubmodelIdShort,
+                    ElementIdShortPath = elementPath,
+                });
+                continue;
+            }
+
+            if (path.StartsWith("/", StringComparison.Ordinal) || !path.Contains('.', StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            plan.Add(new DbProjectionPath { RawPath = path, ElementIdShortPath = path });
+        }
+
+        return plan.Count > 0;
+    }
+
+    // Nur Property und MultiLanguageProperty lassen sich direkt aus den ValueSets projizieren;
+    // alle anderen Typen brauchen die kompakte value-Serialisierung des Objektpfads.
+    private static readonly HashSet<string> FastProjectableSmeTypes = new(StringComparer.Ordinal) { "Prop", "MLP" };
+
+    internal static bool IsFastProjectableCell(DbProjectionCell? cell)
+        => cell is { Found: true } && FastProjectableSmeTypes.Contains(NormalizeSmeType(cell.SmeType));
+
+    // SMEType kann einen Operation-Prefix tragen (z.B. "In-Prop"); nur der Basistyp zählt.
+    internal static string NormalizeSmeType(string? smeType)
+    {
+        if (string.IsNullOrEmpty(smeType))
+        {
+            return string.Empty;
+        }
+
+        var index = smeType.LastIndexOf('-');
+        return index >= 0 ? smeType[(index + 1)..] : smeType;
+    }
+
+    // Zellwert aus den ValueSets-Zeilen: Property als Skalar (numerisch bei TValue="D"),
+    // MultiLanguageProperty auf die gewünschte Sprache reduziert (sonst erste vorhandene).
+    internal static JsonNode? ProjectFastCellValue(DbProjectionCell cell, string lang)
+    {
+        if (NormalizeSmeType(cell.SmeType) == "MLP")
+        {
+            var pick = cell.Values.FirstOrDefault(v => string.Equals(v.Annotation, lang, StringComparison.OrdinalIgnoreCase))
+                       ?? cell.Values.FirstOrDefault();
+            return pick?.SValue;
+        }
+
+        var value = cell.Values.FirstOrDefault();
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (value.NValue.HasValue)
+        {
+            return value.NValue.Value;
+        }
+
+        return value.SValue;
+    }
+
     // Eine Projektions-Zeile für ein Submodel: liest es und extrahiert die select-Pfade als {id, <path>:<wert>}.
     private async Task<JsonObject> BuildProjectionRow(
         SecurityConfig securityConfig, string id, string[] select, string lang,
@@ -1610,12 +1914,6 @@ public sealed class McpQueryTools
         }
 
         return delimiter is "," or ";" or "\t" ? delimiter : ";";
-    }
-
-    private static string NormalizeCsvFileName(string? fileName)
-    {
-        var name = string.IsNullOrWhiteSpace(fileName) ? "aas_query_export.csv" : fileName.Trim();
-        return name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? name : name + ".csv";
     }
 
     private static ResultType ParseTarget(string target) => target?.Trim().ToLowerInvariant() switch

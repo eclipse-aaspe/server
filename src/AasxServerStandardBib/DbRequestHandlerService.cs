@@ -1344,6 +1344,28 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return ConvertQueryItems(tcs);
     }
 
+    public async Task<List<DbProjectionRow>> QueryProjectSMs(ISecurityConfig securityConfig, DbProjectionRequest projectionRequest)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ProjectionRequest = projectionRequest
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryProjectSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.ProjectionRows ?? [];
+    }
+
     public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression, bool sqlOnly = false)
     {
         var parameters = new DbRequestParams()

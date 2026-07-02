@@ -234,6 +234,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.QuerySearchSMs:
             case DbRequestOp.QuerySearchSMEs:
             case DbRequestOp.QueryCountSMs:
+            case DbRequestOp.QueryProjectSMs:
                 isAllowed = InitSecurity(securityConfig, out accessRules, out securitySqlConditions, "/query");
 
                 if (!isAllowed)
@@ -770,6 +771,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     //        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.Count = count;
                     //    break;
+                    case DbRequestOp.QueryProjectSMs:
+                        // The batch projection reads SMSets/SMESets/ValueSets directly and does NOT
+                        // apply the object-level security filters; it is therefore only available
+                        // with security disabled. Secured callers keep using the object read path
+                        // (ReadSubmodelById/ReadSubmodelElementByPath).
+                        if (securityConfig is not { NoSecurity: true })
+                        {
+                            throw new NotAllowed("NOT ALLOWED: QueryProjectSMs is only available with security disabled.");
+                        }
+
+                        result.ProjectionRows = ProjectionOperator.Project(db, dbRequest.Context.Params.ProjectionRequest);
+                        break;
                     case DbRequestOp.QueryGetSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);

@@ -71,6 +71,7 @@ public enum DbRequestOp
     QuerySearchSMEs,
 
     QueryGetSMs,
+    QueryProjectSMs,
 
     DeleteAASXByPackageId,
     ReadAASXByPackageId,

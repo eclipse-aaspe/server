@@ -87,6 +87,8 @@ public static class ServerConfiguration
         services.AddMcpServer()
             .WithHttpTransport()
             .WithTools<McpQueryTools>()
+            // Exportdateien (CSV/XLSX) der Export-Tools als MCP-Resource: aas-export://{token}.
+            .WithResources<McpExportResources>()
             .WithRequestFilters(filters =>
             {
                 filters.AddListToolsFilter(next => async (context, ct) =>
@@ -142,6 +144,8 @@ public static class ServerConfiguration
         new Dictionary<string, (string, string)>(StringComparer.Ordinal)
         {
             ["aas_query"]               = ("Searching Voyager…", "Voyager search complete"),
+            ["aas_query_export_csv"]    = ("Exporting Voyager results…", "CSV export ready"),
+            ["aas_query_export_xlsx"]   = ("Exporting Voyager results…", "Excel export ready"),
             ["aas_count"]               = ("Counting Voyager results…", "Voyager count complete"),
             ["aas_get_submodel"]        = ("Reading AAS submodel…", "AAS submodel loaded"),
             ["aas_get_submodels"]       = ("Reading AAS submodels…", "AAS submodels loaded"),
@@ -271,6 +275,18 @@ public static class ServerConfiguration
         endpoints.MapMcp("/mcp");
         endpoints.MapMcp("/mcp-basic");
         endpoints.MapMcp("/mcp-simple");
+
+        // Download-Endpunkt für die von aas_query_export_csv/xlsx erzeugten Dateien.
+        // Das Token stammt aus der Tool-Antwort (downloadUrl); die Dateien verfallen nach ca. 60 Minuten.
+        endpoints.MapGet("/mcp-exports/{token}", (string token) =>
+        {
+            if (!McpExportFileStore.TryGet(token, out var content, out var fileName, out var mimeType))
+            {
+                return Microsoft.AspNetCore.Http.Results.NotFound();
+            }
+
+            return Microsoft.AspNetCore.Http.Results.File(content, mimeType, fileName);
+        });
     }
 
 #endregion

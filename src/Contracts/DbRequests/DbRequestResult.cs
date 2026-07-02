@@ -48,6 +48,8 @@ public class DbRequestResult
     public QResult QueryResult { get; set; }
     public List<string> RawSql { get; set; }
 
+    public List<DbProjectionRow> ProjectionRows { get; set; }
+
     public int Count { get; set; }
 }
 
