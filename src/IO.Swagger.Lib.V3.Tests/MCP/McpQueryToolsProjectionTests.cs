@@ -1,6 +1,7 @@
 namespace IO.Swagger.Lib.V3.Tests.MCP;
 
 using IO.Swagger.Lib.V3.MCP;
+using System.Text.Json.Nodes;
 
 public class McpQueryToolsProjectionTests
 {
@@ -10,7 +11,9 @@ public class McpQueryToolsProjectionTests
         Assert.Equal(500, McpQueryTools.NormalizeLimit(null));
         Assert.Equal(500, McpQueryTools.NormalizeLimit(0));
         Assert.Equal(25, McpQueryTools.NormalizeLimit(25));
-        Assert.Equal(500, McpQueryTools.NormalizeLimit(1000));
+        Assert.Equal(1000, McpQueryTools.NormalizeLimit(1000));
+        Assert.Equal(5000, McpQueryTools.NormalizeLimit(5000));
+        Assert.Equal(5000, McpQueryTools.NormalizeLimit(6000));
     }
 
     [Fact]
@@ -30,6 +33,49 @@ public class McpQueryToolsProjectionTests
         Assert.Equal(0, McpQueryTools.NormalizeCursor("abc"));
         Assert.Equal(0, McpQueryTools.NormalizeCursor("-5"));
         Assert.Equal(20, McpQueryTools.NormalizeCursor("20"));
+    }
+
+    [Fact]
+    public void BuildCsv_EscapesExcelRelevantCells()
+    {
+        var rows = new[]
+        {
+            new JsonObject
+            {
+                ["id"] = "submodel-1",
+                ["name"] = "A;B",
+                ["text"] = "He said \"yes\"",
+                ["value"] = 42.5,
+            },
+        };
+
+        var csv = McpQueryTools.BuildCsv(["id", "name", "text", "value"], rows, ";");
+
+        Assert.Contains("id;name;text;value", csv);
+        Assert.Contains("submodel-1;\"A;B\";\"He said \"\"yes\"\"\";42.5", csv);
+    }
+
+    [Fact]
+    public void TryParseCrossSubmodelProjectionPath_ParsesExplicitSubmodelPrefix()
+    {
+        var parsed = McpQueryTools.TryParseCrossSubmodelProjectionPath(
+            "/TechnicalData/GeneralInformation.ManufacturerArticleNumber",
+            out var submodelIdShort,
+            out var elementPath);
+
+        Assert.True(parsed);
+        Assert.Equal("TechnicalData", submodelIdShort);
+        Assert.Equal("GeneralInformation.ManufacturerArticleNumber", elementPath);
+    }
+
+    [Theory]
+    [InlineData("GeneralInformation.ManufacturerArticleNumber")]
+    [InlineData("/TechnicalData")]
+    [InlineData("//GeneralInformation.ManufacturerArticleNumber")]
+    [InlineData("/TechnicalData/")]
+    public void TryParseCrossSubmodelProjectionPath_RejectsNonExplicitOrIncompletePaths(string path)
+    {
+        Assert.False(McpQueryTools.TryParseCrossSubmodelProjectionPath(path, out _, out _));
     }
 
     [Fact]

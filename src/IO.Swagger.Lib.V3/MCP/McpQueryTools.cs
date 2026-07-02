@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AasCore.Aas3_1;
@@ -66,7 +67,8 @@ public sealed class McpQueryCondition
 [McpServerToolType]
 public sealed class McpQueryTools
 {
-    private const int MaxPageSize = 500;
+    private const int DefaultPageSize = 500;
+    private const int MaxPageSize = 5000;
 
     // Tool-Sätze für die reduzierten Endpunkte (Pfad-Filter siehe ServerConfiguration).
     // /mcp-basic: das mächtige conditions-Tool — ein Call, aber komplexe Suchen (AND/OR, Operatoren). Für mittlere Modelle (z.B. Gemini Flash).
@@ -139,14 +141,15 @@ public sealed class McpQueryTools
         "(3) ODER: combine=\"or\", conditions=[{scope:\"sme\",field:\"value\",op:\"eq\",value:\"A\"},{scope:\"sme\",field:\"value\",op:\"eq\",value:\"B\"}]. " +
         "Nicht automatisch aas_count vorschalten; aas_count nur verwenden, wenn der Benutzer explizit die exakte Gesamtzahl braucht. Wenn hasMore=true, mit cursor weiterblättern, nicht count aufrufen. " +
         "Wichtig: aas_query liefert standardmäßig nur Identifier. Danach den Inhalt mit aas_get_submodel lesen — oder, wenn die Frage mehrere Submodelle eines Produkts betrifft (z.B. technische Daten + Hersteller + CO2), in EINEM Schritt mit aas_get_product(identifier). " +
-        "TIPP für Tabellen/Listen: Übergib select=[idShortPaths], dann liefert aas_query je Treffer direkt diese Feldwerte (Projektion) — das ersetzt viele Einzelabrufe.")]
+        "TIPP für Tabellen/Listen: Übergib select=[idShortPaths], dann liefert aas_query je Treffer direkt diese Feldwerte (Projektion) — das ersetzt viele Einzelabrufe. " +
+        "Für Daten aus einem anderen Submodel derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber.")]
     public async Task<object> AasQuery(
         [Description("Zielobjekt: \"submodels\" oder \"shells\".")] string target,
         [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
         [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\". Bei einer Bedingung ohne Bedeutung.")] string combine = "and",
-        [Description("Maximale Trefferzahl (Default und Maximum 500).")] int? limit = null,
+        [Description("Maximale Trefferzahl (Default 500, Maximum 5000).")] int? limit = null,
         [Description("Cursor (Offset) zum Weiterblättern; aus nextCursor einer vorigen Antwort.")] string? cursor = null,
-        [Description("Optional: Liste von idShortPaths, deren Werte je Treffer direkt mitgeliefert werden (Projektion = Tabellenspalten), z.B. [\"GeneralInformation.ManufacturerArticleNumber\", \"TechnicalProperties.Power_output\"]. Dann gibt das Tool statt nur Identifier eine Zeile pro Treffer mit diesen Feldern zurück — spart viele aas_get_submodel-Aufrufe. Volle Pfade (mit Punkt) sind präzise; ein Blattname ohne Punkt nimmt den ersten Treffer im Submodel. Nur für target=\"submodels\".")] string[]? select = null,
+        [Description("Optional: Liste von idShortPaths, deren Werte je Treffer direkt mitgeliefert werden (Projektion = Tabellenspalten), z.B. [\"GeneralInformation.ManufacturerArticleNumber\", \"TechnicalProperties.Power_output\"]. Pfade ohne / beziehen sich auf das Treffer-Submodel. Für andere Submodelle derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber. Nur für target=\"submodels\".")] string[]? select = null,
         [Description("Sprache für mehrsprachige Felder (MultiLanguageProperty) in der Projektion: nur dieser Sprachwert kommt zurück (Default \"en\"; fehlt die Sprache, wird die erste vorhandene genommen). Nur relevant zusammen mit select.")] string lang = "en",
         [Description("Optionale Prioritätsreihenfolge für mehrdeutige Blattnamen. Default: Nameplate, GeneralInformation, TechnicalData, TechnicalProperties, HandoverDocumentation, ProductCarbonFootprint.")] string[]? priority = null,
         [Description("Optionale Pfadsegmente, die bei mehrdeutigen Blattnamen ans Ende gestellt werden. Default: Associated_part, Part_relation.")] string[]? deprioritize = null,
@@ -215,6 +218,101 @@ public sealed class McpQueryTools
             nextStep = identifiers.Count > 0
                 ? "Dies sind nur Identifier. Inhalte lesen: aas_get_submodel(identifier), oder gleich Felder mitliefern via select=[...]. Für ALLE Daten eines Produkts (Technik+Hersteller+CO2): aas_get_product(identifier)."
                 : "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq), Groß-/Kleinschreibung des idShort prüfen oder breiter suchen.",
+        };
+    }
+
+    [McpServerTool(Name = "aas_query_export_csv", Title = "Export AAS Query as CSV", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
+    [Description(
+        "Führt eine aas_query mit select aus und liefert das Ergebnis als Excel-taugliche CSV-Datei-Nutzlast zurück. " +
+        "Nutzen, wenn der Benutzer eine Tabelle/Excel/CSV-Datei möchte, statt große aas_query-Zeilen im Chat weiterzuverarbeiten. " +
+        "Die Antwort enthält fileName, mimeType=text/csv, contentBase64 und content. " +
+        "select ist erforderlich; exportiert wird eine Zeile pro Treffer mit Spalte id plus den select-Spalten. " +
+        "Pfade ohne / beziehen sich auf das Treffer-Submodel. Für andere Submodelle derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber. " +
+        "Für mehr als 500 Treffer limit explizit setzen, z.B. limit=1000.")]
+    public async Task<object> AasQueryExportCsv(
+        [Description("Zielobjekt: aktuell \"submodels\".")] string target,
+        [Description("Liste von Suchbedingungen (mindestens eine).")] McpQueryCondition[] conditions,
+        [Description("idShortPaths/Blattnamen als CSV-Spalten, z.B. [\"ProductCarbonFootprintCradleToGate00.PCFCO2eq\"]. Für andere Submodelle derselben AAS nutze /SubmodelIdShort/idShortPath, z.B. /TechnicalData/GeneralInformation.ManufacturerArticleNumber.")] string[] select,
+        [Description("Verknüpfung mehrerer Bedingungen: \"and\" oder \"or\".")] string combine = "and",
+        [Description("Maximale Trefferzahl (Default 500, Maximum 5000).")] int? limit = null,
+        [Description("Cursor (Offset) zum Weiterblättern; aus nextCursor einer vorigen Antwort.")] string? cursor = null,
+        [Description("Sprache für mehrsprachige Felder (Default \"en\").")] string lang = "en",
+        [Description("CSV-Trennzeichen; Default Semikolon für deutschsprachiges Excel.")] string delimiter = ";",
+        [Description("Dateiname der exportierten CSV.")] string fileName = "aas_query_export.csv",
+        [Description("Optionale Prioritätsreihenfolge für mehrdeutige Blattnamen.")] string[]? priority = null,
+        [Description("Optionale Pfadsegmente, die bei mehrdeutigen Blattnamen ans Ende gestellt werden.")] string[]? deprioritize = null)
+    {
+        using var _ = LogCallTimed($"aas_query_export_csv {target} {DescribeConditions(conditions, combine)} limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} cursor={cursor ?? "-"} select={(select is { Length: > 0 } ? string.Join(",", select) : "-")}");
+
+        if (select is null || select.Length == 0)
+        {
+            return new { error = "select ist für aas_query_export_csv erforderlich, damit CSV-Spalten erzeugt werden können." };
+        }
+
+        ResultType resultType;
+        string expression;
+        try
+        {
+            resultType = ParseTarget(target);
+            if (resultType != ResultType.Submodel)
+            {
+                throw new ArgumentException("aas_query_export_csv unterstützt aktuell nur target=\"submodels\".");
+            }
+
+            expression = BuildExpression(conditions, combine);
+        }
+        catch (ArgumentException ex)
+        {
+            return new { error = ex.Message };
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var requestedLimit = NormalizeLimit(limit);
+        var pagination = new PaginationParameters(cursor, requestedLimit + 1);
+
+        var (list, queryError) = await TryQuery(securityConfig, pagination, resultType, expression);
+        if (queryError != null)
+        {
+            return new { error = "Query fehlgeschlagen: " + queryError };
+        }
+
+        var fetchedIdentifiers = ExtractIdentifiers(list);
+        var hasMore = fetchedIdentifiers.Count > requestedLimit;
+        var identifiers = fetchedIdentifiers.Take(requestedLimit).ToList();
+        string? nextCursor = hasMore
+            ? (pagination.Cursor + identifiers.Count).ToString(CultureInfo.InvariantCulture)
+            : null;
+
+        var rows = new List<JsonObject>(identifiers.Count);
+        for (var index = 0; index < identifiers.Count; index++)
+        {
+            var id = identifiers[index];
+            var projectionWatch = Stopwatch.StartNew();
+            LogMcpLine($"aas_query_export_csv projection {index + 1}/{identifiers.Count}: {id}");
+            rows.Add(await BuildProjectionRow(securityConfig, id, select, lang, priority, deprioritize, withPaths: false));
+            LogMcpLine(
+                $"aas_query_export_csv projection {index + 1}/{identifiers.Count} done " +
+                $"in {projectionWatch.ElapsedMilliseconds} ms");
+        }
+
+        var columns = new[] { "id" }.Concat(select.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim())).ToArray();
+        var normalizedDelimiter = NormalizeCsvDelimiter(delimiter);
+        var csv = BuildCsv(columns, rows, normalizedDelimiter);
+        var bytes = Encoding.UTF8.GetBytes("\uFEFF" + csv);
+
+        return new
+        {
+            target,
+            count = rows.Count,
+            hasMore,
+            nextCursor,
+            fileName = NormalizeCsvFileName(fileName),
+            mimeType = "text/csv",
+            encoding = "utf-8-sig",
+            delimiter = normalizedDelimiter,
+            columns,
+            contentBase64 = Convert.ToBase64String(bytes),
+            content = csv,
         };
     }
 
@@ -729,7 +827,7 @@ public sealed class McpQueryTools
     private async Task<object> FindProductCore(string expression, string fmt, bool coreOnly = false)
     {
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
-        var pagination = new PaginationParameters(null, MaxPageSize);
+        var pagination = new PaginationParameters(null, DefaultPageSize);
         var (list, queryError) = await TryQuery(securityConfig, pagination, ResultType.Submodel, expression);
         if (queryError != null)
         {
@@ -989,6 +1087,9 @@ public sealed class McpQueryTools
         JsonObject? selectedPaths = withPaths ? new JsonObject() : null;
         ISubmodel? submodel = null;
         var submodelLoadAttempted = false;
+        IAssetAdministrationShell? shell = null;
+        var shellResolveAttempted = false;
+        var crossSubmodelIdCache = new Dictionary<string, string?>(StringComparer.Ordinal);
 
         foreach (var rawPath in select)
         {
@@ -998,6 +1099,41 @@ public sealed class McpQueryTools
             }
 
             var path = rawPath.Trim();
+
+            if (TryParseCrossSubmodelProjectionPath(path, out var targetSubmodelIdShort, out var targetPath))
+            {
+                if (!shellResolveAttempted)
+                {
+                    shellResolveAttempted = true;
+                    shell = await ResolveShellForIdentifier(securityConfig, id);
+                }
+
+                var targetSubmodelId = shell is null
+                    ? null
+                    : await ResolveSubmodelIdByIdShort(
+                        securityConfig, shell, targetSubmodelIdShort, crossSubmodelIdCache);
+
+                if (targetSubmodelId is null)
+                {
+                    row[path] = null;
+                    if (selectedPaths is not null)
+                    {
+                        selectedPaths[path] = null;
+                    }
+
+                    continue;
+                }
+
+                var (element, resolvedPath) = await ReadProjectedElement(
+                    securityConfig, targetSubmodelId, targetPath, priority, deprioritize);
+                row[path] = GetProjectedValue(element, lang);
+                if (selectedPaths is not null)
+                {
+                    selectedPaths[path] = element is null ? null : "/" + targetSubmodelIdShort + "/" + resolvedPath;
+                }
+
+                continue;
+            }
 
             // A full idShortPath can be fetched directly. Loading the complete
             // submodel for every projected cell is prohibitively expensive for
@@ -1051,6 +1187,108 @@ public sealed class McpQueryTools
         }
 
         return row;
+    }
+
+    internal static bool TryParseCrossSubmodelProjectionPath(
+        string? rawPath, out string submodelIdShort, out string elementPath)
+    {
+        submodelIdShort = string.Empty;
+        elementPath = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(rawPath) || !rawPath.StartsWith("/", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var trimmed = rawPath.Trim();
+        var separator = trimmed.IndexOf('/', 1);
+        if (separator <= 1 || separator == trimmed.Length - 1)
+        {
+            return false;
+        }
+
+        submodelIdShort = trimmed[1..separator].Trim();
+        elementPath = trimmed[(separator + 1)..].Trim();
+        return submodelIdShort.Length > 0 && elementPath.Length > 0;
+    }
+
+    private async Task<string?> ResolveSubmodelIdByIdShort(
+        SecurityConfig securityConfig,
+        IAssetAdministrationShell shell,
+        string submodelIdShort,
+        Dictionary<string, string?> cache)
+    {
+        if (cache.TryGetValue(submodelIdShort, out var cached))
+        {
+            return cached;
+        }
+
+        if (shell.Submodels != null)
+        {
+            foreach (var smRef in shell.Submodels)
+            {
+                var smId = smRef?.Keys?.LastOrDefault()?.Value;
+                if (string.IsNullOrEmpty(smId))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (await _dbRequestHandlerService.ReadSubmodelById(
+                            securityConfig, null, smId, level: null, extent: null) is ISubmodel submodel
+                        && string.Equals(submodel.IdShort, submodelIdShort, StringComparison.Ordinal))
+                    {
+                        cache[submodelIdShort] = smId;
+                        return smId;
+                    }
+                }
+                catch (NotFoundException)
+                {
+                    // Ignore dangling references in the shell.
+                }
+            }
+        }
+
+        cache[submodelIdShort] = null;
+        return null;
+    }
+
+    private async Task<(ISubmodelElement? Element, string? ResolvedPath)> ReadProjectedElement(
+        SecurityConfig securityConfig,
+        string submodelId,
+        string path,
+        string[]? priority,
+        string[]? deprioritize)
+    {
+        if (path.Contains('.', StringComparison.Ordinal))
+        {
+            try
+            {
+                return (await _dbRequestHandlerService.ReadSubmodelElementByPath(
+                    securityConfig, null, submodelId, path, level: null, extent: null) as ISubmodelElement, path);
+            }
+            catch (NotFoundException)
+            {
+                return (null, null);
+            }
+        }
+
+        try
+        {
+            if (await _dbRequestHandlerService.ReadSubmodelById(
+                    securityConfig, null, submodelId, level: null, extent: null) is ISubmodel submodel)
+            {
+                var match = GetProjectionMatch(submodel, path, priority, deprioritize);
+                return (match?.Element, match?.Path);
+            }
+        }
+        catch (NotFoundException)
+        {
+            // Handled as empty projection cell.
+        }
+
+        return (null, null);
     }
 
     private async Task<IAssetAdministrationShell?> TryReadShell(SecurityConfig securityConfig, string aasId)
@@ -1305,6 +1543,81 @@ public sealed class McpQueryTools
         }
     }
 
+    internal static string BuildCsv(string[] columns, IReadOnlyList<JsonObject> rows, string delimiter)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(string.Join(delimiter, columns.Select(column => CsvEscape(column, delimiter))));
+
+        foreach (var row in rows)
+        {
+            sb.AppendLine(string.Join(delimiter, columns.Select(column =>
+                CsvEscape(row.TryGetPropertyValue(column, out var value) ? value : null, delimiter))));
+        }
+
+        return sb.ToString();
+    }
+
+    internal static string CsvEscape(JsonNode? value, string delimiter)
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        if (value is JsonValue jsonValue)
+        {
+            if (jsonValue.TryGetValue<string>(out var s))
+                return CsvEscape(s, delimiter);
+            if (jsonValue.TryGetValue<int>(out var i))
+                return i.ToString(CultureInfo.InvariantCulture);
+            if (jsonValue.TryGetValue<long>(out var l))
+                return l.ToString(CultureInfo.InvariantCulture);
+            if (jsonValue.TryGetValue<double>(out var d))
+                return d.ToString(CultureInfo.InvariantCulture);
+            if (jsonValue.TryGetValue<decimal>(out var m))
+                return m.ToString(CultureInfo.InvariantCulture);
+            if (jsonValue.TryGetValue<bool>(out var b))
+                return b ? "true" : "false";
+        }
+
+        return CsvEscape(value.ToJsonString(), delimiter);
+    }
+
+    internal static string CsvEscape(string? value, string delimiter)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var mustQuote = value.Contains('"', StringComparison.Ordinal)
+                        || value.Contains('\r', StringComparison.Ordinal)
+                        || value.Contains('\n', StringComparison.Ordinal)
+                        || value.Contains(delimiter, StringComparison.Ordinal);
+        if (!mustQuote)
+        {
+            return value;
+        }
+
+        return "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+    }
+
+    private static string NormalizeCsvDelimiter(string? delimiter)
+    {
+        if (string.IsNullOrEmpty(delimiter))
+        {
+            return ";";
+        }
+
+        return delimiter is "," or ";" or "\t" ? delimiter : ";";
+    }
+
+    private static string NormalizeCsvFileName(string? fileName)
+    {
+        var name = string.IsNullOrWhiteSpace(fileName) ? "aas_query_export.csv" : fileName.Trim();
+        return name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? name : name + ".csv";
+    }
+
     private static ResultType ParseTarget(string target) => target?.Trim().ToLowerInvariant() switch
     {
         "submodels" or "submodel" or "sm" => ResultType.Submodel,
@@ -1316,7 +1629,7 @@ public sealed class McpQueryTools
     {
         if (limit is null || limit <= 0)
         {
-            return MaxPageSize;
+            return DefaultPageSize;
         }
 
         return Math.Min(limit.Value, MaxPageSize);

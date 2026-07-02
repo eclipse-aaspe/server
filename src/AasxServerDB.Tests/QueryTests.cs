@@ -852,6 +852,41 @@ public sealed class QueryTests
     }
 
     /// <summary>
+    /// A pure OR of direct <c>$sme#value</c> equalities represents MCP <c>in</c> and stays on the
+    /// value-driven path, instead of being downgraded to a correlated EXISTS just because it contains OR.
+    /// </summary>
+    [Fact]
+    public void EqualityOr_RareValues_StaysValueDriven()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [
+                { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz-absent-a" } ] },
+                { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz-absent-b" } ] }
+              ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // absent values yield 0 matches -> rare
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sm.Id IN (", "a pure OR of value equalities should stay value-driven");
+            sql.Should().NotContain("sme_value.SMId = sm.Id", "a pure OR of value equalities must not force a correlated EXISTS");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
     /// A common direct <c>$sme#value</c> prefix (<c>starts-with</c>) must also route to the correlated
     /// EXISTS (early-stop), not the value-driven IN that materializes the whole prefix range.
     /// </summary>

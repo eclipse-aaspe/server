@@ -2450,8 +2450,8 @@ public partial class Query
     }
 
     // Operator heuristic for BuildValueMatchSql: a value predicate is "join-worthy" when it is an
-    // index-usable positive comparison (=, <, >, <=, >=, or a GLOB prefix without leading wildcard)
-    // and carries no negation or top-level OR (one non-selective disjunct would force a scan).
+    // index-usable positive comparison (=, <, >, <=, >=, or a GLOB prefix without leading wildcard).
+    // Top-level OR is only join-worthy for a pure disjunction of value equalities, matching MCP "in".
     private static bool PredicatePrefersJoin(string predicateSql)
     {
         if (string.IsNullOrWhiteSpace(predicateSql))
@@ -2461,12 +2461,28 @@ public partial class Query
             Regex.IsMatch(predicateSql, @"\bNOT\b", RegexOptions.IgnoreCase))
             return false;
         if (Regex.IsMatch(predicateSql, @"\bOR\b", RegexOptions.IgnoreCase))
-            return false;
+            return IsPureValueEqualityDisjunction(predicateSql);
         if (Regex.IsMatch(predicateSql, @"[=<>]", RegexOptions.CultureInvariant))
             return true;
         if (Regex.IsMatch(predicateSql, @"GLOB\s+'[^*]"))
             return true;
         return false;
+    }
+
+    private static bool IsPureValueEqualityDisjunction(string predicateSql)
+    {
+        var s = StripEnclosingParens(predicateSql).Trim();
+        if (string.IsNullOrWhiteSpace(s))
+            return false;
+
+        var orParts = SplitTopLevelOr(s);
+        if (orParts.Count > 1)
+            return orParts.All(IsPureValueEqualityDisjunction);
+
+        return Regex.IsMatch(
+            StripEnclosingParens(s).Trim(),
+            @"^v\.""(?:SValue|NValue)""\s*=\s*(?:'([^']|'')*'|-?\d+(?:\.\d+)?)$",
+            RegexOptions.CultureInvariant);
     }
 
     /// <summary>
