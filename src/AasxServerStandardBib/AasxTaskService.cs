@@ -3014,6 +3014,11 @@ namespace AasxServer
                             cfp.children.Add(child);
                         }
                     }
+
+                    if (cfp?.aas?.IdShort == "ZveiControlCabinetAas - EXTERNAL")
+                    {
+                        root = cfp;
+                    }
                 }
             }
 
