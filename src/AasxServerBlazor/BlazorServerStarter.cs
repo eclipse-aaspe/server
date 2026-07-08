@@ -14,11 +14,13 @@
 using AasSecurity;
 using AasxServer;
 using AasxServerStandardBib.Interfaces;
+using AasxServerStandardBib.Logging;
 using Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Linq;
@@ -50,6 +52,8 @@ public static class BlazorServerStarter
 
         var config = LoadConfiguration();
         var host   = BuildHost(args, config);
+
+        ApplicationLogging.LoggerFactory = host.Services.GetService<ILoggerFactory>();
 
         host.RunAsync();
 

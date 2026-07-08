@@ -32,6 +32,7 @@ using AasSecurity.Models;
 using AasxServer;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Services;
+using AdminShellNS;
 using Contracts;
 using Extensions;
 using Irony.Parsing;
@@ -76,7 +77,7 @@ namespace AasSecurity
                 var pos = parser.Context.CurrentToken.Location.Position;
                 var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
                 text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
-                Console.WriteLine(text2);
+                _logger.LogDebug(text2);
                 return;
             }
 
@@ -427,7 +428,7 @@ namespace AasSecurity
                 accessRole = "isNotAuthenticated";
             }
 
-            Console.WriteLine($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
+            _logger.LogDebug($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
             var aasSecurityContext = new AasSecurityContext(accessRole, route, httpOperation);
             //Create claims
             var claims = new List<Claim>
@@ -463,7 +464,7 @@ namespace AasSecurity
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
             {
-                Console.WriteLine($"Access role found {accessRole}");
+                _logger.LogDebug($"Access role found {accessRole}");
 
                 return accessRole;
             }
@@ -524,7 +525,7 @@ namespace AasSecurity
 
             if (bearerToken == null)
             {
-                Console.WriteLine("NO BEARER TOKEN");
+                _logger.LogDebug("NO BEARER TOKEN");
                 return null;
             }
 
@@ -572,11 +573,11 @@ namespace AasSecurity
                         try
                         {
                             var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-                            Console.WriteLine("Token is valid.");
+                            _logger.LogDebug("Token is valid.");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Token validation failed: {ex.Message}");
+                            _logger.LogError($"Token validation failed: {ex.Message}");
                             user = "";
                             return "";
                         }
@@ -597,8 +598,8 @@ namespace AasSecurity
                                 audience = audienceEnvVar;
                             }
 
-                            Console.WriteLine($"TOKENEXCHANGE1 = {tokenExchange1}");
-                            Console.WriteLine($"TOKENEXCHANGE2 = {tokenExchange2}");
+                            _logger.LogDebug($"TOKENEXCHANGE1 = {tokenExchange1}");
+                            _logger.LogDebug($"TOKENEXCHANGE2 = {tokenExchange2}");
                             var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                             var client = new HttpClient(handlerExchange);
 
@@ -626,7 +627,7 @@ namespace AasSecurity
                             if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
                             {
                                 bearerToken = tokenElement.GetString();
-                                Console.WriteLine("token exchange 2 " + bearerToken);
+                                _logger.LogDebug("token exchange 2 " + bearerToken);
                                 jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                 iss = "";
@@ -656,7 +657,7 @@ namespace AasSecurity
                                         }
                                         catch (Exception ex)
                                         {
-                                            Console.WriteLine($"Could not access well-known from {iss}");
+                                            _logger.LogDebug($"Could not access well-known from {iss}");
                                         }
 
                                         parameters = new Dictionary<string, string>
@@ -683,7 +684,7 @@ namespace AasSecurity
                                             jwtSecurityToken = null;
 
                                             bearerToken = tokenElementFromLocalIdp.GetString();
-                                            Console.WriteLine("token exchange 3 (with local idP) " + bearerToken);
+                                            _logger.LogDebug("token exchange 3 (with local idP) " + bearerToken);
                                             jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                             issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
@@ -738,7 +739,7 @@ namespace AasSecurity
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine($"Could not access well-known from {iss}");
+                                    _logger.LogWarning($"Could not access well-known from {iss}");
                                 }
                             }
                             try
@@ -765,12 +766,12 @@ namespace AasSecurity
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine($"Error in validation of token {bearerToken}: {ex.Message}.");
+                                    _logger.LogWarning($"Error in validation of token {bearerToken}: {ex.Message}.");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
+                                _logger.LogWarning($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
                             }
                         }
                     }
@@ -784,7 +785,7 @@ namespace AasSecurity
                             if (cert == null)
                             {
                                 user = "";
-                                Console.WriteLine("NO SERVER CERTIFICATE FOUND");
+                                _logger.LogDebug("NO SERVER CERTIFICATE FOUND");
                                 return "";
                             }
 
@@ -805,7 +806,7 @@ namespace AasSecurity
                             catch
                             {
                                 user = "";
-                                Console.WriteLine("DECODE SERVER CERTIFICATE FAILED");
+                                _logger.LogWarning("DECODE SERVER CERTIFICATE FAILED");
                                 return "";
                             }
                         }
@@ -893,7 +894,7 @@ namespace AasSecurity
             catch (Exception ex)
             {
                 error = true;
-                Console.WriteLine($"Exception occurred while parsing the bearer token.{ex.Message}");
+                _logger.LogWarning($"Exception occurred while parsing the bearer token.{ex.Message}");
                 _logger.LogDebug(ex.StackTrace);
             }
 
@@ -918,7 +919,7 @@ namespace AasSecurity
                             switch (split[0].ToLower())
                             {
                                 case "bearer":
-                                   Console.WriteLine($"Received bearer token {split[1]}");
+                                   _logger.LogDebug($"Received bearer token {split[1]}");
                                    //_logger.LogInformation("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
                                     bearerToken = split[1];
                                     break;
@@ -1214,7 +1215,7 @@ namespace AasSecurity
                                 }
                                 catch (FormatException formatException)
                                 {
-                                    Console.WriteLine($"Exception while parsing {actualTime}: {formatException.Message}");
+                                    _logger.LogWarning($"Exception while parsing {actualTime}: {formatException.Message}");
                                 }
                             }
 
@@ -1278,14 +1279,14 @@ namespace AasSecurity
                             s.Position = 0;
                             byte[] hashValue = mySHA256.ComputeHash(s);
                             getPolicy = Convert.ToHexString(hashValue);
-                            Console.WriteLine("hash: " + getPolicy);
+                            _logger.LogDebug("hash: " + getPolicy);
                             pPolicy.Value = getPolicy;
                         }
                     }
                 }
                 catch (ObjectDisposedException objectDisposedException)
                 {
-                    Console.WriteLine($"Exception in {nameof(CheckPolicy)}: {objectDisposedException.Message}");
+                    _logger.LogWarning($"Exception in {nameof(CheckPolicy)}: {objectDisposedException.Message}");
                 }
             }
 
