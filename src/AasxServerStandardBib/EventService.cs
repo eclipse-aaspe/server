@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using AasxServer;
 using AasxServerDB;
 using AasxServerDB.Entities;
+using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Contracts;
 using Contracts.Events;
@@ -38,10 +39,13 @@ using Extensions;
 using IdentityModel.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 public class EventService : IEventService
 {
+    private static readonly ILogger _logger = ApplicationLogging.CreateLogger("EventService");
+
     public EventService(MqttClientService mqttClientService)
     {
         _mqttClientService = mqttClientService;
@@ -419,7 +423,7 @@ public class EventService : IEventService
                     if (result != null && result.IsSuccess)
                     {
                         isSucceeded = true;
-                        Console.WriteLine($"MQTT message sent on message topic {eventData.MessageTopicType.Value}.");
+                        _logger.LogDebug($"MQTT message sent on message topic {eventData.MessageTopicType.Value}.");
                     }
 
                     if (isSucceeded)
@@ -492,7 +496,7 @@ public class EventService : IEventService
                     var now = DateTime.UtcNow;
                     eventData.Status.SetTimeStamp(now);
 
-                    Console.WriteLine($"FAILED: Send MQTT message on message topic {eventData.MessageTopicType.Value}.");
+                    _logger.LogDebug($"FAILED: Send MQTT message on message topic {eventData.MessageTopicType.Value}.");
 
                     // d = eventData.LastUpdate.Value = "reconnect";
                 }
@@ -966,7 +970,7 @@ public class EventService : IEventService
                         }
                     }
                 }
-
+                _logger.LogDebug($"Event id: {entry.id}, Type: {entry.type}");
                 eventPayloadList.Add(entry);
             }
         }
@@ -1335,7 +1339,7 @@ public class EventService : IEventService
                                 eventPayloadList.Add(entry);
 
                                 diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
-                                Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Schema: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+                                _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Schema: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
                                 countSME++;
                             }
                         }
@@ -1391,7 +1395,7 @@ public class EventService : IEventService
                     }
 
                     diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
-                    Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+                    _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
 
                     eventPayloadList.Add(entry);
                     countSM++;
@@ -1475,7 +1479,7 @@ public class EventService : IEventService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            _logger.LogDebug(ex.ToString());
         }
         transmit = eventPayload[0].transmitted;
         var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload[0].time);
@@ -1516,7 +1520,7 @@ public class EventService : IEventService
         var entriesSubmodel = new List<EventPayload>();
         foreach (var entry in eventPayload)
         {
-            Console.WriteLine($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+            _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
             Submodel receiveSM = null;
             if (entry.dataSchema.Split("/")?.Last().ToLower() == "submodel")
             {
@@ -1751,7 +1755,7 @@ public class EventService : IEventService
                 }
                 if (!path.Contains("."))
                 {
-                    Console.WriteLine("Event CREATE SME: " + entry.GetIdShortPath());
+                    _logger.LogDebug("Event CREATE SME: " + entry.GetIdShortPath());
                     receiveSme.TimeStampCreate = dt;
                     receiveSme.TimeStampDelete = new DateTime();
                     int i = 0;
@@ -1805,7 +1809,7 @@ public class EventService : IEventService
                 var sme = submodelElements[i];
                 if (entry.GetIdShortPath() == idShortPath + sme.IdShort)
                 {
-                    Console.WriteLine("Event UPDATE SME: " + entry.GetIdShortPath());
+                    _logger.LogDebug("Event UPDATE SME: " + entry.GetIdShortPath());
                     receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
                     receiveSme.TimeStampDelete = submodelElements[i].TimeStampDelete;
                     submodelElements[i] = receiveSme;
@@ -1849,7 +1853,7 @@ public class EventService : IEventService
                     }
                     if (entry.GetIdShortPath() == idShortPath + sme.IdShort)
                     {
-                        Console.WriteLine("Event DELETE SME: " + entry.GetIdShortPath());
+                        _logger.LogDebug("Event DELETE SME: " + entry.GetIdShortPath());
                         if (children.Count != 0)
                         {
                             int c = 0;
@@ -2031,12 +2035,12 @@ public class EventService : IEventService
                             var url = System.Environment.GetEnvironmentVariable(envVarName);
                             if (url != null)
                             {
-                                Console.WriteLine($"{p.Value} = {url}");
+                                _logger.LogDebug($"{p.Value} = {url}");
                                 p.Value = url;
                             }
                             else
                             {
-                                Console.WriteLine($"Environment variable {envVarName} not found.");
+                                _logger.LogWarning($"Environment variable {envVarName} not found.");
                             }
                         }
                         eventDto.EndPoint = p;
@@ -2447,7 +2451,7 @@ public class EventService : IEventService
                         if (result != null && result.IsSuccess)
                         {
                             isSucceeded = true;
-                            Console.WriteLine("MQTT message sent.");
+                            _logger.LogDebug("MQTT message sent.");
                         }
 
                         if (isSucceeded)
