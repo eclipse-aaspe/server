@@ -2533,153 +2533,157 @@ public class EventService : IEventService
 
         var restEventDtos = notificationEventDtos.Where(ne => ne.Mode.Value == "REST_API");
 
-        if (restEventDtos.Any())
+        if (smeModelType.IsNullOrEmpty())
         {
-            foreach (var restEventDto in restEventDtos)
+            if (restEventDtos.Any())
             {
-                if (IsPublishRestApiConfigured(restEventDto))
+                foreach (var restEventDto in restEventDtos)
                 {
-                    var eventPayload = new EventPayload(true);
-
-                    var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodel.Id);
-
-                    eventPayload.source = sourceString;
-                    eventPayload.SetSubmodelType(EventPayloadType.Deleted);
-                    eventPayload.SetTime(submodel.TimeStampTree);
-
-                    eventPayload.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
-
-                    if (submodel.SemanticId != null)
+                    if (IsPublishRestApiConfigured(restEventDto))
                     {
-                        eventPayload.semanticid = (submodel.SemanticId != null && submodel.SemanticId?.Keys != null) ? submodel.SemanticId?.Keys[0].Value : "";
-                    }
+                        var eventPayload = new EventPayload(true);
 
-                    eventPayload.subject = submodel.Id;
+                        var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodel.Id);
 
-                    bool wp = false;
+                        eventPayload.source = sourceString;
+                        eventPayload.SetSubmodelType(EventPayloadType.Deleted);
+                        eventPayload.SetTime(submodel.TimeStampTree);
 
-                    //ToDo: Is empty data in Events Feed API spec allowed?
-                    //if (eventData.Include != null
-                    //    && eventData.Include.Value != null)
-                    //{
-                    //    wp = eventData.Include.Value.ToLower() == "true";
-                    //}
+                        eventPayload.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
 
-                    wp = true;
-
-                    if (wp)
-                    {
-                        var j = Jsonization.Serialize.ToJsonObject(submodel);
-                        if (j != null)
+                        if (submodel.SemanticId != null)
                         {
-                            eventPayload.data = ConvertSmJsonToRestApiSpecSmJson(j);
+                            eventPayload.semanticid = (submodel.SemanticId != null && submodel.SemanticId?.Keys != null) ? submodel.SemanticId?.Keys[0].Value : "";
                         }
-                    }
 
-                    var options = new JsonSerializerOptions
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    };
+                        eventPayload.subject = submodel.Id;
 
-                    var now = DateTime.UtcNow;
+                        bool wp = false;
 
-                    var payloadObjString = JsonSerializer.Serialize(new List<EventPayload> { eventPayload }, options);
+                        //ToDo: Is empty data in Events Feed API spec allowed?
+                        //if (eventData.Include != null
+                        //    && eventData.Include.Value != null)
+                        //{
+                        //    wp = eventData.Include.Value.ToLower() == "true";
+                        //}
 
-                    try
-                    {
-                        HttpClientHandler handler = new HttpClientHandler()
+                        wp = true;
+
+                        if (wp)
                         {
-                            Proxy = HttpClient.DefaultProxy,
-                            DefaultProxyCredentials = CredentialCache.DefaultCredentials
+                            var j = Jsonization.Serialize.ToJsonObject(submodel);
+                            if (j != null)
+                            {
+                                eventPayload.data = ConvertSmJsonToRestApiSpecSmJson(j);
+                            }
+                        }
+
+                        var options = new JsonSerializerOptions
+                        {
+                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                         };
+                        _logger.LogDebug($"Event id: {eventPayload.id}, Type: {eventPayload.type}");
 
-                        HttpClient client = new HttpClient(handler);
+                        var now = DateTime.UtcNow;
 
-                        string user = "John Doe";
-                        string password = null;
+                        var payloadObjString = JsonSerializer.Serialize(new List<EventPayload> { eventPayload }, options);
 
-                        if (restEventDto.AccessToken != null && restEventDto.AccessToken.Value != null && restEventDto.AccessToken.Value != "")
+                        try
                         {
-                            client.SetBearerToken(restEventDto.AccessToken.Value);
-                        }
-                        else
-                        {
-                            if (restEventDto.UserName != null && restEventDto.PassWord != null)
+                            HttpClientHandler handler = new HttpClientHandler()
                             {
-                                user = restEventDto.UserName.Value;
-                                password = restEventDto.PassWord.Value;
+                                Proxy = HttpClient.DefaultProxy,
+                                DefaultProxyCredentials = CredentialCache.DefaultCredentials
+                            };
+
+                            HttpClient client = new HttpClient(handler);
+
+                            string user = "John Doe";
+                            string password = null;
+
+                            if (restEventDto.AccessToken != null && restEventDto.AccessToken.Value != null && restEventDto.AccessToken.Value != "")
+                            {
+                                client.SetBearerToken(restEventDto.AccessToken.Value);
                             }
-                        }
-
-                        string requestPath = $"{restEventDto.EndPoint.Value}?user={user}";
-
-                        using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestPath))
-                        {
-                            var content = new StringContent(payloadObjString, System.Text.Encoding.UTF8, "application/json");
-                            requestMessage.Content = content;
-
-                            if (!user.IsNullOrEmpty()
-                                 && !password.IsNullOrEmpty())
+                            else
                             {
-                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, restEventDto.PassWord.Value);
-                            }
-
-                            client.DefaultRequestHeaders.Add("user", user);
-
-                            HttpResponseMessage response = null;
-                            var task = Task.Run(async () =>
-                            {
-                                response = await client.SendAsync(requestMessage);
-
-                                var now = DateTime.UtcNow;
-                                if (!response.IsSuccessStatusCode)
+                                if (restEventDto.UserName != null && restEventDto.PassWord != null)
                                 {
-                                    if (restEventDto.Status != null)
+                                    user = restEventDto.UserName.Value;
+                                    password = restEventDto.PassWord.Value;
+                                }
+                            }
+
+                            string requestPath = $"{restEventDto.EndPoint.Value}?user={user}";
+
+                            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestPath))
+                            {
+                                var content = new StringContent(payloadObjString, System.Text.Encoding.UTF8, "application/json");
+                                requestMessage.Content = content;
+
+                                if (!user.IsNullOrEmpty()
+                                     && !password.IsNullOrEmpty())
+                                {
+                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, restEventDto.PassWord.Value);
+                                }
+
+                                client.DefaultRequestHeaders.Add("user", user);
+
+                                HttpResponseMessage response = null;
+                                var task = Task.Run(async () =>
+                                {
+                                    response = await client.SendAsync(requestMessage);
+
+                                    var now = DateTime.UtcNow;
+                                    if (!response.IsSuccessStatusCode)
                                     {
-                                        if (restEventDto.Message != null)
+                                        if (restEventDto.Status != null)
                                         {
-                                            restEventDto.Message.Value = "ERROR: " +
-                                                response.StatusCode.ToString() + " ; " +
-                                                response.Content.ReadAsStringAsync().Result +
-                                                " ; PUT " + requestPath;
+                                            if (restEventDto.Message != null)
+                                            {
+                                                restEventDto.Message.Value = "ERROR: " +
+                                                    response.StatusCode.ToString() + " ; " +
+                                                    response.Content.ReadAsStringAsync().Result +
+                                                    " ; PUT " + requestPath;
+                                            }
+                                            restEventDto.Status.SetTimeStamp(now);
+                                            // d = restEventDto.LastUpdate.Value = "reconnect";
+                                            restEventDto.LastUpdate.SetTimeStamp(now);
                                         }
-                                        restEventDto.Status.SetTimeStamp(now);
-                                        // d = restEventDto.LastUpdate.Value = "reconnect";
-                                        restEventDto.LastUpdate.SetTimeStamp(now);
                                     }
-                                }
-                                else
-                                {
-                                    if (restEventDto.Transmitted != null)
+                                    else
                                     {
-                                        restEventDto.Transmitted.Value = eventPayload.transmitted;
-                                        restEventDto.Transmitted.SetTimeStamp(now);
-                                    }
-                                    var maxTime = eventPayload.time;
-                                    var dt = DateTime.ParseExact(maxTime, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                        if (restEventDto.Transmitted != null)
+                                        {
+                                            restEventDto.Transmitted.Value = eventPayload.transmitted;
+                                            restEventDto.Transmitted.SetTimeStamp(now);
+                                        }
+                                        var maxTime = eventPayload.time;
+                                        var dt = DateTime.ParseExact(maxTime, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
-                                    if (restEventDto.LastUpdate != null)
-                                    {
-                                        restEventDto.LastUpdate.Value = maxTime;
-                                        restEventDto.LastUpdate.SetTimeStamp(dt);
+                                        if (restEventDto.LastUpdate != null)
+                                        {
+                                            restEventDto.LastUpdate.Value = maxTime;
+                                            restEventDto.LastUpdate.SetTimeStamp(dt);
+                                        }
                                     }
-                                }
-                            });
-                            task.Wait();
+                                });
+                                task.Wait();
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (restEventDto.Message != null)
+                        catch (Exception ex)
                         {
-                            restEventDto.Message.Value = "ERROR: " +
-                                ex.Message +
-                                " ; PUT " + restEventDto.EndPoint.Value;
+                            if (restEventDto.Message != null)
+                            {
+                                restEventDto.Message.Value = "ERROR: " +
+                                    ex.Message +
+                                    " ; PUT " + restEventDto.EndPoint.Value;
+                            }
+                            restEventDto.Status.SetTimeStamp(now);
                         }
-                        restEventDto.Status.SetTimeStamp(now);
-                    }
 
-                    restEventDto.env.setWrite(true);
+                        restEventDto.env.setWrite(true);
+                    }
                 }
             }
         }
