@@ -2590,13 +2590,13 @@ public class EventService : IEventService
 
                         try
                         {
-                            HttpClientHandler handler = new HttpClientHandler()
+                            using var handler = new HttpClientHandler()
                             {
                                 Proxy = HttpClient.DefaultProxy,
                                 DefaultProxyCredentials = CredentialCache.DefaultCredentials
                             };
 
-                            HttpClient client = new HttpClient(handler);
+                            using var client = new HttpClient(handler);
 
                             string user = "John Doe";
                             string password = null;
