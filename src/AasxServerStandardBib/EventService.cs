@@ -2640,7 +2640,7 @@ public class EventService : IEventService
                                             if (restEventDto.Message != null)
                                             {
                                                 restEventDto.Message.Value = "ERROR: " +
-                                                    response.StatusCode.ToString() + " ; " +
+                                                    response.StatusCode + " ; " +
                                                     response.Content.ReadAsStringAsync().Result +
                                                     " ; PUT " + requestPath;
                                             }
