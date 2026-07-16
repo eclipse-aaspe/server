@@ -1338,8 +1338,8 @@ public class EventService : IEventService
 
                                 eventPayloadList.Add(entry);
 
-                                diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
-                                _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Schema: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+                                diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
+                                _logger.LogDebug($"Event {entry.type} Schema: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
                                 countSME++;
                             }
                         }
@@ -1394,8 +1394,8 @@ public class EventService : IEventService
                         }
                     }
 
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
-                    _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+                    diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
+                    _logger.LogDebug($"Event {entry.type} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
 
                     eventPayloadList.Add(entry);
                     countSM++;
@@ -1508,7 +1508,7 @@ public class EventService : IEventService
         AasCore.Aas3_1.Environment aasEnv = null;
         int index = -1;
         ISubmodelElementCollection dataCollection = null;
-        List<ISubmodelElement> data = new List<ISubmodelElement>();
+        //List<ISubmodelElement> data = new List<ISubmodelElement>();
         SubmodelElementCollection status = null;
         AasCore.Aas3_1.Property message = null;
         AasCore.Aas3_1.Property transmitted = null;
@@ -1520,7 +1520,7 @@ public class EventService : IEventService
         var entriesSubmodel = new List<EventPayload>();
         foreach (var entry in eventPayload)
         {
-            _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+            _logger.LogDebug($"Event {entry.type} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
             Submodel receiveSM = null;
             if (entry.dataSchema.Split("/")?.Last().ToLower() == "submodel")
             {
@@ -1779,7 +1779,7 @@ public class EventService : IEventService
                     }
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
+                    diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
                     count++;
                     return count;
                 }
@@ -1815,7 +1815,7 @@ public class EventService : IEventService
                     submodelElements[i] = receiveSme;
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
+                    diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
                     count++;
                     return count;
                 }
@@ -1871,7 +1871,7 @@ public class EventService : IEventService
                                 }
                             }
                         }
-                        diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath() + ".*");
+                        diffEntry.Add(entry.type + " " + entry.GetIdShortPath() + ".*");
                         count++;
                         break;
                     }
@@ -2533,11 +2533,11 @@ public class EventService : IEventService
 
         var restEventDtos = notificationEventDtos.Where(ne => ne.Mode.Value == "REST_API");
 
-        if (restEventDtos.Any())
+        if (smeModelType.IsNullOrEmpty())
         {
-            foreach (var restEventDto in restEventDtos)
+            if (restEventDtos.Any())
             {
-                if (IsPublishRestApiConfigured(restEventDto))
+                foreach (var restEventDto in restEventDtos.Where(IsPublishRestApiConfigured))
                 {
                     var eventPayload = new EventPayload(true);
 
@@ -2580,6 +2580,7 @@ public class EventService : IEventService
                     {
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     };
+                    _logger.LogDebug($"Event id: {eventPayload.id}, Type: {eventPayload.type}");
 
                     var now = DateTime.UtcNow;
 
@@ -2587,13 +2588,13 @@ public class EventService : IEventService
 
                     try
                     {
-                        HttpClientHandler handler = new HttpClientHandler()
+                        using var handler = new HttpClientHandler()
                         {
                             Proxy = HttpClient.DefaultProxy,
                             DefaultProxyCredentials = CredentialCache.DefaultCredentials
                         };
 
-                        HttpClient client = new HttpClient(handler);
+                        using var client = new HttpClient(handler);
 
                         string user = "John Doe";
                         string password = null;
@@ -2621,7 +2622,7 @@ public class EventService : IEventService
                             if (!user.IsNullOrEmpty()
                                  && !password.IsNullOrEmpty())
                             {
-                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, restEventDto.PassWord.Value);
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, password);
                             }
 
                             client.DefaultRequestHeaders.Add("user", user);
@@ -2639,7 +2640,7 @@ public class EventService : IEventService
                                         if (restEventDto.Message != null)
                                         {
                                             restEventDto.Message.Value = "ERROR: " +
-                                                response.StatusCode.ToString() + " ; " +
+                                                response.StatusCode + " ; " +
                                                 response.Content.ReadAsStringAsync().Result +
                                                 " ; PUT " + requestPath;
                                         }
