@@ -2586,104 +2586,105 @@ public class EventService : IEventService
 
                     var payloadObjString = JsonSerializer.Serialize(new List<EventPayload> { eventPayload }, options);
 
-                        try
+                    try
+                    {
+                        using var handler = new HttpClientHandler()
                         {
-                            using var handler = new HttpClientHandler()
+                            Proxy = HttpClient.DefaultProxy,
+                            DefaultProxyCredentials = CredentialCache.DefaultCredentials
+                        };
+
+                        using var client = new HttpClient(handler);
+
+                        string user = "John Doe";
+                        string password = null;
+
+                        if (restEventDto.AccessToken != null && restEventDto.AccessToken.Value != null && restEventDto.AccessToken.Value != "")
+                        {
+                            client.SetBearerToken(restEventDto.AccessToken.Value);
+                        }
+                        else
+                        {
+                            if (restEventDto.UserName != null && restEventDto.PassWord != null)
                             {
-                                Proxy = HttpClient.DefaultProxy,
-                                DefaultProxyCredentials = CredentialCache.DefaultCredentials
-                            };
-
-                            using var client = new HttpClient(handler);
-
-                            string user = "John Doe";
-                            string password = null;
-
-                            if (restEventDto.AccessToken != null && restEventDto.AccessToken.Value != null && restEventDto.AccessToken.Value != "")
-                            {
-                                client.SetBearerToken(restEventDto.AccessToken.Value);
-                            }
-                            else
-                            {
-                                if (restEventDto.UserName != null && restEventDto.PassWord != null)
-                                {
-                                    user = restEventDto.UserName.Value;
-                                    password = restEventDto.PassWord.Value;
-                                }
-                            }
-
-                            string requestPath = $"{restEventDto.EndPoint.Value}?user={user}";
-
-                            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestPath))
-                            {
-                                var content = new StringContent(payloadObjString, System.Text.Encoding.UTF8, "application/json");
-                                requestMessage.Content = content;
-
-                                if (!user.IsNullOrEmpty()
-                                     && !password.IsNullOrEmpty())
-                                {
-                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, password);
-                                }
-
-                                client.DefaultRequestHeaders.Add("user", user);
-
-                                HttpResponseMessage response = null;
-                                var task = Task.Run(async () =>
-                                {
-                                    response = await client.SendAsync(requestMessage);
-
-                                    var now = DateTime.UtcNow;
-                                    if (!response.IsSuccessStatusCode)
-                                    {
-                                        if (restEventDto.Status != null)
-                                        {
-                                            if (restEventDto.Message != null)
-                                            {
-                                                restEventDto.Message.Value = "ERROR: " +
-                                                    response.StatusCode + " ; " +
-                                                    response.Content.ReadAsStringAsync().Result +
-                                                    " ; PUT " + requestPath;
-                                            }
-                                            restEventDto.Status.SetTimeStamp(now);
-                                            // d = restEventDto.LastUpdate.Value = "reconnect";
-                                            restEventDto.LastUpdate.SetTimeStamp(now);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (restEventDto.Transmitted != null)
-                                        {
-                                            restEventDto.Transmitted.Value = eventPayload.transmitted;
-                                            restEventDto.Transmitted.SetTimeStamp(now);
-                                        }
-                                        var maxTime = eventPayload.time;
-                                        var dt = DateTime.ParseExact(maxTime, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-
-                                        if (restEventDto.LastUpdate != null)
-                                        {
-                                            restEventDto.LastUpdate.Value = maxTime;
-                                            restEventDto.LastUpdate.SetTimeStamp(dt);
-                                        }
-                                    }
-                                });
-                                task.Wait();
+                                user = restEventDto.UserName.Value;
+                                password = restEventDto.PassWord.Value;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            if (restEventDto.Message != null)
-                            {
-                                restEventDto.Message.Value = "ERROR: " +
-                                    ex.Message +
-                                    " ; PUT " + restEventDto.EndPoint.Value;
-                            }
-                            restEventDto.Status.SetTimeStamp(now);
-                        }
 
-                        restEventDto.env.setWrite(true);
+                        string requestPath = $"{restEventDto.EndPoint.Value}?user={user}";
+
+                        using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestPath))
+                        {
+                            var content = new StringContent(payloadObjString, System.Text.Encoding.UTF8, "application/json");
+                            requestMessage.Content = content;
+
+                            if (!user.IsNullOrEmpty()
+                                 && !password.IsNullOrEmpty())
+                            {
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, password);
+                            }
+
+                            client.DefaultRequestHeaders.Add("user", user);
+
+                            HttpResponseMessage response = null;
+                            var task = Task.Run(async () =>
+                            {
+                                response = await client.SendAsync(requestMessage);
+
+                                var now = DateTime.UtcNow;
+                                if (!response.IsSuccessStatusCode)
+                                {
+                                    if (restEventDto.Status != null)
+                                    {
+                                        if (restEventDto.Message != null)
+                                        {
+                                            restEventDto.Message.Value = "ERROR: " +
+                                                response.StatusCode + " ; " +
+                                                response.Content.ReadAsStringAsync().Result +
+                                                " ; PUT " + requestPath;
+                                        }
+                                        restEventDto.Status.SetTimeStamp(now);
+                                        // d = restEventDto.LastUpdate.Value = "reconnect";
+                                        restEventDto.LastUpdate.SetTimeStamp(now);
+                                    }
+                                }
+                                else
+                                {
+                                    if (restEventDto.Transmitted != null)
+                                    {
+                                        restEventDto.Transmitted.Value = eventPayload.transmitted;
+                                        restEventDto.Transmitted.SetTimeStamp(now);
+                                    }
+                                    var maxTime = eventPayload.time;
+                                    var dt = DateTime.ParseExact(maxTime, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                                    if (restEventDto.LastUpdate != null)
+                                    {
+                                        restEventDto.LastUpdate.Value = maxTime;
+                                        restEventDto.LastUpdate.SetTimeStamp(dt);
+                                    }
+                                }
+                            });
+                            task.Wait();
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        if (restEventDto.Message != null)
+                        {
+                            restEventDto.Message.Value = "ERROR: " +
+                                ex.Message +
+                                " ; PUT " + restEventDto.EndPoint.Value;
+                        }
+                        restEventDto.Status.SetTimeStamp(now);
+                    }
+
+                    restEventDto.env.setWrite(true);
                 }
             }
         }
     }
 }
+
+
