@@ -2445,7 +2445,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         _logger.LogInformation($"Received request to create a new submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
 
-        var output = _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, idShortPath);
+        var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, idShortPath);
 
         /*
         if (output != null)

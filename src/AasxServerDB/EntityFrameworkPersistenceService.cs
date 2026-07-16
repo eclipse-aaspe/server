@@ -551,7 +551,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, aasIdentifier, submodelIdentifier, idShort, out SMESet smE, securitySqlConditions);
                         if (submodelElement == null)
                         {
-                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                            throw new NotFoundException($"Submodel element in Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
                         }
 
                         result.ResultData = new List<IClass>
