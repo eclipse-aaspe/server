@@ -1338,8 +1338,8 @@ public class EventService : IEventService
 
                                 eventPayloadList.Add(entry);
 
-                                diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
-                                _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Schema: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+                                diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
+                                _logger.LogDebug($"Event {entry.type} Schema: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
                                 countSME++;
                             }
                         }
@@ -1394,8 +1394,8 @@ public class EventService : IEventService
                         }
                     }
 
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
-                    _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+                    diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
+                    _logger.LogDebug($"Event {entry.type} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
 
                     eventPayloadList.Add(entry);
                     countSM++;
@@ -1520,7 +1520,7 @@ public class EventService : IEventService
         var entriesSubmodel = new List<EventPayload>();
         foreach (var entry in eventPayload)
         {
-            _logger.LogDebug($"Event {entry.eventPayloadEntryType.ToString()} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
+            _logger.LogDebug($"Event {entry.type} Type: {entry.dataSchema} idShortPath: {entry.GetIdShortPath()}");
             Submodel receiveSM = null;
             if (entry.dataSchema.Split("/")?.Last().ToLower() == "submodel")
             {
@@ -1779,7 +1779,7 @@ public class EventService : IEventService
                     }
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
+                    diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
                     count++;
                     return count;
                 }
@@ -1815,7 +1815,7 @@ public class EventService : IEventService
                     submodelElements[i] = receiveSme;
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath());
+                    diffEntry.Add(entry.type + " " + entry.GetIdShortPath());
                     count++;
                     return count;
                 }
@@ -1871,7 +1871,7 @@ public class EventService : IEventService
                                 }
                             }
                         }
-                        diffEntry.Add(entry.eventPayloadEntryType.ToString() + " " + entry.GetIdShortPath() + ".*");
+                        diffEntry.Add(entry.type + " " + entry.GetIdShortPath() + ".*");
                         count++;
                         break;
                     }
@@ -2624,7 +2624,7 @@ public class EventService : IEventService
                                 if (!user.IsNullOrEmpty()
                                      && !password.IsNullOrEmpty())
                                 {
-                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, restEventDto.PassWord.Value);
+                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(user, password);
                                 }
 
                                 client.DefaultRequestHeaders.Add("user", user);
