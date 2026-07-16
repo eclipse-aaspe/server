@@ -2537,56 +2537,54 @@ public class EventService : IEventService
         {
             if (restEventDtos.Any())
             {
-                foreach (var restEventDto in restEventDtos)
+                foreach (var restEventDto in restEventDtos.Where(IsPublishRestApiConfigured))
                 {
-                    if (IsPublishRestApiConfigured(restEventDto))
+                    var eventPayload = new EventPayload(true);
+
+                    var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodel.Id);
+
+                    eventPayload.source = sourceString;
+                    eventPayload.SetSubmodelType(EventPayloadType.Deleted);
+                    eventPayload.SetTime(submodel.TimeStampTree);
+
+                    eventPayload.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
+
+                    if (submodel.SemanticId != null)
                     {
-                        var eventPayload = new EventPayload(true);
+                        eventPayload.semanticid = (submodel.SemanticId != null && submodel.SemanticId?.Keys != null) ? submodel.SemanticId?.Keys[0].Value : "";
+                    }
 
-                        var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(submodel.Id);
+                    eventPayload.subject = submodel.Id;
 
-                        eventPayload.source = sourceString;
-                        eventPayload.SetSubmodelType(EventPayloadType.Deleted);
-                        eventPayload.SetTime(submodel.TimeStampTree);
+                    bool wp = false;
 
-                        eventPayload.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
+                    //ToDo: Is empty data in Events Feed API spec allowed?
+                    //if (eventData.Include != null
+                    //    && eventData.Include.Value != null)
+                    //{
+                    //    wp = eventData.Include.Value.ToLower() == "true";
+                    //}
 
-                        if (submodel.SemanticId != null)
+                    wp = true;
+
+                    if (wp)
+                    {
+                        var j = Jsonization.Serialize.ToJsonObject(submodel);
+                        if (j != null)
                         {
-                            eventPayload.semanticid = (submodel.SemanticId != null && submodel.SemanticId?.Keys != null) ? submodel.SemanticId?.Keys[0].Value : "";
+                            eventPayload.data = ConvertSmJsonToRestApiSpecSmJson(j);
                         }
+                    }
 
-                        eventPayload.subject = submodel.Id;
+                    var options = new JsonSerializerOptions
+                    {
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    };
+                    _logger.LogDebug($"Event id: {eventPayload.id}, Type: {eventPayload.type}");
 
-                        bool wp = false;
+                    var now = DateTime.UtcNow;
 
-                        //ToDo: Is empty data in Events Feed API spec allowed?
-                        //if (eventData.Include != null
-                        //    && eventData.Include.Value != null)
-                        //{
-                        //    wp = eventData.Include.Value.ToLower() == "true";
-                        //}
-
-                        wp = true;
-
-                        if (wp)
-                        {
-                            var j = Jsonization.Serialize.ToJsonObject(submodel);
-                            if (j != null)
-                            {
-                                eventPayload.data = ConvertSmJsonToRestApiSpecSmJson(j);
-                            }
-                        }
-
-                        var options = new JsonSerializerOptions
-                        {
-                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                        };
-                        _logger.LogDebug($"Event id: {eventPayload.id}, Type: {eventPayload.type}");
-
-                        var now = DateTime.UtcNow;
-
-                        var payloadObjString = JsonSerializer.Serialize(new List<EventPayload> { eventPayload }, options);
+                    var payloadObjString = JsonSerializer.Serialize(new List<EventPayload> { eventPayload }, options);
 
                         try
                         {
