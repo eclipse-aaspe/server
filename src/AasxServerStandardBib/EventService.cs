@@ -2686,5 +2686,3 @@ public class EventService : IEventService
         }
     }
 }
-
-
