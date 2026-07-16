@@ -1508,7 +1508,7 @@ public class EventService : IEventService
         AasCore.Aas3_1.Environment aasEnv = null;
         int index = -1;
         ISubmodelElementCollection dataCollection = null;
-        List<ISubmodelElement> data = new List<ISubmodelElement>();
+        //List<ISubmodelElement> data = new List<ISubmodelElement>();
         SubmodelElementCollection status = null;
         AasCore.Aas3_1.Property message = null;
         AasCore.Aas3_1.Property transmitted = null;
