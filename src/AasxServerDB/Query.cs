@@ -2132,13 +2132,19 @@ public partial class Query
         "FROM SMESets (?<sme>[A-Za-z][A-Za-z0-9_]*)(?<nl>\\r?\\n)" +
         "(?:LEFT JOIN|JOIN) ValueSets (?<value>[A-Za-z][A-Za-z0-9_]*) ON " +
         "\\k<value>\\.SMEId = \\k<sme>\\.Id AND (?<predicate>[^\\r\\n]+)\\k<nl>" +
-        "WHERE \\k<predicate>",
+        "WHERE \\k<predicate>" +
+        "(?<rest>(?:\\k<nl>AND [^\\r\\n]+)*)",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     /// <summary>
     /// Path searches normally start at SMESets and repeat the value predicate in
     /// JOIN and WHERE. For an indexed contains or prefix predicate, start at the
-    /// reduced ValueSets candidates instead. CROSS JOIN fixes that loop order.
+    /// reduced ValueSets candidates instead. For all other predicates (equality,
+    /// range) with an IdShort filter, start at SMESets: the IdShort B-tree is the
+    /// deterministic entry there, and hot values like SValue='24' must never drive.
+    /// Without the forced order the plan depends on sqlite_stat1 averages, which
+    /// underestimate hot keys (measured: 0.3 s -> 4.9 s after ANALYZE, 28 s in
+    /// nested AND arms without it). CROSS JOIN fixes the loop order either way.
     /// </summary>
     internal static string ApplySqliteIndexedPathJoinOrder(string sql)
     {
@@ -2148,16 +2154,30 @@ public partial class Query
         return SqliteIndexedPathJoinRegex.Replace(sql, match =>
         {
             var predicate = match.Groups["predicate"].Value;
-            if (!HasIndexableSValueTrigram(predicate) && !HasIndexableSValuePrefix(predicate))
-                return match.Value;
-
             var smeAlias = match.Groups["sme"].Value;
             var valueAlias = match.Groups["value"].Value;
             var newline = match.Groups["nl"].Value;
-            return $"FROM ValueSets {valueAlias}{newline}" +
-                   $"CROSS JOIN SMESets {smeAlias}{newline}" +
-                   $"WHERE {smeAlias}.Id = {valueAlias}.SMEId{newline}" +
-                   $"AND {predicate}";
+            var rest = match.Groups["rest"].Value;
+
+            if (HasIndexableSValueTrigram(predicate) || HasIndexableSValuePrefix(predicate))
+            {
+                return $"FROM ValueSets {valueAlias}{newline}" +
+                       $"CROSS JOIN SMESets {smeAlias}{newline}" +
+                       $"WHERE {smeAlias}.Id = {valueAlias}.SMEId{newline}" +
+                       $"AND {predicate}" +
+                       rest;
+            }
+
+            // sme-first only when an IdShort equality narrows the outer loop; wildcard-only
+            // paths (no IdShort filter) would otherwise scan the full SMESets table.
+            if (!rest.Contains($"\"{smeAlias}\".\"IdShort\" = '", StringComparison.Ordinal))
+                return match.Value;
+
+            return $"FROM SMESets {smeAlias}{newline}" +
+                   $"CROSS JOIN ValueSets {valueAlias}{newline}" +
+                   $"WHERE {valueAlias}.SMEId = {smeAlias}.Id{newline}" +
+                   $"AND {predicate}" +
+                   rest;
         });
     }
 
@@ -2249,7 +2269,13 @@ public partial class Query
 
     // A leading-wildcard contains matching at least this many value rows is treated as "common" and
     // realized as a correlated EXISTS (early-stop) rather than the value-driven IN/FTS. Settable for tests.
-    internal static int ContainsCommonProbeCap = 1000;
+    // The EXISTS gamble only wins when hits are DENSE at submodel level (early-stop finds the LIMIT
+    // quickly). 1000 of ~50M value rows is far too sparse for that: terms like a product-family name
+    // match a few thousand rows concentrated in few submodels, and the EXISTS walk degenerated into a
+    // near-full corpus scan (measured 40 s) while the skipped FTS path would answer in milliseconds.
+    // 100000 keeps truly ubiquitous terms (e.g. the manufacturer name, present in half of all
+    // submodels, where FTS materialization would be the expensive side) on the EXISTS path.
+    internal static int ContainsCommonProbeCap = 100_000;
 
     // Classifies each direct $sme#value condition that is a *single* indexable value match (a
     // leading-wildcard contains OR an exact equality) by a capped probe: if it matches at least

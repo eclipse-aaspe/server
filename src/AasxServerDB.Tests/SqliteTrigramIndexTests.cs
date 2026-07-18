@@ -416,4 +416,46 @@ public sealed class SqliteTrigramIndexTests
 
         Query.ApplySqliteTrigramIndex(input).Should().Be(input);
     }
+
+    [Fact]
+    public void ApplySqliteIndexedPathJoinOrder_DrivesEqualityPathSearchFromSmeIdShort()
+    {
+        // Equality/range value predicates must be driven from the SMESets side (IdShort B-tree):
+        // hot values like SValue='24' would otherwise drive the loop when sqlite_stat1 averages
+        // underestimate them (measured 0.3 s -> 4.9 s after ANALYZE on the large corpus).
+        const string input = """
+            SELECT sme.SMId
+            FROM SMESets sme
+            LEFT JOIN ValueSets v ON v.SMEId = sme.Id AND (v."SValue" = '24')
+            WHERE (v."SValue" = '24')
+            AND "sme"."IdShort" = 'nominal_value_1__output_voltage'
+            AND 1=1
+            """;
+
+        var reordered = Query.ApplySqliteIndexedPathJoinOrder(input);
+
+        reordered.Should().Contain("FROM SMESets sme");
+        reordered.Should().Contain("CROSS JOIN ValueSets v");
+        reordered.Should().Contain("WHERE v.SMEId = sme.Id");
+        reordered.Should().Contain("AND \"sme\".\"IdShort\" = 'nominal_value_1__output_voltage'");
+        reordered.Should().Contain("AND 1=1");
+        (reordered.Split("v.\"SValue\" = '24'", StringSplitOptions.None).Length - 1)
+            .Should().Be(1, "the duplicated JOIN/WHERE predicate must collapse into one");
+    }
+
+    [Fact]
+    public void ApplySqliteIndexedPathJoinOrder_LeavesEqualityWithoutIdShortFilterUnchanged()
+    {
+        // Without an IdShort equality there is no selective SMESets entry point —
+        // forcing sme-first would scan the full SMESets table.
+        const string input = """
+            SELECT sme.SMId
+            FROM SMESets sme
+            LEFT JOIN ValueSets v ON v.SMEId = sme.Id AND (v."SValue" = '24')
+            WHERE (v."SValue" = '24')
+            AND "sme"."IdShortPath" GLOB 'Documents[[]*[]].Title'
+            """;
+
+        Query.ApplySqliteIndexedPathJoinOrder(input).Should().Be(input);
+    }
 }
