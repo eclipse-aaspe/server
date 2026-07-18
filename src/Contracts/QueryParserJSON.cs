@@ -50,7 +50,9 @@ public class QueryGrammarJSON : Grammar
 
         // Define terminals
         var stringLiteral = new StringLiteral("StringLiteral", "\"", StringOptions.AllowsAllEscapes);
-        var numberLiteral = new NumberLiteral("NumberLiteral");
+        // AllowSign: JSON-Zahlen dürfen negativ sein ($numVal: -40, z.B. Minusgrade bei
+        // Umgebungstemperaturen); ohne die Option scheitert der Parser an führendem '-'.
+        var numberLiteral = new NumberLiteral("NumberLiteral", NumberOptions.AllowSign);
         var booleanLiteral = new RegexBasedTerminal("BooleanLiteral", "true|false");
 
         // Define non-terminals: other Literals

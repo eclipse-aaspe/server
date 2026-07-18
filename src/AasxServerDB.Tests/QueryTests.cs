@@ -1218,4 +1218,40 @@ public sealed class QueryTests
             because: "missing claims must produce an empty SQL literal, not leave the sentinel in place");
         perRequest.FormulaConditions["all"].Should().NotContain(SqlConditions.ClaimSentinelPrefix);
     }
+
+    // -------------------------------------------------------------------------
+    // Negative number literals — $numVal: -40 (e.g. minus-degree ambient
+    // temperatures) must parse; requires NumberOptions.AllowSign on the grammar.
+    // -------------------------------------------------------------------------
+    [Fact]
+    public void NegativeNumVal_ParsesAndExecutes()
+    {
+        const string expression = """
+            {
+              "Query": {
+                "$select": "id",
+                "$condition":
+                  { "$le": [
+                    { "$field": "$sme#value" },
+                    { "$numVal": -40 }
+                  ] }
+              }
+            }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var result = new Query(_fixture.Grammar)
+            .GetQueryData(
+                noSecurity: true,
+                db,
+                pageFrom: 0,
+                pageSize: int.MaxValue,
+                ResultType.Submodel,
+                expression,
+                includeDebugSql: true,
+                securitySqlConditions: null);
+
+        result.Should().NotBeNull("negative number literals must be accepted by the JSON grammar");
+        result!.Sql.Should().Contain(sql => sql.Contains("-40"));
+    }
 }
