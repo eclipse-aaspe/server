@@ -141,6 +141,8 @@ public sealed class McpQueryTools
         "Mehrere Bedingungen werden mit combine (\"and\"/\"or\") verknüpft. " +
         "target=\"submodels\" gibt Submodel-Identifier zurück, target=\"shells\" gibt AAS-Identifier zurück. " +
         "Wildcard-/Teilstring-Suchen (contains, starts-with, ends-with) dürfen ausschließlich auf value, idShort und idShortPath verwendet werden. Für semanticId und id ausschließlich eq oder in verwenden; regex ist derzeit nicht unterstützt. " +
+        "Wenn unklar ist, wie ein Merkmal heißt (z.B. \"Ausgangsspannung\"): ZUERST aas_find_concepts aufrufen und dann über field=\"semanticId\" suchen — das ist exakt und herstellerunabhängig, statt idShort-Schreibweisen zu raten. " +
+        "Für einen Überblick, welche Submodel-Typen und Feldpfade es überhaupt gibt: aas_describe_model. " +
         "Beispiele: " +
         "(1) eine Bedingung: target=\"submodels\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"}]. " +
         "(2) UND: combine=\"and\", conditions=[{scope:\"sm\",field:\"idShort\",op:\"eq\",value:\"TechnicalData\"},{scope:\"sme\",field:\"value\",op:\"lt\",value:\"100\"}]. " +
@@ -221,7 +223,7 @@ public sealed class McpQueryTools
             nextCursor,
             nextStep = identifiers.Count > 0
                 ? "Dies sind nur Identifier. Inhalte lesen: aas_get_submodel(identifier), oder gleich Felder mitliefern via select=[...]. Für ALLE Daten eines Produkts (Technik+Hersteller+CO2): aas_get_product(identifier)."
-                : "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq), Groß-/Kleinschreibung des idShort prüfen oder breiter suchen.",
+                : "Keine Treffer. Bedingung lockern (z.B. op=contains statt eq), Groß-/Kleinschreibung des idShort prüfen — oder mit aas_find_concepts die richtige semanticId ermitteln und über field=\"semanticId\" suchen.",
         };
     }
 
@@ -908,6 +910,738 @@ public sealed class McpQueryTools
         // Bewusst immer "value" (kompakt) + coreOnly: full und Datei-/Doku-Submodelle überfordern sehr kleine Modelle (Halluzination).
         return await FindProductCore(expression, "value", coreOnly: true);
     }
+
+    [McpServerTool(Name = "aas_find_concepts", Title = "Find Concept Definitions (Semantic IDs)", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
+    [Description(
+        "Durchsucht den Merkmalskatalog (ConceptDescriptions, ECLASS/IEC 61360) nach Stichwörtern und liefert die semantischen Definitionen der Datenfelder: " +
+        "IRDI (= semanticId, z.B. 0173-1#02-AAM635#003), Namen (de/en), Einheit, Datentyp und Definition. " +
+        "ZUERST verwenden, wenn unklar ist, wie ein Merkmal in den Daten heißt (z.B. \"Ausgangsspannung\", \"output power\", \"Gewicht\") — " +
+        "danach mit aas_query exakt suchen, statt idShort-Schreibweisen zu raten: " +
+        "EIN Merkmal: field=\"semanticId\" op=\"eq\" value=<id> plus optional eine value-Bedingung (combine=\"and\") — beide beziehen sich auf DASSELBE Element. " +
+        "MEHRERE Merkmale (z.B. Spannung UND Leistung): NICHT mehrere semanticId/value-Paare kombinieren (ergibt immer 0 Treffer) — stattdessen je Merkmal eine Bedingung mit idShortPath=<idShort des Konzepts> und op/value; der idShort des Konzepts ist zugleich der idShort des Elements in den Daten. " +
+        "Die Suche ist case-insensitiv; mehrere Wörter sind UND-verknüpft und werden in idShort, preferredName, shortName und definition (de+en) gesucht. " +
+        "Bei 0 Treffern: Synonyme oder die jeweils andere Sprache probieren (z.B. \"voltage\" statt \"Spannung\"). " +
+        "usageCount gibt an, in wie vielen Submodellen die semanticId tatsächlich vorkommt (gedeckelt bei 1000; 1000 = 1000 oder mehr) — Konzepte mit usageCount=0 existieren nur im Katalog und sind für Suchen nutzlos.")]
+    public async Task<object> AasFindConcepts(
+        [Description("Suchbegriffe, z.B. \"output voltage\" oder \"Ausgangsspannung\". Mehrere Wörter müssen alle vorkommen (UND). Gesucht wird in deutschen UND englischen Texten.")] string search,
+        [Description("Maximale Trefferzahl (Default 20, Maximum 100).")] int? limit = null,
+        [Description("Bevorzugte Sprache der definition im Ergebnis: \"en\" oder \"de\" (Default \"en\"; fehlt die Sprache, wird die andere genommen).")] string lang = "en",
+        [Description("Wenn true (Default), wird je Treffer gezählt, in wie vielen Submodellen die semanticId vorkommt (usageCount; wird für maximal die ersten 15 Treffer berechnet).")] bool withUsage = true)
+    {
+        using var _ = LogCallTimed($"aas_find_concepts search=\"{search}\" limit={(limit?.ToString(CultureInfo.InvariantCulture) ?? "-")} withUsage={withUsage}");
+
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return new { error = "search darf nicht leer sein, z.B. \"output voltage\" oder \"Ausgangsspannung\"." };
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+
+        List<ConceptInfo> catalog;
+        try
+        {
+            catalog = await GetConceptCatalog(securityConfig);
+        }
+        catch (Exception ex)
+        {
+            return new { error = "ConceptDescriptions konnten nicht geladen werden: " + ex.Message };
+        }
+
+        var terms = search.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var requestedLimit = Math.Min(limit is > 0 ? limit.Value : DefaultConceptLimit, MaxConceptLimit);
+
+        // Alle Terme müssen irgendwo vorkommen; Treffer im Namen (idShort/preferredName/shortName)
+        // zählen doppelt, damit "voltage" MaxOutputVoltage vor Konzepten mit "voltage" nur in der Definition listet.
+        // Mit withUsage wird ein größerer Kandidaten-Pool gezogen und erst NACH der Usage-Sortierung auf limit
+        // geschnitten — sonst verdrängen textlich gleichwertige Katalogleichen bei kleinem limit die real
+        // genutzten Konzepte (Counts sind dank 1000er-Deckel billig).
+        var ranked = catalog
+            .Select(c => new
+            {
+                Concept = c,
+                Score = terms.Sum(t => c.NameText.Contains(t, StringComparison.Ordinal) ? 2
+                    : c.SearchText.Contains(t, StringComparison.Ordinal) ? 1 : 0),
+            })
+            .Where(x => terms.All(t => x.Concept.SearchText.Contains(t, StringComparison.Ordinal)))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Concept.IdShort, StringComparer.OrdinalIgnoreCase)
+            .Take(withUsage ? Math.Max(requestedLimit, ConceptRankingPoolSize) : requestedLimit)
+            .ToList();
+
+        // Usage nur für die vorderen Treffer zählen (je ein indizierter COUNT über die Query-Pipeline, gecacht).
+        var usage = new Dictionary<string, int?>(StringComparer.Ordinal);
+        if (withUsage)
+        {
+            foreach (var x in ranked.Take(MaxConceptUsageLookups))
+            {
+                usage[x.Concept.Id] = await GetConceptUsageCount(securityConfig, x.Concept.Id);
+            }
+        }
+
+        var preferGerman = string.Equals(lang?.Trim(), "de", StringComparison.OrdinalIgnoreCase);
+        var concepts = ranked
+            .OrderByDescending(x => usage.TryGetValue(x.Concept.Id, out var u) ? u ?? -1 : -1)
+            .ThenByDescending(x => x.Score)
+            .ThenBy(x => x.Concept.IdShort, StringComparer.OrdinalIgnoreCase)
+            .Take(requestedLimit)
+            .Select(x => new
+            {
+                id = x.Concept.Id,
+                idShort = x.Concept.IdShort,
+                nameEn = x.Concept.NameEn,
+                nameDe = x.Concept.NameDe,
+                unit = x.Concept.Unit,
+                dataType = x.Concept.DataType,
+                definition = preferGerman ? (x.Concept.DefDe ?? x.Concept.DefEn) : (x.Concept.DefEn ?? x.Concept.DefDe),
+                usageCount = usage.TryGetValue(x.Concept.Id, out var u) ? u : null,
+            })
+            .ToList();
+
+        return new
+        {
+            search,
+            count = concepts.Count,
+            concepts,
+            nextStep = concepts.Count > 0
+                ? "In den Daten suchen mit aas_query. EIN Merkmal: conditions=[{scope:\"sme\",field:\"semanticId\",op:\"eq\",value:\"<id>\"},{scope:\"sme\",field:\"value\",op:\"gt\",value:\"...\"}] mit combine=\"and\" — " +
+                  "beide Bedingungen beziehen sich auf DASSELBE Element. MEHRERE Merkmale: je Merkmal EINE Bedingung mit idShortPath=<idShort des Konzepts> und op/value " +
+                  "(z.B. {scope:\"sme\",idShortPath:\"Power_output\",op:\"gt\",value:\"500\"}); mehrere semanticId/value-Paare in einem and ergeben immer 0 Treffer. " +
+                  "Konzepte mit usageCount=0 nicht verwenden; bei mehreren passenden Kandidaten op=\"in\" mit values=[<id1>,<id2>]."
+                : "Keine Konzepte gefunden. Synonyme oder die andere Sprache probieren (z.B. \"voltage\" statt \"Spannung\") oder weniger/kürzere Suchwörter verwenden.",
+        };
+    }
+
+    // --------------- ConceptDescription-Katalog (Cache für aas_find_concepts) ---------------
+
+    private const int DefaultConceptLimit = 20;
+    private const int MaxConceptLimit = 100;
+    private const int MaxConceptUsageLookups = 40;
+    private const int ConceptRankingPoolSize = 30;
+    private const int UsageCountCap = 1000;
+    private static readonly TimeSpan ConceptCacheTtl = TimeSpan.FromMinutes(10);
+
+    // Kompakte, durchsuchbare Sicht auf eine ConceptDescription (dedupliziert nach Id).
+    private sealed class ConceptInfo
+    {
+        public required string Id { get; init; }
+        public string? IdShort { get; init; }
+        public string? NameEn { get; init; }
+        public string? NameDe { get; init; }
+        public string? Unit { get; init; }
+        public string? DataType { get; init; }
+        public string? DefEn { get; init; }
+        public string? DefDe { get; init; }
+        public required string NameText { get; init; }   // lowercase: idShort + Namen
+        public required string SearchText { get; init; } // lowercase: NameText + Definitionen + Id
+    }
+
+    private static List<ConceptInfo>? s_conceptCatalog;
+    private static DateTime s_conceptCatalogTime;
+    private static readonly System.Threading.SemaphoreSlim s_conceptCatalogLock = new(1, 1);
+
+    // usageCount-Cache je IRDI: COUNT-Queries auf großen DBs nicht bei jeder Konzeptsuche wiederholen.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Count, DateTime Time)> s_conceptUsage =
+        new(StringComparer.Ordinal);
+
+    private async Task<List<ConceptInfo>> GetConceptCatalog(SecurityConfig securityConfig)
+    {
+        var cached = s_conceptCatalog;
+        if (cached != null && DateTime.UtcNow - s_conceptCatalogTime < ConceptCacheTtl)
+        {
+            return cached;
+        }
+
+        await s_conceptCatalogLock.WaitAsync();
+        try
+        {
+            cached = s_conceptCatalog;
+            if (cached != null && DateTime.UtcNow - s_conceptCatalogTime < ConceptCacheTtl)
+            {
+                return cached;
+            }
+
+            var watch = Stopwatch.StartNew();
+            var pagination = new PaginationParameters(null, int.MaxValue);
+            var cdList = await _dbRequestHandlerService.ReadPagedConceptDescriptions(pagination, securityConfig);
+
+            // Die Liste enthält je Environment dieselbe CD erneut — nach Id deduplizieren.
+            var byId = new Dictionary<string, ConceptInfo>(StringComparer.Ordinal);
+            foreach (var cd in (cdList ?? new List<IClass>()).OfType<IConceptDescription>())
+            {
+                if (string.IsNullOrWhiteSpace(cd.Id) || byId.ContainsKey(cd.Id))
+                {
+                    continue;
+                }
+
+                byId[cd.Id] = BuildConceptInfo(cd);
+            }
+
+            var catalog = byId.Values.ToList();
+            s_conceptCatalog = catalog;
+            s_conceptCatalogTime = DateTime.UtcNow;
+            LogMcpLine($"aas_find_concepts catalog: {catalog.Count} distinct concepts loaded in {watch.ElapsedMilliseconds} ms");
+            return catalog;
+        }
+        finally
+        {
+            s_conceptCatalogLock.Release();
+        }
+    }
+
+    private static ConceptInfo BuildConceptInfo(IConceptDescription cd)
+    {
+        var iec = cd.EmbeddedDataSpecifications?
+            .Select(e => e?.DataSpecificationContent)
+            .OfType<IDataSpecificationIec61360>()
+            .FirstOrDefault();
+
+        var nameEn = PickLangText(iec?.PreferredName, "en") ?? PickLangText(iec?.ShortName, "en");
+        var nameDe = PickLangText(iec?.PreferredName, "de") ?? PickLangText(iec?.ShortName, "de");
+        var defEn = TruncateText(PickLangText(iec?.Definition, "en"), 300);
+        var defDe = TruncateText(PickLangText(iec?.Definition, "de"), 300);
+
+        var nameText = JoinLower(cd.IdShort, nameEn, nameDe, PickLangText(iec?.ShortName, null));
+        var searchText = JoinLower(nameText, defEn, defDe, cd.Id);
+
+        return new ConceptInfo
+        {
+            Id = cd.Id,
+            IdShort = cd.IdShort,
+            NameEn = nameEn,
+            NameDe = nameDe,
+            Unit = string.IsNullOrWhiteSpace(iec?.Unit) ? null : iec.Unit,
+            DataType = iec?.DataType is { } dataType ? Stringification.ToString(dataType) : null,
+            DefEn = defEn,
+            DefDe = defDe,
+            NameText = nameText,
+            SearchText = searchText,
+        };
+    }
+
+    // Text einer LangString-Liste in der gewünschten Sprache; language=null nimmt den ersten Eintrag.
+    private static string? PickLangText(System.Collections.IEnumerable? langStrings, string? language)
+    {
+        if (langStrings is null)
+        {
+            return null;
+        }
+
+        string? first = null;
+        foreach (var ls in langStrings.OfType<IAbstractLangString>())
+        {
+            if (string.IsNullOrWhiteSpace(ls.Text))
+            {
+                continue;
+            }
+
+            first ??= ls.Text;
+            if (language != null && string.Equals(ls.Language?.Trim(), language, StringComparison.OrdinalIgnoreCase))
+            {
+                return ls.Text;
+            }
+        }
+
+        return language is null ? first : null;
+    }
+
+    private static string JoinLower(params string?[] parts)
+        => string.Join('\n', parts.Where(p => !string.IsNullOrWhiteSpace(p))).ToLowerInvariant();
+
+    private static string? TruncateText(string? text, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var trimmed = text.Trim();
+        return trimmed.Length <= maxLength ? trimmed : trimmed[..maxLength] + "…";
+    }
+
+    // Anzahl Submodelle, in denen die semanticId vorkommt — indizierter COUNT über die Query-Pipeline, gecacht.
+    private async Task<int?> GetConceptUsageCount(SecurityConfig securityConfig, string semanticId)
+    {
+        if (s_conceptUsage.TryGetValue(semanticId, out var entry) && DateTime.UtcNow - entry.Time < ConceptCacheTtl)
+        {
+            return entry.Count;
+        }
+
+        try
+        {
+            var expression = BuildExpression(
+                new[] { new McpQueryCondition { Scope = "sme", Field = "semanticId", Op = "eq", Value = semanticId } }, "and");
+
+            // Gedeckelter Count (LIMIT im Subselect bricht früh ab): "1000" bedeutet "1000 oder mehr".
+            // Für die Frage "existiert das Konzept in den Daten und wie verbreitet ist es?" reicht das —
+            // exakte Zahlen über hunderttausende Treffer kosten Sekunden pro semanticId.
+            var count = await _dbRequestHandlerService.QueryCountSMs(
+                securityConfig, string.Empty, string.Empty, string.Empty,
+                new PaginationParameters(null, UsageCountCap), ResultType.Submodel, expression);
+            s_conceptUsage[semanticId] = (count, DateTime.UtcNow);
+            return count;
+        }
+        catch
+        {
+            // usageCount ist Zusatzinfo — ein Fehler (z.B. Engine-Limit) darf die Konzeptsuche nicht scheitern lassen.
+            return null;
+        }
+    }
+
+    [McpServerTool(Name = "aas_describe_model", Title = "Describe Submodel Structures", Destructive = false, ReadOnly = true, Idempotent = true, OpenWorld = false)]
+    [Description(
+        "Liefert einen Überblick über die real vorhandenen Datenstrukturen: welche Submodel-Typen es gibt (idShort, semanticId, exakte Gesamtzahl — " +
+        "deterministisch und vollständig aus der Datenbank ermittelt, inkl. semanticId-Varianten je Typ) " +
+        "und welche Felder darin vorkommen — je Feld idShortPath, semanticId, Element-Typ, valueType, Einheit, Name und ein Beispielwert. " +
+        "Die Feldlisten stammen aus einer über den Bestand gestreuten Stichprobe echter Submodelle, angereichert mit den ConceptDescriptions. " +
+        "IDEALER ERSTER AUFRUF einer Session, BEVOR Suchanfragen formuliert werden: danach sind die korrekten idShortPaths und semanticIds " +
+        "für aas_query-Bedingungen, select-Projektionen und Exporte bekannt, statt Feldnamen zu raten. " +
+        "seenInSamples zeigt, in wie vielen der Stichproben-Submodelle das Feld vorkam — Felder, die nur bestimmte Produktklassen haben " +
+        "(z.B. Ausgangsspannung nur bei Netzteilen), können in der Stichprobe fehlen; solche Merkmale gezielt über aas_find_concepts suchen. " +
+        "Das Ergebnis wird serverseitig 10 Minuten gecacht.")]
+    public async Task<object> AasDescribeModel(
+        [Description("Optional: nur diesen Submodel-Typ beschreiben (idShort, z.B. \"TechnicalData\"). Ohne Angabe werden alle gefundenen Submodel-Typen beschrieben.")] string? submodel = null,
+        [Description("Stichprobengröße je Submodel-Typ (Default 5, Maximum 20). Mehr Stichproben finden mehr produktklassen-spezifische Felder, dauern aber länger.")] int? samples = null,
+        [Description("Maximale Feldzahl je Submodel-Typ im Ergebnis (Default 200, Maximum 500). Häufige Felder zuerst; truncated=true zeigt Kürzung an.")] int? maxFields = null,
+        [Description("Bevorzugte Sprache für Namen aus den ConceptDescriptions und Beispielwerte mehrsprachiger Felder (Default \"en\").")] string lang = "en",
+        [Description("Wenn true, wird für SELTENE Felder (nicht in allen Stichproben) gezählt, in wie vielen Submodellen des Bestands ihre semanticId vorkommt (usageCount, gedeckelt bei 1000 = \"1000 oder mehr\"; gecacht, max. 30 frische Zählungen pro Aufruf). Allgegenwärtige Felder erhalten keinen usageCount — dort genügt seenInSamples. Default false.")] bool withUsage = false)
+    {
+        using var _ = LogCallTimed($"aas_describe_model submodel={submodel ?? "-"} samples={(samples?.ToString(CultureInfo.InvariantCulture) ?? "-")} withUsage={withUsage}");
+
+        var sampleCount = Math.Clamp(samples ?? DefaultDescribeSamples, 1, MaxDescribeSamples);
+        var fieldCap = Math.Clamp(maxFields ?? DefaultDescribeMaxFields, 10, MaxDescribeMaxFields);
+        var normalizedLang = string.IsNullOrWhiteSpace(lang) ? "en" : lang.Trim();
+        var templateFilter = string.IsNullOrWhiteSpace(submodel) ? null : submodel.Trim();
+
+        var cacheKey = $"{templateFilter ?? "*"}|{sampleCount}|{fieldCap}|{normalizedLang}|{withUsage}";
+        if (s_describeCache.TryGetValue(cacheKey, out var cached) && DateTime.UtcNow - cached.Time < ConceptCacheTtl)
+        {
+            return cached.Value;
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        object result;
+        try
+        {
+            result = await BuildModelDescription(securityConfig, templateFilter, sampleCount, fieldCap, normalizedLang, withUsage);
+        }
+        catch (Exception ex)
+        {
+            return new { error = "Modellbeschreibung fehlgeschlagen: " + ex.Message };
+        }
+
+        s_describeCache[cacheKey] = (result, DateTime.UtcNow);
+        return result;
+    }
+
+    // --------------- Modellbeschreibung (aas_describe_model) ---------------
+
+    private const int DefaultDescribeSamples = 5;
+    private const int MaxDescribeSamples = 20;
+    private const int DefaultDescribeMaxFields = 200;
+    private const int MaxDescribeMaxFields = 500;
+    private const int MaxDescribeUsageLookups = 30;
+    private const int DescribeDiscoveryPageSize = 40;
+    private const int DescribeEmptyRetryPageSize = 10;
+    private const int MaxDescribeTemplates = 50;
+    private static readonly TimeSpan DescribeUsageTimeBudget = TimeSpan.FromSeconds(15);
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (object Value, DateTime Time)> s_describeCache =
+        new(StringComparer.Ordinal);
+
+    // Aggregat eines Feldes über die Stichprobe: gleiche Struktur (Pfad mit neutralisierten Ziffern) + gleiche semanticId = ein Feld.
+    private sealed class FieldAggregate
+    {
+        public required string Path { get; init; }
+        public string? SemanticId { get; init; }
+        public required string Type { get; init; }
+        public string? ValueType { get; set; }
+        public string? Example { get; set; }
+        public int SeenIn { get; set; }
+        public HashSet<string> Variants { get; } = new(StringComparer.Ordinal);
+    }
+
+    private async Task<object> BuildModelDescription(
+        SecurityConfig securityConfig, string? templateFilter, int sampleCount, int fieldCap, string lang, bool withUsage)
+    {
+        // 1) DETERMINISTISCH: vollständiges Template-Inventar der DB (GROUP BY IdShort+SemanticId über die
+        //    SMSets — zwei Spalten, eine Zeile je Submodel; NICHT die großen SMESets). Erst danach Stichprobe.
+        List<DbSubmodelTemplateRow>? inventory = null;
+        var inventoryWatch = Stopwatch.StartNew();
+        try
+        {
+            inventory = await _dbRequestHandlerService.ReadSubmodelTemplates(securityConfig);
+            LogMcpLine($"aas_describe_model inventory: {inventory.Count} rows in {inventoryWatch.ElapsedMilliseconds} ms");
+        }
+        catch (Exception ex)
+        {
+            // Fallback (z.B. Security aktiv): Templates aus der Discovery-Seite ableiten — dann stochastisch.
+            LogMcpLine($"aas_describe_model inventory unavailable ({ex.Message}); using page discovery");
+        }
+
+        // 2) Erste Stichproben aus einer Seite echter Submodelle; ohne Inventar zugleich Template-Entdeckung.
+        var discovery = await _dbRequestHandlerService.ReadPagedSubmodels(
+            new PaginationParameters(null, DescribeDiscoveryPageSize), securityConfig, null, null, null, null);
+
+        var localSamples = new Dictionary<string, List<ISubmodel>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var sm in (discovery ?? new List<IClass>()).OfType<ISubmodel>())
+        {
+            if (string.IsNullOrWhiteSpace(sm.IdShort))
+            {
+                continue;
+            }
+
+            if (templateFilter != null && !string.Equals(sm.IdShort, templateFilter, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!localSamples.TryGetValue(sm.IdShort, out var list))
+            {
+                localSamples[sm.IdShort] = list = new List<ISubmodel>();
+            }
+
+            // Höchstens 2 Muster aus dem Anfang des Bestands — der Rest wird gestreut nachgeladen,
+            // damit auch produktklassen-spezifische Felder (variable TechnicalData) auftauchen.
+            if (list.Count < 2)
+            {
+                list.Add(sm);
+            }
+        }
+
+        // 3) Template-Liste: aus dem Inventar (vollständig, exakte Zahlen, semanticId-Varianten),
+        //    im Fallback aus den Discovery-Stichproben.
+        List<(string Name, int? TotalCount, List<DbSubmodelTemplateRow>? Variants)> templateInfos;
+        if (inventory != null)
+        {
+            templateInfos = inventory
+                .Where(row => !string.IsNullOrWhiteSpace(row.IdShort))
+                .GroupBy(row => row.IdShort!.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(g => templateFilter == null || string.Equals(g.Key, templateFilter, StringComparison.OrdinalIgnoreCase))
+                .Select(g => (
+                    Name: g.Key,
+                    TotalCount: (int?)g.Sum(row => row.Count),
+                    Variants: (List<DbSubmodelTemplateRow>?)g.OrderByDescending(row => row.Count).ToList()))
+                .OrderByDescending(t => t.TotalCount)
+                .ThenBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+        else
+        {
+            // Explizit angefragter Typ, der in der Discovery-Seite nicht vorkam:
+            // leer starten, die Stichprobe kommt dann komplett über die Query-Pipeline.
+            if (templateFilter != null && !localSamples.ContainsKey(templateFilter))
+            {
+                localSamples[templateFilter] = new List<ISubmodel>();
+            }
+
+            templateInfos = localSamples.Keys
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .Select(name => (name, (int?)null, (List<DbSubmodelTemplateRow>?)null))
+                .ToList();
+        }
+
+        var catalog = await GetConceptCatalog(securityConfig);
+        var cdById = new Dictionary<string, ConceptInfo>(StringComparer.Ordinal);
+        foreach (var concept in catalog)
+        {
+            cdById.TryAdd(concept.Id, concept);
+        }
+
+        var templates = new List<object>();
+        foreach (var info in templateInfos.Take(MaxDescribeTemplates))
+        {
+            localSamples.TryGetValue(info.Name, out var samplesForTemplate);
+            templates.Add(await DescribeTemplate(
+                securityConfig, info.Name, samplesForTemplate ?? new List<ISubmodel>(),
+                sampleCount, fieldCap, lang, withUsage, cdById, info.TotalCount, info.Variants));
+        }
+
+        return new
+        {
+            templateCount = templateInfos.Count,
+            truncatedTemplates = templateInfos.Count > MaxDescribeTemplates ? true : (bool?)null,
+            templates,
+            nextStep = templates.Count > 0
+                ? "So damit suchen (aas_query): EIN Merkmal: conditions=[{scope:\"sme\",field:\"semanticId\",op:\"eq\",value:<semanticId>},{scope:\"sme\",field:\"value\",op:\"gt\",value:\"...\"}] mit combine=\"and\" (beide auf DASSELBE Element bezogen). " +
+                  "MEHRERE Merkmale: je Merkmal EINE Bedingung {scope:\"sme\",idShortPath:<path>,op,value}. " +
+                  "Tabellen/Exporte: select=[<path>], für Felder anderer Submodelle derselben AAS /<SubmodelIdShort>/<path>. " +
+                  "Einzelne Merkmale per Stichwort: aas_find_concepts."
+                : "Keine Submodelle gefunden. Ohne submodel-Filter aufrufen oder Schreibweise des idShort prüfen.",
+        };
+    }
+
+    private async Task<object> DescribeTemplate(
+        SecurityConfig securityConfig, string templateName, List<ISubmodel> localSamples,
+        int sampleCount, int fieldCap, string lang, bool withUsage, Dictionary<string, ConceptInfo> cdById,
+        int? knownTotalCount, List<DbSubmodelTemplateRow>? semanticVariants)
+    {
+        var expression = BuildExpression(
+            new[] { new McpQueryCondition { Scope = "sm", Field = "idShort", Op = "eq", Value = templateName } }, "and");
+
+        var totalCount = knownTotalCount ?? 0;
+        if (knownTotalCount == null)
+        {
+            try
+            {
+                totalCount = await _dbRequestHandlerService.QueryCountSMs(
+                    securityConfig, string.Empty, string.Empty, string.Empty,
+                    new PaginationParameters(null, int.MaxValue), ResultType.Submodel, expression);
+            }
+            catch
+            {
+                // Gesamtzahl ist Zusatzinfo; Beschreibung geht mit totalCount=0 weiter.
+            }
+        }
+
+        // Stichprobe auffüllen: gestreute Offsets über den Bestand statt nur Anfangsbereich.
+        var sampled = new List<ISubmodel>(localSamples);
+        var sampledIds = new HashSet<string>(sampled.Select(s => s.Id ?? string.Empty), StringComparer.Ordinal);
+        var needed = Math.Min(sampleCount, totalCount > 0 ? totalCount : sampleCount) - sampled.Count;
+        for (var i = 1; i <= needed && totalCount > localSamples.Count; i++)
+        {
+            var offset = (long)totalCount * i / (needed + 1);
+            var (list, err) = await TryQuery(
+                securityConfig, new PaginationParameters(offset.ToString(CultureInfo.InvariantCulture), 1), ResultType.Submodel, expression);
+            if (err != null)
+            {
+                break;
+            }
+
+            var id = ExtractIdentifiers(list).FirstOrDefault();
+            if (id == null || !sampledIds.Add(id))
+            {
+                continue;
+            }
+
+            try
+            {
+                if (await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, id, null, null) is ISubmodel sm)
+                {
+                    sampled.Add(sm);
+                }
+            }
+            catch (NotFoundException)
+            {
+                // Treffer zwischen Query und Read verschwunden — Stichprobe bleibt einfach kleiner.
+            }
+        }
+
+        var fields = new Dictionary<string, FieldAggregate>(StringComparer.Ordinal);
+
+        void AggregateSample(ISubmodel sm)
+        {
+            var seenThisSample = new HashSet<string>(StringComparer.Ordinal);
+            CollectFieldInfos(sm.SubmodelElements, string.Empty, (path, element) =>
+            {
+                var semanticId = LastKeyValue(element.SemanticId);
+                var key = NormalizeStructurePath(path) + "|" + (semanticId ?? string.Empty);
+                if (!fields.TryGetValue(key, out var agg))
+                {
+                    fields[key] = agg = new FieldAggregate
+                    {
+                        Path = path,
+                        SemanticId = semanticId,
+                        Type = element.GetType().Name,
+                    };
+                }
+
+                agg.Variants.Add(path);
+                if (seenThisSample.Add(key))
+                {
+                    agg.SeenIn++;
+                }
+
+                agg.Example ??= ExampleValue(element, lang);
+                if (agg.ValueType == null && element is IProperty property)
+                {
+                    agg.ValueType = Stringification.ToString(property.ValueType);
+                }
+            });
+        }
+
+        foreach (var sm in sampled)
+        {
+            AggregateSample(sm);
+        }
+
+        // Alle Stichproben leer (z.B. CarbonFootprint: bei jedem Produkt vorhanden, aber überwiegend
+        // unbefüllt)? Dann gezielt eine Seite dieses Typs laden und die ersten befüllten Exemplare beschreiben.
+        if (fields.Count == 0 && totalCount > 0)
+        {
+            try
+            {
+                var retry = await _dbRequestHandlerService.ReadPagedSubmodels(
+                    new PaginationParameters(null, DescribeEmptyRetryPageSize), securityConfig, null, templateName, null, null);
+                var added = 0;
+                foreach (var sm in (retry ?? new List<IClass>()).OfType<ISubmodel>())
+                {
+                    if (sm.SubmodelElements is not { Count: > 0 } || !sampledIds.Add(sm.Id ?? string.Empty))
+                    {
+                        continue;
+                    }
+
+                    sampled.Add(sm);
+                    AggregateSample(sm);
+                    if (++added >= 3)
+                    {
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // Nachfass ist Best Effort; die Beschreibung bleibt sonst bei "alle Stichproben leer".
+            }
+        }
+
+        var emptySamples = sampled.Count(s => s.SubmodelElements is not { Count: > 0 });
+        string? note = null;
+        if (fields.Count == 0 && totalCount > 0)
+        {
+            note = $"Alle {sampled.Count} Stichproben sind leer — dieser Submodel-Typ existiert {totalCount}-mal, ist aber überwiegend unbefüllt. " +
+                   "Befüllte Exemplare über aas_query finden (sm.idShort eq + eine sme-Bedingung, z.B. sme.idShort eq <Feldname>).";
+        }
+        else if (emptySamples > 0)
+        {
+            note = $"{emptySamples} von {sampled.Count} Stichproben waren leer — dieser Submodel-Typ ist nicht bei allen Produkten befüllt.";
+        }
+
+        var ordered = fields.Values
+            .OrderByDescending(f => f.SeenIn)
+            .ThenBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var usage = new Dictionary<string, int?>(StringComparer.Ordinal);
+        if (withUsage)
+        {
+            // Allgegenwärtige Felder nicht zählen: der COUNT läuft dann über hunderttausende Treffer
+            // (teuer, gemessen ~5 s/Stück) und sagt nichts Neues — seenInSamples == sampledCount genügt.
+            // WICHTIG: über die semanticId ausschließen, nicht nur über die Feldzeile — dieselbe IRDI
+            // taucht oft zusätzlich an seltenen Pfaden auf (z.B. Zubehör-Äste) und würde dort doch gezählt.
+            var ubiquitousIds = new HashSet<string>(
+                fields.Values.Where(f => f.SeenIn >= sampled.Count && f.SemanticId != null).Select(f => f.SemanticId!),
+                StringComparer.Ordinal);
+
+            // Seltenste zuerst (selektivste = billigste + informativste Counts); Stückzahl- UND Zeitbudget,
+            // denn auch sample-seltene Felder können hunderttausendfach vorkommen.
+            var budget = MaxDescribeUsageLookups;
+            var usageWatch = Stopwatch.StartNew();
+            foreach (var f in ordered.Take(fieldCap).OrderBy(f => f.SeenIn))
+            {
+                if (f.SemanticId == null || usage.ContainsKey(f.SemanticId) || ubiquitousIds.Contains(f.SemanticId))
+                {
+                    continue;
+                }
+
+                if (s_conceptUsage.TryGetValue(f.SemanticId, out var entry) && DateTime.UtcNow - entry.Time < ConceptCacheTtl)
+                {
+                    usage[f.SemanticId] = entry.Count;
+                    continue;
+                }
+
+                if (budget-- <= 0 || usageWatch.Elapsed > DescribeUsageTimeBudget)
+                {
+                    continue;
+                }
+
+                usage[f.SemanticId] = await GetConceptUsageCount(securityConfig, f.SemanticId);
+            }
+        }
+
+        var preferGerman = string.Equals(lang, "de", StringComparison.OrdinalIgnoreCase);
+        var rows = ordered
+            .Take(fieldCap)
+            .Select(f =>
+            {
+                ConceptInfo? cd = null;
+                if (f.SemanticId != null)
+                {
+                    cdById.TryGetValue(f.SemanticId, out cd);
+                }
+
+                return new
+                {
+                    path = f.Path,
+                    variants = f.Variants.Count > 1 ? (int?)f.Variants.Count : null,
+                    type = f.Type,
+                    valueType = f.ValueType,
+                    semanticId = f.SemanticId,
+                    name = cd == null ? null : (preferGerman ? cd.NameDe ?? cd.NameEn : cd.NameEn ?? cd.NameDe),
+                    unit = cd?.Unit,
+                    example = f.Example,
+                    seenInSamples = f.SeenIn,
+                    usageCount = f.SemanticId != null && usage.TryGetValue(f.SemanticId, out var u) ? u : null,
+                };
+            })
+            .ToList();
+
+        return new
+        {
+            submodel = templateName,
+            semanticId = semanticVariants is { Count: > 0 }
+                ? semanticVariants[0].SemanticId
+                : LastKeyValue(sampled.FirstOrDefault()?.SemanticId),
+            semanticIdVariants = semanticVariants is { Count: > 1 }
+                ? (object?)semanticVariants.Select(v => new { semanticId = v.SemanticId, count = v.Count }).ToList()
+                : null,
+            totalCount,
+            sampledCount = sampled.Count,
+            note,
+            fieldCount = fields.Count,
+            truncated = fields.Count > fieldCap ? true : (bool?)null,
+            fields = rows,
+        };
+    }
+
+    // Rekursiver Strukturlauf: ruft visit(idShortPath, element) für jedes Element inkl. Kindern von Collection/List/Entity.
+    private static void CollectFieldInfos(List<ISubmodelElement>? elements, string prefix, Action<string, ISubmodelElement> visit)
+    {
+        if (elements == null)
+        {
+            return;
+        }
+
+        var index = 0;
+        foreach (var element in elements)
+        {
+            if (element == null)
+            {
+                continue;
+            }
+
+            var name = string.IsNullOrEmpty(element.IdShort) ? $"[{index}]" : element.IdShort;
+            var path = prefix.Length == 0 ? name : prefix + "." + name;
+            visit(path, element);
+
+            List<ISubmodelElement>? children = element switch
+            {
+                ISubmodelElementCollection collection => collection.Value,
+                ISubmodelElementList list => list.Value,
+                IEntity entity => entity.Statements,
+                _ => null,
+            };
+            CollectFieldInfos(children, path, visit);
+            index++;
+        }
+    }
+
+    // Nummerierte Wiederholungen (Application_standards00/01/02, [0]/[1]) auf eine Strukturzeile kollabieren:
+    // Ziffern am Segmentende werden für den Gruppierungsschlüssel neutralisiert.
+    private static string NormalizeStructurePath(string path)
+        => System.Text.RegularExpressions.Regex.Replace(path, @"\d+(?=\.|$)", "#");
+
+    private static string? LastKeyValue(IReference? reference)
+        => reference?.Keys is { Count: > 0 } keys ? keys[^1]?.Value : null;
+
+    // Kompakter Beispielwert eines Elements für die Modellbeschreibung (Skalar bzw. eine Sprache, gekürzt).
+    private static string? ExampleValue(ISubmodelElement element, string lang)
+        => element switch
+        {
+            IProperty property => TruncateText(property.Value, 40),
+            IMultiLanguageProperty mlp => TruncateText(PickLangText(mlp.Value, lang) ?? PickLangText(mlp.Value, null), 40),
+            IRange range => TruncateText($"{range.Min}..{range.Max}", 40),
+            _ => null,
+        };
 
     // --------------- Helfer ---------------
 

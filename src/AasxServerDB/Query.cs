@@ -266,6 +266,8 @@ public partial class Query
     // the full submodels (the "Collect results" phase). This is the fast,
     // scalable way to answer aas_count for large databases. pageSize should be
     // unbounded (e.g. int.MaxValue) so the count is the true total, not a page.
+    // A bounded pageSize is allowed and yields a capped count ("pageSize or more") —
+    // the subquery keeps its LIMIT, so huge match sets stop scanning early.
     internal int GetQueryDataCount(bool noSecurity, AasContext db,
         int pageFrom, int pageSize, ResultType resultType, string expression,
         SqlConditions? securitySqlConditions = null)
@@ -659,7 +661,7 @@ public partial class Query
         if (withExpression) // with expression
         {
             comTable = withCount
-                ? [CombineTablesLEFTCount(db, sqlConditions, resultType, flags, generatedSql)]
+                ? [CombineTablesLEFTCount(db, sqlConditions, resultType, flags, generatedSql, pageSize)]
                 : CombineTablesLEFT(db, sqlConditions, pageFrom, pageSize, resultType, flags, generatedSql);
         }
 
@@ -1764,7 +1766,8 @@ public partial class Query
         SqlConditions sqlConditions,
         ResultType resultType,
         List<string> flags,
-        List<string>? generatedSql = null)
+        List<string>? generatedSql = null,
+        int pageSize = int.MaxValue)
     {
         var sqlAasMerged = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("aas", ""));
         var sqlOverallCondition = NormalizeSqlAliases(sqlConditions.FormulaConditions.GetValueOrDefault("all", ""));
@@ -1792,6 +1795,15 @@ public partial class Query
             @"\r?\nORDER BY [^\r\n]+\r?\nLIMIT \d+ OFFSET \d+\s*$",
             string.Empty,
             RegexOptions.CultureInvariant);
+
+        // Capped count: with a bounded pageSize the subquery keeps a LIMIT, so the scan
+        // stops after pageSize distinct ids. Callers get "pageSize or more" instead of the
+        // exact total — cheap existence/prevalence checks on huge match sets.
+        if (pageSize > 0 && pageSize < int.MaxValue)
+        {
+            rawSql = rawSql.TrimEnd() + $"\r\nLIMIT {pageSize.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
         var countSql = $"SELECT COUNT(*) AS Value\r\nFROM (\r\n{rawSql.TrimEnd()}\r\n) AS count_query";
         AddGeneratedSql(generatedSql, countSql);
 

@@ -50,6 +50,8 @@ public class DbRequestResult
 
     public List<DbProjectionRow> ProjectionRows { get; set; }
 
+    public List<DbSubmodelTemplateRow> SubmodelTemplates { get; set; }
+
     public int Count { get; set; }
 }
 

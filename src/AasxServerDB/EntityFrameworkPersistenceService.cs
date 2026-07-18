@@ -235,6 +235,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.QuerySearchSMEs:
             case DbRequestOp.QueryCountSMs:
             case DbRequestOp.QueryProjectSMs:
+            case DbRequestOp.ReadSubmodelTemplates:
                 isAllowed = InitSecurity(securityConfig, out accessRules, out securitySqlConditions, "/query");
 
                 if (!isAllowed)
@@ -782,6 +783,25 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         result.ProjectionRows = ProjectionOperator.Project(db, dbRequest.Context.Params.ProjectionRequest);
+                        break;
+                    case DbRequestOp.ReadSubmodelTemplates:
+                        // Deterministic template inventory: GROUP BY over SMSets only (2 columns,
+                        // ~1 row per submodel — NOT the huge SMESets). Reads raw table rows without
+                        // object-level security filters, therefore restricted to noSecurity mode.
+                        if (securityConfig is not { NoSecurity: true })
+                        {
+                            throw new NotAllowed("NOT ALLOWED: ReadSubmodelTemplates is only available with security disabled.");
+                        }
+
+                        result.SubmodelTemplates = db.SMSets
+                            .GroupBy(sm => new { sm.IdShort, sm.SemanticId })
+                            .Select(g => new DbSubmodelTemplateRow
+                            {
+                                IdShort = g.Key.IdShort,
+                                SemanticId = g.Key.SemanticId,
+                                Count = g.Count(),
+                            })
+                            .ToList();
                         break;
                     case DbRequestOp.QueryGetSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;

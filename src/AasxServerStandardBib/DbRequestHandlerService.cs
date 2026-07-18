@@ -1366,6 +1366,23 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.ProjectionRows ?? [];
     }
 
+    public async Task<List<DbSubmodelTemplateRow>> ReadSubmodelTemplates(ISecurityConfig securityConfig)
+    {
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = new DbRequestParams()
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelTemplates, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SubmodelTemplates ?? [];
+    }
+
     public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression, bool sqlOnly = false)
     {
         var parameters = new DbRequestParams()

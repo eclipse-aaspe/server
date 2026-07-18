@@ -155,6 +155,8 @@ public static class ServerConfiguration
             ["aas_find_product"]        = ("Finding AAS product…", "AAS product found"),
             ["aas_find_product_simple"] = ("Finding product…", "Product found"),
             ["aas_get_element"]         = ("Reading AAS element…", "AAS element loaded"),
+            ["aas_find_concepts"]       = ("Searching concept definitions…", "Concept definitions found"),
+            ["aas_describe_model"]      = ("Analyzing data structures…", "Data structure overview ready"),
         };
 
     // Erlaubter Tool-Satz je nach MCP-Endpunkt-Pfad (null = alle Tools, voller Endpunkt /mcp).
