@@ -37,6 +37,7 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AdminShellNS;
+using Contracts;
 using IO.Swagger.Lib.V3.MCP;
 #if GRAPHQL
 using HotChocolate.AspNetCore;
@@ -123,7 +124,7 @@ public static class ServerConfiguration
                     return result;
                 });
 
-                filters.AddCallToolFilter(next => (context, ct) =>
+                filters.AddCallToolFilter(next => async (context, ct) =>
                 {
                     var allowed = AllowedMcpTools(context.Services);
                     if (allowed is not null
@@ -134,7 +135,14 @@ public static class ServerConfiguration
                             $"Tool '{context.Params.Name}' ist auf diesem MCP-Endpunkt nicht verfügbar.");
                     }
 
-                    return next(context, ct);
+                    var logSession = ExplicitLogSession(context.Services);
+                    if (!McpSessionLogStore.IsValidSessionId(logSession))
+                    {
+                        return await next(context, ct);
+                    }
+
+                    using var _ = DiagnosticsLog.BeginBrowserLogSession(logSession!);
+                    return await next(context, ct);
                 });
             });
     }
@@ -180,6 +188,18 @@ public static class ServerConfiguration
         }
 
         return null;
+    }
+
+    private static string? ExplicitLogSession(IServiceProvider? services)
+    {
+        var request = services?
+            .GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?
+            .HttpContext?
+            .Request;
+
+        return request?.Query.TryGetValue("logSession", out var value) == true
+            ? value.FirstOrDefault()
+            : null;
     }
 
         /// <summary>

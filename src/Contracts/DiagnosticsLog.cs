@@ -8,6 +8,7 @@ using System.Threading;
 public static class DiagnosticsLog
 {
     private static readonly AsyncLocal<int> McpScopeDepth = new();
+    private static readonly AsyncLocal<string?> BrowserLogSession = new();
     private static int GlobalMcpScopeDepth;
 
     public static bool QueryEnabled =>
@@ -31,6 +32,18 @@ public static class DiagnosticsLog
         });
     }
 
+    public static IDisposable BeginBrowserLogSession(string sessionId)
+    {
+        if (!McpSessionLogStore.IsValidSessionId(sessionId))
+        {
+            return new Scope(() => { });
+        }
+
+        var previous = BrowserLogSession.Value;
+        BrowserLogSession.Value = sessionId;
+        return new Scope(() => BrowserLogSession.Value = previous);
+    }
+
     public static void WriteMcp(string message, bool timestamp = false)
     {
         if (!McpEnabled)
@@ -41,13 +54,16 @@ public static class DiagnosticsLog
         if (message.Length == 0)
         {
             Console.WriteLine();
+            WriteBrowserLine(string.Empty);
             return;
         }
 
         var prefix = timestamp
             ? $"[MCP {Timestamp()}] "
             : "[MCP] ";
-        Console.WriteLine(prefix + message);
+        var line = prefix + message;
+        Console.WriteLine(line);
+        WriteBrowserLine(line);
     }
 
     public static void WriteQuery(string message, bool timestamp = false)
@@ -71,14 +87,26 @@ public static class DiagnosticsLog
             if (line.Length == 0)
             {
                 Console.WriteLine();
+                WriteBrowserLine(string.Empty);
                 continue;
             }
 
             var time = timestamp && firstNonEmpty
                 ? $"[{Timestamp()}] "
                 : string.Empty;
-            Console.WriteLine(indent + time + line);
+            var output = indent + time + line;
+            Console.WriteLine(output);
+            WriteBrowserLine(output);
             firstNonEmpty = false;
+        }
+    }
+
+    private static void WriteBrowserLine(string line)
+    {
+        var sessionId = BrowserLogSession.Value;
+        if (McpSessionLogStore.IsValidSessionId(sessionId))
+        {
+            McpSessionLogStore.Append(sessionId!, line);
         }
     }
 
