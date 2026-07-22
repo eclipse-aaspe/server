@@ -537,7 +537,7 @@ public class EventService : IEventService
         wp = true;
 
         var e = CollectPayloadForRestApi(null, eventData.ConditionSM, eventData.ConditionSME,
-             minInterval, maxInterval, wp, diffTime);
+             minInterval, maxInterval, wp, diffTime, submodelId);
 
         var options = new JsonSerializerOptions
         {
@@ -838,7 +838,7 @@ public class EventService : IEventService
 
     private List<EventPayload> CollectPayloadForRestApi(SqlConditions? securitySqlConditions,
     AasCore.Aas3_1.Property conditionSM, AasCore.Aas3_1.Property conditionSME, TimeSpan minInterval, TimeSpan maxInterval,
-    bool withPayload, DateTime diffTime)
+    bool withPayload, DateTime diffTime, string eventSubmodelId)
     {
         bool isREST = true;
 
@@ -892,7 +892,7 @@ public class EventService : IEventService
 
             if (searchSM is "(*)" or "*" or "")
             {
-                var s = db.SMSets.Select(sm => sm.TimeStampTree);
+                var s = db.SMSets.Where(sm => sm.Identifier != eventSubmodelId).Select(sm => sm.TimeStampTree);
                 if (s.Any())
                 {
                     timeStampMax = s.Max();
@@ -900,7 +900,7 @@ public class EventService : IEventService
             }
             else
             {
-                var s = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree);
+                var s = db.SMSets.Where(sm => sm.Identifier != eventSubmodelId).Where(searchSM).Select(sm => sm.TimeStampTree);
                 if (s.Any())
                 {
                     timeStampMax = s.Max();
@@ -909,7 +909,7 @@ public class EventService : IEventService
 
             eventPayload.SetTime(timeStampMax);
 
-            IQueryable<SMSet> smSearchSet = db.SMSets;
+            IQueryable<SMSet> smSearchSet = db.SMSets.Where(sm => sm.Identifier != eventSubmodelId);
             if (!searchSM.IsNullOrEmpty() && searchSM != "*")
             {
                 smSearchSet = smSearchSet.Where(searchSM);
@@ -944,7 +944,7 @@ public class EventService : IEventService
 
                 //entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
-                entry.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
+                entry.SetDataschema(EventPayload.REST_API_SM_SCHEMA_URL);
 
                 if (sm.SemanticId != null && !isREST)
                 {
@@ -1309,7 +1309,7 @@ public class EventService : IEventService
 
                                 entry.source = sourceString;
 
-                                entry.dataSchema = EventPayload.SCHEMA_URL + CrudOperator.GetModelType(sme.SMEType);
+                                entry.SetDataschema(EventPayload.SCHEMA_URL + CrudOperator.GetModelType(sme.SMEType));
 
                                 if (notDeletedIdShortList != null && notDeletedIdShortList.Count > 0)
                                 {
@@ -1367,7 +1367,7 @@ public class EventService : IEventService
                     entry.SetSubmodelType(entryType);
                     entry.SetTime(sm.TimeStampTree);
 
-                    entry.dataSchema = EventPayload.SCHEMA_URL + "submodel";
+                    entry.SetDataschema(EventPayload.SCHEMA_URL + "submodel");
 
                     if (sm.SemanticId != null && !isREST)
                     {
@@ -1451,7 +1451,7 @@ public class EventService : IEventService
     {
         if (!basicEventElementSourceString.IsNullOrEmpty())
         {
-            eventPayload.dataSchema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+            eventPayload.SetDataschema("https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement");
             eventPayload.id = $"{basicEventElementSourceString}-{eventPayload.time}";
             eventPayload.source = basicEventElementSourceString;
             eventPayload.cursor = "0";
@@ -2388,7 +2388,7 @@ public class EventService : IEventService
                             eventPayload.source = $"{Program.externalBlazor}/submodels/{Base64UrlEncoder.Encode(mqttEventDto.SubmodelId)}/events/{mqttEventDto.IdShortPath}.{mqttEventDto.IdShort}";
                         }
                         eventPayload.semanticid = (mqttEventDto.SemanticId != null && mqttEventDto.SemanticId?.Keys != null) ? mqttEventDto.SemanticId?.Keys[0].Value : "";
-                        eventPayload.dataSchema = "https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement";
+                        eventPayload.SetDataschema("https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.1.0#/components/schemas/BasicEventElement");
 
                     }
                     else
@@ -2402,11 +2402,11 @@ public class EventService : IEventService
                         {
                             sourceString += "/submodel-elements/" + idShortPath;
                             eventPayload.semanticid = smeSemanticId;
-                            eventPayload.dataSchema = EventPayload.SCHEMA_URL + smeModelType;
+                            eventPayload.SetDataschema(EventPayload.SCHEMA_URL + smeModelType);
                         }
                         else
                         {
-                            eventPayload.dataSchema = EventPayload.SCHEMA_URL + "submodel";
+                            eventPayload.SetDataschema(EventPayload.SCHEMA_URL + "submodel");
 
                             if (submodel.SemanticId != null)
                             {
@@ -2547,7 +2547,7 @@ public class EventService : IEventService
                     eventPayload.SetSubmodelType(EventPayloadType.Deleted);
                     eventPayload.SetTime(submodel.TimeStampTree);
 
-                    eventPayload.dataSchema = EventPayload.REST_API_SM_SCHEMA_URL;
+                    eventPayload.SetDataschema(EventPayload.REST_API_SM_SCHEMA_URL) ;
 
                     if (submodel.SemanticId != null)
                     {
