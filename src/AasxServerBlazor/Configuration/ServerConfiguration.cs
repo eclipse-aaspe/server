@@ -15,6 +15,7 @@ namespace AasxServerBlazor.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using AasSecurity;
 using AasxServerStandardBib.ServiceExtensions;
 using IO.Swagger.Controllers;
@@ -36,6 +37,8 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AdminShellNS;
+using Contracts;
+using IO.Swagger.Lib.V3.MCP;
 #if GRAPHQL
 using HotChocolate.AspNetCore;
 #endif
@@ -77,6 +80,126 @@ public static class ServerConfiguration
                     IncludeExceptionDetails = true
                 });
 #endif
+
+        // MCP-Server (Streamable HTTP) als dünner Adapter über die Query-Pipeline. Immer aktiv.
+        // Zwei Endpunkte: /mcp (voll, alle Tools) und /mcp-basic (nur aas_find_product, für schwache Modelle).
+        // Die Aufteilung erfolgt über Request-Filter, die den Request-Pfad prüfen.
+        services.AddHttpContextAccessor();
+        services.AddMcpServer()
+            .WithHttpTransport()
+            .WithTools<McpQueryTools>()
+            // Exportdateien (CSV/XLSX) der Export-Tools als MCP-Resource: aas-export://{token}.
+            .WithResources<McpExportResources>()
+            .WithRequestFilters(filters =>
+            {
+                filters.AddListToolsFilter(next => async (context, ct) =>
+                {
+                    var result = await next(context, ct);
+                    var allowed = AllowedMcpTools(context.Services);
+                    if (result.Tools is not null)
+                    {
+                        if (allowed is not null)
+                        {
+                            result.Tools = result.Tools.Where(t => allowed.Contains(t.Name)).ToList();
+                        }
+
+                        // OpenAI Apps SDK / ChatGPT compatibility: declare each (read-only, public) tool as
+                        // no-auth and give it invocation status text. securitySchemes is mirrored into _meta
+                        // (the location ChatGPT reads; the typed SDK cannot emit a custom top-level field).
+                        // title + readOnly/idempotent/etc. annotations come from the [McpServerTool] attributes.
+                        foreach (var tool in result.Tools)
+                        {
+                            var meta = tool.Meta ?? new System.Text.Json.Nodes.JsonObject();
+                            meta["securitySchemes"] = new System.Text.Json.Nodes.JsonArray(
+                                new System.Text.Json.Nodes.JsonObject { ["type"] = "noauth" });
+                            if (McpToolStatus.TryGetValue(tool.Name, out var status))
+                            {
+                                meta["openai/toolInvocation/invoking"] = status.Invoking;
+                                meta["openai/toolInvocation/invoked"] = status.Invoked;
+                            }
+                            tool.Meta = meta;
+                        }
+                    }
+
+                    return result;
+                });
+
+                filters.AddCallToolFilter(next => async (context, ct) =>
+                {
+                    var allowed = AllowedMcpTools(context.Services);
+                    if (allowed is not null
+                        && context.Params is not null
+                        && !allowed.Contains(context.Params.Name))
+                    {
+                        throw new InvalidOperationException(
+                            $"Tool '{context.Params.Name}' ist auf diesem MCP-Endpunkt nicht verfügbar.");
+                    }
+
+                    var logSession = ExplicitLogSession(context.Services);
+                    if (!McpSessionLogStore.IsValidSessionId(logSession))
+                    {
+                        return await next(context, ct);
+                    }
+
+                    using var _ = DiagnosticsLog.BeginBrowserLogSession(logSession!);
+                    return await next(context, ct);
+                });
+            });
+    }
+
+    // Per-tool invocation status text (OpenAI Apps SDK _meta), kept <= 64 chars per the spec.
+    private static readonly IReadOnlyDictionary<string, (string Invoking, string Invoked)> McpToolStatus =
+        new Dictionary<string, (string, string)>(StringComparer.Ordinal)
+        {
+            ["aas_query"]               = ("Searching Voyager…", "Voyager search complete"),
+            ["aas_query_export_csv"]    = ("Exporting Voyager results…", "CSV export ready"),
+            ["aas_query_export_xlsx"]   = ("Exporting Voyager results…", "Excel export ready"),
+            ["aas_count"]               = ("Counting Voyager results…", "Voyager count complete"),
+            ["aas_get_submodel"]        = ("Reading AAS submodel…", "AAS submodel loaded"),
+            ["aas_get_submodels"]       = ("Reading AAS submodels…", "AAS submodels loaded"),
+            ["aas_get_shell"]           = ("Reading AAS shell…", "AAS shell loaded"),
+            ["aas_get_shells"]          = ("Reading AAS shells…", "AAS shells loaded"),
+            ["aas_get_product"]         = ("Reading AAS product…", "AAS product loaded"),
+            ["aas_find_product"]        = ("Finding AAS product…", "AAS product found"),
+            ["aas_find_product_simple"] = ("Finding product…", "Product found"),
+            ["aas_get_element"]         = ("Reading AAS element…", "AAS element loaded"),
+            ["aas_find_concepts"]       = ("Searching concept definitions…", "Concept definitions found"),
+            ["aas_describe_model"]      = ("Analyzing data structures…", "Data structure overview ready"),
+        };
+
+    // Erlaubter Tool-Satz je nach MCP-Endpunkt-Pfad (null = alle Tools, voller Endpunkt /mcp).
+    // /mcp-simple zuerst prüfen (Pfad enthält nicht "mcp-basic"), dann /mcp-basic, sonst voll.
+    private static HashSet<string>? AllowedMcpTools(IServiceProvider? services)
+    {
+        var path = services?.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?.HttpContext?.Request.Path.Value;
+        if (path is null)
+        {
+            return null;
+        }
+
+        if (path.Contains("mcp-simple", StringComparison.OrdinalIgnoreCase))
+        {
+            return McpQueryTools.SimpleToolNames;
+        }
+
+        if (path.Contains("mcp-basic", StringComparison.OrdinalIgnoreCase))
+        {
+            return McpQueryTools.BasicToolNames;
+        }
+
+        return null;
+    }
+
+    private static string? ExplicitLogSession(IServiceProvider? services)
+    {
+        var request = services?
+            .GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?
+            .HttpContext?
+            .Request;
+
+        return request?.Query.TryGetValue("logSession", out var value) == true
+            ? value.FirstOrDefault()
+            : null;
     }
 
         /// <summary>
@@ -169,6 +292,23 @@ public static class ServerConfiguration
             Tool = { Enable = true }
         });
 #endif
+        // MCP-Endpoints (Streamable HTTP). PathBase ist "/api/v3.0", real also "/api/v3.0/mcp" bzw. "/api/v3.0/mcp-basic".
+        // /mcp = voller Toolsatz (starke Modelle), /mcp-basic = nur aas_find_product (schwache Modelle); Filter s. ConfigureMcp.
+        endpoints.MapMcp("/mcp");
+        endpoints.MapMcp("/mcp-basic");
+        endpoints.MapMcp("/mcp-simple");
+
+        // Download-Endpunkt für die von aas_query_export_csv/xlsx erzeugten Dateien.
+        // Das Token stammt aus der Tool-Antwort (downloadUrl); die Dateien verfallen nach ca. 60 Minuten.
+        endpoints.MapGet("/mcp-exports/{token}", (string token) =>
+        {
+            if (!McpExportFileStore.TryGet(token, out var content, out var fileName, out var mimeType))
+            {
+                return Microsoft.AspNetCore.Http.Results.NotFound();
+            }
+
+            return Microsoft.AspNetCore.Http.Results.File(content, mimeType, fileName);
+        });
     }
 
 #endregion

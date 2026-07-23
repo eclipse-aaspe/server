@@ -392,7 +392,7 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = false;
-        public static int startIndex = 0;
+        public static string startIndex = "0";
 
         public static bool withPolicy = false;
 
@@ -426,7 +426,7 @@ namespace AasxServer
             public int      AasxInMemory    { get; set; }
             public bool     WithDb          { get; set; }
             public bool     NoDbFiles       { get; set; }
-            public int      StartIndex      { get; set; }
+            public string   StartIndex      { get; set; }
             public bool     Analyze         { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
@@ -583,8 +583,8 @@ namespace AasxServer
             Program.htmlId      = a.HtmlId;
             Program.withDb      = a.WithDb;
 
-            if (a.StartIndex > 0)
-                startIndex = a.StartIndex;
+            if (!string.IsNullOrWhiteSpace(a.StartIndex))
+                startIndex = a.StartIndex.Trim();
             if (a.AasxInMemory > 0)
                 envimax = a.AasxInMemory;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
@@ -772,7 +772,7 @@ namespace AasxServer
             // Init DB
             if (withDb)
             {
-                persistenceService.InitDB(startIndex == 0 && !createFilesOnly, a.DataPath);
+                persistenceService.InitDB(startIndex == "0" && !createFilesOnly, a.DataPath, deferSearchIndexes: true);
             }
 
             string[] fileNames = null;
@@ -780,9 +780,9 @@ namespace AasxServer
             {
                 var filesPath = Path.Combine(AasxHttpContextHelper.DataPath, "files");
 
-                if (startIndex == 0)
+                if (startIndex == "0")
                 {
-                    persistenceService.InitDBFiles(startIndex == 0, AasxHttpContextHelper.DataPath);
+                    persistenceService.InitDBFiles(true, AasxHttpContextHelper.DataPath);
                 }
 
                 var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -808,22 +808,14 @@ namespace AasxServer
                 }
 
                 // Phase 2: regular AASX files
-                var regularFiles = fileNames
-                    .Skip(startIndex)
-                    .Where(f =>
-                    {
-                        var fl = f.ToLower(System.Globalization.CultureInfo.CurrentCulture);
-                        return !fl.Contains("globalsecurity", StringComparison.InvariantCulture) &&
-                               !fl.Contains("registry", StringComparison.InvariantCulture);
-                    })
-                    .ToArray();
-
-                // Full sorted list position (1-based) and --start-index (skip count) use fileNames order; parallel parse may complete out of order.
-                var fileIndexByPath = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                for (var fileIdx = 0; fileIdx < fileNames.Length; fileIdx++)
+                static bool IsRegularImportFile(string file)
                 {
-                    fileIndexByPath[fileNames[fileIdx]] = fileIdx;
+                    var lower = file.ToLower(System.Globalization.CultureInfo.CurrentCulture);
+                    return !lower.Contains("globalsecurity", StringComparison.InvariantCulture) &&
+                           !lower.Contains("registry", StringComparison.InvariantCulture);
                 }
+
+                var regularFiles = fileNames.Where(IsRegularImportFile).ToArray();
 
                 if (withDb)
                 {
@@ -836,63 +828,121 @@ namespace AasxServer
                     // Increase (e.g. 200–500) for fewer SaveChanges rounds on large imports; uses more RAM until the next flush.
                     const int importDbFlushEveryNPackages = 100;
                     const int importParseQueueCapacity = 128;
-                    var queue = new System.Collections.Concurrent.BlockingCollection<AasxServerDB.Entities.EnvSet>(boundedCapacity: importParseQueueCapacity);
+                    var queue = new System.Collections.Concurrent.BlockingCollection<
+                        (int Lane, int Index, string Path, AasxServerDB.Entities.EnvSet? Env, bool LaneCompleted)>(
+                        boundedCapacity: importParseQueueCapacity);
+
+                    var laneStarts = Enumerable.Range(0, parserThreads)
+                        .Select(lane => lane * fileNames.Length / parserThreads).ToArray();
+                    var laneEnds = Enumerable.Range(0, parserThreads)
+                        .Select(lane => (lane + 1) * fileNames.Length / parserThreads).ToArray();
+                    var resumeIndexes = new int[parserThreads];
+                    var startParts = startIndex.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                    if (startParts.Length == 1 && int.TryParse(startParts[0], out var globalStartIndex) && globalStartIndex >= 0)
+                    {
+                        for (var lane = 0; lane < parserThreads; lane++)
+                            resumeIndexes[lane] = Math.Clamp(globalStartIndex, laneStarts[lane], laneEnds[lane]);
+                    }
+                    else if (startParts.Length == parserThreads)
+                    {
+                        for (var lane = 0; lane < parserThreads; lane++)
+                        {
+                            if (!int.TryParse(startParts[lane], out resumeIndexes[lane]) ||
+                                resumeIndexes[lane] < laneStarts[lane] || resumeIndexes[lane] > laneEnds[lane])
+                            {
+                                Console.Error.WriteLine(
+                                    $"Invalid --start-index lane {lane + 1}: expected {laneStarts[lane]}..{laneEnds[lane]}, got '{startParts[lane]}'.");
+                                return 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine(
+                            $"Invalid --start-index '{startIndex}'. Use 0, one non-negative index, or four '/'-separated indexes.");
+                        return 1;
+                    }
+
+                    var regularBatchCount = Enumerable.Range(0, parserThreads).Sum(lane =>
+                        Enumerable.Range(resumeIndexes[lane], laneEnds[lane] - resumeIndexes[lane])
+                            .Count(index => IsRegularImportFile(fileNames[index])));
+                    Console.WriteLine($"Import resume: index {string.Join('/', resumeIndexes)}");
 
                     var parsedCount = 0;
-                    var producer = Task.Run(() =>
+                    var producers = Enumerable.Range(0, parserThreads).Select(lane => Task.Run(() =>
                     {
                         try
                         {
-                            Parallel.ForEach(regularFiles,
-                                new ParallelOptions { MaxDegreeOfParallelism = parserThreads },
-                                f =>
+                            for (var index = resumeIndexes[lane]; index < laneEnds[lane]; index++)
+                            {
+                                var file = fileNames[index];
+                                if (!IsRegularImportFile(file))
+                                    continue;
+                                try
                                 {
-                                    try
-                                    {
-                                        var envDB = AasxServerDB.VisitorAASX.ParseAASX(f, createFilesOnly);
-                                        if (envDB != null)
-                                        {
-                                            queue.Add(envDB);
-                                            System.Threading.Interlocked.Increment(ref parsedCount);
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Console.Error.WriteLine($"Error parsing {f}: {ex.Message} — skipping.");
-                                    }
-                                });
+                                    var envDB = AasxServerDB.VisitorAASX.ParseAASX(file, createFilesOnly);
+                                    queue.Add((lane, index, file, envDB, false));
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.Error.WriteLine($"Error parsing {file}: {ex.Message} — skipping.");
+                                    queue.Add((lane, index, file, null, false));
+                                }
+                                finally
+                                {
+                                    System.Threading.Interlocked.Increment(ref parsedCount);
+                                }
+                            }
                         }
                         finally
                         {
-                            queue.CompleteAdding();
+                            queue.Add((lane, laneEnds[lane], string.Empty, null, true));
                         }
+                    })).ToArray();
+                    var producer = Task.Run(() =>
+                    {
+                        try { Task.WaitAll(producers); }
+                        finally { queue.CompleteAdding(); }
                     });
 
                     int count = 0;
-                    var maxResumeStartIndex = startIndex;
-                    foreach (var envDB in queue.GetConsumingEnumerable())
+                    var sinceLastFlush = 0;
+                    var pendingResumeIndexes = resumeIndexes.ToArray();
+                    var committedResumeIndexes = resumeIndexes.ToArray();
+
+                    void FlushAndReport()
                     {
-                        count++;
-                        var aasxName = string.IsNullOrEmpty(envDB.Path) ? "?" : Path.GetFileName(envDB.Path);
-                        var idx = string.IsNullOrEmpty(envDB.Path) ? -1 : fileIndexByPath.GetValueOrDefault(envDB.Path, -1);
-                        if (idx >= 0)
+                        persistenceService.FlushBulkImport();
+                        Array.Copy(pendingResumeIndexes, committedResumeIndexes, parserThreads);
+                        sinceLastFlush = 0;
+                        Console.WriteLine(
+                            $"DB Flush committed: written={count} (regular batch {regularBatchCount}) " +
+                            $"index {string.Join('/', committedResumeIndexes)} parsed={parsedCount} " +
+                            $"({watch.ElapsedMilliseconds / 1000}s)");
+                    }
+
+                    foreach (var item in queue.GetConsumingEnumerable())
+                    {
+                        if (item.LaneCompleted)
                         {
-                            maxResumeStartIndex = Math.Max(maxResumeStartIndex, idx + 1);
+                            pendingResumeIndexes[item.Lane] = laneEnds[item.Lane];
+                            continue;
                         }
 
-                        // 1-based position in sorted directory; --start-index after this file finishes = (idx+1) — same as 0-based index of next file.
-                        Console.WriteLine(idx >= 0
-                            ? $"Import to DB ({idx + 1}/{fileNames.Length}): {aasxName}"
-                            : $"Import to DB (?/{fileNames.Length}): {aasxName}");
-                        AasxServerDB.VisitorAASX.AddEnvSetToBulk(envDB);
-                        if (count % importDbFlushEveryNPackages == 0)
-                        {
-                            Console.WriteLine(
-                                $"DB Flush: written={count} (regular batch {regularFiles.Length}) max --start-index={maxResumeStartIndex}/{fileNames.Length} parsed={parsedCount} ({watch.ElapsedMilliseconds / 1000}s)");
-                            persistenceService.FlushBulkImport();
-                        }
+                        pendingResumeIndexes[item.Lane] = item.Index + 1;
+                        if (item.Env == null)
+                            continue;
+
+                        count++;
+                        sinceLastFlush++;
+                        Console.WriteLine(
+                            $"Import to DB ({item.Index + 1}/{fileNames.Length}): {Path.GetFileName(item.Path)}");
+                        AasxServerDB.VisitorAASX.AddEnvSetToBulk(item.Env);
+                        if (sinceLastFlush >= importDbFlushEveryNPackages)
+                            FlushAndReport();
                     }
                     producer.Wait();
+                    FlushAndReport();
                 }
                 else
                 {
@@ -952,6 +1002,8 @@ namespace AasxServer
                 if (withDb)
                 {
                     persistenceService.EndBulkImport(a.Analyze);
+                    Console.WriteLine("Building deferred SQLite substring-search indexes...");
+                    persistenceService.InitializeSearchIndexes();
 
                     // preload AASX from DB and keep in memory
                     var packages = new List<AdminShellPackageEnv>();
@@ -1280,9 +1332,9 @@ namespace AasxServer
                                   new Option<bool>(
                                                    new[] {"--no-db-files"},
                                                    "If set, do not export files from AASX into ZIP"),
-                                  new Option<int>(
+                                  new Option<string>(
                                                   new[] {"--start-index"},
-                                                  "If set, start index in list of AASX files"),
+                                                  "Start index: 0 for full import, one global index, or four '/'-separated resume indexes"),
                                   new Option<bool>(
                                                    new[] {"--analyze"},
                                                    "If set, run ANALYZE after bulk import to update query planner statistics")

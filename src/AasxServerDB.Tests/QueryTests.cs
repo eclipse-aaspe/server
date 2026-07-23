@@ -657,6 +657,267 @@ public sealed class QueryTests
                 .Should().BeGreaterThan(1, "the user $or must split into separate temp-table INSERT branches");
     }
 
+    /// <summary>
+    /// Without security the OR-distribution fallback must still split a fully-paren-wrapped top-level
+    /// OR ("(A OR B)") via StripEnclosingParens — otherwise $UNION/$TEMPTABLE would degenerate to one
+    /// monolithic branch (full SMSets scan) instead of value-/index-driven branches.
+    /// </summary>
+    [Theory]
+    [InlineData("$UNION")]
+    [InlineData("$TEMPTABLE")]
+    public void UnionOrTemp_NoSecurity_DistributesTopLevelOr(string flag)
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition": { "$or": [
+              { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "Nameplate" } ] },
+              { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "TechnicalData" } ] }
+            ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var def = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery, includeDebugSql: true);
+        var flagged = new Query(_fixture.Grammar).GetQueryData(
+            noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+            ResultType.Submodel, userQuery + " " + flag, includeDebugSql: true);
+
+        def.Should().NotBeNull();
+        flagged.Should().NotBeNull();
+        flagged!.Ids.Should().BeEquivalentTo(def!.Ids, "OR distribution must preserve query semantics");
+
+        var sql = string.Join("\n", flagged.Sql);
+        if (flag == "$UNION")
+            sql.Should().Contain("UNION", "a fully-wrapped top-level OR must split even without security");
+        else
+            System.Text.RegularExpressions.Regex.Matches(sql, "INSERT OR IGNORE INTO union_ids").Count
+                .Should().BeGreaterThan(1, "a fully-wrapped top-level OR must split into temp-table branches even without security");
+    }
+
+    /// <summary>
+    /// A non-selective ("common") $contains is realized as a correlated EXISTS (early-stop under
+    /// ORDER BY/LIMIT), and the FTS candidate filter is NOT injected into it (which would re-materialize
+    /// the huge match set). Cap is lowered so any present term counts as common in the small fixture.
+    /// </summary>
+    [Fact]
+    public void Contains_CommonValue_RoutedToExists_WithoutFtsPrefilter()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [ { "$contains": [ { "$field": "$sme#value" }, { "$strVal": "ZVEI" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present term is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common contains must be realized as a correlated EXISTS");
+            sql.Should().NotContain("ValueSets_fts", "the common contains EXISTS must not get the FTS candidate filter");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    [Fact]
+    public void Contains_CommonValue_WithPagedLimit_RoutedToExists_WithoutFtsPrefilter()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [ { "$contains": [ { "$field": "$sme#value" }, { "$strVal": "ZVEI" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present term is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: 20,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common contains must also use EXISTS for paged queries");
+            sql.Should().NotContain("sm.Id IN (", "a common contains must not materialize the full value-driven match set");
+            sql.Should().NotContain("ValueSets_fts", "the common contains EXISTS must not get the FTS candidate filter");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A rare/absent $contains stays on the value-driven IN path with the FTS candidate filter
+    /// (fast for small/empty match sets).
+    /// </summary>
+    [Fact]
+    public void Contains_RareValue_StaysValueDrivenWithFtsPrefilter()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [ { "$contains": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz123" } ] } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // absent term still yields 0 matches -> rare
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sm.Id IN (", "a rare/absent contains stays value-driven");
+            sql.Should().Contain("ValueSets_fts", "the rare contains keeps the FTS candidate filter");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A common direct <c>$sme#value</c> equality must be realized as a correlated EXISTS (early-stop
+    /// under ORDER BY/LIMIT), NOT the value-driven IN — otherwise a frequent value (e.g. a manufacturer
+    /// name on hundreds of thousands of elements) materializes its whole match set even for LIMIT 3.
+    /// </summary>
+    [Fact]
+    public void Equality_CommonValue_RoutedToExists()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "2500" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present value is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common equality must be realized as a correlated EXISTS");
+            sql.Should().NotContain("sm.Id IN (", "a common equality must not materialize the full value-driven match set");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A rare/absent <c>$sme#value</c> equality stays on the value-driven IN path (small match set).
+    /// </summary>
+    [Fact]
+    public void Equality_RareValue_StaysValueDriven()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz-absent-value" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // absent value yields 0 matches -> rare
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sm.Id IN (", "a rare/absent equality stays value-driven");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A pure OR of direct <c>$sme#value</c> equalities represents MCP <c>in</c> and stays on the
+    /// value-driven path, instead of being downgraded to a correlated EXISTS just because it contains OR.
+    /// </summary>
+    [Fact]
+    public void EqualityOr_RareValues_StaysValueDriven()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$or": [
+                { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz-absent-a" } ] },
+                { "$eq": [ { "$field": "$sme#value" }, { "$strVal": "Zzqqxyz-absent-b" } ] }
+              ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // absent values yield 0 matches -> rare
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sm.Id IN (", "a pure OR of value equalities should stay value-driven");
+            sql.Should().NotContain("sme_value.SMId = sm.Id", "a pure OR of value equalities must not force a correlated EXISTS");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
+    /// <summary>
+    /// A common direct <c>$sme#value</c> prefix (<c>starts-with</c>) must also route to the correlated
+    /// EXISTS (early-stop), not the value-driven IN that materializes the whole prefix range.
+    /// </summary>
+    [Fact]
+    public void Prefix_CommonValue_RoutedToExists()
+    {
+        const string userQuery = """
+            { "Query": { "$select": "id", "$condition":
+              { "$starts-with": [ { "$field": "$sme#value" }, { "$strVal": "250" } ] } } }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var originalCap = Query.ContainsCommonProbeCap;
+        Query.ContainsCommonProbeCap = 1; // any present prefix is "common"
+        try
+        {
+            var result = new Query(_fixture.Grammar).GetQueryData(
+                noSecurity: true, db, pageFrom: 0, pageSize: int.MaxValue,
+                ResultType.Submodel, userQuery, includeDebugSql: true);
+
+            result.Should().NotBeNull();
+            var sql = string.Join("\n", result!.Sql);
+            sql.Should().Contain("sme_value.SMId = sm.Id", "a common prefix must be realized as a correlated EXISTS");
+            sql.Should().NotContain("sm.Id IN (", "a common prefix must not materialize the full value-driven match set");
+        }
+        finally
+        {
+            Query.ContainsCommonProbeCap = originalCap;
+        }
+    }
+
     private const string AnonymousSubmodelsAcl = """
         {
           "AllAccessPermissionRules": {
@@ -743,11 +1004,13 @@ public sealed class QueryTests
     }
 
     /// <summary>
-    /// A standalone <c>$sme#value</c> is realized via the value-join (not the EXISTS path). The element
-    /// FILTER must be applied inside that join too, otherwise a value in a hidden element could match.
+    /// A standalone <c>$sme#value</c> now routes through the value-match builder (a bare value
+    /// comparison is its own existential over the SM's elements), not a value join. The element
+    /// FILTER must be applied inside that value-match subquery too, otherwise a value in a hidden
+    /// element could match.
     /// </summary>
     [Fact]
-    public void StandaloneValue_WithSecurity_FilterInsideValueJoin()
+    public void StandaloneValue_WithSecurity_FilterInsideValueMatch()
     {
         const string userQuery = """
             { "Query": { "$select": "id", "$condition":
@@ -762,9 +1025,12 @@ public sealed class QueryTests
 
         result.Should().NotBeNull();
         var sql = string.Join("\n", result!.Sql);
-        // The FILTER must sit inside the value join (before its ") AS value" close).
-        sql.Should().MatchRegex(@"JOIN SMESets sme ON sme\.Id = v\.SMEId[\s\S]*?GLOB 'General\*'[\s\S]*?\) AS value",
-            "the element FILTER must sit inside the value join");
+        // A selective bare value '=' is value-driven (IN), not a value join. The element-level
+        // security FILTER must sit inside that value-match subquery, applied to the very elements
+        // whose value is matched.
+        sql.Should().Contain("sm.Id IN (", "a selective bare value '=' is value-driven (IN), not a value join");
+        sql.Should().MatchRegex(@"sm\.Id IN \([\s\S]*?v\.""SValue"" = '2500'[\s\S]*?GLOB 'General\*'[\s\S]*?\)\)",
+            "the element FILTER must sit inside the value-match subquery");
     }
 
     // -------------------------------------------------------------------------
@@ -951,5 +1217,41 @@ public sealed class QueryTests
         perRequest.FormulaConditions["all"].Should().Contain("('' GLOB '*xx.com')",
             because: "missing claims must produce an empty SQL literal, not leave the sentinel in place");
         perRequest.FormulaConditions["all"].Should().NotContain(SqlConditions.ClaimSentinelPrefix);
+    }
+
+    // -------------------------------------------------------------------------
+    // Negative number literals — $numVal: -40 (e.g. minus-degree ambient
+    // temperatures) must parse; requires NumberOptions.AllowSign on the grammar.
+    // -------------------------------------------------------------------------
+    [Fact]
+    public void NegativeNumVal_ParsesAndExecutes()
+    {
+        const string expression = """
+            {
+              "Query": {
+                "$select": "id",
+                "$condition":
+                  { "$le": [
+                    { "$field": "$sme#value" },
+                    { "$numVal": -40 }
+                  ] }
+              }
+            }
+            """;
+
+        using var db = _fixture.CreateDbContext();
+        var result = new Query(_fixture.Grammar)
+            .GetQueryData(
+                noSecurity: true,
+                db,
+                pageFrom: 0,
+                pageSize: int.MaxValue,
+                ResultType.Submodel,
+                expression,
+                includeDebugSql: true,
+                securitySqlConditions: null);
+
+        result.Should().NotBeNull("negative number literals must be accepted by the JSON grammar");
+        result!.Sql.Should().Contain(sql => sql.Contains("-40"));
     }
 }

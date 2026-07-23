@@ -66,5 +66,7 @@ public class DbRequestParams
     public DbEventRequest EventRequest { get; set; }
 
     public DbQueryRequest QueryRequest { get; set; }
+
+    public DbProjectionRequest ProjectionRequest { get; set; }
 }
 

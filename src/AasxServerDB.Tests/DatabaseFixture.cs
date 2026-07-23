@@ -67,6 +67,13 @@ public sealed class DatabaseFixture : IDisposable
             VisitorAASX.ImportAASXIntoDB(file, createFilesOnly: false);
         }
 
+        // Production installs this during InitDB. Build it after fixture import so
+        // query execution exercises the same SQLite substring-search path.
+        using (var indexDb = new AasContext())
+        {
+            SqliteTrigramIndex.Initialize(indexDb);
+        }
+
         Console.WriteLine("[DatabaseFixture] Import done.");
         using var verify = new AasContext();
         Console.WriteLine($"  SMSets:  {verify.SMSets.Count()}");

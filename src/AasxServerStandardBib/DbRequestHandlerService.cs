@@ -1246,7 +1246,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
+    public async Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, ResultType resultType, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1257,6 +1257,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                 SemanticId = semanticId,
                 Identifier = identifier,
                 Diff = diff,
+                ResultType = resultType,
                 Expression = expression
             }
         };
@@ -1341,6 +1342,45 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return ConvertQueryItems(tcs);
+    }
+
+    public async Task<List<DbProjectionRow>> QueryProjectSMs(ISecurityConfig securityConfig, DbProjectionRequest projectionRequest)
+    {
+        var parameters = new DbRequestParams()
+        {
+            ProjectionRequest = projectionRequest
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryProjectSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.ProjectionRows ?? [];
+    }
+
+    public async Task<List<DbSubmodelTemplateRow>> ReadSubmodelTemplates(ISecurityConfig securityConfig)
+    {
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = new DbRequestParams()
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelTemplates, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SubmodelTemplates ?? [];
     }
 
     public async Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression, bool sqlOnly = false)
