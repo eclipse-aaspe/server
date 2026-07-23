@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Irony.Parsing;
 using Microsoft.IdentityModel.Tokens;
 
 
@@ -65,7 +66,9 @@ public class EventPayload : IComparable<EventPayload>
     public string type { get; set; } // Created, Updated, Deleted
     public string source { get; set; } // link to source
     public JsonObject data { get; set; } // JSON Serialization
-    public string dataSchema { get; set; } // SCHEMA_URL + model type
+
+    public string dataSchema { get; private set; } // SCHEMA_URL + model type
+    public string dataschema { get; private set; } // SCHEMA_URL + model type fur REST API
     public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
     public string semanticid { get; set; }
     public string subject { get; set; }
@@ -79,12 +82,14 @@ public class EventPayload : IComparable<EventPayload>
         {
             id = Guid.NewGuid().ToString();
             domain = null;
+            dataSchema = null;
         }
         else
         {
             id = null;
             datacontenttype = DATA_CONTENT_TYPE;
             domain = "";
+            dataschema = null;
         }
 
         IsREST = isREST;
@@ -96,6 +101,18 @@ public class EventPayload : IComparable<EventPayload>
     {
         this.eventPayloadEntryType = type;
         this.type = $"io.admin-shell.submodel.{type.ToString()?.ToLower()}.v1";
+    }
+
+    public void SetDataschema(string dataschema)
+    {
+        if (IsREST)
+        {
+            this.dataschema = dataschema;
+        }
+        else
+        {
+            this.dataSchema = dataschema;
+        }
     }
 
     public void SetTime(DateTime dateTime)
@@ -165,6 +182,11 @@ public class EventPayload : IComparable<EventPayload>
 
     public string GetModelType()
     {
+        if (IsREST)
+        {
+            return dataschema.Split("/")?.Last();
+        }
+
         return dataSchema.Split("/")?.Last();
     }
 
