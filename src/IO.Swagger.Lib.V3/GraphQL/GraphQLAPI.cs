@@ -62,7 +62,7 @@ public class GraphQLAPI
     {
         var paginationParameters = new PaginationParameters(pageFrom, MAX_PAGE_SIZE);
         var securityConfig = new SecurityConfig(Program.noSecurity, null);
-        var result = await _dbRequestHandlerService.QueryCountSMs(securityConfig, semanticId, identifier, diff, paginationParameters, expression);
+        var result = await _dbRequestHandlerService.QueryCountSMs(securityConfig, semanticId, identifier, diff, paginationParameters, Contracts.QueryResult.ResultType.Submodel, expression);
         return result;
     }
 

@@ -250,6 +250,13 @@ public class ExistsCondition
 
     /// <summary>Predicate SQL inside the correlated EXISTS query.</summary>
     public string PredicateSql { get; set; } = "";
+
+    /// <summary>
+    /// Set at SQL-build time when a capped FTS probe found the (leading-wildcard contains) predicate to be
+    /// non-selective ("common"): realize it as a correlated EXISTS (early-stop under ORDER BY/LIMIT) instead
+    /// of the value-driven IN/FTS, which would materialize the huge match set. Default false.
+    /// </summary>
+    public bool PreferExists { get; set; }
 }
 
 /// <summary>

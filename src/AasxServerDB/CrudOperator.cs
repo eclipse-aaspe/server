@@ -33,7 +33,11 @@ namespace AasxServerDB
 
     internal static class ReadDiag
     {
-        public static bool Enabled = true;
+        // Master switch for the VERBOSE query/read diagnostics (per-phase ReadSubmodel
+        // timings, generated SQL, query plan, SearchSMs/combinedCondition banners).
+        // Off by default; re-enable by setting AAS_QUERY_LOG=1 (AAS_QUERY_DIAG=1 is
+        // kept as a backwards-compatible alias).
+        public static bool Enabled => DiagnosticsLog.QueryEnabled;
 
         public static long ReadSubmodelTicks;
         public static int ReadSubmodelCount;
@@ -65,14 +69,25 @@ namespace AasxServerDB
         public static void Print(string label)
         {
             if (!Enabled) return;
-            Console.WriteLine($"[ReadDiag] {label}");
-            Console.WriteLine($"[ReadDiag]   ReadSubmodel         : {ReadSubmodelCount,5} x, total {Ms(ReadSubmodelTicks),8:F1} ms, avg {(ReadSubmodelCount > 0 ? Ms(ReadSubmodelTicks) / ReadSubmodelCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]   IsSubmodelAllowed... : {AllowCheckCount,5} x, total {Ms(AllowCheckTicks),8:F1} ms, avg {(AllowCheckCount > 0 ? Ms(AllowCheckTicks) / AllowCheckCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]   ApplySmeSqlFilter... : {ApplyFilterCount,5} x, total {Ms(ApplyFilterTicks),8:F1} ms, avg {(ApplyFilterCount > 0 ? Ms(ApplyFilterTicks) / ApplyFilterCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]   GetSmeMerged         : {GetSmeMergedCount,5} x, total {Ms(GetSmeMergedTicks),8:F1} ms, avg {(GetSmeMergedCount > 0 ? Ms(GetSmeMergedTicks) / GetSmeMergedCount : 0),6:F2} ms");
-            Console.WriteLine($"[ReadDiag]     join ValueSets     : total {Ms(JoinSValueTicks),8:F1} ms");
-            Console.WriteLine($"[ReadDiag]     join OValueSets    : total {Ms(JoinOValueTicks),8:F1} ms");
-            Console.WriteLine($"[ReadDiag]     no-value residual  : total {Ms(NoValueTicks),8:F1} ms");
+            Write($"[ReadDiag] {label}");
+            Write($"[ReadDiag]   ReadSubmodel         : {ReadSubmodelCount,5} x, total {Ms(ReadSubmodelTicks),8:F1} ms, avg {(ReadSubmodelCount > 0 ? Ms(ReadSubmodelTicks) / ReadSubmodelCount : 0),6:F2} ms");
+            Write($"[ReadDiag]   IsSubmodelAllowed... : {AllowCheckCount,5} x, total {Ms(AllowCheckTicks),8:F1} ms, avg {(AllowCheckCount > 0 ? Ms(AllowCheckTicks) / AllowCheckCount : 0),6:F2} ms");
+            Write($"[ReadDiag]   ApplySmeSqlFilter... : {ApplyFilterCount,5} x, total {Ms(ApplyFilterTicks),8:F1} ms, avg {(ApplyFilterCount > 0 ? Ms(ApplyFilterTicks) / ApplyFilterCount : 0),6:F2} ms");
+            Write($"[ReadDiag]   GetSmeMerged         : {GetSmeMergedCount,5} x, total {Ms(GetSmeMergedTicks),8:F1} ms, avg {(GetSmeMergedCount > 0 ? Ms(GetSmeMergedTicks) / GetSmeMergedCount : 0),6:F2} ms");
+            Write($"[ReadDiag]     join ValueSets     : total {Ms(JoinSValueTicks),8:F1} ms");
+            Write($"[ReadDiag]     join OValueSets    : total {Ms(JoinOValueTicks),8:F1} ms");
+            Write($"[ReadDiag]     no-value residual  : total {Ms(NoValueTicks),8:F1} ms");
+        }
+
+        public static void Write(string message) => DiagnosticsLog.WriteQuery(message, IsStartMessage(message));
+
+        private static bool IsStartMessage(string message)
+        {
+            var line = message.TrimStart('\r', '\n');
+            return line.StartsWith("SearchSM", StringComparison.Ordinal) ||
+                (line.StartsWith("[ReadDiag] ReadSubmodel ", StringComparison.Ordinal) &&
+                 (line.EndsWith(": load SME rows and values...", StringComparison.Ordinal) ||
+                  line.EndsWith(": build SME tree...", StringComparison.Ordinal)));
         }
     }
 
@@ -690,6 +705,11 @@ namespace AasxServerDB
             if (querySME == null)
                 return null;
 
+            // Materialize the SME rows once.  The former no-value query translated
+            // all IDs which already had a value into a potentially huge SQL NOT IN
+            // expression.  That becomes extremely expensive for large submodels.
+            var allSmes = querySME.ToList();
+
             IQueryable<ValueSet> valueSets = db.ValueSets;
             var valueSql = sqlConditions?.FormulaConditions.GetValueOrDefault("value", "");
             if (!string.IsNullOrWhiteSpace(valueSql))
@@ -721,8 +741,8 @@ namespace AasxServerDB
             result.AddRange(joinOValue);
 
             var swNoVal = Stopwatch.StartNew();
-            var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
-            var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
+            var smeIdsWithValue = result.Select(sme => sme.smeSet.Id).ToHashSet();
+            var noValue = allSmes.Where(sme => !smeIdsWithValue.Contains(sme.Id))
                 .Select(sme => new SmeMerged {smSet = smSet, smeSet = sme, valueSet = null, oValueSet = null })
                 .ToList();
             result.AddRange(noValue);
@@ -769,7 +789,7 @@ namespace AasxServerDB
             if (result == null)
             {
                 if (ReadDiag.Enabled)
-                    Console.WriteLine($"[ReadDiag] ReadPagedSubmodels: SearchSMs returned null after {swSearch.ElapsedMilliseconds} ms");
+                    ReadDiag.Write($"[ReadDiag] ReadPagedSubmodels: SearchSMs returned null after {swSearch.ElapsedMilliseconds} ms");
                 return output;
             }
 
@@ -795,10 +815,10 @@ namespace AasxServerDB
             swPage.Stop();
             if (ReadDiag.Enabled)
             {
-                Console.WriteLine($"[ReadDiag] ReadPagedSubmodels page: pageSize={paginationParameters.Limit}, cursor={paginationParameters.Cursor}, returned={output.Count}, total={swPage.ElapsedMilliseconds} ms");
-                Console.WriteLine($"[ReadDiag]   prep mergedSqlConditions    : {swPrep.ElapsedMilliseconds,5} ms");
-                Console.WriteLine($"[ReadDiag]   SearchSMs                   : {swSearch.ElapsedMilliseconds,5} ms (returned {result.Count} ids)");
-                Console.WriteLine($"[ReadDiag]   db.SMSets.Where(...).ToList : {swMaterialize.ElapsedMilliseconds,5} ms (loaded {smDBList.Count} rows)");
+                ReadDiag.Write($"[ReadDiag] ReadPagedSubmodels page: pageSize={paginationParameters.Limit}, cursor={paginationParameters.Cursor}, returned={output.Count}, total={swPage.ElapsedMilliseconds} ms");
+                ReadDiag.Write($"[ReadDiag]   prep mergedSqlConditions    : {swPrep.ElapsedMilliseconds,5} ms");
+                ReadDiag.Write($"[ReadDiag]   SearchSMs                   : {swSearch.ElapsedMilliseconds,5} ms (returned {result.Count} ids)");
+                ReadDiag.Write($"[ReadDiag]   db.SMSets.Where(...).ToList : {swMaterialize.ElapsedMilliseconds,5} ms (loaded {smDBList.Count} rows)");
                 ReadDiag.Print("  ReadSubmodel phases:");
             }
 
@@ -810,6 +830,7 @@ namespace AasxServerDB
             bool skipAllowCheck = false)
         {
             var swRead = Stopwatch.StartNew();
+            var mergedRowCount = 0;
 
             if (!submodelIdentifier.IsNullOrEmpty())
             {
@@ -877,16 +898,20 @@ namespace AasxServerDB
                 }
 
                 var swMerged = Stopwatch.StartNew();
+                if (ReadDiag.Enabled)
+                    ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: load SME rows and values...");
                 var smeMerged = GetSmeMerged(
                     db,
                     filteredSmeQuery,
                     smDB,
                     securitySqlConditions);
                 swMerged.Stop();
+                mergedRowCount = smeMerged?.Count ?? 0;
                 if (ReadDiag.Enabled)
                 {
                     ReadDiag.GetSmeMergedTicks += swMerged.ElapsedTicks;
                     ReadDiag.GetSmeMergedCount++;
+                    ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: loaded {mergedRowCount} merged rows in {swMerged.ElapsedMilliseconds} ms");
                 }
 
                 if (smeMerged == null)
@@ -896,7 +921,13 @@ namespace AasxServerDB
 
                 if (smeMerged.Count != 0)
                 {
+                    var swTree = Stopwatch.StartNew();
+                    if (ReadDiag.Enabled)
+                        ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: build SME tree...");
                     LoadSME(submodel, null, null, null, smeMerged);
+                    swTree.Stop();
+                    if (ReadDiag.Enabled)
+                        ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: SME tree built in {swTree.ElapsedMilliseconds} ms");
                 }
             }
 
@@ -904,11 +935,16 @@ namespace AasxServerDB
             submodel.TimeStamp = smDB.TimeStamp;
             submodel.TimeStampTree = smDB.TimeStampTree;
             submodel.TimeStampDelete = smDB.TimeStampDelete;
+            var swParents = Stopwatch.StartNew();
             submodel.SetAllParents();
+            swParents.Stop();
+            if (ReadDiag.Enabled)
+                ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: parents set in {swParents.ElapsedMilliseconds} ms");
 
             swRead.Stop();
             if (ReadDiag.Enabled)
             {
+                ReadDiag.Write($"[ReadDiag] ReadSubmodel {smDB.Identifier}: {mergedRowCount} rows in {swRead.ElapsedMilliseconds} ms");
                 ReadDiag.ReadSubmodelTicks += swRead.ElapsedTicks;
                 ReadDiag.ReadSubmodelCount++;
             }
@@ -1166,6 +1202,11 @@ namespace AasxServerDB
             var smeFoundDB = db.SMESets.Where(sme => sme.SMId == smDBId && sme.IdShortPath == idShortPath);
             var smeFound = smeFoundDB.ToList();
 
+            if (smeFound.Count != 1)
+            {
+                return null;
+            }
+
             //for (int i = 1; i < idShortPathElements.Count; i++)
             //{
             //    idShort = idShortPathElements[i];
@@ -1179,7 +1220,15 @@ namespace AasxServerDB
             //    parentId = smeFound[0].Id;
             //}
 
-            var smeFoundTree = CrudOperator.GetTree(db, smDB[0], smeFound);
+            // Scalar data elements cannot contain child elements. Avoid walking a
+            // potentially huge or malformed descendant graph just to project one
+            // Property/MultiLanguageProperty value.
+            var containerTypes = new HashSet<string>(StringComparer.Ordinal)
+                { "RelA", "SML", "SMC", "Ent", "Opr" };
+            var normalizedType = smeFound[0].SMEType?.Split(VisitorAASX.OPERATION_SPLIT).LastOrDefault();
+            var smeFoundTree = containerTypes.Contains(normalizedType ?? string.Empty)
+                ? CrudOperator.GetTree(db, smDB[0], smeFound)
+                : smeFound;
             var smeTreeIds = smeFoundTree?.Select(sme => sme.Id).ToList() ?? [];
             var smeTreeQuery = db.SMESets.Where(sme => smeTreeIds.Contains(sme.Id));
             smeTreeQuery = ApplySmeSqlFilterConditions(db, smeTreeQuery, smDB[0], securitySqlConditions);
@@ -1379,20 +1428,59 @@ namespace AasxServerDB
             var smeSets = SMEList;
             if (tree != null)
             {
-                smeSets = tree.Select(t => t.smeSet).Distinct().ToList();
+                smeSets = tree.Select(t => t.smeSet).GroupBy(s => s.Id).Select(g => g.First()).ToList();
             }
-            // smeSets = smeSets.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
-            smeSets = smeSets.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.TimeStampTree).ToList();
+
+            // Build the parent/child lookup once.  Filtering the entire SME list
+            // again at every recursion level made large submodels O(n²).
+            var childrenByParent = smeSets
+                .GroupBy(s => s.ParentSMEId ?? 0)
+                .ToDictionary(g => g.Key, g => g.OrderBy(s => s.TimeStampTree).ToList());
+            var valuesBySme = tree?
+                .Where(item => item.valueSet is not null)
+                .GroupBy(item => item.valueSet.SMEId)
+                .ToDictionary(g => g.Key, g => g.Select(item => item.valueSet).ToList())
+                ?? new Dictionary<int, List<ValueSet>>();
+            var objectValuesBySme = tree?
+                .Where(item => item.oValueSet is not null)
+                .GroupBy(item => item.oValueSet.SMEId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToDictionary(item => item.oValueSet.Attribute, item => item.oValueSet.Value))
+                ?? new Dictionary<int, Dictionary<string, string>>();
+            var visited = new HashSet<int>();
+            LoadSMERecursive(
+                submodel, sme, smeSet, tree, childrenByParent,
+                valuesBySme, objectValuesBySme, visited);
+        }
+
+        private static void LoadSMERecursive(
+            Submodel submodel,
+            ISubmodelElement? sme,
+            SMESet? smeSet,
+            List<SmeMerged>? tree,
+            IReadOnlyDictionary<int, List<SMESet>> childrenByParent,
+            IReadOnlyDictionary<int, List<ValueSet>> valuesBySme,
+            IReadOnlyDictionary<int, Dictionary<string, string>> objectValuesBySme,
+            HashSet<int> visited)
+        {
+            var parentId = smeSet?.Id ?? 0;
+            if (!childrenByParent.TryGetValue(parentId, out var smeSets))
+                return;
 
             foreach (var smel in smeSets)
             {
+                // Invalid cyclic or duplicate parent relations must not recurse forever.
+                if (!visited.Add(smel.Id))
+                    continue;
+
                 // prefix of operation
                 var split = !smel.SMEType.IsNullOrEmpty() ? smel.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
                 var oprPrefix = split.Length == 2 ? split[0] : string.Empty;
                 smel.SMEType = split.Length == 2 ? split[1] : split[0];
 
                 // create SME from database
-                var nextSME = CreateSME(smel, tree);
+                var nextSME = CreateSME(smel, tree, valuesBySme, objectValuesBySme);
 
                 // add sme to sm or sme 
                 if (sme == null)
@@ -1436,7 +1524,9 @@ namespace AasxServerDB
                     case "SMC":
                     case "Ent":
                     case "Opr":
-                        LoadSME(submodel, nextSME, smel, SMEList, tree);
+                        LoadSMERecursive(
+                            submodel, nextSME, smel, tree, childrenByParent,
+                            valuesBySme, objectValuesBySme, visited);
                         break;
                 }
             }
@@ -1785,7 +1875,11 @@ namespace AasxServerDB
                     return null;
             }
         }
-        private static ISubmodelElement? CreateSME(SMESet smeSet, List<SmeMerged> tree = null)
+        private static ISubmodelElement? CreateSME(
+            SMESet smeSet,
+            List<SmeMerged> tree = null,
+            IReadOnlyDictionary<int, List<ValueSet>>? valuesBySme = null,
+            IReadOnlyDictionary<int, Dictionary<string, string>>? objectValuesBySme = null)
         {
             ISubmodelElement? sme = null;
 
@@ -1798,8 +1892,12 @@ namespace AasxServerDB
             }
             else
             {
-                value = GetValue(smeSet, tree);
-                oValue = GetOValue(smeSet, tree);
+                value = valuesBySme is not null
+                    ? GetValue(smeSet, valuesBySme.GetValueOrDefault(smeSet.Id, []))
+                    : GetValue(smeSet, tree);
+                oValue = objectValuesBySme is not null
+                    ? objectValuesBySme.GetValueOrDefault(smeSet.Id, new Dictionary<string, string>())
+                    : GetOValue(smeSet, tree);
             }
 
             switch (smeSet.SMEType)

@@ -87,10 +87,12 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool includeCD = false, bool createAASXPackage = false);
 
     Task<QResult> QuerySearchSMs(ISecurityConfig securityConfig, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
-    Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
+    Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, ResultType resultType, string expression);
     Task<QResult> QuerySearchSMEs(ISecurityConfig securityConfig, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff,
         string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression);
     Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression);
+    Task<List<DbRequests.DbProjectionRow>> QueryProjectSMs(ISecurityConfig securityConfig, DbRequests.DbProjectionRequest projectionRequest);
+    Task<List<DbRequests.DbSubmodelTemplateRow>> ReadSubmodelTemplates(ISecurityConfig securityConfig);
     Task<QueryDebugExecutionResult> QueryGetSMsDebug(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, ResultType resultType, string expression, bool sqlOnly = false);
 
     Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId);

@@ -117,10 +117,79 @@ namespace AasxServerDB
             Console.WriteLine($"  SMESets:   {_bulkDb.SMESets.Count()}");
             Console.WriteLine($"  ValueSets: {_bulkDb.ValueSets.Count()}");
             Console.WriteLine($"  OValueSets:{_bulkDb.OValueSets.Count()}");
+            // Keep the FTS size diagnostics available, but do not run them during startup:
+            // counting the large FTS tables adds noticeable delay on production datasets.
+            // PrintTrigramIndexSizes(_bulkDb);
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
             _bulkDb.Database.ExecuteSqlRaw("PRAGMA synchronous   = NORMAL;");
             _bulkDb.Dispose();
             _bulkDb = null;
+        }
+
+        // Reports the on-disk size and row count of the two FTS5 trigram indexes (value SValue +
+        // element IdShort) next to the table row counts at startup. Best-effort: the size needs
+        // SQLite's dbstat vtab; if it is not available we still print the FTS row counts. Fully
+        // wrapped so it can never block startup.
+        private static void PrintTrigramIndexSizes(AasContext db)
+        {
+            if (!db.Database.IsSqlite())
+                return;
+            try
+            {
+                var connection = db.Database.GetDbConnection();
+                if (connection.State != System.Data.ConnectionState.Open)
+                    connection.Open();
+
+                PrintOneTrigramIndex(connection, "ValueSets FTS (SValue)", SqliteTrigramIndex.TableName);
+                PrintOneTrigramIndex(connection, "SMESets FTS (IdShort)", SqliteTrigramIndex.IdShortTableName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  (FTS index sizes unavailable: {ex.Message})");
+            }
+        }
+
+        private static void PrintOneTrigramIndex(System.Data.Common.DbConnection connection, string label, string ftsTable)
+        {
+            long rows;
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = $"SELECT COUNT(*) FROM \"{ftsTable}\"";
+                rows = Convert.ToInt64(cmd.ExecuteScalar());
+            }
+
+            string sizeText;
+            try
+            {
+                using var cmd = connection.CreateCommand();
+                // dbstat lists the FTS5 shadow tables (…_data/_idx/_docsize/…) individually; GLOB '<name>*'
+                // rolls them up. GLOB treats '_' literally (LIKE would treat it as a wildcard).
+                cmd.CommandText = $"SELECT SUM(pgsize) FROM dbstat WHERE name GLOB '{ftsTable}*'";
+                var result = cmd.ExecuteScalar();
+                var bytes = result == null || result is DBNull ? 0L : Convert.ToInt64(result);
+                sizeText = FormatBytes(bytes);
+            }
+            catch
+            {
+                sizeText = "size n/a (dbstat off)";
+            }
+
+            Console.WriteLine($"  {label,-22}: {rows,14:N0} rows, {sizeText}");
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes <= 0)
+                return "0 B";
+            string[] units = { "B", "KB", "MB", "GB", "TB" };
+            double value = bytes;
+            var unit = 0;
+            while (value >= 1024 && unit < units.Length - 1)
+            {
+                value /= 1024;
+                unit++;
+            }
+            return $"{value:0.##} {units[unit]}";
         }
 
         // Parse AASX without touching DB — for parallel producer threads

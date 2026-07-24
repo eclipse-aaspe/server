@@ -1,0 +1,180 @@
+@page "/McpLog"
+@using Contracts
+@using System.Threading
+@using System.Threading.Tasks
+@implements IDisposable
+@inject NavigationManager Nav
+
+<style>
+    .mcp-log-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    .mcp-log-toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .mcp-log-toolbar input {
+        min-width: 280px;
+        max-width: 520px;
+        flex: 1;
+    }
+
+    .mcp-log-view {
+        height: calc(100vh - 220px);
+        min-height: 420px;
+        overflow: auto;
+        border: 1px solid #c8d0d8;
+        background: #0b1220;
+        color: #d9e7ff;
+        padding: 12px;
+        font-family: Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .mcp-log-muted {
+        color: #5f6c7a;
+        margin-bottom: 12px;
+    }
+</style>
+
+<div class="mcp-log-page">
+    <h3>MCP Log</h3>
+    <p class="mcp-log-muted">
+        Shows server-side MCP diagnostics only for the explicit <code>logSession</code> value.
+    </p>
+
+    <div class="mcp-log-toolbar">
+        <input class="form-control"
+               placeholder="logSession"
+               @bind="_sessionInput"
+               @bind:event="oninput" />
+        <button class="btn btn-primary" @onclick="ApplySession">Show</button>
+        <button class="btn btn-secondary" @onclick="ClearView" disabled="@(!HasSession)">Clear</button>
+    </div>
+
+    @if (!HasSession)
+    {
+        <p class="mcp-log-muted">
+            Open this page with <code>?logSession=your-token</code> or enter the same token used on the MCP endpoint.
+        </p>
+    }
+    else if (!McpSessionLogStore.IsValidSessionId(_session))
+    {
+        <p class="text-danger">
+            Invalid logSession. Use letters, digits, dash, underscore, dot or colon; max 128 characters.
+        </p>
+    }
+    else
+    {
+        <div class="mcp-log-muted">
+            MCP endpoint: <code>/api/v3.0/mcp?logSession=@_session</code>
+        </div>
+        <div class="mcp-log-view">
+@LogText
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<McpSessionLogEntry> _entries = new();
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource? _cts;
+    private string? _session;
+    private string? _sessionInput;
+    private long _lastSequence;
+
+    private bool HasSession => !string.IsNullOrWhiteSpace(_session);
+
+    private string LogText => _entries.Count == 0
+        ? "Waiting for MCP log lines..."
+        : string.Join(Environment.NewLine, _entries.Select(e => e.Line));
+
+    protected override void OnInitialized()
+    {
+        _session = ReadQueryValue("logSession");
+        _sessionInput = _session;
+        _cts = new CancellationTokenSource();
+        _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(750));
+        _ = PollAsync(_cts.Token);
+    }
+
+    private void ApplySession()
+    {
+        _session = string.IsNullOrWhiteSpace(_sessionInput) ? null : _sessionInput.Trim();
+        _entries.Clear();
+        _lastSequence = 0;
+    }
+
+    private void ClearView()
+    {
+        if (McpSessionLogStore.IsValidSessionId(_session))
+        {
+            McpSessionLogStore.Clear(_session!);
+        }
+
+        _entries.Clear();
+        _lastSequence = 0;
+    }
+
+    private async Task PollAsync(CancellationToken cancellationToken)
+    {
+        while (_timer is not null && await _timer.WaitForNextTickAsync(cancellationToken))
+        {
+            if (!McpSessionLogStore.IsValidSessionId(_session))
+            {
+                continue;
+            }
+
+            var next = McpSessionLogStore.Read(_session!, _lastSequence, 500);
+            if (next.Count == 0)
+            {
+                continue;
+            }
+
+            _entries.AddRange(next);
+            _lastSequence = _entries[^1].Sequence;
+
+            if (_entries.Count > 2000)
+            {
+                _entries.RemoveRange(0, _entries.Count - 2000);
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string? ReadQueryValue(string key)
+    {
+        var query = new Uri(Nav.Uri).Query.TrimStart('?');
+        if (query.Length == 0)
+        {
+            return null;
+        }
+
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var pair = part.Split('=', 2);
+            if (pair.Length == 2 && string.Equals(Uri.UnescapeDataString(pair[0]), key, StringComparison.Ordinal))
+            {
+                return Uri.UnescapeDataString(pair[1]);
+            }
+        }
+
+        return null;
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _timer?.Dispose();
+        _cts?.Dispose();
+    }
+}

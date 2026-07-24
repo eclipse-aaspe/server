@@ -71,6 +71,8 @@ public enum DbRequestOp
     QuerySearchSMEs,
 
     QueryGetSMs,
+    QueryProjectSMs,
+    ReadSubmodelTemplates,
 
     DeleteAASXByPackageId,
     ReadAASXByPackageId,

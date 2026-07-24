@@ -78,7 +78,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void InitDB(bool reloadDB, string dataPath)
+    public void InitDB(bool reloadDB, string dataPath, bool deferSearchIndexes = false)
     {
         AasContext.DataPath = dataPath;
 
@@ -165,6 +165,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         sqliteDb.Database.EnsureCreated();
 
+                        // During a bulk import, build the FTS indexes once afterwards.
+                        // Creating their triggers here would index every imported row separately.
+                        if (!deferSearchIndexes)
+                            SqliteTrigramIndex.Initialize(sqliteDb);
+
                         //sqliteDb.Database.Migrate();
                     }
                     catch (Exception ex)
@@ -177,6 +182,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
             }
         }
+    }
+
+    public void InitializeSearchIndexes()
+    {
+        if (AasContext.IsPostgres)
+            return;
+
+        using var sqliteDb = new SqliteAasContext();
+        SqliteTrigramIndex.Initialize(sqliteDb);
     }
 
     public void ImportAASXIntoDB(string filePath, bool createFilesOnly)
@@ -220,6 +234,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.QuerySearchSMs:
             case DbRequestOp.QuerySearchSMEs:
             case DbRequestOp.QueryCountSMs:
+            case DbRequestOp.QueryProjectSMs:
+            case DbRequestOp.ReadSubmodelTemplates:
                 isAllowed = InitSecurity(securityConfig, out accessRules, out securitySqlConditions, "/query");
 
                 if (!isAllowed)
@@ -729,13 +745,18 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     //        queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.QueryResult = qresult;
                     //    break;
-                    //case DbRequestOp.QueryCountSMs:
-                    //    queryRequest = dbRequest.Context.Params.QueryRequest;
-                    //    query = new Query(_grammar);
-                    //    var count = query.CountSMs(securityConfig, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
-                    //        queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                    //    result.Count = count;
-                    //    break;
+                    case DbRequestOp.QueryCountSMs:
+                        var countRequest = dbRequest.Context.Params.QueryRequest;
+                        var countQuery = new Query(_grammar);
+                        result.Count = countQuery.GetQueryDataCount(
+                            securityConfig.NoSecurity,
+                            db,
+                            countRequest.PageFrom,
+                            countRequest.PageSize,
+                            countRequest.ResultType,
+                            countRequest.Expression,
+                            securitySqlConditions);
+                        break;
                     //case DbRequestOp.QuerySearchSMEs:
                     //    queryRequest = dbRequest.Context.Params.QueryRequest;
                     //    query = new Query(_grammar);
@@ -751,6 +772,37 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     //        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                     //    result.Count = count;
                     //    break;
+                    case DbRequestOp.QueryProjectSMs:
+                        // The batch projection reads SMSets/SMESets/ValueSets directly and does NOT
+                        // apply the object-level security filters; it is therefore only available
+                        // with security disabled. Secured callers keep using the object read path
+                        // (ReadSubmodelById/ReadSubmodelElementByPath).
+                        if (securityConfig is not { NoSecurity: true })
+                        {
+                            throw new NotAllowed("NOT ALLOWED: QueryProjectSMs is only available with security disabled.");
+                        }
+
+                        result.ProjectionRows = ProjectionOperator.Project(db, dbRequest.Context.Params.ProjectionRequest);
+                        break;
+                    case DbRequestOp.ReadSubmodelTemplates:
+                        // Deterministic template inventory: GROUP BY over SMSets only (2 columns,
+                        // ~1 row per submodel — NOT the huge SMESets). Reads raw table rows without
+                        // object-level security filters, therefore restricted to noSecurity mode.
+                        if (securityConfig is not { NoSecurity: true })
+                        {
+                            throw new NotAllowed("NOT ALLOWED: ReadSubmodelTemplates is only available with security disabled.");
+                        }
+
+                        result.SubmodelTemplates = db.SMSets
+                            .GroupBy(sm => new { sm.IdShort, sm.SemanticId })
+                            .Select(g => new DbSubmodelTemplateRow
+                            {
+                                IdShort = g.Key.IdShort,
+                                SemanticId = g.Key.SemanticId,
+                                Count = g.Count(),
+                            })
+                            .ToList();
+                        break;
                     case DbRequestOp.QueryGetSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);

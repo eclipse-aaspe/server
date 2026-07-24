@@ -29,7 +29,9 @@ public class Running
 
 public interface IPersistenceService
 {
-    void InitDB(bool reloadDB, string dataPath);
+    void InitDB(bool reloadDB, string dataPath, bool deferSearchIndexes = false);
+
+    void InitializeSearchIndexes();
 
     void InitDBFiles(bool reloadDBFiles, string dataPath);
 
