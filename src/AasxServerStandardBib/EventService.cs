@@ -923,55 +923,57 @@ public class EventService : IEventService
 
             foreach (var sm in smSearchList)
             {
-                var entryType = EventPayloadType.Updated;
-                if (sm.TimeStampCreate > diffTime)
+                if (sm.SemanticId != null)
                 {
-                    entryType = EventPayloadType.Created;
-                }
-
-                if (sm.TimeStampTree > timeStampMax)
-                {
-                    timeStampMax = sm.TimeStampTree;
-                }
-
-                var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(sm.Identifier);
-
-                var entry = new EventPayload(isREST);
-
-                entry.source = sourceString;
-                entry.SetSubmodelType(entryType);
-                entry.SetTime(sm.TimeStampTree);
-
-                //entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
-
-                entry.SetDataschema(EventPayload.REST_API_SM_SCHEMA_URL);
-
-                if (sm.SemanticId != null && !isREST)
-                {
-                    entry.semanticid = sm.SemanticId;
-                }
-
-                if (isREST && sm.Identifier != null)
-                {
-                    entry.subject = sm.Identifier;
-                }
-
-                if (withPayload)
-                {
-                    var s = CrudOperator.ReadSubmodel(db, sm, loadIntoMemoryWithoutElements: true,
-                        securitySqlConditions: securitySqlConditions,
-                        skipAllowCheck: true);
-                    if (s != null)
+                    var entryType = EventPayloadType.Updated;
+                    if (sm.TimeStampCreate > diffTime)
                     {
-                        var j = Jsonization.Serialize.ToJsonObject(s);
-                        if (j != null)
+                        entryType = EventPayloadType.Created;
+                    }
+
+                    if (sm.TimeStampTree > timeStampMax)
+                    {
+                        timeStampMax = sm.TimeStampTree;
+                    }
+
+                    var sourceString = Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(sm.Identifier);
+
+                    var entry = new EventPayload(isREST);
+
+                    entry.source = sourceString;
+                    entry.SetSubmodelType(entryType);
+                    entry.SetTime(sm.TimeStampTree);
+
+                    //entry.time = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+
+                    entry.SetDataschema(EventPayload.REST_API_SM_SCHEMA_URL);
+
+
+                    if (sm.Identifier != null)
+                    {
+                        entry.subject = sm.Identifier;
+                    }
+
+                    if (withPayload)
+                    {
+                        var s = CrudOperator.ReadSubmodel(db, sm, loadIntoMemoryWithoutElements: true,
+                            securitySqlConditions: securitySqlConditions,
+                            skipAllowCheck: true);
+                        if (s != null)
                         {
-                            entry.data = ConvertSmJsonToRestApiSpecSmJson(j);
+                            var j = Jsonization.Serialize.ToJsonObject(s);
+                            if (j != null)
+                            {
+                                entry.data = ConvertSmJsonToRestApiSpecSmJson(j);
+                            }
                         }
                     }
+
+                    entry.semanticid = sm.SemanticId;
+
+                    _logger.LogDebug($"Event id: {entry.id}, Type: {entry.type}");
+                    eventPayloadList.Add(entry);
                 }
-                _logger.LogDebug($"Event id: {entry.id}, Type: {entry.type}");
-                eventPayloadList.Add(entry);
             }
         }
 
