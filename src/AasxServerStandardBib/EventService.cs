@@ -548,6 +548,8 @@ public class EventService : IEventService
 
         if (e.Count > 0)
         {
+
+            Console.WriteLine(JsonSerializer.Serialize(e.First(), options));
             var payloadObjString = JsonSerializer.Serialize(e, options);
 
             try
