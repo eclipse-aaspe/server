@@ -16,31 +16,35 @@ namespace AasxServer
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using AasxServerDB;
     using System.IdentityModel.Tokens.Jwt;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Security.Authentication;
     using System.Security.Claims;
+    using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
-    using System.Text.Json.Nodes;
     using System.Text;
+    using System.Text.Json;
+    using System.Text.Json.Nodes;
+    using System.Text.Json.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
+    using AasxServerDB;
     using AdminShellNS;
+    using Contracts;
+    using Contracts.Events;
+    using Contracts.Pagination;
+    using Contracts.Security;
     using Extensions;
     using IdentityModel;
     using IdentityModel.Client;
     using Microsoft.IdentityModel.Tokens;
-    using System.Security.Cryptography;
-    using System.Linq;
-    using System.Text.Json;
-    using Contracts;
-    using Contracts.Events;
     using MQTTnet;
-    using System.Security.Authentication;
-    using System.Text.Json.Serialization;
+    using NetTopologySuite.Geometries;
+    using ScottPlot;
 
     public class AasxTask
     {
@@ -78,20 +82,75 @@ namespace AasxServer
         public List<CfpNode> children = new List<CfpNode>();
         public int iChild = 0;
     }
+    // One submodel of a GlcNode, already resolved from the DB package env and prepared for
+    // rendering. Everything here is a pure function of the raw idShort, so it is computed once
+    // in createGlcList. Credential dependent link building stays in Glc.razor, because
+    // cs.credentials changes at runtime.
+    public class GlcSubmodelNode
+    {
+        public ISubmodel sm = null;
+        public string displayId = "";  // "NP", "BOM", "PCF", "PCF v1.0", "TECH", "DOC" or the raw idShort
+        public string iconName = null; // file name below wwwroot/sm_icons without .svg, null => text only
+        public string color = "green"; // "green" or "red" for " - NO ACCESS"
+        public int sortKey = int.MaxValue;
+    }
 
+    public class GlcNode
+    {
+        public string asset = null;
+        public AssetAdministrationShell aas = null;
+        public AasCore.Aas3_1.File manufacturerLogo = null;
+        public AasCore.Aas3_1.File productImage = null;
+        public string productDesignation = "";
+        public List<string> bom = new List<string>();
+        public DateTime bomTimestamp = new DateTime();
+        public List<GlcSubmodelNode> submodels = new List<GlcSubmodelNode>();
+    }
+
+    public class NoSecurityConfig : ISecurityConfig
+    {
+        public NoSecurityConfig()
+        {
+            NoSecurity = true;
+        }
+
+        public bool NoSecurity
+        {
+            get; set;
+        }
+
+        public ClaimsPrincipal Principal { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public NeededRights NeededRightsClaim { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    }
 
     public class AasxTaskService
     {
-        public AasxTaskService(IEventService eventService)
+        public AasxTaskService(IEventService eventService, IDbRequestHandlerService dbRequestHandlerService)
         {
             _eventService = eventService;
+            _dbRequestHandlerService = dbRequestHandlerService;
         }
 
         public List<AasxTask> taskList = new List<AasxTask>();
         public IEventService _eventService = null;
+        private readonly IDbRequestHandlerService _dbRequestHandlerService;
         public WebProxy proxy = null;
 
-        //CFP
+        //GLC
+        // the control cabinet AAS, used by MainLayout.getIframePathGlc()
+        public GlcNode glcRoot = null;
+        public List<GlcNode> glcList = new List<GlcNode>();
+        private volatile bool _glcRunning = false;
+        //public Property pCO2eqTotal = null;
+        ////public bool cfpValid = false;
+        public DateTime lastCreateTimestampGlc = new DateTime();
+        public bool credentialsChangedGlc = false;
+        public string hashBOMGlc = "";
+        //public long logCount = 0;
+        //public long logCountModulo = 30;
+        //public bool once = false;
+
+        ////CFP
         public CfpNode root = null;
         public string asbuilt_total = null;
         public Property pCO2eqTotal = null;
@@ -102,6 +161,7 @@ namespace AasxServer
         public long logCount = 0;
         public long logCountModulo = 30;
         public bool once = false;
+
         bool firstCycle = true;
 
         public void TaskInit()
@@ -323,9 +383,13 @@ namespace AasxServer
                         case "limitcount":
                             operation_limitCount(op, envIndex, timeStamp);
                             break;
-                        case "calculatecfp":
-                        case "calculate_cfp":
-                            operation_calculate_cfp(timeStamp);
+                        //case "calculatecfp":
+                        //case "calculate_cfp":
+                        //    operation_calculate_cfp(timeStamp);
+                        //    break;
+                        case "calculateglc":
+                        case "calculate_glc":
+                            operation_calculate_glc(timeStamp);
                             break;
                         case "timeseriessampling":
                             AasxTimeSeries.TimeSeries.timeSeriesSampling(false);
@@ -1673,23 +1737,23 @@ namespace AasxServer
                     return;
                 }
 
-                if (eventData.Direction.Value == "IN" && eventData.Mode.Value == "MQTT")
-                {
-                    if (firstCycle)
-                    {
-                        _eventService.CalculateCfpRequestReceived += (sender, e) =>
-                        {
-                            operation_calculate_cfp(DateTime.UtcNow);
+                //if (eventData.Direction.Value == "IN" && eventData.Mode.Value == "MQTT")
+                //{
+                //    if (firstCycle)
+                //    {
+                //        _eventService.CalculateCfpRequestReceived += (sender, e) =>
+                //        {
+                //            operation_calculate_cfp(DateTime.UtcNow);
 
-                        };
-                        _eventService.RegisterMqttMessage(eventData, submodelId, idShortPath);
-                    }
-                    else
-                    {
-                        _eventService.CheckMqttMessages(eventData, submodelId, idShortPath);
-                    }
-                    return;
-                }
+                //        };
+                //        _eventService.RegisterMqttMessage(eventData, submodelId, idShortPath);
+                //    }
+                //    else
+                //    {
+                //        _eventService.CheckMqttMessages(eventData, submodelId, idShortPath);
+                //    }
+                //    return;
+                //}
 
                 if (eventData.Direction.Value == "OUT" && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
                 {
@@ -2434,6 +2498,12 @@ namespace AasxServer
             public int iChild = 0;
         }
 
+        public void resetTimeStampGlc()
+        {
+            lastCreateTimestampGlc = new DateTime();
+            credentialsChangedGlc = true;
+        }
+
         public void resetTimeStamp()
         {
             lastCreateTimestamp = new DateTime();
@@ -3033,208 +3103,731 @@ namespace AasxServer
             return changed;
         }
 
-        public void operation_calculate_cfp(DateTime timeStamp)
+        private static string glcCleanupIdShort(string text)
         {
-            if (AasxServer.Program.initializingRegistry)
+            if (text == null)
+                return "";
+
+            text = text.Replace(" - EXTERNAL", "");
+            text = text.Replace(" - NO ACCESS", "");
+            text = text.Replace(" - COPY", "");
+            return text;
+        }
+
+        // custom ordering of submodels to achieve same rendering of all AASs
+        private static int glcSubmodelOrder(string idShort)
+        {
+            switch (idShort)
             {
-                // once = false; // one more again
-                return;
+                case "Nameplate": return 1;
+                case "BillOfMaterial": return 2;
+                case "ProductCarbonFootprint": return 3;
+                case "CarbonFootprint": return 4;
+                case "Documentation": return 5;
+                case "HandoverDocumentation": return 6;
+                case "TechnicalData": return 7;
+                default: return int.MaxValue;
+            }
+        }
+
+        private static GlcSubmodelNode glcMakeSubmodelNode(ISubmodel sm)
+        {
+            var raw = sm.IdShort ?? "";
+            var clean = glcCleanupIdShort(raw);
+            var node = new GlcSubmodelNode
+            {
+                sm = sm,
+                color = raw.Contains(" - NO ACCESS") ? "red" : "green",
+                sortKey = glcSubmodelOrder(clean)
+            };
+
+            // iconName must match a file in AasxServerBlazor/wwwroot/sm_icons
+            switch (clean)
+            {
+                case "Nameplate": node.displayId = "NP"; node.iconName = "np"; break;
+                case "BillOfMaterial": node.displayId = "BOM"; node.iconName = "bom"; break;
+                case "ProductCarbonFootprint": node.displayId = "PCF"; node.iconName = "pcf"; break;
+                case "CarbonFootprint": node.displayId = "PCF v1.0"; node.iconName = "pcf v1.0"; break;
+                case "TechnicalData": node.displayId = "TECH"; node.iconName = "tech"; break;
+                case "Documentation":
+                case "HandoverDocumentation": node.displayId = "DOC"; node.iconName = "doc"; break;
+                default: node.displayId = clean; node.iconName = null; break;
             }
 
-            if (once)
+            return node;
+        }
+
+        public async Task<bool> createGlcList(DateTime timeStamp)
+        {
+            bool changed = false;
+            string digest = "";
+            //cfpValid = true;
+
+            //// GET actual BOM
+            //AdminShellPackageEnv env = null;
+            //int aascount = AasxServer.Program.env.Length;
+
+            //for (int i = 0; i < aascount; i++)
+            //{
+            //    env = AasxServer.Program.env[i];
+            //    if (env != null)
+            //    {
+            //        var aas = env.AasEnv.AssetAdministrationShells[0];
+
+            //        Submodel newsm = null;
+            //        if (aas.Submodels != null && aas.Submodels.Count > 0)
+            //        {
+            //            // foreach (var smr in aas.Submodels)
+            //            for (int j = 0; j < aas.Submodels.Count; j++)
+            //            {
+            //                var smr = aas.Submodels[j];
+            //                var sm = env.AasEnv.FindSubmodel(smr);
+            //                if (sm != null && sm.IdShort != null)
+            //                {
+            //                    if (sm.IdShort.Contains("BillOfMaterial"))
+            //                    {
+            //                        if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[0].Name == "endpoint")
+            //                        {
+            //                        }
+
+            //                        break;
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+
+            //Dictionary<string, GlcNode> assetCfp = new Dictionary<string, GlcNode>();
+            var tempGlcList = new List<GlcNode>();
+            // cfpNode root = new cfpNode();
+
+            var paginationParameters = new PaginationParameters(null, null);
+
+            var aasen = await _dbRequestHandlerService.ReadPagedAssetAdministrationShells(paginationParameters, new NoSecurityConfig(), null, null);
+            var aascount = aasen.Count;
+
+            // Collect data from all AAS into glcNode(s)
+            for (int i = 0; i < aascount; i++)
+            {
+                var aasId = (aasen[i] as IAssetAdministrationShell).Id;
+                var envee = await _dbRequestHandlerService.ReadPackageEnv(aasId, null);
+                var env = envee?.PackageEnv;
+                if (env != null && env.AasEnv != null)
+                {
+                    // ReadPackageEnv returns the complete AASX env, so [0] is not necessarily aasen[i]
+                    var aas = env.AasEnv.AssetAdministrationShells.FirstOrDefault(a => a.Id == aasId) as AssetAdministrationShell;
+                    if (aas == null)
+                        continue;
+
+                    // internal PCF configuration shell (see RegistryInitializerService.cs:257), not demo data
+                    if (glcCleanupIdShort(aas.IdShort).ToLower() == "pcfviewtask")
+                        continue;
+
+                    var cfp = new GlcNode();
+                    cfp.aas = aas;
+                    cfp.asset = aas.AssetInformation?.GlobalAssetId;
+                    cfp.productDesignation = aas.IdShort;
+
+                    if (aas.Submodels != null && aas.Submodels.Count > 0)
+                    {
+                        foreach (var smr in aas.Submodels)
+                        {
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm != null && sm.IdShort != null)
+                            {
+                                if (sm.IdShort == "tasks")
+                                    continue;
+
+                                cfp.submodels.Add(glcMakeSubmodelNode(sm));
+
+                                if (sm.IdShort.Contains("BillOfMaterial"))
+                                {
+                                    //if (sm.IdShort.Contains(" - NO ACCESS"))
+                                    //{
+                                    //    Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
+                                    //    cfpValid = false;
+                                    //}
+
+                                    if (sm.SubmodelElements != null)
+                                    {
+                                        cfp.bomTimestamp = sm.TimeStampTree;
+                                        List<string> bom = new List<string>();
+                                        foreach (var v in sm.SubmodelElements)
+                                        {
+                                            string s = "";
+                                            if (v is Entity e)
+                                            {
+                                                s = e?.GlobalAssetId;
+                                                if (s != "")
+                                                {
+                                                    // check if first entity is newer than last cfp creation
+                                                    //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
+                                                    //s = e?.assetRef?.Keys?[ 0 ].Value;
+                                                    s = e?.GlobalAssetId;
+                                                    if (s != "")
+                                                    {
+                                                        bom.Add(s);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // assetBOM.Add(assetId, bom);
+                                        cfp.bom = bom;
+                                    }
+                                }
+
+                                if (sm.IdShort.Contains("TechnicalData") && sm.SubmodelElements != null)
+                                {
+                                    foreach (var v in sm.SubmodelElements)
+                                    {
+                                        if (v is SubmodelElementCollection c)
+                                        {
+                                            if (c.IdShort == "GeneralInformation")
+                                            {
+                                                foreach (var sme in c.Value)
+                                                {
+                                                    if (sme is AasCore.Aas3_1.File f)
+                                                    {
+                                                        if (f.IdShort == "ManufacturerLogo" || f.IdShort == "CompanyLogo")
+                                                            cfp.manufacturerLogo = f;
+                                                        if (f.IdShort == "ProductImage")
+                                                            cfp.productImage = f;
+                                                    }
+                                                    if (sme.IdShort == "ProductImages" && sme is SubmodelElementList l)
+                                                    {
+                                                        if (l.Value != null && l.Value[0] is SubmodelElementCollection cc)
+                                                        {
+                                                            if (cc.Value?[0].IdShort == "ImageFile" && cc.Value[0] is AasCore.Aas3_1.File ff)
+                                                            {
+                                                                cfp.productImage = ff;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (sm.IdShort.Contains("Nameplate") && sm.SubmodelElements != null)
+                                {
+                                    foreach (var v in sm.SubmodelElements)
+                                    {
+                                        if (v is MultiLanguageProperty p)
+                                        {
+                                            if (p.IdShort == "ManufacturerProductDesignation")
+                                            {
+                                                if (p.Value != null)
+                                                {
+                                                    string s = null;
+                                                    foreach (var ls in p.Value)
+                                                    {
+                                                        if (ls.Language.ToLower() == "en")
+                                                        {
+                                                            s = ls.Text;
+                                                            break; //english has priority over German
+                                                        }
+
+                                                        if (ls.Language.ToLower() == "de")
+                                                        {
+                                                            if (s != null)
+                                                                s = ls.Text;
+                                                        }
+                                                    }
+
+                                                    if (s != null)
+                                                        cfp.productDesignation = s;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // stable sort; List.Sort is unstable and would shuffle the unknown submodels
+                    cfp.submodels = cfp.submodels.OrderBy(s => s.sortKey).ToList();
+
+                    tempGlcList.Add(cfp);
+                }
+            }
+
+            // the cabinet is the shell that carries the BillOfMaterial, i.e. the composed one
+            glcRoot = tempGlcList.FirstOrDefault(n => n.bom.Count != 0)
+                      ?? tempGlcList.FirstOrDefault();
+            Console.WriteLine("glcList: " + tempGlcList.Count + " AAS, cabinet=" + (glcRoot?.aas?.IdShort ?? "<none>"));
+
+            // publish only after the loop, otherwise a render thread enumerates a list that is still growing
+            this.glcList = tempGlcList;
+            lastCreateTimestampGlc = timeStamp;
+            Program.signalNewData(1);
+
+            //// create children from BOM
+            //foreach (var d in assetCfp)
+            //{
+            //    var cfp = d.Value;
+            //    if (cfp.bom.Count != 0)
+            //    {
+            //        foreach (var asset in cfp.bom)
+            //        {
+            //            CfpNode child = null;
+            //            if (assetCfp.TryGetValue(asset, out child))
+            //            {
+            //                cfp.children.Add(child);
+            //            }
+            //        }
+
+            //        if (cfp?.aas?.IdShort == "ZveiControlCabinetAas - EXTERNAL")
+            //        {
+            //            root = cfp;
+            //        }
+            //    }
+            //}
+
+            //logCount++;
+
+            //if (digest != hashBOM)
+            //{
+            //    changed = true;
+            //    hashBOM = digest;
+            //}
+
+            return changed;
+        }
+
+        //public void operation_calculate_cfp(DateTime timeStamp)
+        //{
+        //    if (AasxServer.Program.initializingRegistry)
+        //    {
+        //        // once = false; // one more again
+        //        return;
+        //    }
+
+        //    if (once)
+        //        return;
+
+        //    // Iterate tree and calculate CFP values
+        //    bool changed = createCfpTree(timeStamp);
+
+        //    CfpNode node = root;
+        //    CfpNode parent = null;
+        //    List<CfpNode> stack = new List<CfpNode>();
+        //    int sp = -1;
+
+        //    while (node != null)
+        //    {
+        //        // create cfp combination only once at first child
+        //        if (node.iChild == 0)
+        //        {
+        //            if (node.cradleToGateCombination != null)
+        //            {
+        //                node.cradleToGateCombination.Value = "0.0";
+        //                if (node.cradleToGateModule != null)
+        //                {
+        //                    node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
+        //                }
+
+        //                node.cradleToGateCombination.SetTimeStamp(timeStamp);
+        //            }
+
+        //            if (node.productionCombination != null)
+        //            {
+        //                node.productionCombination.Value = "0.0";
+        //                if (node.productionModule != null)
+        //                {
+        //                    node.productionCombination.Value = node.productionModule.Value;
+        //                }
+
+        //                node.productionCombination.SetTimeStamp(timeStamp);
+        //            }
+
+        //            if (node.distributionCombination != null)
+        //            {
+        //                node.distributionCombination.Value = "0.0";
+        //                if (node.distributionModule != null)
+        //                {
+        //                    node.distributionCombination.Value = node.distributionModule.Value;
+        //                }
+
+        //                node.distributionCombination.SetTimeStamp(timeStamp);
+        //            }
+
+        //            if (node.weightCombination != null)
+        //            {
+        //                node.weightCombination.Value = "0.0";
+        //                if (node.weightModule != null)
+        //                {
+        //                    node.weightCombination.Value = node.weightModule.Value;
+        //                }
+
+        //                node.weightCombination.SetTimeStamp(timeStamp);
+        //            }
+        //        }
+
+        //        // move up, if all children iterated
+        //        if (node.iChild == node.children.Count)
+        //        {
+        //            node.iChild = 0;
+        //            if (sp == -1)
+        //            {
+        //                node = null;
+        //            }
+        //            else
+        //            {
+        //                parent = stack[sp];
+        //                if (parent.cradleToGateCombination != null)
+        //                {
+        //                    Property p = node.cradleToGateModule;
+        //                    if (node.cradleToGateCombination != null)
+        //                        p = node.cradleToGateCombination;
+
+        //                    if (p != null)
+        //                    {
+        //                        double value1 = 0.0;
+        //                        double value2 = 0.0;
+        //                        try
+        //                        {
+        //                            value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+        //                            value1 = Math.Round(value1 + value2, 8);
+        //                            parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+        //                            parent.cradleToGateCombination.SetTimeStamp(timeStamp);
+        //                        }
+        //                        catch
+        //                        {
+        //                        }
+        //                    }
+        //                }
+
+        //                if (parent.productionCombination != null)
+        //                {
+        //                    Property p = node.productionModule;
+        //                    if (node.productionCombination != null)
+        //                        p = node.productionCombination;
+        //                    if (p != null)
+        //                    {
+        //                        double value1 = 0.0;
+        //                        double value2 = 0.0;
+        //                        try
+        //                        {
+        //                            value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
+        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+        //                            value1 = Math.Round(value1 + value2, 8);
+        //                            parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+        //                            parent.productionCombination.SetTimeStamp(timeStamp);
+        //                        }
+        //                        catch
+        //                        {
+        //                        }
+        //                    }
+        //                }
+
+        //                if (parent.distributionCombination != null)
+        //                {
+        //                    Property p = node.distributionModule;
+        //                    if (node.distributionCombination != null)
+        //                        p = node.distributionCombination;
+        //                    if (p != null)
+        //                    {
+        //                        double value1 = 0.0;
+        //                        double value2 = 0.0;
+        //                        try
+        //                        {
+        //                            value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
+        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+        //                            value1 = Math.Round(value1 + value2, 8);
+        //                            parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+        //                            parent.distributionCombination.SetTimeStamp(timeStamp);
+        //                        }
+        //                        catch
+        //                        {
+        //                        }
+        //                    }
+        //                }
+
+        //                if (parent.weightCombination != null)
+        //                {
+        //                    Property p = node.weightModule;
+        //                    if (node.weightCombination != null)
+        //                        p = node.weightCombination;
+        //                    if (p != null)
+        //                    {
+        //                        double value1 = 0.0;
+        //                        double value2 = 0.0;
+        //                        try
+        //                        {
+        //                            value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
+        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+        //                            value1 = Math.Round(value1 + value2, 8);
+        //                            parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+        //                            parent.weightCombination.SetTimeStamp(timeStamp);
+        //                        }
+        //                        catch
+        //                        {
+        //                        }
+        //                    }
+        //                }
+
+        //                parent = null;
+        //                node = stack[sp];
+        //                stack.RemoveAt(sp);
+        //                sp--;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            // Interate children
+        //            stack.Add(node);
+        //            sp++;
+        //            node = node.children[node.iChild++];
+        //        }
+        //    }
+
+        //    if (pCO2eqTotal != null)
+        //    {
+        //        pCO2eqTotal.Value = "0";
+        //        pCO2eqTotal.Value = root?.cradleToGateCombination?.Value;
+        //    }
+
+        //    // once = true;
+        //    // if (root != null && root.bomTimestamp > lastCreateTimestamp)
+        //    if (changed || credentialsChanged)
+        //    {
+        //        Program.signalNewData(1);
+        //        lastCreateTimestamp = timeStamp;
+        //        credentialsChanged = false;
+        //    }
+        //}
+
+        public void operation_calculate_glc(DateTime timeStamp)
+        {
+
+            //if (AasxServer.Program.initializingRegistry)
+            //{
+            //    // once = false; // one more again
+            //    return;
+            //}
+
+            //if (once)
+            //    return;
+
+            if (!firstCycle || _glcRunning)
                 return;
+
+            _glcRunning = true;
+
+            // TasksCyclic() is synchronous, so the DB scan has to run off the task thread.
+            // Without the try/catch every failure would vanish as an unobserved task fault.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await createGlcList(timeStamp);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("createGlcList failed: " + ex.Message);
+                }
+                finally
+                {
+                    _glcRunning = false;
+                }
+            });
 
             // Iterate tree and calculate CFP values
-            bool changed = createCfpTree(timeStamp);
+            //bool changed = createGlcList(timeStamp);
 
-            CfpNode node = root;
-            CfpNode parent = null;
-            List<CfpNode> stack = new List<CfpNode>();
-            int sp = -1;
+            //GlcNode node = glcRoot;
+            //CfpNode parent = null;
+            //List<CfpNode> stack = new List<CfpNode>();
+            //int sp = -1;
 
-            while (node != null)
-            {
-                // create cfp combination only once at first child
-                if (node.iChild == 0)
-                {
-                    if (node.cradleToGateCombination != null)
-                    {
-                        node.cradleToGateCombination.Value = "0.0";
-                        if (node.cradleToGateModule != null)
-                        {
-                            node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
-                        }
+            //while (node != null)
+            //{
+            //    // create cfp combination only once at first child
+            //    if (node.iChild == 0)
+            //    {
+            //        if (node.cradleToGateCombination != null)
+            //        {
+            //            node.cradleToGateCombination.Value = "0.0";
+            //            if (node.cradleToGateModule != null)
+            //            {
+            //                node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
+            //            }
 
-                        node.cradleToGateCombination.SetTimeStamp(timeStamp);
-                    }
+            //            node.cradleToGateCombination.SetTimeStamp(timeStamp);
+            //        }
 
-                    if (node.productionCombination != null)
-                    {
-                        node.productionCombination.Value = "0.0";
-                        if (node.productionModule != null)
-                        {
-                            node.productionCombination.Value = node.productionModule.Value;
-                        }
+            //        if (node.productionCombination != null)
+            //        {
+            //            node.productionCombination.Value = "0.0";
+            //            if (node.productionModule != null)
+            //            {
+            //                node.productionCombination.Value = node.productionModule.Value;
+            //            }
 
-                        node.productionCombination.SetTimeStamp(timeStamp);
-                    }
+            //            node.productionCombination.SetTimeStamp(timeStamp);
+            //        }
 
-                    if (node.distributionCombination != null)
-                    {
-                        node.distributionCombination.Value = "0.0";
-                        if (node.distributionModule != null)
-                        {
-                            node.distributionCombination.Value = node.distributionModule.Value;
-                        }
+            //        if (node.distributionCombination != null)
+            //        {
+            //            node.distributionCombination.Value = "0.0";
+            //            if (node.distributionModule != null)
+            //            {
+            //                node.distributionCombination.Value = node.distributionModule.Value;
+            //            }
 
-                        node.distributionCombination.SetTimeStamp(timeStamp);
-                    }
+            //            node.distributionCombination.SetTimeStamp(timeStamp);
+            //        }
 
-                    if (node.weightCombination != null)
-                    {
-                        node.weightCombination.Value = "0.0";
-                        if (node.weightModule != null)
-                        {
-                            node.weightCombination.Value = node.weightModule.Value;
-                        }
+            //        if (node.weightCombination != null)
+            //        {
+            //            node.weightCombination.Value = "0.0";
+            //            if (node.weightModule != null)
+            //            {
+            //                node.weightCombination.Value = node.weightModule.Value;
+            //            }
 
-                        node.weightCombination.SetTimeStamp(timeStamp);
-                    }
-                }
+            //            node.weightCombination.SetTimeStamp(timeStamp);
+            //        }
+            //    }
 
-                // move up, if all children iterated
-                if (node.iChild == node.children.Count)
-                {
-                    node.iChild = 0;
-                    if (sp == -1)
-                    {
-                        node = null;
-                    }
-                    else
-                    {
-                        parent = stack[sp];
-                        if (parent.cradleToGateCombination != null)
-                        {
-                            Property p = node.cradleToGateModule;
-                            if (node.cradleToGateCombination != null)
-                                p = node.cradleToGateCombination;
+            //    // move up, if all children iterated
+            //    if (node.iChild == node.children.Count)
+            //    {
+            //        node.iChild = 0;
+            //        if (sp == -1)
+            //        {
+            //            node = null;
+            //        }
+            //        else
+            //        {
+            //            parent = stack[sp];
+            //            if (parent.cradleToGateCombination != null)
+            //            {
+            //                Property p = node.cradleToGateModule;
+            //                if (node.cradleToGateCombination != null)
+            //                    p = node.cradleToGateCombination;
 
-                            if (p != null)
-                            {
-                                double value1 = 0.0;
-                                double value2 = 0.0;
-                                try
-                                {
-                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
-                                    parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.cradleToGateCombination.SetTimeStamp(timeStamp);
-                                }
-                                catch
-                                {
-                                }
-                            }
-                        }
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.cradleToGateCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
 
-                        if (parent.productionCombination != null)
-                        {
-                            Property p = node.productionModule;
-                            if (node.productionCombination != null)
-                                p = node.productionCombination;
-                            if (p != null)
-                            {
-                                double value1 = 0.0;
-                                double value2 = 0.0;
-                                try
-                                {
-                                    value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
-                                    parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.productionCombination.SetTimeStamp(timeStamp);
-                                }
-                                catch
-                                {
-                                }
-                            }
-                        }
+            //            if (parent.productionCombination != null)
+            //            {
+            //                Property p = node.productionModule;
+            //                if (node.productionCombination != null)
+            //                    p = node.productionCombination;
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.productionCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
 
-                        if (parent.distributionCombination != null)
-                        {
-                            Property p = node.distributionModule;
-                            if (node.distributionCombination != null)
-                                p = node.distributionCombination;
-                            if (p != null)
-                            {
-                                double value1 = 0.0;
-                                double value2 = 0.0;
-                                try
-                                {
-                                    value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
-                                    parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.distributionCombination.SetTimeStamp(timeStamp);
-                                }
-                                catch
-                                {
-                                }
-                            }
-                        }
+            //            if (parent.distributionCombination != null)
+            //            {
+            //                Property p = node.distributionModule;
+            //                if (node.distributionCombination != null)
+            //                    p = node.distributionCombination;
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.distributionCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
 
-                        if (parent.weightCombination != null)
-                        {
-                            Property p = node.weightModule;
-                            if (node.weightCombination != null)
-                                p = node.weightCombination;
-                            if (p != null)
-                            {
-                                double value1 = 0.0;
-                                double value2 = 0.0;
-                                try
-                                {
-                                    value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
-                                    parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.weightCombination.SetTimeStamp(timeStamp);
-                                }
-                                catch
-                                {
-                                }
-                            }
-                        }
+            //            if (parent.weightCombination != null)
+            //            {
+            //                Property p = node.weightModule;
+            //                if (node.weightCombination != null)
+            //                    p = node.weightCombination;
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.weightCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
 
-                        parent = null;
-                        node = stack[sp];
-                        stack.RemoveAt(sp);
-                        sp--;
-                    }
-                }
-                else
-                {
-                    // Interate children
-                    stack.Add(node);
-                    sp++;
-                    node = node.children[node.iChild++];
-                }
-            }
+            //            parent = null;
+            //            node = stack[sp];
+            //            stack.RemoveAt(sp);
+            //            sp--;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        // Interate children
+            //        stack.Add(node);
+            //        sp++;
+            //        node = node.children[node.iChild++];
+            //    }
+            //}
 
-            if (pCO2eqTotal != null)
-            {
-                pCO2eqTotal.Value = "0";
-                pCO2eqTotal.Value = root?.cradleToGateCombination?.Value;
-            }
+            //if (pCO2eqTotal != null)
+            //{
+            //    pCO2eqTotal.Value = "0";
+            //    pCO2eqTotal.Value = glcRoot?.cradleToGateCombination?.Value;
+            //}
 
             // once = true;
             // if (root != null && root.bomTimestamp > lastCreateTimestamp)
-            if (changed || credentialsChanged)
-            {
-                Program.signalNewData(1);
-                lastCreateTimestamp = timeStamp;
-                credentialsChanged = false;
-            }
+            //if (changed || credentialsChanged)
+            //{
+            //    Program.signalNewData(1);
+            //    lastCreateTimestamp = timeStamp;
+            //    credentialsChanged = false;
+            //}
         }
 
         public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)
