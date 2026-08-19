@@ -157,7 +157,9 @@
 	{
 		string endpoint  = null;
 		var    idEncoded = Base64UrlEncoder.Encode(aas.Id);
-		if (aas.Extensions != null)
+		// Count check as well: a non-null but empty list would throw and take the whole layout
+		// down, and DB-loaded shells can have one.
+		if (aas.Extensions != null && aas.Extensions.Count > 0)
 		{
 			endpoint = aas.Extensions[ 0 ].Value;
 		}
@@ -240,14 +242,22 @@
     }
 
 	// The cabinet AAS comes from the DB-backed GLC list, not from Program.env, which is empty
-	// in --with-db mode. No credentials and no registry for GLC.
+	// in --with-db mode. No credentials for GLC, but registryURL is mandatory - see below.
 	string getIframePathGlc()
 	{
 		var link = "";
 		var cabinet = AasxTaskService.glcRoot;
 		if (cabinet?.aas != null)
 		{
-			link = "?aasUrl=" + getAasLink(cabinet.aas);
+			// same reason as in Glc.razor: without registryURL the viewer renders no submodel
+			// tabs at all (dashboard/js/submodelViewV3.js:103-133). The server answers
+			// /shell-descriptors itself in --with-db mode.
+			var registryURL = AasxServer.Program.externalRepository;
+			if (string.IsNullOrEmpty(registryURL))
+				registryURL = AasxServer.Program.externalBlazor;
+
+			link = "?aasUrl=" + getAasLink(cabinet.aas)
+			     + "&registryURL=" + registryURL.TrimEnd('/');
 		}
 
 		// local base path, so repeated renders cannot accumulate into the static _path
@@ -257,6 +267,10 @@
 		{
 			basePath = p.Replace("\r", "").Replace("\n", "");
 		}
+
+		// without a viewer base path the iframe would load the Blazor app into itself
+		if (basePath == "")
+			return "about:blank";
 
 		return basePath + link;
 	}
