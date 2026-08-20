@@ -49,7 +49,7 @@
 					{
 						<span style="font-family: ui-monospace, SFMono-Regular, Consolas, 'Courier New', monospace;
 									 font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700;
-									 line-height: 1.1; white-space: nowrap; color: #174a87;">@materialNumber</span>
+									 line-height: 1.1; white-space: nowrap; color: @GlcTheme.TextAccent;">@materialNumber</span>
 					}
 				</div>
 				@if (productImage != null)
@@ -82,8 +82,8 @@
 				<div class="flex-none self-center hide-slim">
 					<button class="btn px-3 text-white"
 							onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink'"
-							style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
-						<span style="color:limegreen;font-weight:bold;">&gt;</span>
+							style="background-color: @GlcTheme.Accent; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
+						<span style="color:@GlcTheme.AccentText;font-weight:bold;">&gt;</span>
 					</button>
 				</div>
 			</div>
