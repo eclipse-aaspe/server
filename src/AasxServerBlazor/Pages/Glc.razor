@@ -1,0 +1,232 @@
+@page "/glc"
+
+@using AasCore.Aas3_1
+@using Data
+@using AasxServer;
+@using Extensions;
+@using Microsoft.IdentityModel.Tokens;
+@using static AasxServer.AasxTask;
+@inject AASService SubmodelService
+@inject AasxTaskService AasxTaskService
+@implements IDisposable
+
+@* Flat list of the AAS in the DB. All data comes from AasxTaskService.glcList, which is
+   built in createGlcList() via IDbRequestHandlerService - never from Program.env, which is
+   empty in --with-db mode. The iframe lives in MainLayout, hence the plain onclick. *@
+
+<div class="relative flex min-h-screen flex-col overflow-hidden bg-gray-50 break-all">
+	<img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
+	<div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
+		@{
+			var iframePath   = getIframePath();
+			var registryLink = getRegistryLink();
+		}
+		@foreach (var node in AasxTaskService.glcList)
+		{
+			if (node.aas == null)
+			{
+				continue;
+			}
+
+			var manufacturerLogo = getImageLink(node.manufacturerLogo);
+			var productImage     = getImageLink(node.productImage);
+
+			var text = node.productDesignation;
+			if (string.IsNullOrEmpty(text))
+			{
+				text = node.aas.IdShort ?? "";
+			}
+
+			var link = getAasLink(node.aas);
+
+			<div class="node mb-2 flex flex-row space-x-2">
+				@if (manufacturerLogo != null)
+				{
+					<img src="@manufacturerLogo" style="max-width: 50px; object-fit: contain;" class="self-center"
+						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" />
+				}
+				@if (productImage != null)
+				{
+					<img src="@productImage" class="h-16 self-center" style="max-width: 50px; object-fit: contain;"
+						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" />
+				}
+				<div class="self-center grow">
+					<div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
+					<div class="hidden" style="font-size:70%; color:#888;">assetid=@node.asset aasid=@node.aas.Id</div>
+					<div>
+						@foreach (var sub in node.submodels)
+						{
+							var filter = sub.color == "red"
+								? "invert(0.5) sepia(1) saturate(100) hue-rotate(0deg)"
+								: "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
+
+							<a href="@link" target="_blank"
+							   onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink&smUrl=@System.Net.WebUtility.UrlEncode(sub.sm.Id)'; return false;"
+							   style="margin-right: 4px;">
+								@if (sub.iconName != null)
+								{
+									<img src="/sm_icons/@(Uri.EscapeDataString(sub.iconName)).svg" style="height:22px; display: inline; filter: @filter;" />
+								}
+								<span style="font-size:8pt; color:@sub.color;">@sub.displayId</span>
+							</a>
+						}
+					</div>
+				</div>
+				<div class="flex-none self-center hide-slim">
+					<button class="btn px-3 text-white"
+							onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink'"
+							style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
+						<span style="color:limegreen;font-weight:bold;">&gt;</span>
+					</button>
+				</div>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+
+	static string path = "";
+	static bool pathIntit = true;
+
+	// IFRAMEPATH_GLC first, so GLC can point at the locally served, customized viewer
+	// (mounted from VIEWERROOT, see ServerConfiguration.cs) while /pcf2 keeps the remote
+	// IFRAMEPATH. A root-relative value like /viewer/submodelViewV3.html is resolved by the
+	// browser against the page URL, so it also works over LAN, in Docker and behind TLS.
+	static string getIframePath()
+	{
+		if (pathIntit)
+		{
+			pathIntit = false;
+			var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH_GLC");
+			if (string.IsNullOrWhiteSpace(p))
+				p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
+			if (p != null)
+				path = p.Replace("\r", "").Replace("\n", "").Trim();
+		}
+
+		return path;
+	}
+
+	static string getSmLink(ISubmodel sm)
+	{
+		if (sm.Extensions != null && sm.Extensions.Count > 0)
+			return sm.Extensions[0].Value;
+
+		return Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(sm.Id);
+	}
+
+	static string getAasLink(AssetAdministrationShell aas)
+	{
+		if (aas.Extensions != null && aas.Extensions.Count > 0)
+			return aas.Extensions[0].Value;
+
+		return Program.externalBlazor + "/shells/" + Base64UrlEncoder.Encode(aas.Id);
+	}
+
+	// The viewer builds its submodel tab list only when registryURL is present
+	// (dashboard/js/submodelViewV3.js:103-133) - otherwise no <a id="activeSM"> is created
+	// and its final .click() throws. Our own server answers GET /shell-descriptors/{b64}
+	// straight from the DB whenever --with-db is set.
+	static string getRegistryLink()
+	{
+		var reg = Program.externalRepository;
+		if (string.IsNullOrEmpty(reg))
+			reg = Program.externalBlazor;
+
+		// the viewer concatenates registryURL + "/shell-descriptors/" + aasId
+		return reg.TrimEnd('/');
+	}
+
+	// Builds the attachment URL of an image File element. The Parent chain is populated,
+	// because CrudOperator.ReadSubmodel() calls submodel.SetAllParents().
+	static string getImageLink(File f)
+	{
+		if (f == null || string.IsNullOrEmpty(f.Value))
+			return null;
+
+		var createPath = false;
+		if (f.Value.ToLower().StartsWith("http"))
+		{
+			// External location: our own attachment endpoint rejects these - FileService.ReadFileInZip
+			// throws NotImplementedException for http(s) values (src/AasxServerDB/FileService.cs:176).
+			// Let the browser fetch the image straight from the source.
+			return f.Value;
+		}
+		else
+		{
+			string[] split = f.Value.Split(new Char[] { '/' });
+			if (split.Length == 1 || split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
+			{
+				split = f.Value.Split(new Char[] { '.' });
+				switch (split.Last().ToLower())
+				{
+					case "jpg":
+					case "bmp":
+					case "png":
+					case "svg":
+						createPath = true;
+						break;
+				}
+			}
+		}
+
+		if (!createPath)
+			return null;
+
+		try
+		{
+			string idShortPath = f.IdShort;
+			var p = f.Parent;
+			while (p != null && !(p is Submodel))
+			{
+				if (p is SubmodelElementList)
+				{
+					//for now only take first image
+					idShortPath = (p as ISubmodelElement).IdShort + "[0]" + idShortPath;
+				}
+				else if (p is ISubmodelElement)
+				{
+					idShortPath = (p as ISubmodelElement).IdShort + "." + idShortPath;
+				}
+				p = (p as ISubmodelElement).Parent;
+			}
+
+			if (p == null)
+				return null;
+
+			return getSmLink(p as Submodel) + "/submodel-elements/" + idShortPath + "/attachment";
+		}
+		catch
+		{
+		}
+
+		return null;
+	}
+
+	protected override void OnInitialized()
+	{
+		SubmodelService.NewDataAvailable += NewData;
+	}
+
+	public void Dispose()
+	{
+		SubmodelService.NewDataAvailable -= NewData;
+	}
+
+	void NewData(object source, EventArgs args)
+	{
+		if (Program.isLoading)
+			return;
+
+		if (args is Program.NewDataAvailableArgs newArgs)
+		{
+			int newDataMode = newArgs.signalNewDataMode;
+			if (newDataMode != 0)
+			{
+				InvokeAsync(() => this.StateHasChanged());
+			}
+		}
+	}
+
+}
