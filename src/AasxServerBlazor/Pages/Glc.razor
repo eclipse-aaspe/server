@@ -68,7 +68,7 @@
 								: "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
 
 							<a href="@link" target="_blank"
-							   onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink&smUrl=@System.Net.WebUtility.UrlEncode(sub.sm.Id)'; return false;"
+							   onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink&smUrl=@System.Net.WebUtility.UrlEncode(sub.sm.Id)&materialNumber=@node.materialNumber'; return false;"
 							   style="margin-right: 4px;">
 								@if (sub.iconName != null)
 								{
@@ -81,7 +81,7 @@
 				</div>
 				<div class="flex-none self-center hide-slim">
 					<button class="btn px-3 text-white"
-							onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink'"
+							onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink&materialNumber=@node.materialNumber'"
 							style="background-color: @GlcTheme.Accent; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
 						<span style="color:@GlcTheme.AccentText;font-weight:bold;">&gt;</span>
 					</button>
