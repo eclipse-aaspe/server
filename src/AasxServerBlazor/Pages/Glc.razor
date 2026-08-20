@@ -28,8 +28,8 @@
 				continue;
 			}
 
-			var manufacturerLogo = getImageLink(node.manufacturerLogo);
-			var productImage     = getImageLink(node.productImage);
+			var productImage   = GlcLinks.GetImageLink(node.productImage);
+			var materialNumber = node.materialNumber;
 
 			var text = node.productDesignation;
 			if (string.IsNullOrEmpty(text))
@@ -37,14 +37,21 @@
 				text = node.aas.IdShort ?? "";
 			}
 
-			var link = getAasLink(node.aas);
+			var link = GlcLinks.GetAasLink(node.aas);
 
 			<div class="node mb-2 flex flex-row space-x-2">
-				@if (manufacturerLogo != null)
-				{
-					<img src="@manufacturerLogo" style="max-width: 50px; object-fit: contain;" class="self-center"
-						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" />
-				}
+				@* one company per showcase, so the per row manufacturer logo is redundant - it
+				   moved to the GLC header in MainLayout. Fixed width keeps the rows aligned.
+				   Inline styles only: font-mono/tabular-nums/text-xs are NOT in the pre-built
+				   wwwroot/css/site.css, and rebuilding it would delete its hand-written part. *@
+				<div class="flex-none self-center text-center" style="width: 70px;" title="Material number">
+					@if (!string.IsNullOrEmpty(materialNumber))
+					{
+						<span style="font-family: ui-monospace, SFMono-Regular, Consolas, 'Courier New', monospace;
+									 font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700;
+									 line-height: 1.1; white-space: nowrap; color: #174a87;">@materialNumber</span>
+					}
+				</div>
 				@if (productImage != null)
 				{
 					<img src="@productImage" class="h-16 self-center" style="max-width: 50px; object-fit: contain;"
@@ -52,7 +59,7 @@
 				}
 				<div class="self-center grow">
 					<div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
-					<div class="hidden" style="font-size:70%; color:#888;">assetid=@node.asset aasid=@node.aas.Id</div>
+					<div class="hidden" style="font-size:70%; color:#888;">matno=@node.materialNumber assetid=@node.asset aasid=@node.aas.Id</div>
 					<div>
 						@foreach (var sub in node.submodels)
 						{
@@ -108,21 +115,9 @@
 		return path;
 	}
 
-	static string getSmLink(ISubmodel sm)
-	{
-		if (sm.Extensions != null && sm.Extensions.Count > 0)
-			return sm.Extensions[0].Value;
-
-		return Program.externalBlazor + "/submodels/" + Base64UrlEncoder.Encode(sm.Id);
-	}
-
-	static string getAasLink(AssetAdministrationShell aas)
-	{
-		if (aas.Extensions != null && aas.Extensions.Count > 0)
-			return aas.Extensions[0].Value;
-
-		return Program.externalBlazor + "/shells/" + Base64UrlEncoder.Encode(aas.Id);
-	}
+	// getSmLink / getAasLink / getImageLink moved to Data/GlcLinks.cs, because MainLayout
+	// needs GetImageLink for the company logo in the GLC header. getIframePath above stays
+	// here: it owns the path/pathIntit env var cache and has no second consumer.
 
 	// The viewer builds its submodel tab list only when registryURL is present
 	// (dashboard/js/submodelViewV3.js:103-133) - otherwise no <a id="activeSM"> is created
@@ -136,72 +131,6 @@
 
 		// the viewer concatenates registryURL + "/shell-descriptors/" + aasId
 		return reg.TrimEnd('/');
-	}
-
-	// Builds the attachment URL of an image File element. The Parent chain is populated,
-	// because CrudOperator.ReadSubmodel() calls submodel.SetAllParents().
-	static string getImageLink(File f)
-	{
-		if (f == null || string.IsNullOrEmpty(f.Value))
-			return null;
-
-		var createPath = false;
-		if (f.Value.ToLower().StartsWith("http"))
-		{
-			// External location: our own attachment endpoint rejects these - FileService.ReadFileInZip
-			// throws NotImplementedException for http(s) values (src/AasxServerDB/FileService.cs:176).
-			// Let the browser fetch the image straight from the source.
-			return f.Value;
-		}
-		else
-		{
-			string[] split = f.Value.Split(new Char[] { '/' });
-			if (split.Length == 1 || split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
-			{
-				split = f.Value.Split(new Char[] { '.' });
-				switch (split.Last().ToLower())
-				{
-					case "jpg":
-					case "bmp":
-					case "png":
-					case "svg":
-						createPath = true;
-						break;
-				}
-			}
-		}
-
-		if (!createPath)
-			return null;
-
-		try
-		{
-			string idShortPath = f.IdShort;
-			var p = f.Parent;
-			while (p != null && !(p is Submodel))
-			{
-				if (p is SubmodelElementList)
-				{
-					//for now only take first image
-					idShortPath = (p as ISubmodelElement).IdShort + "[0]" + idShortPath;
-				}
-				else if (p is ISubmodelElement)
-				{
-					idShortPath = (p as ISubmodelElement).IdShort + "." + idShortPath;
-				}
-				p = (p as ISubmodelElement).Parent;
-			}
-
-			if (p == null)
-				return null;
-
-			return getSmLink(p as Submodel) + "/submodel-elements/" + idShortPath + "/attachment";
-		}
-		catch
-		{
-		}
-
-		return null;
 	}
 
 	protected override void OnInitialized()

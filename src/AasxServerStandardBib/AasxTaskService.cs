@@ -30,6 +30,7 @@ namespace AasxServer
     using System.Text.Json;
     using System.Text.Json.Nodes;
     using System.Text.Json.Serialization;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using AasxServerDB;
@@ -102,6 +103,10 @@ namespace AasxServer
         public AasCore.Aas3_1.File manufacturerLogo = null;
         public AasCore.Aas3_1.File productImage = null;
         public string productDesignation = "";
+
+        // 7 digit material number, shown per row instead of the (per row redundant)
+        // manufacturer logo, which moved to the GLC header. See glcMaterialNumber().
+        public string materialNumber = "";
         public List<string> bom = new List<string>();
         public DateTime bomTimestamp = new DateTime();
         public List<GlcSubmodelNode> submodels = new List<GlcSubmodelNode>();
@@ -3157,6 +3162,42 @@ namespace AasxServer
             return node;
         }
 
+        // 7 digit material number for the showcase list. Priority:
+        //   1. Nameplate/ProductArticleNumberOfManufacturer - verbatim, e.g. "2900542"
+        //   2. Nameplate/URIOfTheProduct      - "https://www.phoenixcontact.com/qr/2900542"
+        //   3. AssetInformation.GlobalAssetId - "https://phoenixcontact.com/qr/2900542/1B"
+        // 2 and 3 are URIs, so the number comes from the last run of 7+ digits, NOT from the
+        // last 7 characters: the global asset id carries a trailing variant ("/1B"), which
+        // would yield "0542/1B". Verified against
+        // src/AasxServerDB.Tests/TestData/PHOENIX_CONTACT_2900542_...aasx.
+        private static string glcMaterialNumber(string articleNumber, string productUri, string globalAssetId)
+        {
+            if (!string.IsNullOrWhiteSpace(articleNumber))
+                return articleNumber.Trim();
+
+            var fromUri = glcTrailingDigits(productUri);
+            if (fromUri != "")
+                return fromUri;
+
+            return glcTrailingDigits(globalAssetId);
+        }
+
+        private static readonly Regex glcDigitRun = new Regex(@"\d{7,}", RegexOptions.Compiled);
+
+        // last run of 7 or more digits, truncated to its last 7 characters; "" if there is none
+        private static string glcTrailingDigits(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return "";
+
+            var matches = glcDigitRun.Matches(text);
+            if (matches.Count == 0)
+                return "";
+
+            var v = matches[matches.Count - 1].Value;
+            return v.Length > 7 ? v.Substring(v.Length - 7) : v;
+        }
+
         public async Task<bool> createGlcList(DateTime timeStamp)
         {
             bool changed = false;
@@ -3228,6 +3269,13 @@ namespace AasxServer
                     cfp.aas = aas;
                     cfp.asset = aas.AssetInformation?.GlobalAssetId;
                     cfp.productDesignation = aas.IdShort;
+
+                    // raw nameplate candidates; the chain is resolved after the submodel loop,
+                    // because URIOfTheProduct is the first nameplate element while the article
+                    // number comes several hundred lines later - inline assignment would make
+                    // the result depend on document order
+                    string npArticleNumber = null;
+                    string npProductUri = null;
 
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
@@ -3341,12 +3389,31 @@ namespace AasxServer
                                                         cfp.productDesignation = s;
                                                 }
                                             }
+
+                                            // ZVEI nameplate 2/0 declares the article number as MLP.
+                                            // GetDefaultString() prefers "en" and falls back to the
+                                            // first entry (Extensions/ExtendLangStringSet.cs:45).
+                                            if (p.IdShort == "ProductArticleNumberOfManufacturer")
+                                                npArticleNumber = p.Value?.GetDefaultString();
+                                        }
+                                        else if (v is Property np)
+                                        {
+                                            // some suppliers model the article number as a plain
+                                            // Property instead of an MLP - accept both
+                                            if (np.IdShort == "ProductArticleNumberOfManufacturer")
+                                                npArticleNumber = np.Value;
+
+                                            // Property, xs:string, e.g. ".../qr/2900542"
+                                            if (np.IdShort == "URIOfTheProduct")
+                                                npProductUri = np.Value;
                                         }
                                     }
                                 }
                             }
                         }
                     }
+
+                    cfp.materialNumber = glcMaterialNumber(npArticleNumber, npProductUri, cfp.asset);
 
                     // stable sort; List.Sort is unstable and would shuffle the unknown submodels
                     cfp.submodels = cfp.submodels.OrderBy(s => s.sortKey).ToList();

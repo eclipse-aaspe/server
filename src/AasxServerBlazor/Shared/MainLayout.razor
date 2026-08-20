@@ -51,6 +51,13 @@
 				{
 					modelText = "weight";
 				}
+
+				// all showcase components come from one company, so the logo is redundant per row
+				// (Glc.razor shows the material number there now) and lives in the header instead.
+				// Dynamic: first AAS in the GLC list that carries one. glcList is empty until the
+				// first calculateglc cycle, so headerLogo is simply null on the first render.
+				var headerLogo = Data.GlcLinks.GetImageLink(
+					AasxTaskService.glcList.FirstOrDefault(n => n.manufacturerLogo != null)?.manufacturerLogo);
 				<style>
         input:checked ~ .dot {
             transform: translateX(100%);
@@ -59,11 +66,21 @@
     </style>
                 <div style="height:100%; padding:0 !important; overflow-y: visible;">
                     <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0; min-height: 8%;">
-						<div class="self-center">
+						@* flex-none: this is a flex child of the space-between row, so without it the
+						   cell shrinks against the "Loaded N shells" label and the title wraps *@
+						<div class="flex-none self-center">
                             <div class="flex items-stretch">
+                                @if (headerLogo != null)
+                                {
+                                    @* max-height, not the old IDTA max-width: site.css has a global
+                                       img { max-width: 80%; max-height: max-content; }, which would let
+                                       a tall logo stretch this min-height:8% row. Inline style wins. *@
+                                    <img src="@headerLogo" alt="Company logo" class="self-center"
+                                         style="max-height: 34px; max-width: 110px; object-fit: contain; padding-left: 15px;" />
+                                }
 								@if (!Program.showWeight)
                                 {
-                                    <span hspace=20 style="padding-left:15px; padding-right:5px; font-size:large;" class="self-center">
+                                    <span hspace=20 style="padding-left:15px; padding-right:5px; font-size:large; white-space: nowrap;" class="self-center">
                                         <strong>GLC DDP Showcase</strong>
                                     </span>
                                 }
