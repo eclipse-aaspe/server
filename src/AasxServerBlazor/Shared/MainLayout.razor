@@ -279,11 +279,13 @@
 
 		// local base path, so repeated renders cannot accumulate into the static _path
 		var basePath = "";
-		var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
+		// IFRAMEPATH_GLC first, so GLC can point at the locally served, customized viewer
+		// (see VIEWERROOT in ServerConfiguration.cs) while /pcf2 keeps the remote IFRAMEPATH
+		var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH_GLC");
+		if (string.IsNullOrWhiteSpace(p))
+			p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
 		if (p != null)
-		{
-			basePath = p.Replace("\r", "").Replace("\n", "");
-		}
+			basePath = p.Replace("\r", "").Replace("\n", "").Trim();
 
 		// without a viewer base path the iframe would load the Blazor app into itself
 		if (basePath == "")

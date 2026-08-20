@@ -30,6 +30,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
@@ -55,6 +56,8 @@ public static class ServerConfiguration
     private const string SwaggerRoutePrefix = "swagger";
     private const string SyntaxHighLightLowercase = "syntaxHighlight";
     private const string SyntaxHighlightUppercase = "SyntaxHighlight";
+    private const string ViewerRequestPath = "/viewer";
+    private const string ViewerRootEnvVar = "VIEWERROOT";
 
     /// <summary>
     /// Configures server-related services for the application.
@@ -242,6 +245,49 @@ public static class ServerConfiguration
     }
 
     /// <summary>
+    /// Serves the submodel viewer used by the /glc iframe from the directory named by the
+    /// VIEWERROOT environment variable, mapped to <see cref="ViewerRequestPath"/>.
+    /// </summary>
+    /// <remarks>
+    /// The viewer is third-party code and deliberately lives outside this repository, so it is
+    /// never committed and never baked into a container image - in Docker it comes in as a
+    /// volume. An unset or bad VIEWERROOT just leaves the path unmapped; the /glc list itself
+    /// keeps working and only the iframe stays empty.
+    /// </remarks>
+    /// <param name="app">The application builder used to configure the middleware pipeline.</param>
+    private static void MapExternalViewer(IApplicationBuilder app)
+    {
+        var root = System.Environment.GetEnvironmentVariable(ViewerRootEnvVar);
+        if (string.IsNullOrWhiteSpace(root))
+            return;
+
+        root = root.Replace("\r", "").Replace("\n", "").Trim();
+
+        try
+        {
+            // PhysicalFileProvider insists on a rooted path and throws on a missing directory
+            var fullPath = Path.GetFullPath(root);
+            if (!Directory.Exists(fullPath))
+            {
+                Console.WriteLine($"{ViewerRootEnvVar}: directory not found, {ViewerRequestPath} not mapped: {fullPath}");
+                return;
+            }
+
+            app.UseStaticFiles(new StaticFileOptions
+                               {
+                                   FileProvider = new PhysicalFileProvider(fullPath),
+                                   RequestPath  = ViewerRequestPath
+                               });
+
+            Console.WriteLine($"{ViewerRequestPath} serves {fullPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"{ViewerRootEnvVar} invalid, {ViewerRequestPath} not mapped: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Configures the HTTP request pipeline for the application.
     /// </summary>
     /// <param name="app">The application builder used to configure the middleware pipeline.</param>
@@ -260,6 +306,11 @@ public static class ServerConfiguration
         app.UseMiddleware<ExceptionMiddleware>();
 
         app.UseStaticFiles();
+
+        // same slot as wwwroot, i.e. before UseRouting, so /viewer/* is not swallowed by the
+        // Blazor fallback endpoint - and, like wwwroot and /swagger, it is served anonymously
+        MapExternalViewer(app);
+
         app.UsePathBase("/api/v3.0");
         app.UseRouting();
         app.UseAuthorization();
