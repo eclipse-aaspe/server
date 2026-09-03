@@ -44,6 +44,7 @@ namespace AasxServer
     using IdentityModel.Client;
     using Microsoft.IdentityModel.Tokens;
     using MQTTnet;
+    using Namotion.Reflection;
     using NetTopologySuite.Geometries;
     using ScottPlot;
 
@@ -107,6 +108,7 @@ namespace AasxServer
         // 7 digit material number, shown per row instead of the (per row redundant)
         // manufacturer logo, which moved to the GLC header. See glcMaterialNumber().
         public string materialNumber = "";
+        public double? pcfCO2eq = null;  // from CarbonFootprint submodel, PcfCO2eq property
         public List<string> bom = new List<string>();
         public DateTime bomTimestamp = new DateTime();
         public List<GlcSubmodelNode> submodels = new List<GlcSubmodelNode>();
@@ -145,6 +147,7 @@ namespace AasxServer
         // the control cabinet AAS, used by MainLayout.getIframePathGlc()
         public GlcNode glcRoot = null;
         public List<GlcNode> glcList = new List<GlcNode>();
+        public double glcPcfTotal = 0;
         private volatile bool _glcRunning = false;
         //public Property pCO2eqTotal = null;
         ////public bool cfpValid = false;
@@ -394,7 +397,7 @@ namespace AasxServer
                         //    break;
                         case "calculateglc":
                         case "calculate_glc":
-                            operation_calculate_glc(timeStamp);
+                            operation_calculate_glc(op, timeStamp);
                             break;
                         case "timeseriessampling":
                             AasxTimeSeries.TimeSeries.timeSeriesSampling(false);
@@ -3198,7 +3201,32 @@ namespace AasxServer
             return v.Length > 7 ? v.Substring(v.Length - 7) : v;
         }
 
-        public async Task<bool> createGlcList(DateTime timeStamp)
+        private static double? glcFindPcfCO2eq(ISubmodel sm)
+            => glcFindSmeProp(sm.SubmodelElements, "PcfCO2eq");
+
+        private static double? glcFindSmeProp(IEnumerable<ISubmodelElement> elements, string idShort)
+        {
+            if (elements == null) return null;
+            foreach (var e in elements)
+            {
+                if (e is Property p && p.IdShort == idShort)
+                {
+                    // normalize decimal separator: AAS properties may use comma (de) or period (en)
+                    var normalized = p.Value?.Replace(',', '.');
+                    if (double.TryParse(normalized, System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out var val))
+                        return val;
+                }
+                if (e is ISubmodelElementCollection col)
+                {
+                    var found = glcFindSmeProp(col.Value, idShort);
+                    if (found.HasValue) return found;
+                }
+            }
+            return null;
+        }
+
+        public async Task<bool> createGlcList(DateTime timeStamp, Dictionary<string, int> materialNumberPcfValueDict)
         {
             bool changed = false;
             string digest = "";
@@ -3265,10 +3293,10 @@ namespace AasxServer
                     if (glcCleanupIdShort(aas.IdShort).ToLower() == "pcfviewtask")
                         continue;
 
-                    var cfp = new GlcNode();
-                    cfp.aas = aas;
-                    cfp.asset = aas.AssetInformation?.GlobalAssetId;
-                    cfp.productDesignation = aas.IdShort;
+                    var glcNode = new GlcNode();
+                    glcNode.aas = aas;
+                    glcNode.asset = aas.AssetInformation?.GlobalAssetId;
+                    glcNode.productDesignation = aas.IdShort;
 
                     // raw nameplate candidates; the chain is resolved after the submodel loop,
                     // because URIOfTheProduct is the first nameplate element while the article
@@ -3287,7 +3315,10 @@ namespace AasxServer
                                 if (sm.IdShort == "tasks")
                                     continue;
 
-                                cfp.submodels.Add(glcMakeSubmodelNode(sm));
+                                glcNode.submodels.Add(glcMakeSubmodelNode(sm));
+
+                                if (glcCleanupIdShort(sm.IdShort) == "CarbonFootprint")
+                                    glcNode.pcfCO2eq = glcFindPcfCO2eq(sm);
 
                                 if (sm.IdShort.Contains("BillOfMaterial"))
                                 {
@@ -3299,7 +3330,7 @@ namespace AasxServer
 
                                     if (sm.SubmodelElements != null)
                                     {
-                                        cfp.bomTimestamp = sm.TimeStampTree;
+                                        glcNode.bomTimestamp = sm.TimeStampTree;
                                         List<string> bom = new List<string>();
                                         foreach (var v in sm.SubmodelElements)
                                         {
@@ -3322,7 +3353,7 @@ namespace AasxServer
                                         }
 
                                         // assetBOM.Add(assetId, bom);
-                                        cfp.bom = bom;
+                                        glcNode.bom = bom;
                                     }
                                 }
 
@@ -3339,9 +3370,9 @@ namespace AasxServer
                                                     if (sme is AasCore.Aas3_1.File f)
                                                     {
                                                         if (f.IdShort == "ManufacturerLogo" || f.IdShort == "CompanyLogo")
-                                                            cfp.manufacturerLogo = f;
+                                                            glcNode.manufacturerLogo = f;
                                                         if (f.IdShort == "ProductImage")
-                                                            cfp.productImage = f;
+                                                            glcNode.productImage = f;
                                                     }
                                                     if (sme.IdShort == "ProductImages" && sme is SubmodelElementList l)
                                                     {
@@ -3349,7 +3380,7 @@ namespace AasxServer
                                                         {
                                                             if (cc.Value?[0].IdShort == "ImageFile" && cc.Value[0] is AasCore.Aas3_1.File ff)
                                                             {
-                                                                cfp.productImage = ff;
+                                                                glcNode.productImage = ff;
                                                             }
                                                         }
                                                     }
@@ -3386,7 +3417,7 @@ namespace AasxServer
                                                     }
 
                                                     if (s != null)
-                                                        cfp.productDesignation = s;
+                                                        glcNode.productDesignation = s;
                                                 }
                                             }
 
@@ -3413,14 +3444,28 @@ namespace AasxServer
                         }
                     }
 
-                    cfp.materialNumber = glcMaterialNumber(npArticleNumber, npProductUri, cfp.asset);
+                    glcNode.materialNumber = glcMaterialNumber(npArticleNumber, npProductUri, glcNode.asset);
 
                     // stable sort; List.Sort is unstable and would shuffle the unknown submodels
-                    cfp.submodels = cfp.submodels.OrderBy(s => s.sortKey).ToList();
+                    glcNode.submodels = glcNode.submodels.OrderBy(s => s.sortKey).ToList();
 
-                    tempGlcList.Add(cfp);
+                    tempGlcList.Add(glcNode);
                 }
             }
+
+            double total = 0;
+
+            foreach (var node in tempGlcList)
+            {
+                if (node.pcfCO2eq.HasValue
+                    && !string.IsNullOrEmpty(node.materialNumber)
+                    && materialNumberPcfValueDict.TryGetValue(node.materialNumber, out int count))
+                {
+                    var nodePcf = node.pcfCO2eq.Value * count;
+                    total += nodePcf;
+                }
+            }
+            glcPcfTotal = total;
 
             // the cabinet is the shell that carries the BillOfMaterial, i.e. the composed one
             glcRoot = tempGlcList.FirstOrDefault(n => n.bom.Count != 0)
@@ -3669,8 +3714,26 @@ namespace AasxServer
         //    }
         //}
 
-        public void operation_calculate_glc(DateTime timeStamp)
+        public void operation_calculate_glc(Operation op, DateTime timeStamp)
         {
+            var inputVariable = op.InputVariables.FirstOrDefault(i => i.Value is SubmodelElementCollection);
+            Dictionary<string, int> materialNumberPcfValueDict = new Dictionary<string, int>();
+
+            if (inputVariable != null)
+            {
+                var materialNumberAmounts = inputVariable.Value as SubmodelElementCollection;
+
+                if (materialNumberAmounts != null)
+                {
+                    foreach (var item in materialNumberAmounts.Value)
+                    {
+                        var prop = item as Property;
+                        var materialNumber = item.IdShort.Trim('A');
+                        var pcfValue = Int32.Parse(item.ValueAsText());
+                        materialNumberPcfValueDict.Add(item.IdShort.Trim('A'), pcfValue);
+                    }
+                }
+            }
 
             //if (AasxServer.Program.initializingRegistry)
             //{
@@ -3692,7 +3755,7 @@ namespace AasxServer
             {
                 try
                 {
-                    await createGlcList(timeStamp);
+                    await createGlcList(timeStamp, materialNumberPcfValueDict);
                 }
                 catch (Exception ex)
                 {
