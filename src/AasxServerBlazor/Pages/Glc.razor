@@ -40,6 +40,11 @@
 			var link = GlcLinks.GetAasLink(node.aas);
 
 			<div class="node mb-2 flex flex-row space-x-2">
+				@if (productImage != null)
+				{
+					<img src="@productImage" class="h-16 self-center" style="max-width: 50px; object-fit: contain;"
+						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" />
+				}
 				@* one company per showcase, so the per row manufacturer logo is redundant - it
 				   moved to the GLC header in MainLayout. Fixed width keeps the rows aligned.
 				   Inline styles only: font-mono/tabular-nums/text-xs are NOT in the pre-built
@@ -47,22 +52,18 @@
 				<div class="flex-none self-center text-center" style="width: 70px;" title="Material number">
 					@if (!string.IsNullOrEmpty(materialNumber))
 					{
-						<span style="font-family: ui-monospace, SFMono-Regular, Consolas, 'Courier New', monospace;
-									 font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700;
-									 line-height: 1.1; white-space: nowrap; color: @GlcTheme.TextAccent;">@materialNumber</span>
+						<div class="font-bold text-slate-700 dark:text-slate-500">@materialNumber</div>
 					}
 				</div>
-				@if (productImage != null)
-				{
-					<img src="@productImage" class="h-16 self-center" style="max-width: 50px; object-fit: contain;"
-						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" />
-				}
 				<div class="self-center grow">
 					<div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
 					<div class="hidden" style="font-size:70%; color:#888;">matno=@node.materialNumber assetid=@node.asset aasid=@node.aas.Id</div>
 					<div>
 						@foreach (var sub in node.submodels)
 						{
+							if (sub.displayId == "TECH")
+								continue;
+
 							var filter = sub.color == "red"
 								? "invert(0.5) sepia(1) saturate(100) hue-rotate(0deg)"
 								: "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
