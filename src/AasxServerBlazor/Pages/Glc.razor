@@ -24,9 +24,14 @@
 		}
 		@if (glcPcfTotal > 0)
 		{
-			<div class="mb-4 rounded-lg px-6 py-3 text-white font-bold text-lg"
-				 style="background-color: @GlcTheme.Accent;">
-				Total Carbon Footprint: @glcPcfTotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) kg CO&#x2082; eq
+			<div class="mb-4 rounded-lg px-6 py-3"
+				 style="background-color: @GlcTheme.Accent;
+	            color: white;
+	            font-size: 1.375rem;
+	            font-weight: 400;">
+				Total Carbon Footprint:
+				@glcPcfTotal.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)
+				kg CO&#x2082;e
 			</div>
 		}
 		@foreach (var node in AasxTaskService.glcList)
