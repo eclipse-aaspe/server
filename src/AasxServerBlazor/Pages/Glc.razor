@@ -43,6 +43,7 @@
 
 			var productImage   = GlcLinks.GetImageLink(node.productImage);
 			var materialNumber = node.materialNumber;
+			var productType = node.productType;
 
 			var text = node.productDesignation;
 			if (string.IsNullOrEmpty(text))
@@ -55,8 +56,8 @@
 			<div class="node mb-2 flex flex-row space-x-2">
 				@if (productImage != null)
 				{
-					<img src="@productImage" class="h-16 self-center" style="max-width: 50px; object-fit: contain;"
-						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" />
+					<img src="@productImage" class="h-24 self-center" style="max-width: 75px; object-fit: contain;"
+						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(4500.0 / (this.width*this.height))) + 'px';" />
 				}
 				@* one company per showcase, so the per row manufacturer logo is redundant - it
 				   moved to the GLC header in MainLayout. Fixed width keeps the rows aligned.
@@ -71,6 +72,10 @@
 				<div class="self-center grow">
 					<div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
 					<div class="hidden" style="font-size:70%; color:#888;">matno=@node.materialNumber assetid=@node.asset aasid=@node.aas.Id</div>
+					@if (!string.IsNullOrEmpty(productType))
+					{
+						<div class="font-bold text-slate-700 dark:text-slate-500">@productType</div>
+					}
 					<div>
 						@foreach (var sub in node.submodels)
 						{

@@ -108,6 +108,7 @@ namespace AasxServer
         // 7 digit material number, shown per row instead of the (per row redundant)
         // manufacturer logo, which moved to the GLC header. See glcMaterialNumber().
         public string materialNumber = "";
+        public string productType = "";
         public double? pcfCO2eq = null;  // from CarbonFootprint submodel, PcfCO2eq property
         public List<string> bom = new List<string>();
         public DateTime bomTimestamp = new DateTime();
@@ -3304,6 +3305,7 @@ namespace AasxServer
                     // the result depend on document order
                     string npArticleNumber = null;
                     string npProductUri = null;
+                    string npProductType = null;
 
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
@@ -3426,6 +3428,8 @@ namespace AasxServer
                                             // first entry (Extensions/ExtendLangStringSet.cs:45).
                                             if (p.IdShort == "ProductArticleNumberOfManufacturer")
                                                 npArticleNumber = p.Value?.GetDefaultString();
+                                            if (p.IdShort == "ManufacturerProductType")
+                                                npProductType = p.Value?.GetDefaultString();
                                         }
                                         else if (v is Property np)
                                         {
@@ -3445,6 +3449,7 @@ namespace AasxServer
                     }
 
                     glcNode.materialNumber = glcMaterialNumber(npArticleNumber, npProductUri, glcNode.asset);
+                    glcNode.productType = npProductType;
 
                     // stable sort; List.Sort is unstable and would shuffle the unknown submodels
                     glcNode.submodels = glcNode.submodels.OrderBy(s => s.sortKey).ToList();
