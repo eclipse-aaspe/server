@@ -37,6 +37,7 @@
 				_input = "anonymous";
 				AasxCredentials.initAnonymous(cs.credentials);
 				AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
+				AasxTaskService.resetTimeStamp();
 				AasxTaskService.resetTimeStampGlc();
 			}
 

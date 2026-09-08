@@ -392,10 +392,10 @@ namespace AasxServer
                         case "limitcount":
                             operation_limitCount(op, envIndex, timeStamp);
                             break;
-                        //case "calculatecfp":
-                        //case "calculate_cfp":
-                        //    operation_calculate_cfp(timeStamp);
-                        //    break;
+                        case "calculatecfp":
+                        case "calculate_cfp":
+                            operation_calculate_cfp(timeStamp);
+                            break;
                         case "calculateglc":
                         case "calculate_glc":
                             operation_calculate_glc(op, timeStamp);
@@ -1746,23 +1746,23 @@ namespace AasxServer
                     return;
                 }
 
-                //if (eventData.Direction.Value == "IN" && eventData.Mode.Value == "MQTT")
-                //{
-                //    if (firstCycle)
-                //    {
-                //        _eventService.CalculateCfpRequestReceived += (sender, e) =>
-                //        {
-                //            operation_calculate_cfp(DateTime.UtcNow);
+                if (eventData.Direction.Value == "IN" && eventData.Mode.Value == "MQTT")
+                {
+                    if (firstCycle)
+                    {
+                        _eventService.CalculateCfpRequestReceived += (sender, e) =>
+                        {
+                            operation_calculate_cfp(DateTime.UtcNow);
 
-                //        };
-                //        _eventService.RegisterMqttMessage(eventData, submodelId, idShortPath);
-                //    }
-                //    else
-                //    {
-                //        _eventService.CheckMqttMessages(eventData, submodelId, idShortPath);
-                //    }
-                //    return;
-                //}
+                        };
+                        _eventService.RegisterMqttMessage(eventData, submodelId, idShortPath);
+                    }
+                    else
+                    {
+                        _eventService.CheckMqttMessages(eventData, submodelId, idShortPath);
+                    }
+                    return;
+                }
 
                 if (eventData.Direction.Value == "OUT" && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
                 {
@@ -3515,209 +3515,209 @@ namespace AasxServer
             return changed;
         }
 
-        //public void operation_calculate_cfp(DateTime timeStamp)
-        //{
-        //    if (AasxServer.Program.initializingRegistry)
-        //    {
-        //        // once = false; // one more again
-        //        return;
-        //    }
+        public void operation_calculate_cfp(DateTime timeStamp)
+        {
+            if (AasxServer.Program.initializingRegistry)
+            {
+                // once = false; // one more again
+                return;
+            }
 
-        //    if (once)
-        //        return;
+            if (once)
+                return;
 
-        //    // Iterate tree and calculate CFP values
-        //    bool changed = createCfpTree(timeStamp);
+            // Iterate tree and calculate CFP values
+            bool changed = createCfpTree(timeStamp);
 
-        //    CfpNode node = root;
-        //    CfpNode parent = null;
-        //    List<CfpNode> stack = new List<CfpNode>();
-        //    int sp = -1;
+            CfpNode node = root;
+            CfpNode parent = null;
+            List<CfpNode> stack = new List<CfpNode>();
+            int sp = -1;
 
-        //    while (node != null)
-        //    {
-        //        // create cfp combination only once at first child
-        //        if (node.iChild == 0)
-        //        {
-        //            if (node.cradleToGateCombination != null)
-        //            {
-        //                node.cradleToGateCombination.Value = "0.0";
-        //                if (node.cradleToGateModule != null)
-        //                {
-        //                    node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
-        //                }
+            while (node != null)
+            {
+                // create cfp combination only once at first child
+                if (node.iChild == 0)
+                {
+                    if (node.cradleToGateCombination != null)
+                    {
+                        node.cradleToGateCombination.Value = "0.0";
+                        if (node.cradleToGateModule != null)
+                        {
+                            node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
+                        }
 
-        //                node.cradleToGateCombination.SetTimeStamp(timeStamp);
-        //            }
+                        node.cradleToGateCombination.SetTimeStamp(timeStamp);
+                    }
 
-        //            if (node.productionCombination != null)
-        //            {
-        //                node.productionCombination.Value = "0.0";
-        //                if (node.productionModule != null)
-        //                {
-        //                    node.productionCombination.Value = node.productionModule.Value;
-        //                }
+                    if (node.productionCombination != null)
+                    {
+                        node.productionCombination.Value = "0.0";
+                        if (node.productionModule != null)
+                        {
+                            node.productionCombination.Value = node.productionModule.Value;
+                        }
 
-        //                node.productionCombination.SetTimeStamp(timeStamp);
-        //            }
+                        node.productionCombination.SetTimeStamp(timeStamp);
+                    }
 
-        //            if (node.distributionCombination != null)
-        //            {
-        //                node.distributionCombination.Value = "0.0";
-        //                if (node.distributionModule != null)
-        //                {
-        //                    node.distributionCombination.Value = node.distributionModule.Value;
-        //                }
+                    if (node.distributionCombination != null)
+                    {
+                        node.distributionCombination.Value = "0.0";
+                        if (node.distributionModule != null)
+                        {
+                            node.distributionCombination.Value = node.distributionModule.Value;
+                        }
 
-        //                node.distributionCombination.SetTimeStamp(timeStamp);
-        //            }
+                        node.distributionCombination.SetTimeStamp(timeStamp);
+                    }
 
-        //            if (node.weightCombination != null)
-        //            {
-        //                node.weightCombination.Value = "0.0";
-        //                if (node.weightModule != null)
-        //                {
-        //                    node.weightCombination.Value = node.weightModule.Value;
-        //                }
+                    if (node.weightCombination != null)
+                    {
+                        node.weightCombination.Value = "0.0";
+                        if (node.weightModule != null)
+                        {
+                            node.weightCombination.Value = node.weightModule.Value;
+                        }
 
-        //                node.weightCombination.SetTimeStamp(timeStamp);
-        //            }
-        //        }
+                        node.weightCombination.SetTimeStamp(timeStamp);
+                    }
+                }
 
-        //        // move up, if all children iterated
-        //        if (node.iChild == node.children.Count)
-        //        {
-        //            node.iChild = 0;
-        //            if (sp == -1)
-        //            {
-        //                node = null;
-        //            }
-        //            else
-        //            {
-        //                parent = stack[sp];
-        //                if (parent.cradleToGateCombination != null)
-        //                {
-        //                    Property p = node.cradleToGateModule;
-        //                    if (node.cradleToGateCombination != null)
-        //                        p = node.cradleToGateCombination;
+                // move up, if all children iterated
+                if (node.iChild == node.children.Count)
+                {
+                    node.iChild = 0;
+                    if (sp == -1)
+                    {
+                        node = null;
+                    }
+                    else
+                    {
+                        parent = stack[sp];
+                        if (parent.cradleToGateCombination != null)
+                        {
+                            Property p = node.cradleToGateModule;
+                            if (node.cradleToGateCombination != null)
+                                p = node.cradleToGateCombination;
 
-        //                    if (p != null)
-        //                    {
-        //                        double value1 = 0.0;
-        //                        double value2 = 0.0;
-        //                        try
-        //                        {
-        //                            value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
-        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-        //                            value1 = Math.Round(value1 + value2, 8);
-        //                            parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-        //                            parent.cradleToGateCombination.SetTimeStamp(timeStamp);
-        //                        }
-        //                        catch
-        //                        {
-        //                        }
-        //                    }
-        //                }
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.cradleToGateCombination.SetTimeStamp(timeStamp);
+                                }
+                                catch
+                                {
+                                }
+                            }
+                        }
 
-        //                if (parent.productionCombination != null)
-        //                {
-        //                    Property p = node.productionModule;
-        //                    if (node.productionCombination != null)
-        //                        p = node.productionCombination;
-        //                    if (p != null)
-        //                    {
-        //                        double value1 = 0.0;
-        //                        double value2 = 0.0;
-        //                        try
-        //                        {
-        //                            value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
-        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-        //                            value1 = Math.Round(value1 + value2, 8);
-        //                            parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-        //                            parent.productionCombination.SetTimeStamp(timeStamp);
-        //                        }
-        //                        catch
-        //                        {
-        //                        }
-        //                    }
-        //                }
+                        if (parent.productionCombination != null)
+                        {
+                            Property p = node.productionModule;
+                            if (node.productionCombination != null)
+                                p = node.productionCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.productionCombination.SetTimeStamp(timeStamp);
+                                }
+                                catch
+                                {
+                                }
+                            }
+                        }
 
-        //                if (parent.distributionCombination != null)
-        //                {
-        //                    Property p = node.distributionModule;
-        //                    if (node.distributionCombination != null)
-        //                        p = node.distributionCombination;
-        //                    if (p != null)
-        //                    {
-        //                        double value1 = 0.0;
-        //                        double value2 = 0.0;
-        //                        try
-        //                        {
-        //                            value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
-        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-        //                            value1 = Math.Round(value1 + value2, 8);
-        //                            parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-        //                            parent.distributionCombination.SetTimeStamp(timeStamp);
-        //                        }
-        //                        catch
-        //                        {
-        //                        }
-        //                    }
-        //                }
+                        if (parent.distributionCombination != null)
+                        {
+                            Property p = node.distributionModule;
+                            if (node.distributionCombination != null)
+                                p = node.distributionCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.distributionCombination.SetTimeStamp(timeStamp);
+                                }
+                                catch
+                                {
+                                }
+                            }
+                        }
 
-        //                if (parent.weightCombination != null)
-        //                {
-        //                    Property p = node.weightModule;
-        //                    if (node.weightCombination != null)
-        //                        p = node.weightCombination;
-        //                    if (p != null)
-        //                    {
-        //                        double value1 = 0.0;
-        //                        double value2 = 0.0;
-        //                        try
-        //                        {
-        //                            value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
-        //                            value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-        //                            value1 = Math.Round(value1 + value2, 8);
-        //                            parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
-        //                            parent.weightCombination.SetTimeStamp(timeStamp);
-        //                        }
-        //                        catch
-        //                        {
-        //                        }
-        //                    }
-        //                }
+                        if (parent.weightCombination != null)
+                        {
+                            Property p = node.weightModule;
+                            if (node.weightCombination != null)
+                                p = node.weightCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.weightCombination.SetTimeStamp(timeStamp);
+                                }
+                                catch
+                                {
+                                }
+                            }
+                        }
 
-        //                parent = null;
-        //                node = stack[sp];
-        //                stack.RemoveAt(sp);
-        //                sp--;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            // Interate children
-        //            stack.Add(node);
-        //            sp++;
-        //            node = node.children[node.iChild++];
-        //        }
-        //    }
+                        parent = null;
+                        node = stack[sp];
+                        stack.RemoveAt(sp);
+                        sp--;
+                    }
+                }
+                else
+                {
+                    // Interate children
+                    stack.Add(node);
+                    sp++;
+                    node = node.children[node.iChild++];
+                }
+            }
 
-        //    if (pCO2eqTotal != null)
-        //    {
-        //        pCO2eqTotal.Value = "0";
-        //        pCO2eqTotal.Value = root?.cradleToGateCombination?.Value;
-        //    }
+            if (pCO2eqTotal != null)
+            {
+                pCO2eqTotal.Value = "0";
+                pCO2eqTotal.Value = root?.cradleToGateCombination?.Value;
+            }
 
-        //    // once = true;
-        //    // if (root != null && root.bomTimestamp > lastCreateTimestamp)
-        //    if (changed || credentialsChanged)
-        //    {
-        //        Program.signalNewData(1);
-        //        lastCreateTimestamp = timeStamp;
-        //        credentialsChanged = false;
-        //    }
-        //}
+            // once = true;
+            // if (root != null && root.bomTimestamp > lastCreateTimestamp)
+            if (changed || credentialsChanged)
+            {
+                Program.signalNewData(1);
+                lastCreateTimestamp = timeStamp;
+                credentialsChanged = false;
+            }
+        }
 
         public void operation_calculate_glc(Operation op, DateTime timeStamp)
         {
