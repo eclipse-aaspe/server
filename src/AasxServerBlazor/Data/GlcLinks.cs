@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using System;
 using System.Linq;
 using AasxServer;
 using Microsoft.IdentityModel.Tokens;
@@ -98,8 +99,9 @@ public static class GlcLinks
 
             return GetSmLink(p as Submodel) + "/submodel-elements/" + idShortPath + "/attachment";
         }
-        catch
+        catch (Exception ex)
         {
+            Console.Error.WriteLine($"GetImageLink failed: {ex}");
         }
 
         return null;
