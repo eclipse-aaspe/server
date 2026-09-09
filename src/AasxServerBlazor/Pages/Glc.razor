@@ -1,0 +1,180 @@
+@page "/glc"
+
+@using AasCore.Aas3_1
+@using Data
+@using AasxServer;
+@using Extensions;
+@using Microsoft.IdentityModel.Tokens;
+@using static AasxServer.AasxTask;
+@inject AASService SubmodelService
+@inject AasxTaskService AasxTaskService
+@implements IDisposable
+
+@* Flat list of the AAS in the DB. All data comes from AasxTaskService.glcList, which is
+   built in createGlcList() via IDbRequestHandlerService - never from Program.env, which is
+   empty in --with-db mode. The iframe lives in MainLayout, hence the plain onclick. *@
+
+<div class="relative flex min-h-screen flex-col overflow-hidden bg-gray-50 break-all">
+	<img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
+	<div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
+		@{
+			var iframePath   = getIframePath();
+			var registryLink = getRegistryLink();
+			var glcPcfTotal  = AasxTaskService.glcPcfTotal;
+		}
+		@if (glcPcfTotal > 0)
+		{
+			<div class="mb-4 rounded-lg px-6 py-3"
+				 style="background-color: @GlcTheme.Accent;
+	            color: white;
+	            font-size: 1.375rem;
+	            font-weight: 400;">
+				Total Carbon Footprint:
+				@glcPcfTotal.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)
+				kg CO&#x2082;e
+			</div>
+		}
+		@foreach (var node in AasxTaskService.glcList)
+		{
+			if (node.aas == null)
+			{
+				continue;
+			}
+
+			var productImage   = GlcLinks.GetImageLink(node.productImage);
+			var materialNumber = node.materialNumber;
+			var productType = node.productType;
+
+			var text = node.productDesignation;
+			if (string.IsNullOrEmpty(text))
+			{
+				text = node.aas.IdShort ?? "";
+			}
+
+			var link = GlcLinks.GetAasLink(node.aas);
+
+			<div class="node mb-2 flex flex-row space-x-2">
+				@if (productImage != null)
+				{
+					<img src="@productImage" class="h-24 self-center" style="max-width: 75px; object-fit: contain;"
+						 onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(4500.0 / (this.width*this.height))) + 'px';" />
+				}
+				@* one company per showcase, so the per row manufacturer logo is redundant - it
+				   moved to the GLC header in MainLayout. Fixed width keeps the rows aligned.
+				   Inline styles only: font-mono/tabular-nums/text-xs are NOT in the pre-built
+				   wwwroot/css/site.css, and rebuilding it would delete its hand-written part. *@
+				<div class="flex-none self-center text-center" style="width: 70px;" title="Material number">
+					@if (!string.IsNullOrEmpty(materialNumber))
+					{
+						<div class="font-bold text-slate-700 dark:text-slate-500">@materialNumber</div>
+					}
+				</div>
+				<div class="self-center grow">
+					<div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
+					<div class="hidden" style="font-size:70%; color:#888;">matno=@node.materialNumber assetid=@node.asset aasid=@node.aas.Id</div>
+					@if (!string.IsNullOrEmpty(productType))
+					{
+						<div class="font-bold text-slate-700 dark:text-slate-500">@productType</div>
+					}
+					<div>
+						@foreach (var sub in node.submodels)
+						{
+							if (sub.displayId == "TECH")
+								continue;
+
+							var filter = sub.color == "red"
+								? "invert(0.5) sepia(1) saturate(100) hue-rotate(0deg)"
+								: "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
+
+							<a href="@link" target="_blank"
+							   onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink&smUrl=@System.Net.WebUtility.UrlEncode(sub.sm.Id)&materialNumber=@node.materialNumber'; return false;"
+							   style="margin-right: 4px;">
+								@if (sub.iconName != null)
+								{
+									<img src="/sm_icons/@(Uri.EscapeDataString(sub.iconName)).svg" style="height:22px; display: inline; filter: @filter;" />
+								}
+								<span style="font-size:8pt; color:@sub.color;">@sub.displayId</span>
+							</a>
+						}
+					</div>
+				</div>
+				<div class="flex-none self-center hide-slim">
+					<button class="btn px-3 text-white"
+							onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&registryURL=@registryLink&materialNumber=@node.materialNumber'"
+							style="background-color: @GlcTheme.Accent; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
+						<span style="color:@GlcTheme.AccentText;font-weight:bold;">&gt;</span>
+					</button>
+				</div>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+
+	static string path = "";
+	static bool pathIntit = true;
+
+	// IFRAMEPATH_GLC first, so GLC can point at the locally served, customized viewer
+	// (mounted from VIEWERROOT, see ServerConfiguration.cs) while /pcf2 keeps the remote
+	// IFRAMEPATH. A root-relative value like /viewer/submodelViewV3.html is resolved by the
+	// browser against the page URL, so it also works over LAN, in Docker and behind TLS.
+	static string getIframePath()
+	{
+		if (pathIntit)
+		{
+			pathIntit = false;
+			var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH_GLC");
+			if (string.IsNullOrWhiteSpace(p))
+				p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
+			if (p != null)
+				path = p.Replace("\r", "").Replace("\n", "").Trim();
+		}
+
+		return path;
+	}
+
+	// getSmLink / getAasLink / getImageLink moved to Data/GlcLinks.cs, because MainLayout
+	// needs GetImageLink for the company logo in the GLC header. getIframePath above stays
+	// here: it owns the path/pathIntit env var cache and has no second consumer.
+
+	// The viewer builds its submodel tab list only when registryURL is present
+	// (dashboard/js/submodelViewV3.js:103-133) - otherwise no <a id="activeSM"> is created
+	// and its final .click() throws. Our own server answers GET /shell-descriptors/{b64}
+	// straight from the DB whenever --with-db is set.
+	static string getRegistryLink()
+	{
+		var reg = Program.externalRepository;
+		if (string.IsNullOrEmpty(reg))
+			reg = Program.externalBlazor;
+
+		// the viewer concatenates registryURL + "/shell-descriptors/" + aasId
+		return reg.TrimEnd('/');
+	}
+
+	protected override void OnInitialized()
+	{
+		SubmodelService.NewDataAvailable += NewData;
+	}
+
+	public void Dispose()
+	{
+		SubmodelService.NewDataAvailable -= NewData;
+	}
+
+	void NewData(object source, EventArgs args)
+	{
+		if (Program.isLoading)
+			return;
+
+		if (args is Program.NewDataAvailableArgs newArgs)
+		{
+			int newDataMode = newArgs.signalNewDataMode;
+			if (newDataMode != 0)
+			{
+				InvokeAsync(() => this.StateHasChanged());
+			}
+		}
+	}
+
+}

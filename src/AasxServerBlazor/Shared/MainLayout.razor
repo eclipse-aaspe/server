@@ -26,25 +26,99 @@
     @{
         if (Program.isLoading)
         {
-            <span style="color:white;background-color:blue;">Loading...</span>
-            System.Threading.Thread.Sleep(1000);
-            StateHasChanged();
+			<span style="color:white;background-color:blue;">Loading...</span>
+			System.Threading.Thread.Sleep(1000);
+			StateHasChanged();
+		}
+		else
+		{
+			if (string.IsNullOrEmpty(_input))
+			{
+				_input = "anonymous";
+				AasxCredentials.initAnonymous(cs.credentials);
+				AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
+				AasxTaskService.resetTimeStamp();
+				AasxTaskService.resetTimeStampGlc();
+			}
+
+			var isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
+													|| NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
+													|| NavMan.Uri.EndsWith("/pcf2edc") || NavMan.Uri.EndsWith("/pcf2edc/");
+
+			if (NavMan.Uri.EndsWith("/glc"))
+			{
+				// all showcase components come from one company, so the logo is redundant per row
+				// (Glc.razor shows the material number there now) and lives in the header instead.
+				// Dynamic: first AAS in the GLC list that carries one. glcList is empty until the
+				// first calculateglc cycle, so headerLogo is simply null on the first render.
+				var headerLogo = Data.GlcLinks.GetImageLink(
+					AasxTaskService.glcList.FirstOrDefault(n => n.manufacturerLogo != null)?.manufacturerLogo);
+				<style>
+        input:checked ~ .dot {
+            transform: translateX(100%);
+            background-color: @(Data.GlcTheme.Accent) !important; /* GLCTHEME, see Data/GlcTheme.cs */
         }
-        else
-        {
-            if (string.IsNullOrEmpty(_input))
-            {
-                _input = "anonymous";
-                AasxCredentials.initAnonymous(cs.credentials);
-                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
-                AasxTaskService.resetTimeStamp();
-            }
-
-            var isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
-                                                    || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
-                                                    || NavMan.Uri.EndsWith("/pcf2edc") || NavMan.Uri.EndsWith("/pcf2edc/");
-
-            if (!isPcf)
+    </style>
+                <div style="height:100%; padding:0 !important; overflow-y: visible;">
+                    <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0; min-height: 8%;">
+						@* flex-none: this is a flex child of the space-between row, so without it the
+						   cell shrinks against the "Loaded N shells" label and the title wraps *@
+						<div class="flex-none self-center">
+                            <div class="flex items-stretch">
+                                @if (headerLogo != null)
+                                {
+                                    @* max-height, not the old IDTA max-width: site.css has a global
+                                       img { max-width: 80%; max-height: max-content; }, which would let
+                                       a tall logo stretch this min-height:8% row. Inline style wins. *@
+                                    <img src="@headerLogo" alt="Company logo" class="self-center"
+                                         style="max-height: 34px; max-width: 110px; object-fit: contain; padding-left: 15px;" />
+                                }
+								@if (!Program.showWeight)
+                                {
+                                    <span hspace=20 style="padding-left:15px; padding-right:5px; font-size:large; white-space: nowrap;" class="self-center">
+                                        <strong>Digital Product Passport Showcase</strong>
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div>
+                            <!-- toggle -->
+                            <!-- label -->
+                            @* Program.submodelAPIcount is only filled by the registry path, so it stays 0
+                               for GLC. Count what the GLC list actually holds instead. *@
+                            <span class="ml-3 text-gray-700 font-medium">
+                                Loaded @AasxTaskService.glcList.Count shells / @AasxTaskService.glcList.Sum(n => n.submodels.Count) submodels
+                            </span>
+                        </div>
+                        <div class="self-center text-right p-2" style="margin-top:8px;">
+                            <label for="toggle" class="flex items-center cursor-pointer justify-end">
+                                Disclaimer: displayed values are for demo purposes only
+                                <div class="relative ml-2">
+                                    <!-- input -->
+                                    <input type="checkbox" id="toggle" class="sr-only"
+                                           onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
+                                            { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
+                                    <!-- line -->
+                                    <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
+                                    <!-- dot -->
+                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex flex-row" style="height:92%;">
+                        <div class="content px-4 expand-slim" style="width:33%; flex-shrink:0; height:100%; padding: 0px !important; overflow-y: scroll;">
+                            @Body
+                        </div>
+                        <div class="content px-4 hide-slim" style="flex:1; padding: 0px !important;">
+                            <iframe src="@getIframePathGlc()"
+                                    id="iframe" style="width: 100%; height: 100%;">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+			}
+            else if (!isPcf)
             {
                 <div class="top-row px-4">
                     <span align=left hspace=20 style="color:blue; font-size: xx-large; vertical-align: middle; margin-right: 20px;">
@@ -70,195 +144,192 @@
                 if (Program.showWeight)
                 {
                     modelText = "weight";
-                }
-
-                <style>
-        input:checked ~ .dot {
-            transform: translateX(100%);
-            background-color: #174a87 !important; /* zvei blau */
-        }
-    </style>
-                <div style="height:100%; padding:0 !important; overflow-y: visible;">
-                    <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0; min-height: 8%;">
-						<div class="self-center">
-                            <div class="flex items-stretch">
-                                <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" alt="zvei logo"/>
-								<img src="Logo_IDTA.jpg" style=" max-width: 100px; display: inline; object-fit: contain; margin-top: 18px" alt="Logo of IDTA"/>
-								@if (!Program.showWeight)
-                                {
-                                    <span hspace=20 style="padding-left:15px; padding-right:5px; font-size:large;" class="self-center">
-                                        <strong>Product Carbon Footprint Showcase</strong>
-                                    </span>
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <!-- toggle -->
-                            <!-- label -->
-                            <span class="ml-3 text-gray-700 font-medium">
-                                @if (_loading)
-                                {
-                                    <span class="loader align-middle"></span>
-                                    <span style="">Loading submodels...</span>
-                                }
-                                else
-                                {
-                                    <span style="">Loaded @Program.submodelAPIcount submodels @_watchText</span>
-                                }
-                                Role:
-                                <!--Curr: <span style="border-width: 1px; color: blue;">@input</span>-->
-
-                                <select @bind="_role"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                    <!--<option selected="@role"></option>-->
-
-                                    @foreach (var t in roleList)
-                                    {
-                                        <option value="@t">@t</option>
-                                    }
-                                </select>
-                                <input
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                    type="password" size="4" @bind="CurrentValue"/>
-                                <button class="btn bg-blue-500 text-white p-1 text-sm" style="background-color: #174a87;"
-                                        @onclick="update">
-                                    Authenticate
-                                </button>
-
-                                @code {
-                                    private string CurrentValue { get; set; }
-                                }
-
-                                @{
-                                    if (_edit)
-                                    {
-                                        <span style="color:red;">edit</span>
-                                    }
-
-                                    async Task update()
-                                    {
-                                        if (!string.IsNullOrEmpty(CurrentValue))
-                                        {
-                                            Program.submodelAPIcount = 0;
-                                            switch (CurrentValue)
-                                            {
-                                                case "edit":
-                                                    _edit = !_edit;
-                                                    Program.signalNewData(2);
-                                                    break;
-                                                case "weight":
-                                                    Program.showWeight = !Program.showWeight;
-                                                    Program.signalNewData(2);
-                                                    break;
-                                                case "count=0":
-                                                    Program.submodelAPIcount = 0;
-                                                    break;
-                                                default:
-                                                    {
-                                                        if (CurrentValue.Contains("FORCE-POLICY"))
-                                                        {
-                                                            Program.withPolicy = CurrentValue.Contains("ON");
-                                                        }
-                                                        else
-                                                        {
-                                                            if (CurrentValue.Contains("get="))
-                                                            {
-                                                                CurrentValue   = CurrentValue.Replace("get=", "");
-                                                                Program.getUrl = CurrentValue;
-                                                                Program.signalNewData(2);
-                                                            }
-                                                            else if (CurrentValue.Contains("secret="))
-                                                            {
-                                                                CurrentValue   = CurrentValue.Replace("secret=", "");
-                                                                Program.getUrl = CurrentValue;
-                                                                Program.signalNewData(2);
-                                                            }
-                                                            else
-                                                            {
-                                                                if (string.IsNullOrEmpty(_role))
-                                                                    _role = roleList[ 0 ];
-                                                                if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
-                                                                {
-                                                                    CurrentValue = CurrentValue.Replace("Email=", "");
-                                                                    AasxCredentials.initByEmail(cs.credentials, CurrentValue);
-                                                                    _input = CurrentValue;
-                                                                    _role  = string.Empty;
-                                                                }
-                                                                else if (CurrentValue == "c" || (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT")))
-                                                                {
-                                                                    if (CurrentValue == "c")
-                                                                    {
-                                                                        CurrentValue = "CREDENTIALS-BEARER.DAT";
-                                                                    }
-                                                                    AasxCredentials.initByFile(cs.credentials, CurrentValue);
-                                                                _input = CurrentValue;
-                                                                _role  = string.Empty;
-                                                            }
-                                                            else if (CurrentValue.Contains("edc="))
-                                                            {
-                                                                CurrentValue = CurrentValue.Replace("edc=", "");
-                                                                AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
-                                                                _input = CurrentValue;
-                                                                _role  = string.Empty;
-                                                            }
-                                                            else
-                                                            {
-                                                                AasxCredentials.initByUserPW(cs.credentials, _role, CurrentValue);
-                                                                _input = _role;
-                                                            }
-
-                                                            _loading = true;
-                                                            StateHasChanged();
-                                                            await Task.Delay(1); //hack to let frontend update
-                                                            var watch = System.Diagnostics.Stopwatch.StartNew();
-                                                            await AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
-                                                            watch.Stop();
-                                                            Console.WriteLine(watch.ElapsedMilliseconds + " ms");
-                                                            _watchText = $"in {((watch.ElapsedMilliseconds + 500) / 1000)}s";
-                                                            AasxTaskService.resetTimeStamp();
-                                                            _loading = false;
-                                                        }
-                                                    }
-
-                                                    break;
-                                                }
-                                            }
-
-                                            CurrentValue = "";
-                                            StateHasChanged();
-                                        }
-                                    }
-                                }
-                            </span>
-                        </div>
-                        <div class="self-center text-right p-2" style="margin-top:8px;">
-                            <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                                Disclaimer: displayed @modelText values are for demo purposes only
-                                <div class="relative ml-2">
-                                    <!-- input -->
-                                    <input type="checkbox" id="toggle" class="sr-only"
-                                           onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
-                                            { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
-                                    <!-- line -->
-                                    <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
-                                    <!-- dot -->
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="flex flex-row" style="height:92%;">
-                        <div class="content px-4 basis-1/3 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
-                            @Body
-                        </div>
-                        <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
-                            <iframe src="@getIframePath()"
-                                    id="iframe" style="width: 100%; height: 100%;">
-                            </iframe>
-                        </div>
-                    </div>
-                </div>
-            }
+				}
+	     			<style>
+	     				input:checked ~ .dot {
+	     					transform: translateX(100%);
+	     					background-color: #174a87 !important; /* zvei blau */
+	     				}
+	     			</style>
+	     			<div style="height:100%; padding:0 !important; overflow-y: visible;">
+	     				<div class="top-row flex justify-between" style="justify-content: space-between; padding: 0; min-height: 8%;">
+	     					<div class="self-center">
+	     						<div class="flex items-stretch">
+	     							<img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" alt="zvei logo" />
+	     							<img src="Logo_IDTA.jpg" style=" max-width: 100px; display: inline; object-fit: contain; margin-top: 18px" alt="Logo of IDTA" />
+	     							@if (!Program.showWeight)
+	     							{
+	     								<span hspace=20 style="padding-left:15px; padding-right:5px; font-size:large;" class="self-center">
+	     									<strong>Product Carbon Footprint Showcase</strong>
+	     								</span>
+	     							}
+	     						</div>
+	     					</div>
+	     					<div>
+	     						<!-- toggle -->
+	     						<!-- label -->
+	     						<span class="ml-3 text-gray-700 font-medium">
+	     							@if (_loading)
+	     							{
+	     								<span class="loader align-middle"></span>
+	     								<span style="">Loading submodels...</span>
+	     							}
+	     							else
+	     							{
+	     								<span style="">Loaded @Program.submodelAPIcount submodels @_watchText</span>
+	     							}
+	     							Role:
+	     							<!--Curr: <span style="border-width: 1px; color: blue;">@input</span>-->
+	     
+	     							<select @bind="_role"
+	     									class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+	     								<!--<option selected="@role"></option>-->
+	     								@foreach (var t in roleList)
+	     								{
+	     									<option value="@t">@t</option>
+	     								}
+	     				</select>
+	     				<input class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+	     					   type="password" size="4" @bind="CurrentValue" />
+	     				<button class="btn bg-blue-500 text-white p-1 text-sm" style="background-color: #174a87;"
+	     						@onclick="update">
+	     					Authenticate
+	     				</button>
+	     
+	     				@code {
+	     					private string CurrentValue { get; set; }
+	     				}
+	     
+	     				@{
+	     					if (_edit)
+	     					{
+	     						<span style="color:red;">edit</span>
+	     					}
+	     
+	     					async Task update()
+	     					{
+	     						if (!string.IsNullOrEmpty(CurrentValue))
+	     						{
+	     							Program.submodelAPIcount = 0;
+	     							switch (CurrentValue)
+	     							{
+	     								case "edit":
+	     									_edit = !_edit;
+	     									Program.signalNewData(2);
+	     									break;
+	     								case "weight":
+	     									Program.showWeight = !Program.showWeight;
+	     									Program.signalNewData(2);
+	     									break;
+	     								case "count=0":
+	     									Program.submodelAPIcount = 0;
+	     									break;
+	     								default:
+	     									{
+	     										if (CurrentValue.Contains("FORCE-POLICY"))
+	     										{
+	     											Program.withPolicy = CurrentValue.Contains("ON");
+	     										}
+	     										else
+	     										{
+	     											if (CurrentValue.Contains("get="))
+	     											{
+	     												CurrentValue = CurrentValue.Replace("get=", "");
+	     												Program.getUrl = CurrentValue;
+	     												Program.signalNewData(2);
+	     											}
+	     											else if (CurrentValue.Contains("secret="))
+	     											{
+	     												CurrentValue = CurrentValue.Replace("secret=", "");
+	     												Program.getUrl = CurrentValue;
+	     												Program.signalNewData(2);
+	     											}
+	     											else
+	     											{
+	     												if (string.IsNullOrEmpty(_role))
+	     													_role = roleList[0];
+	     												if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
+	     												{
+	     													CurrentValue = CurrentValue.Replace("Email=", "");
+	     													AasxCredentials.initByEmail(cs.credentials, CurrentValue);
+	     													_input = CurrentValue;
+	     													_role = string.Empty;
+	     												}
+	     												else if (CurrentValue == "c" || (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT")))
+	     												{
+	     													if (CurrentValue == "c")
+	     													{
+	     														CurrentValue = "CREDENTIALS-BEARER.DAT";
+	     													}
+	     													AasxCredentials.initByFile(cs.credentials, CurrentValue);
+	     													_input = CurrentValue;
+	     													_role = string.Empty;
+	     												}
+	     												else if (CurrentValue.Contains("edc="))
+	     												{
+	     													CurrentValue = CurrentValue.Replace("edc=", "");
+	     													AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
+	     													_input = CurrentValue;
+	     													_role = string.Empty;
+	     												}
+	     												else
+	     												{
+	     													AasxCredentials.initByUserPW(cs.credentials, _role, CurrentValue);
+	     													_input = _role;
+	     												}
+	     
+	     												_loading = true;
+	     												StateHasChanged();
+	     												await Task.Delay(1); //hack to let frontend update
+	     												var watch = System.Diagnostics.Stopwatch.StartNew();
+	     												await AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
+	     												watch.Stop();
+	     												Console.WriteLine(watch.ElapsedMilliseconds + " ms");
+	     												_watchText = $"in {((watch.ElapsedMilliseconds + 500) / 1000)}s";
+	     												AasxTaskService.resetTimeStamp();
+	     												_loading = false;
+	     											}
+	     										}
+	     
+	     										break;
+	     									}
+	     							}
+	     
+	     							CurrentValue = "";
+	     							StateHasChanged();
+	     						}
+	     					}
+	     				}
+	     			</span>
+	     		</div>
+	     		<div class="self-center text-right p-2" style="margin-top:8px;">
+	     			<label for="toggle" class="flex items-center cursor-pointer justify-end">
+	     				Disclaimer: displayed @modelText values are for demo purposes only
+	     				<div class="relative ml-2">
+	     					<!-- input -->
+	     					<input type="checkbox" id="toggle" class="sr-only"
+	     						   onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
+                                                 { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
+	     					<!-- line -->
+	     					<div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
+	     					<!-- dot -->
+	     					<div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+	     				</div>
+	     			</label>
+	     		</div>
+	     	</div>
+	     	<div class="flex flex-row" style="height:92%;">
+	     		<div class="content px-4 basis-1/3 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
+	     			@Body
+	     		</div>
+	     		<div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
+	     			<iframe src="@getIframePath()"
+	     					id="iframe" style="width: 100%; height: 100%;">
+	     			</iframe>
+	     		</div>
+	     	</div>
+	     </div>
+		}
         }
     }
 </div>
@@ -282,7 +353,9 @@
 	{
 		string endpoint  = null;
 		var    idEncoded = Base64UrlEncoder.Encode(aas.Id);
-		if (aas.Extensions != null)
+		// Count check as well: a non-null but empty list would throw and take the whole layout
+		// down, and DB-loaded shells can have one.
+		if (aas.Extensions != null && aas.Extensions.Count > 0)
 		{
 			endpoint = aas.Extensions[ 0 ].Value;
 		}
@@ -363,6 +436,42 @@
 
         return _path;
     }
+
+	// The cabinet AAS comes from the DB-backed GLC list, not from Program.env, which is empty
+	// in --with-db mode. No credentials for GLC, but registryURL is mandatory - see below.
+	string getIframePathGlc()
+	{
+		var link = "";
+		var cabinet = AasxTaskService.glcRoot;
+		if (cabinet?.aas != null)
+		{
+			// same reason as in Glc.razor: without registryURL the viewer renders no submodel
+			// tabs at all (dashboard/js/submodelViewV3.js:103-133). The server answers
+			// /shell-descriptors itself in --with-db mode.
+			var registryURL = AasxServer.Program.externalRepository;
+			if (string.IsNullOrEmpty(registryURL))
+				registryURL = AasxServer.Program.externalBlazor;
+
+			link = "?aasUrl=" + getAasLink(cabinet.aas)
+			     + "&registryURL=" + registryURL.TrimEnd('/');
+		}
+
+		// local base path, so repeated renders cannot accumulate into the static _path
+		var basePath = "";
+		// IFRAMEPATH_GLC first, so GLC can point at the locally served, customized viewer
+		// (see VIEWERROOT in ServerConfiguration.cs) while /pcf2 keeps the remote IFRAMEPATH
+		var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH_GLC");
+		if (string.IsNullOrWhiteSpace(p))
+			p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
+		if (p != null)
+			basePath = p.Replace("\r", "").Replace("\n", "").Trim();
+
+		// without a viewer base path the iframe would load the Blazor app into itself
+		if (basePath == "")
+			return "about:blank";
+
+		return basePath + link;
+	}
 
     protected override void OnInitialized()
     {

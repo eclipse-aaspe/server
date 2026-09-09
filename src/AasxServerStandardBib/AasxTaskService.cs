@@ -16,31 +16,37 @@ namespace AasxServer
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using AasxServerDB;
     using System.IdentityModel.Tokens.Jwt;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Security.Authentication;
     using System.Security.Claims;
+    using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
-    using System.Text.Json.Nodes;
     using System.Text;
+    using System.Text.Json;
+    using System.Text.Json.Nodes;
+    using System.Text.Json.Serialization;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using AasxServerDB;
     using AdminShellNS;
+    using Contracts;
+    using Contracts.Events;
+    using Contracts.Pagination;
+    using Contracts.Security;
     using Extensions;
     using IdentityModel;
     using IdentityModel.Client;
     using Microsoft.IdentityModel.Tokens;
-    using System.Security.Cryptography;
-    using System.Linq;
-    using System.Text.Json;
-    using Contracts;
-    using Contracts.Events;
     using MQTTnet;
-    using System.Security.Authentication;
-    using System.Text.Json.Serialization;
+    using Namotion.Reflection;
+    using NetTopologySuite.Geometries;
+    using ScottPlot;
 
     public class AasxTask
     {
@@ -78,20 +84,82 @@ namespace AasxServer
         public List<CfpNode> children = new List<CfpNode>();
         public int iChild = 0;
     }
+    // One submodel of a GlcNode, already resolved from the DB package env and prepared for
+    // rendering. Everything here is a pure function of the raw idShort, so it is computed once
+    // in createGlcList. Credential dependent link building stays in Glc.razor, because
+    // cs.credentials changes at runtime.
+    public class GlcSubmodelNode
+    {
+        public ISubmodel sm = null;
+        public string displayId = "";  // "NP", "BOM", "PCF", "PCF v1.0", "TECH", "DOC" or the raw idShort
+        public string iconName = null; // file name below wwwroot/sm_icons without .svg, null => text only
+        public string color = "green"; // "green" or "red" for " - NO ACCESS"
+        public int sortKey = int.MaxValue;
+    }
 
+    public class GlcNode
+    {
+        public string asset = null;
+        public AssetAdministrationShell aas = null;
+        public AasCore.Aas3_1.File manufacturerLogo = null;
+        public AasCore.Aas3_1.File productImage = null;
+        public string productDesignation = "";
+
+        // 7 digit material number, shown per row instead of the (per row redundant)
+        // manufacturer logo, which moved to the GLC header. See glcMaterialNumber().
+        public string materialNumber = "";
+        public string productType = "";
+        public double? pcfCO2eq = null;  // from CarbonFootprint submodel, PcfCO2eq property
+        public List<string> bom = new List<string>();
+        public DateTime bomTimestamp = new DateTime();
+        public List<GlcSubmodelNode> submodels = new List<GlcSubmodelNode>();
+    }
+
+    public class NoSecurityConfig : ISecurityConfig
+    {
+        public NoSecurityConfig()
+        {
+            NoSecurity = true;
+        }
+
+        public bool NoSecurity
+        {
+            get; set;
+        }
+
+        public ClaimsPrincipal Principal { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public NeededRights NeededRightsClaim { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    }
 
     public class AasxTaskService
     {
-        public AasxTaskService(IEventService eventService)
+        public AasxTaskService(IEventService eventService, IDbRequestHandlerService dbRequestHandlerService)
         {
             _eventService = eventService;
+            _dbRequestHandlerService = dbRequestHandlerService;
         }
 
         public List<AasxTask> taskList = new List<AasxTask>();
         public IEventService _eventService = null;
+        private readonly IDbRequestHandlerService _dbRequestHandlerService;
         public WebProxy proxy = null;
 
-        //CFP
+        //GLC
+        // the control cabinet AAS, used by MainLayout.getIframePathGlc()
+        public GlcNode glcRoot = null;
+        public List<GlcNode> glcList = new List<GlcNode>();
+        public double glcPcfTotal = 0;
+        private volatile bool _glcRunning = false;
+        //public Property pCO2eqTotal = null;
+        ////public bool cfpValid = false;
+        public DateTime lastCreateTimestampGlc = new DateTime();
+        public bool credentialsChangedGlc = false;
+        public string hashBOMGlc = "";
+        //public long logCount = 0;
+        //public long logCountModulo = 30;
+        //public bool once = false;
+
+        ////CFP
         public CfpNode root = null;
         public string asbuilt_total = null;
         public Property pCO2eqTotal = null;
@@ -102,6 +170,7 @@ namespace AasxServer
         public long logCount = 0;
         public long logCountModulo = 30;
         public bool once = false;
+
         bool firstCycle = true;
 
         public void TaskInit()
@@ -326,6 +395,10 @@ namespace AasxServer
                         case "calculatecfp":
                         case "calculate_cfp":
                             operation_calculate_cfp(timeStamp);
+                            break;
+                        case "calculateglc":
+                        case "calculate_glc":
+                            operation_calculate_glc(op, timeStamp);
                             break;
                         case "timeseriessampling":
                             AasxTimeSeries.TimeSeries.timeSeriesSampling(false);
@@ -2434,6 +2507,12 @@ namespace AasxServer
             public int iChild = 0;
         }
 
+        public void resetTimeStampGlc()
+        {
+            lastCreateTimestampGlc = new DateTime();
+            credentialsChangedGlc = true;
+        }
+
         public void resetTimeStamp()
         {
             lastCreateTimestamp = new DateTime();
@@ -2887,10 +2966,10 @@ namespace AasxServer
                                                             break; //english has priority over German
                                                         }
 
-                                                        if (ls.Language.ToLower() == "de")
+                                                        if (ls.Language.ToLower() == "de"
+                                                            && s != null)
                                                         {
-                                                            if (s != null)
-                                                                s = ls.Text;
+                                                            s = ls.Text;
                                                         }
                                                     }
 
@@ -3029,6 +3108,340 @@ namespace AasxServer
                 changed = true;
                 hashBOM = digest;
             }
+
+            return changed;
+        }
+
+        private static string glcCleanupIdShort(string text)
+        {
+            if (text == null)
+                return "";
+
+            text = text.Replace(" - EXTERNAL", "");
+            text = text.Replace(" - NO ACCESS", "");
+            text = text.Replace(" - COPY", "");
+            return text;
+        }
+
+        // custom ordering of submodels to achieve same rendering of all AASs
+        private static int glcSubmodelOrder(string idShort)
+        {
+            switch (idShort)
+            {
+                case "Nameplate": return 1;
+                case "BillOfMaterial": return 2;
+                case "ProductCarbonFootprint": return 3;
+                case "CarbonFootprint": return 4;
+                case "Documentation": return 5;
+                case "HandoverDocumentation": return 6;
+                case "TechnicalData": return 7;
+                default: return int.MaxValue;
+            }
+        }
+
+        private static GlcSubmodelNode glcMakeSubmodelNode(ISubmodel sm)
+        {
+            var raw = sm.IdShort ?? "";
+            var clean = glcCleanupIdShort(raw);
+            var node = new GlcSubmodelNode
+            {
+                sm = sm,
+                color = raw.Contains(" - NO ACCESS") ? "red" : "green",
+                sortKey = glcSubmodelOrder(clean)
+            };
+
+            // iconName must match a file in AasxServerBlazor/wwwroot/sm_icons
+            switch (clean)
+            {
+                case "Nameplate": node.displayId = "NP"; node.iconName = "np"; break;
+                case "BillOfMaterial": node.displayId = "BOM"; node.iconName = "bom"; break;
+                case "ProductCarbonFootprint": node.displayId = "PCF"; node.iconName = "pcf"; break;
+                case "CarbonFootprint": node.displayId = "PCF v1.0"; node.iconName = "pcf v1.0"; break;
+                case "TechnicalData": node.displayId = "TECH"; node.iconName = "tech"; break;
+                case "Documentation":
+                case "HandoverDocumentation": node.displayId = "DOC"; node.iconName = "doc"; break;
+                default: node.displayId = clean; node.iconName = null; break;
+            }
+
+            return node;
+        }
+
+        // 7 digit material number for the showcase list. Priority:
+        //   1. Nameplate/ProductArticleNumberOfManufacturer - verbatim, e.g. "2900542"
+        //   2. Nameplate/URIOfTheProduct      - "https://www.phoenixcontact.com/qr/2900542"
+        //   3. AssetInformation.GlobalAssetId - "https://phoenixcontact.com/qr/2900542/1B"
+        // 2 and 3 are URIs, so the number comes from the last run of 7+ digits, NOT from the
+        // last 7 characters: the global asset id carries a trailing variant ("/1B"), which
+        // would yield "0542/1B". Verified against
+        // src/AasxServerDB.Tests/TestData/PHOENIX_CONTACT_2900542_...aasx.
+        private static string glcMaterialNumber(string articleNumber, string productUri, string globalAssetId)
+        {
+            if (!string.IsNullOrWhiteSpace(articleNumber))
+                return articleNumber.Trim();
+
+            var fromUri = glcTrailingDigits(productUri);
+            if (fromUri != "")
+                return fromUri;
+
+            return glcTrailingDigits(globalAssetId);
+        }
+
+        private static readonly Regex glcDigitRun = new Regex(@"\d{7,}", RegexOptions.Compiled);
+
+        // last run of 7 or more digits, truncated to its last 7 characters; "" if there is none
+        private static string glcTrailingDigits(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return "";
+
+            var matches = glcDigitRun.Matches(text);
+            if (matches.Count == 0)
+                return "";
+
+            var v = matches[matches.Count - 1].Value;
+            return v.Length > 7 ? v.Substring(v.Length - 7) : v;
+        }
+
+        private static double? glcFindPcfCO2eq(ISubmodel sm)
+            => glcFindSmeProp(sm.SubmodelElements, "PcfCO2eq");
+
+        private static double? glcFindSmeProp(IEnumerable<ISubmodelElement> elements, string idShort)
+        {
+            if (elements == null) return null;
+            foreach (var e in elements)
+            {
+                if (e is Property p && p.IdShort == idShort)
+                {
+                    // normalize decimal separator: AAS properties may use comma (de) or period (en)
+                    var normalized = p.Value?.Replace(',', '.');
+                    if (double.TryParse(normalized, System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out var val))
+                        return val;
+                }
+                if (e is ISubmodelElementCollection col)
+                {
+                    var found = glcFindSmeProp(col.Value, idShort);
+                    if (found.HasValue) return found;
+                }
+            }
+            return null;
+        }
+
+        public async Task<bool> createGlcList(DateTime timeStamp, Dictionary<string, int> materialNumberPcfValueDict)
+        {
+            bool changed = false;
+
+            var tempGlcList = new List<GlcNode>();
+
+            var paginationParameters = new PaginationParameters(null, null);
+
+            var aasen = await _dbRequestHandlerService.ReadPagedAssetAdministrationShells(paginationParameters, new NoSecurityConfig(), null, null);
+            var aascount = aasen.Count;
+
+            // Collect data from all AAS into glcNode(s)
+            for (int i = 0; i < aascount; i++)
+            {
+                var aasId = (aasen[i] as IAssetAdministrationShell).Id;
+                var envee = await _dbRequestHandlerService.ReadPackageEnv(aasId, null);
+                var env = envee?.PackageEnv;
+                if (env != null && env.AasEnv != null)
+                {
+                    // ReadPackageEnv returns the complete AASX env, so [0] is not necessarily aasen[i]
+                    var aas = env.AasEnv.AssetAdministrationShells.FirstOrDefault(a => a.Id == aasId) as AssetAdministrationShell;
+                    if (aas == null)
+                        continue;
+
+                    // internal PCF configuration shell (see RegistryInitializerService.cs:257), not demo data
+                    if (glcCleanupIdShort(aas.IdShort).ToLower() == "pcfviewtask")
+                        continue;
+
+                    var glcNode = new GlcNode();
+                    glcNode.aas = aas;
+                    glcNode.asset = aas.AssetInformation?.GlobalAssetId;
+                    glcNode.productDesignation = aas.IdShort;
+
+                    // raw nameplate candidates; the chain is resolved after the submodel loop,
+                    // because URIOfTheProduct is the first nameplate element while the article
+                    // number comes several hundred lines later - inline assignment would make
+                    // the result depend on document order
+                    string npArticleNumber = null;
+                    string npProductUri = null;
+                    string npProductType = null;
+
+                    if (aas.Submodels != null && aas.Submodels.Count > 0)
+                    {
+                        foreach (var smr in aas.Submodels)
+                        {
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm != null && sm.IdShort != null)
+                            {
+                                if (sm.IdShort == "tasks")
+                                    continue;
+
+                                glcNode.submodels.Add(glcMakeSubmodelNode(sm));
+
+                                if (glcCleanupIdShort(sm.IdShort) == "CarbonFootprint")
+                                    glcNode.pcfCO2eq = glcFindPcfCO2eq(sm);
+
+                                if (sm.IdShort.Contains("BillOfMaterial"))
+                                {
+                                    //if (sm.IdShort.Contains(" - NO ACCESS"))
+                                    //{
+                                    //    Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
+                                    //    cfpValid = false;
+                                    //}
+
+                                    if (sm.SubmodelElements != null)
+                                    {
+                                        glcNode.bomTimestamp = sm.TimeStampTree;
+                                        List<string> bom = new List<string>();
+                                        foreach (var v in sm.SubmodelElements)
+                                        {
+                                            string s = "";
+                                            if (v is Entity e)
+                                            {
+                                                s = e?.GlobalAssetId;
+                                                if (s != "")
+                                                {
+                                                    // check if first entity is newer than last cfp creation
+                                                    //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
+                                                    //s = e?.assetRef?.Keys?[ 0 ].Value;
+                                                    s = e?.GlobalAssetId;
+                                                    if (s != "")
+                                                    {
+                                                        bom.Add(s);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // assetBOM.Add(assetId, bom);
+                                        glcNode.bom = bom;
+                                    }
+                                }
+
+                                if (sm.IdShort.Contains("TechnicalData") && sm.SubmodelElements != null)
+                                {
+                                    foreach (var v in sm.SubmodelElements)
+                                    {
+                                        if (v is SubmodelElementCollection c)
+                                        {
+                                            if (c.IdShort == "GeneralInformation")
+                                            {
+                                                foreach (var sme in c.Value)
+                                                {
+                                                    if (sme is AasCore.Aas3_1.File f)
+                                                    {
+                                                        if (f.IdShort == "ManufacturerLogo" || f.IdShort == "CompanyLogo")
+                                                            glcNode.manufacturerLogo = f;
+                                                        if (f.IdShort == "ProductImage")
+                                                            glcNode.productImage = f;
+                                                    }
+                                                    if (sme.IdShort == "ProductImages" && sme is SubmodelElementList l)
+                                                    {
+                                                        if (l.Value != null && l.Value[0] is SubmodelElementCollection cc)
+                                                        {
+                                                            if (cc.Value?[0].IdShort == "ImageFile" && cc.Value[0] is AasCore.Aas3_1.File ff)
+                                                            {
+                                                                glcNode.productImage = ff;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (sm.IdShort.Contains("Nameplate") && sm.SubmodelElements != null)
+                                {
+                                    foreach (var v in sm.SubmodelElements)
+                                    {
+                                        if (v is MultiLanguageProperty p)
+                                        {
+                                            if (p.IdShort == "ManufacturerProductDesignation")
+                                            {
+                                                if (p.Value != null)
+                                                {
+                                                    string s = null;
+                                                    foreach (var ls in p.Value)
+                                                    {
+                                                        if (ls.Language.ToLower() == "en")
+                                                        {
+                                                            s = ls.Text;
+                                                            break; //english has priority over German
+                                                        }
+
+                                                        if (ls.Language.ToLower() == "de")
+                                                        {
+                                                            if (s != null)
+                                                                s = ls.Text;
+                                                        }
+                                                    }
+
+                                                    if (s != null)
+                                                        glcNode.productDesignation = s;
+                                                }
+                                            }
+
+                                            // ZVEI nameplate 2/0 declares the article number as MLP.
+                                            // GetDefaultString() prefers "en" and falls back to the
+                                            // first entry (Extensions/ExtendLangStringSet.cs:45).
+                                            if (p.IdShort == "ProductArticleNumberOfManufacturer")
+                                                npArticleNumber = p.Value?.GetDefaultString();
+                                            if (p.IdShort == "ManufacturerProductType")
+                                                npProductType = p.Value?.GetDefaultString();
+                                        }
+                                        else if (v is Property np)
+                                        {
+                                            // some suppliers model the article number as a plain
+                                            // Property instead of an MLP - accept both
+                                            if (np.IdShort == "ProductArticleNumberOfManufacturer")
+                                                npArticleNumber = np.Value;
+
+                                            // Property, xs:string, e.g. ".../qr/2900542"
+                                            if (np.IdShort == "URIOfTheProduct")
+                                                npProductUri = np.Value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    glcNode.materialNumber = glcMaterialNumber(npArticleNumber, npProductUri, glcNode.asset);
+                    glcNode.productType = npProductType;
+
+                    // stable sort; List.Sort is unstable and would shuffle the unknown submodels
+                    glcNode.submodels = glcNode.submodels.OrderBy(s => s.sortKey).ToList();
+
+                    tempGlcList.Add(glcNode);
+                }
+            }
+
+            double total = 0;
+
+            foreach (var node in tempGlcList)
+            {
+                if (node.pcfCO2eq.HasValue
+                    && !string.IsNullOrEmpty(node.materialNumber)
+                    && materialNumberPcfValueDict.TryGetValue(node.materialNumber, out int count))
+                {
+                    var nodePcf = node.pcfCO2eq.Value * count;
+                    total += nodePcf;
+                }
+            }
+            glcPcfTotal = total;
+
+            // the cabinet is the shell that carries the BillOfMaterial, i.e. the composed one
+            glcRoot = tempGlcList.FirstOrDefault(n => n.bom.Count != 0)
+                      ?? tempGlcList.FirstOrDefault();
+            Console.WriteLine("glcList: " + tempGlcList.Count + " AAS, cabinet=" + (glcRoot?.aas?.IdShort ?? "<none>"));
+
+            // publish only after the loop, otherwise a render thread enumerates a list that is still growing
+            this.glcList = tempGlcList;
+            lastCreateTimestampGlc = timeStamp;
+            Program.signalNewData(1);
 
             return changed;
         }
@@ -3235,6 +3648,251 @@ namespace AasxServer
                 lastCreateTimestamp = timeStamp;
                 credentialsChanged = false;
             }
+        }
+
+        public void operation_calculate_glc(Operation op, DateTime timeStamp)
+        {
+            var inputVariable = op.InputVariables.FirstOrDefault(i => i.Value is SubmodelElementCollection);
+            Dictionary<string, int> materialNumberPcfValueDict = new Dictionary<string, int>();
+
+            if (inputVariable != null)
+            {
+                var materialNumberAmounts = inputVariable.Value as SubmodelElementCollection;
+
+                if (materialNumberAmounts != null)
+                {
+                    foreach (var item in materialNumberAmounts.Value)
+                    {
+                        var materialNumber = item.IdShort.Trim('A');
+                        var pcfValue = Int32.Parse(item.ValueAsText());
+                        materialNumberPcfValueDict.Add(materialNumber, pcfValue);
+                    }
+                }
+            }
+
+            //if (AasxServer.Program.initializingRegistry)
+            //{
+            //    // once = false; // one more again
+            //    return;
+            //}
+
+            //if (once)
+            //    return;
+
+            if (!firstCycle || _glcRunning)
+                return;
+
+            _glcRunning = true;
+
+            // TasksCyclic() is synchronous, so the DB scan has to run off the task thread.
+            // Without the try/catch every failure would vanish as an unobserved task fault.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await createGlcList(timeStamp, materialNumberPcfValueDict);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("createGlcList failed: " + ex.Message);
+                }
+                finally
+                {
+                    _glcRunning = false;
+                }
+            });
+
+            // Iterate tree and calculate CFP values
+            //bool changed = createGlcList(timeStamp);
+
+            //GlcNode node = glcRoot;
+            //CfpNode parent = null;
+            //List<CfpNode> stack = new List<CfpNode>();
+            //int sp = -1;
+
+            //while (node != null)
+            //{
+            //    // create cfp combination only once at first child
+            //    if (node.iChild == 0)
+            //    {
+            //        if (node.cradleToGateCombination != null)
+            //        {
+            //            node.cradleToGateCombination.Value = "0.0";
+            //            if (node.cradleToGateModule != null)
+            //            {
+            //                node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
+            //            }
+
+            //            node.cradleToGateCombination.SetTimeStamp(timeStamp);
+            //        }
+
+            //        if (node.productionCombination != null)
+            //        {
+            //            node.productionCombination.Value = "0.0";
+            //            if (node.productionModule != null)
+            //            {
+            //                node.productionCombination.Value = node.productionModule.Value;
+            //            }
+
+            //            node.productionCombination.SetTimeStamp(timeStamp);
+            //        }
+
+            //        if (node.distributionCombination != null)
+            //        {
+            //            node.distributionCombination.Value = "0.0";
+            //            if (node.distributionModule != null)
+            //            {
+            //                node.distributionCombination.Value = node.distributionModule.Value;
+            //            }
+
+            //            node.distributionCombination.SetTimeStamp(timeStamp);
+            //        }
+
+            //        if (node.weightCombination != null)
+            //        {
+            //            node.weightCombination.Value = "0.0";
+            //            if (node.weightModule != null)
+            //            {
+            //                node.weightCombination.Value = node.weightModule.Value;
+            //            }
+
+            //            node.weightCombination.SetTimeStamp(timeStamp);
+            //        }
+            //    }
+
+            //    // move up, if all children iterated
+            //    if (node.iChild == node.children.Count)
+            //    {
+            //        node.iChild = 0;
+            //        if (sp == -1)
+            //        {
+            //            node = null;
+            //        }
+            //        else
+            //        {
+            //            parent = stack[sp];
+            //            if (parent.cradleToGateCombination != null)
+            //            {
+            //                Property p = node.cradleToGateModule;
+            //                if (node.cradleToGateCombination != null)
+            //                    p = node.cradleToGateCombination;
+
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.cradleToGateCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
+
+            //            if (parent.productionCombination != null)
+            //            {
+            //                Property p = node.productionModule;
+            //                if (node.productionCombination != null)
+            //                    p = node.productionCombination;
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.productionCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
+
+            //            if (parent.distributionCombination != null)
+            //            {
+            //                Property p = node.distributionModule;
+            //                if (node.distributionCombination != null)
+            //                    p = node.distributionCombination;
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.distributionCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
+
+            //            if (parent.weightCombination != null)
+            //            {
+            //                Property p = node.weightModule;
+            //                if (node.weightCombination != null)
+            //                    p = node.weightCombination;
+            //                if (p != null)
+            //                {
+            //                    double value1 = 0.0;
+            //                    double value2 = 0.0;
+            //                    try
+            //                    {
+            //                        value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
+            //                        value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+            //                        value1 = Math.Round(value1 + value2, 8);
+            //                        parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+            //                        parent.weightCombination.SetTimeStamp(timeStamp);
+            //                    }
+            //                    catch
+            //                    {
+            //                    }
+            //                }
+            //            }
+
+            //            parent = null;
+            //            node = stack[sp];
+            //            stack.RemoveAt(sp);
+            //            sp--;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        // Interate children
+            //        stack.Add(node);
+            //        sp++;
+            //        node = node.children[node.iChild++];
+            //    }
+            //}
+
+            //if (pCO2eqTotal != null)
+            //{
+            //    pCO2eqTotal.Value = "0";
+            //    pCO2eqTotal.Value = glcRoot?.cradleToGateCombination?.Value;
+            //}
+
+            // once = true;
+            // if (root != null && root.bomTimestamp > lastCreateTimestamp)
+            //if (changed || credentialsChanged)
+            //{
+            //    Program.signalNewData(1);
+            //    lastCreateTimestamp = timeStamp;
+            //    credentialsChanged = false;
+            //}
         }
 
         public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)

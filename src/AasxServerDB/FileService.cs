@@ -69,7 +69,7 @@ public class FileService
 
     internal static void CreateThumbnailZipFile(IAssetAdministrationShell aas, Stream thumbnailStreamFromPackage = null)
     {
-        using (var fileStream = new FileStream(GetThumbnailZipPath(aas.Id), FileMode.Create))
+        using (var fileStream = new FileStream(GetThumbnailZipPath(aas.Id), FileMode.Create, FileAccess.ReadWrite, FileShare.None))
         {
             using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
             {
@@ -137,7 +137,7 @@ public class FileService
 
         if (reloadDBFiles || !System.IO.File.Exists(path))
         {
-            using (var fileStream = new FileStream(path, FileMode.OpenOrCreate))
+            using (var fileStream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
             {
                 using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                 {
@@ -186,12 +186,23 @@ public class FileService
 
             try
             {
-                using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open))
+                // Read-only access with a read share: attachment requests are served in
+                // parallel (DbRequestHandlerService runs four workers and lets reads pass
+                // concurrently). The FileStream(path, FileMode) overload asks for
+                // ReadWrite/FileShare.Read instead, so two simultaneous readers of the same
+                // zip fail with "the file is being used by another process".
+                using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                     {
                         var archiveFile = archive.GetEntry(fileName);
-                        var tempStream = archiveFile.Open();
+                        if (archiveFile == null)
+                        {
+                            scopedLogger.LogError($"File {fileName} of the Submodel-Element File with IdShort {file.IdShort} not found in {GetFilesZipPath(envFileName)}.");
+                            return false;
+                        }
+
+                        using var tempStream = archiveFile.Open();
                         var ms = new MemoryStream();
                         tempStream.CopyTo(ms);
                         ms.Position = 0;
@@ -203,8 +214,10 @@ public class FileService
                     return isFileOperationSuceeded;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                scopedLogger.LogError($"Got exception, when trying to read file: {e.Message}");
+
                 isFileOperationSuceeded = false;
             }
 
@@ -280,7 +293,10 @@ public class FileService
 
         try
         {
-            using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open))
+            // exclusive: a reader must not observe a half-rewritten archive. Reads and writes
+            // cannot collide here, because DbRequestHandlerService drains all active reads
+            // before it runs a non-read operation.
+            using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
             {
                 using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
                 {
@@ -329,7 +345,8 @@ public class FileService
 
                 try
                 {
-                    using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open))
+                    // exclusive, same reason as in ReplaceFileInZip
+                    using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
                     {
                         using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
                         {
@@ -377,7 +394,8 @@ public class FileService
         {
             try
             {
-                using (var fileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.Open))
+                // read-only share, same reason as in ReadFileInZip
+                using (var fileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                     {
@@ -448,7 +466,8 @@ public class FileService
 
             result.Close();
 
-            using (var zipFileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.Open))
+            // exclusive, same reason as in ReplaceFileInZip
+            using (var zipFileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
             {
                 using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Update))
                 {
@@ -494,7 +513,8 @@ public class FileService
         {
             try
             {
-                using (var zipFileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.OpenOrCreate))
+                // exclusive, same reason as in ReplaceFileInZip
+                using (var zipFileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
                 {
                     using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Update))
                     {
