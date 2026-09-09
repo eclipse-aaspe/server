@@ -2966,10 +2966,10 @@ namespace AasxServer
                                                             break; //english has priority over German
                                                         }
 
-                                                        if (ls.Language.ToLower() == "de")
+                                                        if (ls.Language.ToLower() == "de"
+                                                            && s != null)
                                                         {
-                                                            if (s != null)
-                                                                s = ls.Text;
+                                                            s = ls.Text;
                                                         }
                                                     }
 
@@ -3230,47 +3230,8 @@ namespace AasxServer
         public async Task<bool> createGlcList(DateTime timeStamp, Dictionary<string, int> materialNumberPcfValueDict)
         {
             bool changed = false;
-            string digest = "";
-            //cfpValid = true;
 
-            //// GET actual BOM
-            //AdminShellPackageEnv env = null;
-            //int aascount = AasxServer.Program.env.Length;
-
-            //for (int i = 0; i < aascount; i++)
-            //{
-            //    env = AasxServer.Program.env[i];
-            //    if (env != null)
-            //    {
-            //        var aas = env.AasEnv.AssetAdministrationShells[0];
-
-            //        Submodel newsm = null;
-            //        if (aas.Submodels != null && aas.Submodels.Count > 0)
-            //        {
-            //            // foreach (var smr in aas.Submodels)
-            //            for (int j = 0; j < aas.Submodels.Count; j++)
-            //            {
-            //                var smr = aas.Submodels[j];
-            //                var sm = env.AasEnv.FindSubmodel(smr);
-            //                if (sm != null && sm.IdShort != null)
-            //                {
-            //                    if (sm.IdShort.Contains("BillOfMaterial"))
-            //                    {
-            //                        if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[0].Name == "endpoint")
-            //                        {
-            //                        }
-
-            //                        break;
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            //Dictionary<string, GlcNode> assetCfp = new Dictionary<string, GlcNode>();
             var tempGlcList = new List<GlcNode>();
-            // cfpNode root = new cfpNode();
 
             var paginationParameters = new PaginationParameters(null, null);
 
@@ -3481,36 +3442,6 @@ namespace AasxServer
             this.glcList = tempGlcList;
             lastCreateTimestampGlc = timeStamp;
             Program.signalNewData(1);
-
-            //// create children from BOM
-            //foreach (var d in assetCfp)
-            //{
-            //    var cfp = d.Value;
-            //    if (cfp.bom.Count != 0)
-            //    {
-            //        foreach (var asset in cfp.bom)
-            //        {
-            //            CfpNode child = null;
-            //            if (assetCfp.TryGetValue(asset, out child))
-            //            {
-            //                cfp.children.Add(child);
-            //            }
-            //        }
-
-            //        if (cfp?.aas?.IdShort == "ZveiControlCabinetAas - EXTERNAL")
-            //        {
-            //            root = cfp;
-            //        }
-            //    }
-            //}
-
-            //logCount++;
-
-            //if (digest != hashBOM)
-            //{
-            //    changed = true;
-            //    hashBOM = digest;
-            //}
 
             return changed;
         }
@@ -3732,10 +3663,9 @@ namespace AasxServer
                 {
                     foreach (var item in materialNumberAmounts.Value)
                     {
-                        var prop = item as Property;
                         var materialNumber = item.IdShort.Trim('A');
                         var pcfValue = Int32.Parse(item.ValueAsText());
-                        materialNumberPcfValueDict.Add(item.IdShort.Trim('A'), pcfValue);
+                        materialNumberPcfValueDict.Add(materialNumber, pcfValue);
                     }
                 }
             }

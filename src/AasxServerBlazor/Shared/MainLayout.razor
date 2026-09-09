@@ -47,12 +47,6 @@
 
 			if (NavMan.Uri.EndsWith("/glc"))
 			{
-				var modelText = "GLC";
-				if (Program.showWeight)
-				{
-					modelText = "weight";
-				}
-
 				// all showcase components come from one company, so the logo is redundant per row
 				// (Glc.razor shows the material number there now) and lives in the header instead.
 				// Dynamic: first AAS in the GLC list that carries one. glcList is empty until the
@@ -113,7 +107,7 @@
                         </div>
                     </div>
                     <div class="flex flex-row" style="height:92%;">
-                        <div class="content px-4 expand-slim" style="width:40%; flex-shrink:0; height:100%; padding: 0px !important; overflow-y: scroll;">
+                        <div class="content px-4 expand-slim" style="width:33%; flex-shrink:0; height:100%; padding: 0px !important; overflow-y: scroll;">
                             @Body
                         </div>
                         <div class="content px-4 hide-slim" style="flex:1; padding: 0px !important;">
