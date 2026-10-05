@@ -322,6 +322,8 @@ Once the branch is merged into the release branch, GitHub Workflows will **autom
 
 Docker image releases are handled automatically at this stage.
 
+## Test
+
 ## Issues
 
 If you want to request new features or report bugs, please
