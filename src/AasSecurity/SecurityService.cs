@@ -110,6 +110,12 @@ namespace AasSecurity
                         r.Acl.Rights != null &&
                         r.Acl.Rights.Contains(neededRightsClaim) &&
                         r.Acl.Attributes != null &&
+                        // An ATTRIBUTE is a single CLAIM key/value pair (Contracts.JsonData.AttributeItem),
+                        // so it has no slot for an expected value: a non-token attribute is compared to
+                        // the access role, a "token:*" attribute only tests that the token CARRIES such a
+                        // claim. Value tests belong in FORMULA via $attribute(CLAIM(...)). A rule like
+                        // {"CLAIM": "token:sub"} therefore matches every token-authenticated user by
+                        // design and is expected to evaluate false for most of them.
                         r.Acl.Attributes.All(a =>
                             a.ItemType == "CLAIM" &&
                             (
