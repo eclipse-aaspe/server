@@ -4,8 +4,13 @@ using System.Security.Claims;
 using Contracts;
 using FluentAssertions;
 
-public sealed class SqlConditionsClaimScopeTests
+[Collection(AccessRulesCollection.Name)]
+public sealed class SqlConditionsClaimScopeTests : IDisposable
 {
+    private AccessRulesTestHost? _accessRules;
+
+    public void Dispose() => _accessRules?.Dispose();
+
     [Fact]
     public void CreateSqlConditions_ClaimOrSmCondition_KeepsClaimInSmScope()
     {
@@ -215,20 +220,5 @@ public sealed class SqlConditionsClaimScopeTests
     private static LogicalExpression StartsWith(LogicalExpression left, LogicalExpression right)
         => new() { ExpressionType = "$starts-with", ExpressionValue = new List<LogicalExpression> { left, right } };
 
-    private static void ParseAccessRules(string expression)
-    {
-        var blazorDir = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "AasxServerBlazor"));
-        var grammar = new QueryGrammarJSON(new NoSecurityRules());
-        var originalCwd = Directory.GetCurrentDirectory();
-        try
-        {
-            Directory.SetCurrentDirectory(blazorDir);
-            grammar.ParseAccessRules(expression);
-        }
-        finally
-        {
-            Directory.SetCurrentDirectory(originalCwd);
-        }
-    }
+    private void ParseAccessRules(string expression) => _accessRules = AccessRulesTestHost.Parse(expression);
 }

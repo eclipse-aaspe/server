@@ -169,7 +169,12 @@ namespace AasSecurity
             {
                 var ruleConditions = CombineAccessRuleFormulaAndFilter(rule);
                 if (ruleConditions == null)
-                    continue;
+                {
+                    // Neither FORMULA nor FILTER: the rule grants unconditionally, so no row-level
+                    // restriction can apply. Skipping it would leave the other rules' predicates as
+                    // the effective filter — the same mistake OrMerge used to make for $boolean: true.
+                    return null;
+                }
 
                 var perRequestRuleConditions = ruleConditions.Clone();
                 merged = merged == null
@@ -177,13 +182,19 @@ namespace AasSecurity
                     : SqlConditionsMerger.OrMerge(merged, perRequestRuleConditions);
             }
 
-            if (merged != null)
+            if (SqlConditionsMerger.IsUnrestricted(merged))
             {
-                // Resolve $attribute(CLAIM(...)) sentinels with the request's token claims before
-                // deriving the C# mirror — see SqlConditions.SubstituteTokenClaims for the contract.
-                merged.SubstituteTokenClaims(tokenClaims);
-                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
+                // Same "no restriction" meaning as the no-matching-rules return above. Allow/deny is
+                // decided by AuthorizeRequest, not here, and null spares consumers such as
+                // CrudOperator.IsSubmodelAllowedBySqlCondition a per-submodel query that can only
+                // ever answer "allowed".
+                return null;
             }
+
+            // Resolve $attribute(CLAIM(...)) sentinels with the request's token claims before
+            // deriving the C# mirror — see SqlConditions.SubstituteTokenClaims for the contract.
+            merged!.SubstituteTokenClaims(tokenClaims);
+            SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
 
             return merged;
         }
@@ -216,12 +227,15 @@ namespace AasSecurity
             foreach (var rule in rules)
             {
                 var combined = CombineAccessRuleFormulaAndFilter(rule);
-                if (combined == null)
+                if (SqlConditionsMerger.IsUnrestricted(combined))
                 {
-                    continue;
+                    // This rule grants READ without any condition. EvaluateSingleRuleTreeSubmodel
+                    // already returns true for an empty condition, so treating a rule with no
+                    // FORMULA at all as "no opinion" would make it weaker than FORMULA $boolean: true.
+                    return true;
                 }
 
-                combined = combined.Clone();
+                combined = combined!.Clone();
                 combined.SubstituteTokenClaims(tokenClaims);
                 SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(combined);
                 if (evaluateCombined(combined))
