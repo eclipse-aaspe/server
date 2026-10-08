@@ -731,67 +731,20 @@ namespace AasSecurity
                     }
                     if (!valid)
                     {
-                        if (jwtSecurityToken.Header.TryGetValue("kid", out _))
+                        if (jwtSecurityToken.Header.TryGetValue("kid", out var kidHeader))
                         {
                             user = "";
-                            var jwksUrl = "";
-                            var kid = jwtSecurityToken.Header["kid"].ToString();
                             var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                             using var httpClient = new HttpClient(clientHandler);
 
-                            if (kid != null)
+                            // Only issuers/kids from the trust list are accepted, with issuer and audience validated.
+                            // If not valid, tokens with a "serverName" claim are still checked against the server certificates below.
+                            valid = JwksTokenValidator.TryValidate(bearerToken, kidHeader?.ToString(), iss, GlobalSecurityVariables.TrustedServers,
+                                url => httpClient.GetStringAsync(url).Result, System.Environment.GetEnvironmentVariable("TOKEN_AUDIENCE"),
+                                _logger, out var jwksDomain);
+                            if (valid)
                             {
-                                jwksUrl = SecurityHelper.FindServerJwksUrl(kid, iss, out domain);
-                            }
-                            if (jwksUrl.IsNullOrEmpty())
-                            {
-                                jwksUrl = $"{iss}/jwks";
-
-                                try
-                                {
-                                    var openIdConfig = httpClient.GetStringAsync($"{iss}/.well-known/openid-configuration").Result;
-                                    var openIdConfigJson = JsonDocument.Parse(openIdConfig);
-
-                                    if (openIdConfigJson.RootElement.TryGetProperty("jwks_uri", out var propJwksUri))
-                                    {
-                                        jwksUrl = propJwksUri.GetString();
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning($"Could not access well-known from {iss}");
-                                }
-                            }
-                            try
-                            {
-                                var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
-                                var jwks = new JsonWebKeySet(jwksJson);
-                                var signingKeys = jwks.GetSigningKeys();
-
-                                var tokenHandler = new JwtSecurityTokenHandler();
-                                var validationParameters = new TokenValidationParameters
-                                {
-                                    ValidateIssuer = false,
-                                    ValidateAudience = false,
-                                    ValidateLifetime = true,
-                                    ValidateIssuerSigningKey = true,
-                                    IssuerSigningKeys = signingKeys
-                                };
-
-                                try
-                                {
-                                    var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-
-                                    valid = true;
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning($"Error in validation of token {bearerToken}: {ex.Message}.");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogWarning($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
+                                domain = jwksDomain;
                             }
                         }
                     }

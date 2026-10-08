@@ -54,14 +54,6 @@ namespace AasSecurity
 
             _logger.LogInformation($"Request is successfully authenticated.");
 
-            _logger.LogInformation("***************** LIST TICKET CLAIMS ********************");
-
-            foreach (var tickeClaim in ticket.Principal.Claims)
-            {
-                _logger.LogInformation($"CLAIM {tickeClaim?.ToString()}");
-                _logger.LogInformation($"next claim");
-            }
-
             return Task.FromResult(AuthenticateResult.Success(ticket));
 
         }

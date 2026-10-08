@@ -12,7 +12,6 @@
 ********************************************************************************/
 
 using AasSecurity.Models;
-using System.Security.Cryptography.X509Certificates;
 
 namespace AasSecurity
 {
@@ -20,12 +19,7 @@ namespace AasSecurity
     {
         public static bool WithAuthentication { get; set; }
         public static List<SecurityRole> SecurityRoles = new();
-        internal static List<X509Certificate2> ServerCertificates = new();
-        internal static List<string> ServerCertFileNames = new();
-        internal static List<string> ServerDomain = new();
-        internal static List<string> ServerJwksUrl = new();
-        internal static List<string> ServerIssuerUrl = new();         //Used when parsing from trustlist.xml
-        internal static List<string> ServerKid = new();
+        internal static List<TrustedServer> TrustedServers = new();
         internal static List<SecurityRight> SecurityRights = new();
         internal static Dictionary<string, string> SecurityUsernamePassword = new();
         internal static Property ConditionSM = null;

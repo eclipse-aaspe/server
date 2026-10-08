@@ -112,3 +112,7 @@ kooy8pxAjM5YUv+GDZdu3ojEdtDtTeZewiAXVCcDeUSLb+q2ogB2GTbYkuBSebhZ
 BmNbiHJ541E5aeIXKj1Ksdv6fUgYvzXgASKfjpq3l+bD7XSBbIAp9mMYl/pi0C8D
 ejiwt3d6N936huydhEwz
 -----END CERTIFICATE-----
+
+# Keycloak realm fx (pxcio dev), service client aasx-service-client
+audience: aasx-server
+issuer: https://identity.dev.pxcio.net/realms/fx

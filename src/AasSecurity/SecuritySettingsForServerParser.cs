@@ -100,6 +100,134 @@ namespace AasSecurity
             }
         }
 
+        /// <summary>
+        /// Parses trustlist.txt. Lines are "key: value"; lines starting with '#' are comments.
+        /// Keys serverName, domain, jwks and audience (comma-separated, repeatable) are collected for the
+        /// next entry. An entry is committed by
+        ///   "END CERTIFICATE" (after a PEM block) - certificate entry for tokens with a "serverName" claim,
+        ///   "kid: "  - JWKS entry matched by the token's kid header (requires jwks),
+        ///   "issuer: " - JWKS entry matched by the token's iss claim; issuer is validated, keys are
+        ///                taken from jwks or from the issuer's .well-known/openid-configuration.
+        /// All collected values are reset after each committed entry.
+        /// </summary>
+        internal static List<TrustedServer> ParseTrustListText(IEnumerable<string> lines)
+        {
+            var entries = new List<TrustedServer>();
+
+            var serverName = "";
+            var domain = "";
+            var jwks = "";
+            var audiences = new List<string>();
+            var base64 = "";
+            var insideBase64 = false;
+
+            void Reset()
+            {
+                serverName = "";
+                domain = "";
+                jwks = "";
+                audiences = new List<string>();
+            }
+
+            foreach (var rawLine in lines)
+            {
+                var line = rawLine.Trim();
+
+                if (insideBase64)
+                {
+                    if (line.Contains("END CERTIFICATE"))
+                    {
+                        insideBase64 = false;
+                        var x509 = new X509Certificate2(Convert.FromBase64String(base64));
+                        entries.Add(new TrustedServer
+                        {
+                            Certificate = x509,
+                            CertFileName = serverName + ".cer",
+                            Domain = domain,
+                            Source = "trustlist.txt"
+                        });
+                        Reset();
+                    }
+                    else
+                    {
+                        base64 += line;
+                    }
+
+                    continue;
+                }
+
+                if (line == "" || line.StartsWith('#'))
+                {
+                    continue;
+                }
+
+                if (line.Contains("BEGIN CERTIFICATE"))
+                {
+                    insideBase64 = true;
+                    base64 = "";
+                    continue;
+                }
+
+                var separator = line.IndexOf(": ", StringComparison.Ordinal);
+                if (separator <= 0)
+                {
+                    continue;
+                }
+
+                var key = line[..separator].Trim();
+                var value = line[(separator + 2)..].Trim();
+                Console.WriteLine($"  {key}: {value}");
+
+                switch (key)
+                {
+                    case "serverName":
+                        serverName = value;
+                        break;
+                    case "domain":
+                        domain = value;
+                        break;
+                    case "jwks":
+                        jwks = value;
+                        break;
+                    case "audience":
+                        audiences.AddRange(value.Split(',').Select(a => a.Trim()).Where(a => a != ""));
+                        break;
+                    case "kid":
+                        if (string.IsNullOrEmpty(jwks))
+                        {
+                            Console.WriteLine($"  WARNING: kid {value} has no jwks url, entry ignored");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"  WARNING: kid {value} has no issuer, the issuer of its tokens is not validated");
+                            entries.Add(new TrustedServer
+                            {
+                                Kid = value,
+                                JwksUrl = jwks,
+                                Domain = domain,
+                                Audiences = audiences,
+                                Source = "trustlist.txt"
+                            });
+                        }
+                        Reset();
+                        break;
+                    case "issuer":
+                        entries.Add(new TrustedServer
+                        {
+                            Issuer = value,
+                            JwksUrl = jwks,
+                            Domain = domain,
+                            Audiences = audiences,
+                            Source = "trustlist.txt"
+                        });
+                        Reset();
+                        break;
+                }
+            }
+
+            return entries;
+        }
+
         private async static void ParseAuthenticationServer(AdminShellPackageEnv env, SubmodelElementCollection? authServer)
         {
             var trustListOnServer = System.Environment.GetEnvironmentVariable("TRUST_LIST");
@@ -109,74 +237,7 @@ namespace AasSecurity
             {
                 Console.WriteLine("Read trustlist.txt");
                 var lines = System.IO.File.ReadAllLines("trustlist.txt");
-                {
-                    var serverName = "";
-                    var domain = "";
-                    var base64 = "";
-                    var insideBas64 = false;
-                    var jwks = "";
-                    var kid = "";
-                    foreach (var line in lines)
-                    {
-                        if (line == "" || line.StartsWith("# "))
-                        {
-                            continue;
-                        }
-
-                        if (line.Contains("serverName: "))
-                        {
-                            var split = line.Split(": ");
-                            serverName = split[1];
-                            Console.WriteLine(" serverName: " + serverName);
-                        }
-                        else if (line.Contains("domain: "))
-                        {
-                            var split = line.Split(": ");
-                            domain = split[1];
-                            Console.WriteLine("  domain: " + domain);
-                        }
-                        else if (line.Contains("jwks: "))
-                        {
-                            var split = line.Split(": ");
-                            jwks = split[1];
-                            Console.WriteLine("  jwks: " + jwks);
-                        }
-                        else if (line.Contains("kid: "))
-                        {
-                            var split = line.Split(": ");
-                            kid = split[1];
-                            Console.WriteLine("  kid: " + kid);
-                            GlobalSecurityVariables.ServerCertificates.Add(null);
-                            GlobalSecurityVariables.ServerCertFileNames.Add("");
-                            GlobalSecurityVariables.ServerDomain.Add(domain);
-                            GlobalSecurityVariables.ServerJwksUrl.Add(jwks);
-                            GlobalSecurityVariables.ServerIssuerUrl.Add("");
-                            GlobalSecurityVariables.ServerKid.Add(kid);
-                        }
-                        else if (line.Contains("BEGIN CERTIFICATE"))
-                        {
-                            insideBas64 = true;
-                            base64 = "";
-                        }
-                        else if (line.Contains("END CERTIFICATE"))
-                        {
-                            insideBas64 = false;
-                            base64 = base64.Replace("\r", "").Replace("\n", "").Trim();
-                            var certBytes = Convert.FromBase64String(base64);
-                            var x509 = new X509Certificate2(certBytes);
-                            GlobalSecurityVariables.ServerCertificates.Add(x509);
-                            GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
-                            GlobalSecurityVariables.ServerDomain.Add(domain);
-                            GlobalSecurityVariables.ServerJwksUrl.Add("");
-                            GlobalSecurityVariables.ServerIssuerUrl.Add("");
-                            GlobalSecurityVariables.ServerKid.Add("");
-                        }
-                        else if (insideBas64)
-                        {
-                            base64 += line;
-                        }
-                    }
-                }
+                GlobalSecurityVariables.TrustedServers.AddRange(ParseTrustListText(lines));
             }
 
             XDocument doc = null;
@@ -331,15 +392,13 @@ namespace AasSecurity
                         var issuer = service?.SupplyPoint;
                         Console.WriteLine("  issuer url: " + issuer);
 
-                        var kid = "";
-
-                        GlobalSecurityVariables.ServerCertificates.Add(null);
-                        GlobalSecurityVariables.ServerCertFileNames.Add("");
-                        GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
-                        GlobalSecurityVariables.ServerDomain.Add(domain);
-                        GlobalSecurityVariables.ServerIssuerUrl.Add(issuer);
-                        GlobalSecurityVariables.ServerJwksUrl.Add("");
-                        GlobalSecurityVariables.ServerKid.Add(kid);
+                        GlobalSecurityVariables.TrustedServers.Add(new TrustedServer
+                        {
+                            CertFileName = serverName + ".cer",
+                            Domain = domain ?? "",
+                            Issuer = issuer ?? "",
+                            Source = "trustlist.xml"
+                        });
                     }
                 }
             }
@@ -380,9 +439,13 @@ namespace AasSecurity
                                 {
                                     certStream.CopyTo(memoryStream);
                                     var buffer = memoryStream.GetBuffer();
-                                    GlobalSecurityVariables.ServerCertificates.Add(new X509Certificate2(buffer));
                                     string[] split = publicCert.Value.Split('/');
-                                    GlobalSecurityVariables.ServerCertFileNames.Add(split[3]);
+                                    GlobalSecurityVariables.TrustedServers.Add(new TrustedServer
+                                    {
+                                        Certificate = new X509Certificate2(buffer),
+                                        CertFileName = split[3],
+                                        Source = "aasx"
+                                    });
                                     //_logger.LogDebug($"Loaded auth server certificate: {split[3]}");
                                 }
                             }
