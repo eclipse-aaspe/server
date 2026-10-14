@@ -287,9 +287,28 @@ public class PathJoin
 /// before being appended — this keeps every <c>$$path{n}$$</c>/<c>$$match{n}$$</c> reference
 /// in the merged <c>FormulaConditions["all"]</c> unambiguous.
 /// </para>
+/// <para>
+/// An empty condition means "no restriction" = TRUE, so it is the <b>neutral</b> element under AND
+/// (<see cref="Merge"/>) and the <b>absorbing</b> element under OR (<see cref="OrMerge"/>).
+/// See <see cref="OrMerge"/> for why conflating the two silently drops an unconditional grant.
+/// </para>
 /// </summary>
 public static class SqlConditionsMerger
 {
+    /// <summary>
+    /// How two condition sets combine — decides what an empty operand means, which is the whole
+    /// difference between <see cref="Merge"/> and <see cref="OrMerge"/>.
+    /// <list type="bullet">
+    /// <item><see cref="And"/>: empty is the NEUTRAL element, so the other side survives.</item>
+    /// <item><see cref="Or"/>: empty is TRUE and therefore ABSORBS — the result is unrestricted.</item>
+    /// </list>
+    /// </summary>
+    private enum MergeOp
+    {
+        And,
+        Or
+    }
+
     public static SqlConditions? Merge(SqlConditions? query, SqlConditions? security)
     {
         if (query == null && security == null) return null;
@@ -299,7 +318,7 @@ public static class SqlConditionsMerger
         var merged = new SqlConditions();
 
         // --- FormulaConditions: AND per key ---
-        MergeConditions(query.FormulaConditions, security.FormulaConditions, merged.FormulaConditions, "AND", skipAll: true);
+        MergeConditions(query.FormulaConditions, security.FormulaConditions, merged.FormulaConditions, MergeOp.And, skipAll: true);
 
         // --- Renumber security placeholders ---
         int pathOffset  = query.Paths.Count;
@@ -384,6 +403,13 @@ public static class SqlConditionsMerger
     /// OR-combines two <see cref="SqlConditions"/> — used when accumulating rules where any rule may match.
     /// FormulaConditions are OR-combined per key.
     /// Paths/Matches are renumbered and appended (same logic as <see cref="Merge"/>).
+    /// <para>
+    /// An empty (or purely tautological) operand means that rule grants without restriction, so it
+    /// ABSORBS: the result is unrestricted, not the other operand. Falling back to the other operand
+    /// would silently drop the unconditional grant and leave an unrelated rule's predicate as the
+    /// effective filter. Same invariant as <c>QueryGrammarJSON.BuildScopeSqlNode</c> case
+    /// <c>"$or"</c> enforces for the branches of a single formula.
+    /// </para>
     /// </summary>
     public static SqlConditions? OrMerge(SqlConditions? left, SqlConditions? right)
     {
@@ -391,10 +417,27 @@ public static class SqlConditionsMerger
         if (left == null) return right;
         if (right == null) return left;
 
+        // Emptiness is unaffected by the placeholder renumbering below, so this can be decided up front.
+        if (string.IsNullOrWhiteSpace(NormalizeNeutralCondition(left.FormulaConditions.GetValueOrDefault("all", ""))) ||
+            string.IsNullOrWhiteSpace(NormalizeNeutralCondition(right.FormulaConditions.GetValueOrDefault("all", ""))))
+        {
+            // One side grants unconditionally, so the disjunction is unrestricted. Every scope
+            // prefilter has to go too: a prefilter not implied by the overall condition would drop
+            // rows the unconditional side allows. And with the overall condition gone, every
+            // $$path/$$match/$$exists placeholder is unreferenced — leaving those joins attached
+            // would disable the direct fast paths and let a stale EXISTS pattern suppress the
+            // trigram index of an unrelated user query (see Query.ClassifyCommonValueMatches).
+            // A fresh bag is exactly "no restriction": all scope keys "" and no joins.
+            return new SqlConditions
+            {
+                Select = !string.IsNullOrWhiteSpace(left.Select) ? left.Select : right.Select ?? ""
+            };
+        }
+
         var merged = new SqlConditions();
 
         // --- FormulaConditions: OR per key ---
-        MergeConditions(left.FormulaConditions, right.FormulaConditions, merged.FormulaConditions, "OR", skipAll: true);
+        MergeConditions(left.FormulaConditions, right.FormulaConditions, merged.FormulaConditions, MergeOp.Or, skipAll: true);
 
         // --- Renumber right placeholders ---
         int pathOffset  = left.Paths.Count;
@@ -410,12 +453,16 @@ public static class SqlConditionsMerger
             rightOverall = rightOverall.Replace($"$$exists{i}$$", $"$$exists{i + existsOffset}$$");
 
         // --- FormulaConditions["all"]: OR-combine ---
+        // Both sides are known non-empty here (the absorb case returned early), but keep the
+        // absorbing rule local so the invariant survives future refactors.
         var lOver = NormalizeNeutralCondition(left.FormulaConditions.GetValueOrDefault("all", ""));
         rightOverall = NormalizeNeutralCondition(rightOverall);
         merged.FormulaConditions["all"] =
-            !string.IsNullOrWhiteSpace(lOver) && !string.IsNullOrWhiteSpace(rightOverall)
-                ? $"({lOver}) OR ({rightOverall})"
-                : string.IsNullOrWhiteSpace(lOver) ? rightOverall : lOver;
+            string.IsNullOrWhiteSpace(lOver) || string.IsNullOrWhiteSpace(rightOverall)
+                ? ""
+                : string.Equals(lOver, rightOverall, StringComparison.Ordinal)
+                    ? lOver
+                    : $"({lOver}) OR ({rightOverall})";
 
         // --- Paths/Matches: left first, then renumbered right ---
         foreach (var p in left.Paths) merged.Paths.Add(p);
@@ -457,7 +504,7 @@ public static class SqlConditionsMerger
         Dictionary<string, string> left,
         Dictionary<string, string> right,
         Dictionary<string, string> target,
-        string op,
+        MergeOp op,
         bool skipAll = false)
     {
         var allKeys = left.Keys.Union(right.Keys);
@@ -468,19 +515,44 @@ public static class SqlConditionsMerger
 
             var lVal = NormalizeNeutralCondition(left.GetValueOrDefault(key, ""));
             var rVal = NormalizeNeutralCondition(right.GetValueOrDefault(key, ""));
+
+            if (op == MergeOp.Or && (string.IsNullOrWhiteSpace(lVal) || string.IsNullOrWhiteSpace(rVal)))
+            {
+                // "" means "no restriction for this scope" = TRUE, and TRUE absorbs under OR. A scope
+                // prefilter is only sound if it is a NECESSARY condition of the disjunction, so if one
+                // side constrains this scope and the other does not, the scope cannot be prefiltered
+                // at all — only the "all" condition may decide.
+                target[key] = "";
+                continue;
+            }
+
             if (!string.IsNullOrWhiteSpace(lVal) && !string.IsNullOrWhiteSpace(rVal))
             {
                 // Avoid (X) OR (X) / (X) AND (X) when merging duplicate rule fragments (same string).
                 target[key] = string.Equals(lVal, rVal, StringComparison.Ordinal)
                     ? lVal
-                    : $"({lVal}) {op} ({rVal})";
+                    : $"({lVal}) {(op == MergeOp.And ? "AND" : "OR")} ({rVal})";
             }
             else
             {
+                // AND: empty is the neutral element, so the non-empty side survives unchanged.
                 target[key] = string.IsNullOrWhiteSpace(lVal) ? rVal : lVal;
             }
         }
     }
+
+    /// <summary>
+    /// True if this bag places no restriction at all: every scope condition is empty or a pure
+    /// tautology and no path/match/exists join is attached. That is what an access rule with
+    /// <c>FORMULA: {"$boolean": true}</c> (or with no FORMULA/FILTER at all) produces, i.e. an
+    /// unconditional grant — see <see cref="OrMerge"/> for why such an operand absorbs.
+    /// <c>null</c> counts as unrestricted, matching the "no restriction" meaning of a null bag
+    /// throughout the query and security paths.
+    /// </summary>
+    public static bool IsUnrestricted(SqlConditions? sc)
+        => sc == null
+        || (sc.Paths.Count == 0 && sc.Matches.Count == 0 && sc.ExistsConditions.Count == 0
+            && sc.FormulaConditions.Values.All(v => string.IsNullOrWhiteSpace(NormalizeNeutralCondition(v))));
 
     /// <summary>
     /// Empty, <c>1=1</c>, or parenthesized tautologies only (e.g. <c>(1=1)</c>, <c>((1=1))</c>) — for AND/OR merges so query <c>$boolean: true</c> does not add noise.

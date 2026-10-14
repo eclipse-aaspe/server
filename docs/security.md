@@ -70,7 +70,7 @@ case-insensitively:
 
 | SubmodelElement `idShort` | Type                          | Result                                                                                                      |
 |---------------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `authenticationServer`    | `SubmodelElementCollection`   | `endpoint` / `type` / `publicCertificate` → `Program.redirectServer`, `Program.authType`, cert in `GlobalSecurityVariables.ServerCertificates`. Also reads side-car files `trustlist.txt` / `trustlist.xml` for additional issuer certs, JWKS URLs and kids. |
+| `authenticationServer`    | `SubmodelElementCollection`   | `endpoint` / `type` / `publicCertificate` → `Program.redirectServer`, `Program.authType`, cert in `GlobalSecurityVariables.TrustedServers`. Also reads side-car files `trustlist.txt` / `trustlist.xml` for trusted token issuers (see §3.3). |
 | `roleMapping`             | `SubmodelElementCollection`   | Per entry: `subjects` (`email`, `emailDomain`, or any property `idShort`) × `roles` → `GlobalSecurityVariables.SecurityRights` entries (`SecurityRight { Name=subject, Role=role }`). |
 | `basicAuth`               | `SubmodelElementCollection`   | Each property is added to `GlobalSecurityVariables.SecurityUsernamePassword` (`IdShort` → `Value`).         |
 
@@ -111,6 +111,45 @@ properties with their password as `Value`:
 > example self-contained; production deployments must replace the `basicAuth`
 > collection (or disable it) and provide an `authenticationServer` entry that
 > points at a real OIDC / JWKS provider.
+
+### 3.3 Trusted token issuers (`trustlist.txt` / `trustlist.xml`)
+
+Bearer tokens (other than Entra ID tokens) are only accepted from issuers listed
+in a trust list. A token with a `kid` header is matched against the trust list
+first by its `iss` claim, then by its `kid`; tokens from unlisted issuers are
+rejected. The JWKS is always taken from the trust list entry, never from the
+token. Tokens with a `serverName` claim are validated against the certificate
+entries.
+
+`trustlist.txt` is a list of `key: value` lines, lines starting with `#` are
+comments. `serverName`, `domain`, `jwks` and `audience` are collected for the
+next entry; an entry is completed by:
+
+| Line                        | Entry                                                                                                   |
+|-----------------------------|---------------------------------------------------------------------------------------------------------|
+| `issuer: <url>`             | OIDC issuer. `iss` must equal the url (trailing `/` ignored). Keys from `jwks`, else from `<url>/.well-known/openid-configuration`. |
+| `kid: <key id>`             | Single key id, requires `jwks`. The issuer is not validated.                                            |
+| `-----END CERTIFICATE-----` | PEM certificate for tokens with `serverName: <serverName>`.                                             |
+
+`audience: a, b` lists accepted audiences (any of them must be in `aud`). Without
+an `audience` line the comma-separated environment variable `TOKEN_AUDIENCE` is
+used; if neither is set, the audience is not validated (a warning is logged).
+`domain` is attached as `domain` claim to tokens that carry a user name.
+All values are reset after each completed entry.
+
+```
+# Keycloak realm, service client with Audience mapper "aasx-server"
+audience: aasx-server
+issuer: https://identity.example.com/realms/fx
+```
+
+`trustlist.xml` (ETSI trust service list, optionally from the url in `TRUST_LIST`
+and signature-checked with `publickey.pem`) adds one issuer entry per
+`ServiceSupplyPoint`.
+
+Tokens without a user name (e.g. client-credentials service accounts) get no
+role from `roleMapping`; grant them access with rules on their token claims,
+e.g. `$contains` on `token:realm_access` for a Keycloak realm role.
 
 ---
 

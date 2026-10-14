@@ -11,7 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using Environment = System.Environment;
+using System.Linq;
 
 namespace AasxServerStandardBib.Services;
 
@@ -21,10 +21,11 @@ namespace AasxServerStandardBib.Services;
 public static class LogSanitizer
 {
     /// <summary>
-    /// Sanitizes the input string for plain text logs by removing new line characters.
-    /// This helps prevent log forging by ensuring user input cannot inject new log entries.
+    /// Sanitizes the input string for plain text logs by removing all control characters
+    /// (new lines, tabs, escape sequences, ...). This helps prevent log forging by ensuring
+    /// user input cannot inject new log entries. It does not hide secrets: never log those.
     /// </summary>
-    /// <param name="input">The user input string to sanitize.</param>
-    /// <returns>The sanitized string with new line characters removed.</returns>
-    public static string Sanitize(string input) => input.Replace(Environment.NewLine, "").Replace("\n", "").Replace("\r", "");
+    /// <param name="input">The user input string to sanitize, may be null.</param>
+    /// <returns>The sanitized string without control characters, or an empty string for null.</returns>
+    public static string Sanitize(string? input) => input == null ? "" : string.Concat(input.Where(c => !char.IsControl(c)));
 }

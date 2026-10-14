@@ -110,6 +110,12 @@ namespace AasSecurity
                         r.Acl.Rights != null &&
                         r.Acl.Rights.Contains(neededRightsClaim) &&
                         r.Acl.Attributes != null &&
+                        // An ATTRIBUTE is a single CLAIM key/value pair (Contracts.JsonData.AttributeItem),
+                        // so it has no slot for an expected value: a non-token attribute is compared to
+                        // the access role, a "token:*" attribute only tests that the token CARRIES such a
+                        // claim. Value tests belong in FORMULA via $attribute(CLAIM(...)). A rule like
+                        // {"CLAIM": "token:sub"} therefore matches every token-authenticated user by
+                        // design and is expected to evaluate false for most of them.
                         r.Acl.Attributes.All(a =>
                             a.ItemType == "CLAIM" &&
                             (
@@ -163,7 +169,12 @@ namespace AasSecurity
             {
                 var ruleConditions = CombineAccessRuleFormulaAndFilter(rule);
                 if (ruleConditions == null)
-                    continue;
+                {
+                    // Neither FORMULA nor FILTER: the rule grants unconditionally, so no row-level
+                    // restriction can apply. Skipping it would leave the other rules' predicates as
+                    // the effective filter — the same mistake OrMerge used to make for $boolean: true.
+                    return null;
+                }
 
                 var perRequestRuleConditions = ruleConditions.Clone();
                 merged = merged == null
@@ -171,13 +182,19 @@ namespace AasSecurity
                     : SqlConditionsMerger.OrMerge(merged, perRequestRuleConditions);
             }
 
-            if (merged != null)
+            if (SqlConditionsMerger.IsUnrestricted(merged))
             {
-                // Resolve $attribute(CLAIM(...)) sentinels with the request's token claims before
-                // deriving the C# mirror — see SqlConditions.SubstituteTokenClaims for the contract.
-                merged.SubstituteTokenClaims(tokenClaims);
-                SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
+                // Same "no restriction" meaning as the no-matching-rules return above. Allow/deny is
+                // decided by AuthorizeRequest, not here, and null spares consumers such as
+                // CrudOperator.IsSubmodelAllowedBySqlCondition a per-submodel query that can only
+                // ever answer "allowed".
+                return null;
             }
+
+            // Resolve $attribute(CLAIM(...)) sentinels with the request's token claims before
+            // deriving the C# mirror — see SqlConditions.SubstituteTokenClaims for the contract.
+            merged!.SubstituteTokenClaims(tokenClaims);
+            SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(merged);
 
             return merged;
         }
@@ -210,12 +227,15 @@ namespace AasSecurity
             foreach (var rule in rules)
             {
                 var combined = CombineAccessRuleFormulaAndFilter(rule);
-                if (combined == null)
+                if (SqlConditionsMerger.IsUnrestricted(combined))
                 {
-                    continue;
+                    // This rule grants READ without any condition. EvaluateSingleRuleTreeSubmodel
+                    // already returns true for an empty condition, so treating a rule with no
+                    // FORMULA at all as "no opinion" would make it weaker than FORMULA $boolean: true.
+                    return true;
                 }
 
-                combined = combined.Clone();
+                combined = combined!.Clone();
                 combined.SubstituteTokenClaims(tokenClaims);
                 SqlConditions.RefreshFormulaConditionsCSharpFromFormulaSql(combined);
                 if (evaluateCombined(combined))
@@ -428,7 +448,9 @@ namespace AasSecurity
                 accessRole = "isNotAuthenticated";
             }
 
-            _logger.LogDebug($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
+            // The access role is not logged: for failed username/password logins it contains the password ("__user__password").
+            _logger.LogDebug("Access role determined, policy: {Policy}, policyRequestedResource: {PolicyRequestedResource}",
+                LogSanitizer.Sanitize(policy), LogSanitizer.Sanitize(policyRequestedResource));
             var aasSecurityContext = new AasSecurityContext(accessRole, route, httpOperation);
             //Create claims
             var claims = new List<Claim>
@@ -464,7 +486,7 @@ namespace AasSecurity
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
             {
-                _logger.LogDebug($"Access role found {accessRole}");
+                _logger.LogDebug("Access role found");
 
                 return accessRole;
             }
@@ -577,7 +599,7 @@ namespace AasSecurity
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError($"Token validation failed: {ex.Message}");
+                            _logger.LogError("Token validation failed: {Reason}", LogSanitizer.Sanitize(ex.Message));
                             user = "";
                             return "";
                         }
@@ -598,8 +620,7 @@ namespace AasSecurity
                                 audience = audienceEnvVar;
                             }
 
-                            _logger.LogDebug($"TOKENEXCHANGE1 = {tokenExchange1}");
-                            _logger.LogDebug($"TOKENEXCHANGE2 = {tokenExchange2}");
+                            _logger.LogDebug("Token exchange is configured for issuer {Issuer}", LogSanitizer.Sanitize(tokenExchange1));
                             var handlerExchange = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                             var client = new HttpClient(handlerExchange);
 
@@ -627,7 +648,7 @@ namespace AasSecurity
                             if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
                             {
                                 bearerToken = tokenElement.GetString();
-                                _logger.LogDebug("token exchange 2 " + bearerToken);
+                                _logger.LogDebug("Token exchange 2: access token received");
                                 jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                 iss = "";
@@ -657,7 +678,7 @@ namespace AasSecurity
                                         }
                                         catch (Exception ex)
                                         {
-                                            _logger.LogDebug($"Could not access well-known from {iss}");
+                                            _logger.LogDebug("Could not access well-known from {Issuer}", LogSanitizer.Sanitize(iss));
                                         }
 
                                         parameters = new Dictionary<string, string>
@@ -684,7 +705,7 @@ namespace AasSecurity
                                             jwtSecurityToken = null;
 
                                             bearerToken = tokenElementFromLocalIdp.GetString();
-                                            _logger.LogDebug("token exchange 3 (with local idP) " + bearerToken);
+                                            _logger.LogDebug("Token exchange 3 (with local idP): token received");
                                             jwtSecurityToken = handler.ReadJwtToken(bearerToken);
 
                                             issClaim = jwtSecurityToken.Claims.Where(c => c.Type == "iss");
@@ -711,67 +732,20 @@ namespace AasSecurity
                     }
                     if (!valid)
                     {
-                        if (jwtSecurityToken.Header.TryGetValue("kid", out _))
+                        if (jwtSecurityToken.Header.TryGetValue("kid", out var kidHeader))
                         {
                             user = "";
-                            var jwksUrl = "";
-                            var kid = jwtSecurityToken.Header["kid"].ToString();
                             var clientHandler = new HttpClientHandler { DefaultProxyCredentials = CredentialCache.DefaultCredentials };
                             using var httpClient = new HttpClient(clientHandler);
 
-                            if (kid != null)
+                            // Only issuers/kids from the trust list are accepted, with issuer and audience validated.
+                            // If not valid, tokens with a "serverName" claim are still checked against the server certificates below.
+                            valid = JwksTokenValidator.TryValidate(bearerToken, kidHeader?.ToString(), iss, GlobalSecurityVariables.TrustedServers,
+                                url => httpClient.GetStringAsync(url).Result, System.Environment.GetEnvironmentVariable("TOKEN_AUDIENCE"),
+                                _logger, out var jwksDomain);
+                            if (valid)
                             {
-                                jwksUrl = SecurityHelper.FindServerJwksUrl(kid, iss, out domain);
-                            }
-                            if (jwksUrl.IsNullOrEmpty())
-                            {
-                                jwksUrl = $"{iss}/jwks";
-
-                                try
-                                {
-                                    var openIdConfig = httpClient.GetStringAsync($"{iss}/.well-known/openid-configuration").Result;
-                                    var openIdConfigJson = JsonDocument.Parse(openIdConfig);
-
-                                    if (openIdConfigJson.RootElement.TryGetProperty("jwks_uri", out var propJwksUri))
-                                    {
-                                        jwksUrl = propJwksUri.GetString();
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning($"Could not access well-known from {iss}");
-                                }
-                            }
-                            try
-                            {
-                                var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
-                                var jwks = new JsonWebKeySet(jwksJson);
-                                var signingKeys = jwks.GetSigningKeys();
-
-                                var tokenHandler = new JwtSecurityTokenHandler();
-                                var validationParameters = new TokenValidationParameters
-                                {
-                                    ValidateIssuer = false,
-                                    ValidateAudience = false,
-                                    ValidateLifetime = true,
-                                    ValidateIssuerSigningKey = true,
-                                    IssuerSigningKeys = signingKeys
-                                };
-
-                                try
-                                {
-                                    var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-
-                                    valid = true;
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning($"Error in validation of token {bearerToken}: {ex.Message}.");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogWarning($"Error in loading jwks from {jwksUrl}: {ex.Message}.");
+                                domain = jwksDomain;
                             }
                         }
                     }
@@ -794,7 +768,7 @@ namespace AasSecurity
                             builder.AppendLine(
                                                Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
                             builder.AppendLine("-----END CERTIFICATE-----");
-                            _logger.LogDebug("Token Server Certificate: " + serverName);
+                            _logger.LogDebug("Token Server Certificate: {ServerName}", LogSanitizer.Sanitize(serverName));
                             _logger.LogDebug(builder.ToString());
                             //check if server cert is correctly signed
                             try
@@ -894,7 +868,7 @@ namespace AasSecurity
             catch (Exception ex)
             {
                 error = true;
-                _logger.LogWarning($"Exception occurred while parsing the bearer token.{ex.Message}");
+                _logger.LogWarning("Exception occurred while parsing the bearer token: {Reason}", LogSanitizer.Sanitize(ex.Message));
                 _logger.LogDebug(ex.StackTrace);
             }
 
@@ -919,8 +893,7 @@ namespace AasSecurity
                             switch (split[0].ToLower())
                             {
                                 case "bearer":
-                                   _logger.LogDebug($"Received bearer token {split[1]}");
-                                   //_logger.LogInformation("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[1]));
+                                    _logger.LogDebug("Received bearer token from authorization header");
                                     bearerToken = split[1];
                                     break;
                                 case "basic" when bearerToken == null:
@@ -932,7 +905,7 @@ namespace AasSecurity
                                             var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
                                             string u = credentials[0];
                                             string p = credentials[1];
-                                            _logger.LogInformation("Received username+password http header = " + u + " : " + p);
+                                            _logger.LogInformation("Received username+password http header for user {User}", LogSanitizer.Sanitize(u));
 
                                             if (u == "secret")
                                             {
@@ -951,7 +924,7 @@ namespace AasSecurity
                                         if (username != null)
                                         {
                                             user = username;
-                                            _logger.LogInformation("Received username+password http header = " + user);
+                                            _logger.LogInformation("Received username+password http header for user {User}", LogSanitizer.Sanitize(user));
                                         }
                                         else
                                         {
@@ -963,7 +936,7 @@ namespace AasSecurity
                                     }
                                     catch (ArgumentException argumentException)
                                     {
-                                        _logger.LogInformation($"Exception while extracting {nameof(Program.secretStringAPI)}: {argumentException.Message}");
+                                        _logger.LogInformation("Exception while extracting {Name}: {Reason}", nameof(Program.secretStringAPI), LogSanitizer.Sanitize(argumentException.Message));
                                     }
 
                                     break;
@@ -997,7 +970,7 @@ namespace AasSecurity
                         var secretQuery = queries["s"]!;
                         if (!string.IsNullOrEmpty(secretQuery))
                         {
-                            _logger.LogInformation("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
+                            _logger.LogInformation("Received token of type s");
                             if (Program.secretStringAPI != null)
                             {
                                 if (secretQuery.Equals(Program.secretStringAPI))
@@ -1014,7 +987,7 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogInformation("Received token of type bear {Sanitize}", LogSanitizer.Sanitize(token));
+                            _logger.LogInformation("Received token of type bear");
                             bearerToken = token;
                         }
 
@@ -1038,7 +1011,7 @@ namespace AasSecurity
                         var token = queries[key];
                         if (token != null)
                         {
-                            _logger.LogInformation("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
+                            _logger.LogInformation("Received token of type username-password");
                             var username = CheckUserPW(token, out var userName, out var passWord);
                             if (username != null)
                             {
@@ -1114,12 +1087,8 @@ namespace AasSecurity
                 currentRole = "isNotAuthenticated";
             }
 
-            _logger.LogDebug("checkAccessLevel: " +
-                             " currentRole = " + currentRole +
-                             " operation = " + operation +
-                             " neededRights = " + neededRights +
-                             " objPath = " + objPath
-                            );
+            _logger.LogDebug("checkAccessLevel: operation = {Operation} neededRights = {NeededRights} objPath = {ObjPath}",
+                LogSanitizer.Sanitize(operation), neededRights, LogSanitizer.Sanitize(objPath));
 
             if (aasResource == null)
             {

@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using AasSecurity.Models;
 using AasxServer;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -84,39 +85,45 @@ namespace AasSecurity
         internal static X509Certificate2? FindServerCertificate(string serverName, out string domain)
         {
             domain = "";
-            if (GlobalSecurityVariables.ServerCertFileNames != null)
+            foreach (var entry in GlobalSecurityVariables.TrustedServers)
             {
-                for (var i = 0; i < GlobalSecurityVariables.ServerCertFileNames.Count; i++)
+                if (entry.Certificate != null && Path.GetFileName(entry.CertFileName) == serverName + ".cer")
                 {
-                    if (Path.GetFileName(GlobalSecurityVariables.ServerCertFileNames[i]) == serverName + ".cer")
-                    {
-                        domain = GlobalSecurityVariables.ServerDomain[i];
-                        return GlobalSecurityVariables.ServerCertificates[i];
-                    }
+                    domain = entry.Domain;
+                    return entry.Certificate;
                 }
             }
 
             return null;
         }
 
-        internal static string? FindServerJwksUrl(string kid, string iss, out string domain)
+        internal static TrustedServer? FindTrustedJwksEntry(string? kid, string? iss)
+            => FindTrustedJwksEntry(GlobalSecurityVariables.TrustedServers, kid, iss);
+
+        /// <summary>
+        /// Finds the trust list entry for a token: first by issuer (iss claim), then by kid header.
+        /// Empty values never match.
+        /// </summary>
+        internal static TrustedServer? FindTrustedJwksEntry(IReadOnlyList<TrustedServer> entries, string? kid, string? iss)
         {
-            domain = "";
-            if (GlobalSecurityVariables.ServerKid != null)
+            var normalizedIss = NormalizeIssuer(iss);
+            if (normalizedIss != "")
             {
-                for (var i = 0; i < GlobalSecurityVariables.ServerKid.Count; i++)
+                var byIssuer = entries.FirstOrDefault(e => e.Issuer != "" && NormalizeIssuer(e.Issuer) == normalizedIss);
+                if (byIssuer != null)
                 {
-                    if ((GlobalSecurityVariables.ServerKid[i] != "" &&
-                        GlobalSecurityVariables.ServerKid[i] == kid)
-                        || GlobalSecurityVariables.ServerIssuerUrl[i] == iss)
-                    {
-                        domain = GlobalSecurityVariables.ServerDomain[i];
-                        return GlobalSecurityVariables.ServerJwksUrl[i];
-                    }
+                    return byIssuer;
                 }
+            }
+
+            if (!string.IsNullOrEmpty(kid))
+            {
+                return entries.FirstOrDefault(e => e.Kid != "" && e.Kid == kid);
             }
 
             return null;
         }
+
+        internal static string NormalizeIssuer(string? issuer) => (issuer ?? "").Trim().TrimEnd('/');
     }
 }

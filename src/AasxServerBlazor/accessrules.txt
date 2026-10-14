@@ -3,6 +3,39 @@
   "AllAccessPermissionRules": {
 
     "rules": [
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "token:realm_access"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$contains": [
+            {
+              "$attribute": {
+                "CLAIM": "token:realm_access"
+              }
+            },
+            {
+              "$strVal": "aas-writer"
+            }
+          ]
+        }
+      },
 
                 {
 
