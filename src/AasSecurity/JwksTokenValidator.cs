@@ -48,7 +48,8 @@ namespace AasSecurity
             var jwksUrl = ResolveJwksUrl(entry, httpGet, logger);
             if (string.IsNullOrEmpty(jwksUrl))
             {
-                logger.LogWarning($"Token rejected: no jwks url for trust list entry {entry}.");
+                logger.LogWarning("Token rejected: no jwks url for issuer {Issuer} / kid {Kid}.",
+                    LogSanitizer.Sanitize(iss), LogSanitizer.Sanitize(kid));
                 return false;
             }
 
@@ -58,7 +59,8 @@ namespace AasSecurity
                 var audiences = ResolveAudiences(entry, globalAudienceCsv);
                 if (audiences.Count == 0 && _warnedNoAudience.TryAdd(entry, true))
                 {
-                    logger.LogWarning($"No audience configured for trust list entry {entry} and TOKEN_AUDIENCE is not set: audience is not validated.");
+                    logger.LogWarning("No audience configured for issuer {Issuer} / kid {Kid} and TOKEN_AUDIENCE is not set: audience is not validated.",
+                        LogSanitizer.Sanitize(iss), LogSanitizer.Sanitize(kid));
                 }
 
                 var validationParameters = BuildParameters(entry, signingKeys, audiences);
@@ -66,7 +68,8 @@ namespace AasSecurity
             }
             catch (Exception ex)
             {
-                logger.LogWarning("Token rejected for trust list entry {Entry}: {Reason}", entry, LogSanitizer.Sanitize(ex.Message));
+                logger.LogWarning("Token rejected for issuer {Issuer} / kid {Kid}: {Reason}",
+                    LogSanitizer.Sanitize(iss), LogSanitizer.Sanitize(kid), LogSanitizer.Sanitize(ex.Message));
                 return false;
             }
 

@@ -448,8 +448,9 @@ namespace AasSecurity
                 accessRole = "isNotAuthenticated";
             }
 
-            _logger.LogDebug("Access role in authentication: {AccessRole}, policy: {Policy}, policyRequestedResource: {PolicyRequestedResource}",
-                LogSanitizer.Sanitize(accessRole), LogSanitizer.Sanitize(policy), LogSanitizer.Sanitize(policyRequestedResource));
+            // The access role is not logged: for failed username/password logins it contains the password ("__user__password").
+            _logger.LogDebug("Access role determined, policy: {Policy}, policyRequestedResource: {PolicyRequestedResource}",
+                LogSanitizer.Sanitize(policy), LogSanitizer.Sanitize(policyRequestedResource));
             var aasSecurityContext = new AasSecurityContext(accessRole, route, httpOperation);
             //Create claims
             var claims = new List<Claim>
@@ -485,7 +486,7 @@ namespace AasSecurity
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
             {
-                _logger.LogDebug("Access role found {AccessRole}", LogSanitizer.Sanitize(accessRole));
+                _logger.LogDebug("Access role found");
 
                 return accessRole;
             }
@@ -1086,8 +1087,8 @@ namespace AasSecurity
                 currentRole = "isNotAuthenticated";
             }
 
-            _logger.LogDebug("checkAccessLevel: currentRole = {CurrentRole} operation = {Operation} neededRights = {NeededRights} objPath = {ObjPath}",
-                LogSanitizer.Sanitize(currentRole), LogSanitizer.Sanitize(operation), neededRights, LogSanitizer.Sanitize(objPath));
+            _logger.LogDebug("checkAccessLevel: operation = {Operation} neededRights = {NeededRights} objPath = {ObjPath}",
+                LogSanitizer.Sanitize(operation), neededRights, LogSanitizer.Sanitize(objPath));
 
             if (aasResource == null)
             {
