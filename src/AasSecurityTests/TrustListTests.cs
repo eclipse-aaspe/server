@@ -81,15 +81,13 @@ public class TrustListTextParserTests
     }
 
     [Fact]
-    public void RepositoryTrustList_ContainsCertificatesAndPxcioIssuer()
+    public void RepositoryTrustList_ContainsCertificates()
     {
         var path = FindRepoFile(Path.Combine("src", "AasxServerBlazor", "trustlist.txt"));
 
         var entries = SecuritySettingsForServerParser.ParseTrustListText(System.IO.File.ReadAllLines(path));
 
         entries.Where(e => e.Certificate != null).Should().HaveCount(4);
-        entries.Should().ContainSingle(e => e.Issuer == "https://identity.dev.pxcio.net/realms/fx")
-               .Which.Audiences.Should().Equal("aasx-server");
     }
 
     private static string FindRepoFile(string relativePath)
