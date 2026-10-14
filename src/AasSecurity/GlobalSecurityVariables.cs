@@ -19,9 +19,9 @@ namespace AasSecurity
     {
         public static bool WithAuthentication { get; set; }
         public static List<SecurityRole> SecurityRoles = new();
-        internal static List<TrustedServer> TrustedServers = new();
+        internal static readonly List<TrustedServer> TrustedServers = new();
         internal static List<SecurityRight> SecurityRights = new();
-        internal static Dictionary<string, string> SecurityUsernamePassword = new();
+        internal static readonly Dictionary<string, string> SecurityUsernamePassword = new();
         internal static Property ConditionSM = null;
         internal static Property ConditionSME = null;
     }

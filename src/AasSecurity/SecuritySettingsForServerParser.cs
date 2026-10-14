@@ -16,6 +16,7 @@ using System.Buffers.Text;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
@@ -118,7 +119,7 @@ namespace AasSecurity
             var domain = "";
             var jwks = "";
             var audiences = new List<string>();
-            var base64 = "";
+            var base64 = new StringBuilder();
             var insideBase64 = false;
 
             void Reset()
@@ -138,7 +139,7 @@ namespace AasSecurity
                     if (line.Contains("END CERTIFICATE"))
                     {
                         insideBase64 = false;
-                        var x509 = new X509Certificate2(Convert.FromBase64String(base64));
+                        var x509 = new X509Certificate2(Convert.FromBase64String(base64.ToString()));
                         entries.Add(new TrustedServer
                         {
                             Certificate = x509,
@@ -150,7 +151,7 @@ namespace AasSecurity
                     }
                     else
                     {
-                        base64 += line;
+                        base64.Append(line);
                     }
 
                     continue;
@@ -164,7 +165,7 @@ namespace AasSecurity
                 if (line.Contains("BEGIN CERTIFICATE"))
                 {
                     insideBase64 = true;
-                    base64 = "";
+                    base64.Clear();
                     continue;
                 }
 

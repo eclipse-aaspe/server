@@ -15,6 +15,7 @@ using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using AasSecurity.Models;
+using AasxServerStandardBib.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
@@ -39,7 +40,8 @@ namespace AasSecurity
             var entry = SecurityHelper.FindTrustedJwksEntry(entries, kid, iss);
             if (entry == null)
             {
-                logger.LogWarning($"Token rejected: issuer {iss} / kid {kid} is not in the trust list.");
+                logger.LogWarning("Token rejected: issuer {Issuer} / kid {Kid} is not in the trust list.",
+                    LogSanitizer.Sanitize(iss), LogSanitizer.Sanitize(kid));
                 return false;
             }
 
@@ -64,7 +66,7 @@ namespace AasSecurity
             }
             catch (Exception ex)
             {
-                logger.LogWarning($"Token rejected for trust list entry {entry}: {ex.Message}");
+                logger.LogWarning("Token rejected for trust list entry {Entry}: {Reason}", entry, LogSanitizer.Sanitize(ex.Message));
                 return false;
             }
 
@@ -95,7 +97,7 @@ namespace AasSecurity
             }
             catch (Exception ex)
             {
-                logger.LogWarning($"Could not access well-known from {issuer}: {ex.Message}");
+                logger.LogWarning("Could not access well-known from {Issuer}: {Reason}", LogSanitizer.Sanitize(issuer), LogSanitizer.Sanitize(ex.Message));
             }
 
             return $"{issuer}/jwks";
